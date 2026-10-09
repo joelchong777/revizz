@@ -7,3 +7,4 @@ export type Json =
   | Json[];
 
 export * from './quiz';
+export * from './ingestion';
