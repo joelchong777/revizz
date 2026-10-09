@@ -1,0 +1,587 @@
+================================================================================
+REVIZZ PLATFORM: GEMINI 3.8 FLASH INGESTION SPECIFICATION & SYSTEM PROMPT
+Cambridge Past Papers, Mark Schemes, and Curriculums Ingestion into Supabase
+================================================================================
+
+TABLE OF CONTENTS:
+1. Operational Architecture & Overview
+2. Supabase Relational Database Schema Alignment
+3. Ingestion & KaTeX Formatting Rules
+   3.1 LaTeX & KaTeX Mathematical Notation Rules
+   3.2 Cambridge Source Reference Canonical Format
+   3.3 Diagram & Image Handling Protocol
+   3.4 Pedagogical Explanation & Distractor Analysis Standard
+4. Complete Gemini 3.8 Flash System Prompt
+5. JSON Output Schema Specification & Realistic Cambridge Examples
+6. TypeScript Ingestion Pipeline (Google Gen AI SDK + Supabase Client)
+
+================================================================================
+1. OPERATIONAL ARCHITECTURE & OVERVIEW
+================================================================================
+
+The Revizz Ingestion Pipeline transforms raw Cambridge Assessment International
+Education (CAIE) examination materials (Question Papers [QP], Mark Schemes [MS],
+and Syllabus Curriculum Specifications) into rich, structured, pedagogy-first
+multiple choice question objects stored in Supabase.
+
+Gemini 3.8 Flash serves as the primary multimodal extraction and reasoning engine.
+It accepts dual PDF inputs (or high-resolution page scans):
+  Input A: Cambridge Question Paper (QP) PDF (e.g., 0455_s25_qp_12.pdf)
+  Input B: Cambridge Official Mark Scheme (MS) PDF (e.g., 0455_s25_ms_12.pdf)
+  Input C (Optional): Subject Syllabus / Topic Directory specification
+
+Processing Objectives:
+- Multimodal text, table, and vector diagram recognition.
+- 100% question extraction fidelity (no dropped questions or spliced stems).
+- Mark Scheme key alignment (matching Q1-Q40 with official MS letter keys).
+- Syllabus curriculum mapping (allocating each question to topic taxonomy).
+- KaTeX mathematical and scientific notation formatting ($...$ and $$...$$).
+- High-yield pedagogical explanations with distractor misconception diagnosis.
+- Strict JSON schema enforcement for automated database upserts.
+
+================================================================================
+2. SUPABASE RELATIONAL DATABASE SCHEMA ALIGNMENT
+================================================================================
+
+The database utilizes PostgreSQL via Supabase with Foreign Key integrity and RLS:
+
+--------------------------------------------------------------------------------
+TABLE: public.subjects
+--------------------------------------------------------------------------------
+Represents the Cambridge academic syllabus subject.
+Columns:
+  - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  - code: TEXT UNIQUE NOT NULL (e.g., '0455', '0625', '0620', '0610', '9708')
+  - name: TEXT NOT NULL (e.g., 'Economics', 'Physics', 'Chemistry', 'Biology')
+  - icon: TEXT (Lucide icon name or emoji identifier, e.g., 'trending-up', 'atom')
+
+--------------------------------------------------------------------------------
+TABLE: public.papers
+--------------------------------------------------------------------------------
+Represents a specific examination session paper sitting.
+Columns:
+  - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  - subject_id: UUID NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE
+  - series: TEXT NOT NULL (e.g., 'May/June', 'October/November', 'Feb/March')
+  - paper_code: TEXT NOT NULL (e.g., '11', '12', '13', '21', '22', '23')
+  - year: INTEGER NOT NULL (e.g., 2024, 2025)
+Constraints:
+  - UNIQUE(subject_id, year, series, paper_code)
+
+--------------------------------------------------------------------------------
+TABLE: public.topics
+--------------------------------------------------------------------------------
+Hierarchical syllabus units / topic classification for mastery tracking.
+Columns:
+  - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  - subject_id: UUID NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE
+  - name: TEXT NOT NULL (e.g., 'The basic economic problem', 'Thermal physics')
+  - order_index: INTEGER NOT NULL DEFAULT 0
+Constraints:
+  - UNIQUE(subject_id, name)
+
+--------------------------------------------------------------------------------
+TABLE: public.questions
+--------------------------------------------------------------------------------
+Individual MCQ unit with stem, diagrams, citation, and pedagogical breakdown.
+Columns:
+  - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  - subject_id: UUID NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE
+  - topic_id: UUID REFERENCES public.topics(id) ON DELETE SET NULL
+  - paper_id: UUID REFERENCES public.papers(id) ON DELETE SET NULL
+  - question_number: INTEGER NOT NULL (e.g., 1 through 40)
+  - stem_markdown: TEXT NOT NULL (Contains question stem, tables, and KaTeX math)
+  - image_url: TEXT (Nullable; storage URI for diagram/graph if present)
+  - explanation_markdown: TEXT (Nullable; detailed step-by-step reasoning)
+  - cambridge_source_ref: TEXT NOT NULL (e.g., 'Cambridge IGCSE Economics 0455/12 May/June 2025 Q1')
+  - active: BOOLEAN NOT NULL DEFAULT true
+  - created_at: TIMESTAMPTZ NOT NULL DEFAULT now()
+Constraints:
+  - UNIQUE(paper_id, question_number)
+
+--------------------------------------------------------------------------------
+TABLE: public.question_options
+--------------------------------------------------------------------------------
+The four canonical multiple-choice selections (A, B, C, D).
+Columns:
+  - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  - question_id: UUID NOT NULL REFERENCES public.questions(id) ON DELETE CASCADE
+  - label: CHAR(1) NOT NULL CHECK (label IN ('A', 'B', 'C', 'D'))
+  - content_markdown: TEXT NOT NULL (Markdown & KaTeX formatted option text)
+  - is_correct: BOOLEAN NOT NULL DEFAULT false
+Constraints:
+  - UNIQUE(question_id, label)
+
+================================================================================
+3. INGESTION & KATEX FORMATTING RULES
+================================================================================
+
+3.1 LATEX & KATEX MATHEMATICAL NOTATION RULES
+--------------------------------------------------------------------------------
+Revizz renders math client-side via React-Markdown + Remark-Math + Rehype-KaTeX.
+All mathematical and scientific expressions must adhere to strict delimiter standards:
+
+1. Inline Math:
+   - Must use single dollar delimiters: $...$
+   - Examples:
+     * Variable / symbols: $x$, $y$, $\Delta P$, $\theta$
+     * Units: $20\text{ m/s}$, $5.0\times 10^{3}\text{ N}$, $12\text{ V}$
+     * Chemical formula: $\text{CaCO}_3$, $\text{H}_2\text{SO}_4$, $\text{Fe}^{3+}$
+     * Fractions & equations: $\text{PED} = \frac{\% \Delta Q_d}{\% \Delta P}$
+
+2. Block / Display Math:
+   - Must use double dollar delimiters: $$...$$ on their own independent lines.
+   - Example:
+     $$V = I \times R$$
+     $$\frac{1}{R_p} = \frac{1}{R_1} + \frac{1}{R_2}$$
+
+3. Escaping Currency & Prose Symbols:
+   - Currency dollar signs must ALWAYS be escaped with a backslash: \$50, \$1.25 million.
+   - Never write bare unescaped dollar signs in normal text, as this corrupts the KaTeX parser.
+
+4. Tables:
+   - Data tables in question stems must be converted to valid GitHub-flavored Markdown tables:
+     | Factor of Production | Reward |
+     | :--- | :--- |
+     | Land | Rent |
+     | Labour | Wages |
+     | Capital | Interest |
+     | Enterprise | Profit |
+
+3.2 CAMBRIDGE SOURCE REFERENCE CANONICAL FORMAT
+--------------------------------------------------------------------------------
+All ingested questions must populate `cambridge_source_ref` using the canonical syntax:
+  "Cambridge [Level] [Subject Name] [SyllabusCode]/[PaperCode] [Series] [Year] Q[QuestionNumber]"
+
+Standard Canonical Patterns:
+- "Cambridge IGCSE Economics 0455/12 May/June 2025 Q1"
+- "Cambridge IGCSE Physics 0625/22 October/November 2024 Q15"
+- "Cambridge International AS & A Level Economics 9708/11 May/June 2024 Q8"
+- "Cambridge O Level Chemistry 5070/12 May/June 2024 Q30"
+
+3.3 DIAGRAM & IMAGE HANDLING PROTOCOL
+--------------------------------------------------------------------------------
+Many Cambridge STEM questions depend on diagrams, circuit schematics, apparatus,
+or economic demand/supply curves.
+
+Rules for diagram detection:
+1. `has_diagram` (boolean):
+   - Set to `true` if the question requires a visual diagram, chart, circuit, or apparatus
+     graphic that cannot be represented purely with markdown text or tables.
+   - Set to `false` for purely text or markdown-table questions.
+
+2. `diagram_description` (string | null):
+   - Provide a concise visual description of the graphic (e.g., "A circuit diagram showing two parallel resistors connected to a 12V battery and an ammeter").
+   - This aids accessibility (alt text) and automated cropping scripts.
+
+3. `image_url` (string | null):
+   - For automated storage pipelines, follow the deterministic naming standard:
+     "diagrams/[syllabus_code]_[series_slug]_[paper_code]_[year]_q[number].png"
+     e.g., "diagrams/0455_s25_12_2025_q04.png"
+   - Leave null if no diagram is present.
+
+3.4 PEDAGOGICAL EXPLANATION & DISTRACTOR ANALYSIS STANDARD
+--------------------------------------------------------------------------------
+Revizz's cognitive architecture relies on the 2-try mastery loop and diagnostic error
+feedback (see .agent/skills/revizz-edtech-learning).
+The `explanation_markdown` field MUST NOT simply state "The answer is B because the mark scheme says so."
+
+Every explanation must contain three explicit structural parts:
+1. **Core Concept & Formula**: State the syllabus learning objective, rule, or formula.
+2. **Step-by-Step Derivation**: Show how the correct option is calculated or deduced.
+3. **Distractor Breakdown (Diagnostic Misconceptions)**:
+   Explain specifically WHY each wrong option was chosen by Cambridge examiners:
+   - E.g., Option A: Common trap where student multiplied instead of dividing.
+   - E.g., Option C: Omits the unit conversion from cm to m.
+   - E.g., Option D: Confuses shift of the demand curve with movement along the curve.
+
+================================================================================
+4. COMPLETE GEMINI 3.8 FLASH SYSTEM PROMPT
+================================================================================
+
+Below is the production system prompt to be provided in `systemInstruction` when
+calling the Gemini 3.8 Flash model:
+
+--------------------------------------------------------------------------------
+<<< START GEMINI 3.8 FLASH SYSTEM PROMPT >>>
+You are an expert Cambridge Assessment International Education (CAIE) Examination Ingestion Specialist and Senior Examiner in STEM and Social Sciences.
+
+Your mission is to read official Cambridge Multiple Choice Question Papers (QP), official Mark Schemes (MS), and Subject Syllabus specifications, and parse them into flawlessly structured, pedagogy-rich JSON records for database insertion.
+
+CRITICAL INGESTION INSTRUCTIONS:
+
+1. FIDELITY & COMPLETENESS:
+   - Extract EVERY question from the examination paper (typically Q1 through Q30 or Q40).
+   - Never skip, combine, summarize, or truncate questions.
+   - Preserve original question numbers, stem phrasing, tables, and option choices exactly.
+
+2. MARK SCHEME CROSS-REFERENCING:
+   - Verify every answer against the official Cambridge Mark Scheme provided in the prompt.
+   - Ensure the `is_correct` boolean is exactly `true` for the letter (A, B, C, or D) designated in the mark scheme, and `false` for all others.
+   - Exactly one option per question must have `is_correct: true`.
+
+3. SYLLABUS TOPIC MAPPING:
+   - Classify each question into its canonical syllabus topic from the official subject syllabus.
+   - Use the exact topic name matching the official Cambridge syllabus unit titles.
+
+4. KATEX / LATEX FORMATTING RULES:
+   - Inline mathematics and formulas MUST be wrapped in single dollar delimiters: $...$
+     (e.g., $E_k = \frac{1}{2}mv^2$, $1.5\text{ A}$, $\Delta Q / Q$, $\text{CO}_2$).
+   - Display equations must be wrapped in double dollar delimiters: $$...$$ on isolated lines.
+   - Currency dollar signs must ALWAYS be escaped with a backslash: \$50, \$100. Never output bare unescaped dollar signs for currency!
+   - Scientific notations, superscripts, subscripts, and greek letters must use standard LaTeX: $\alpha$, $\beta$, $10^{-3}$, $\Omega$.
+
+5. DIAGRAM IDENTIFICATION:
+   - If a question stem refers to a figure, diagram, apparatus, circuit, graph, or visual asset that cannot be fully expressed in Markdown, set `has_diagram: true` and write an exhaustive, accessible `diagram_description`.
+   - If no diagram is required to solve the question, set `has_diagram: false` and `diagram_description: null`.
+
+6. PEDAGOGICAL EXPLANATION & DISTRACTOR DIAGNOSTICS:
+   - For every question, generate a high-yield `explanation_markdown` structured into:
+     * **Concept & Formula**: The theoretical principle or formula.
+     * **Step-by-Step Solution**: Complete logical or mathematical proof for why the correct option is valid.
+     * **Distractor Analysis**: A diagnostic breakdown identifying the cognitive misconception behind each incorrect option (A, B, C, or D).
+
+7. OUTPUT SPECIFICATION:
+   - Output ONLY valid, parseable JSON conforming precisely to the requested schema.
+   - Do NOT include markdown code fences (```json ... ```) in direct API mode if structured JSON is enabled, or provide valid JSON without auxiliary commentary.
+<<< END GEMINI 3.8 FLASH SYSTEM PROMPT >>>
+--------------------------------------------------------------------------------
+
+================================================================================
+5. JSON OUTPUT SCHEMA SPECIFICATION & REALISTIC CAMBRIDGE EXAMPLES
+================================================================================
+
+JSON SCHEMA DEFINITION:
+{
+  "subject_code": "string",
+  "subject_name": "string",
+  "series": "string",
+  "paper_code": "string",
+  "year": 2025,
+  "canonical_paper_citation": "string",
+  "questions": [
+    {
+      "question_number": 1,
+      "topic_name": "string",
+      "cambridge_source_ref": "string",
+      "stem_markdown": "string",
+      "has_diagram": false,
+      "diagram_description": null,
+      "image_url": null,
+      "explanation_markdown": "string",
+      "options": [
+        { "label": "A", "content_markdown": "string", "is_correct": false },
+        { "label": "B", "content_markdown": "string", "is_correct": true },
+        { "label": "C", "content_markdown": "string", "is_correct": false },
+        { "label": "D", "content_markdown": "string", "is_correct": false }
+      ]
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
+REALISTIC CAMBRIDGE MCQ EXAMPLES IN OUTPUT FORMAT
+--------------------------------------------------------------------------------
+
+[
+  {
+    "question_number": 3,
+    "topic_name": "The allocation of resources",
+    "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2025 Q3",
+    "stem_markdown": "The price of a good rises from \\$10 to \\$12, causing the quantity demanded to decrease from 500 units to 400 units.\n\nWhat is the price elasticity of demand (PED) for the good over this price range?",
+    "has_diagram": false,
+    "diagram_description": null,
+    "image_url": null,
+    "explanation_markdown": "### Concept & Formula\nPrice Elasticity of Demand (PED) measures the responsiveness of quantity demanded to a change in price:\n$$\\text{PED} = \\frac{\\% \\Delta Q_d}{\\% \\Delta P}$$\nwhere:\n$$\\% \\Delta Q_d = \\frac{400 - 500}{500} \\times 100\\% = -20\\%$$\n$$\\% \\Delta P = \\frac{12 - 10}{10} \\times 100\\% = +20\\%$$\n$$\\text{PED} = \\frac{-20\\%}{+20\\%} = -1.0$$\n*(Economists generally refer to the absolute value $|\\text{PED}| = 1.0$, which is unitary elastic)*.\n\n### Distractor Analysis\n- **A (0.5)**: Mistake of inverting the elasticity formula (calculating $\% \\Delta P / \\% \\Delta Q_d$) or using absolute price change instead of percentages.\n- **B (1.0) [Correct]**: Accurately computes $-20\\% / 20\\% = -1.0$.\n- **C (1.25)**: Calculating percentage change using the new price as the denominator ($2 / 12 \\approx 16.67\\%$) rather than the initial base price.\n- **D (2.0)**: Arithmetic error confusing total quantity delta (100) with percentage ratio.",
+    "options": [
+      { "label": "A", "content_markdown": "0.5", "is_correct": false },
+      { "label": "B", "content_markdown": "1.0", "is_correct": true },
+      { "label": "C", "content_markdown": "1.25", "is_correct": false },
+      { "label": "D", "content_markdown": "2.0", "is_correct": false }
+    ]
+  },
+  {
+    "question_number": 14,
+    "topic_name": "Electricity and magnetism",
+    "cambridge_source_ref": "Cambridge IGCSE Physics 0625/22 October/November 2024 Q14",
+    "stem_markdown": "A student connects two resistors of resistance $4.0\\ \\Omega$ and $6.0\\ \\Omega$ in parallel to a $12\\text{ V}$ direct current (d.c.) power supply of negligible internal resistance.\n\nWhat is the total current drawn from the power supply?",
+    "has_diagram": true,
+    "diagram_description": "Circuit schematic displaying a 12V d.c. source connected across two parallel branches, one branch with a 4.0 ohm resistor and the other with a 6.0 ohm resistor.",
+    "image_url": "diagrams/0625_w24_22_2024_q14.png",
+    "explanation_markdown": "### Concept & Formula\nFor resistors in parallel, the total equivalent resistance $R_p$ is calculated as:\n$$\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$$\nBy Ohm's Law, total current $I_{\\text{total}} = \\frac{V}{R_p}$ or by calculating branch currents independently ($I = I_1 + I_2$).\n\n### Step-by-Step Derivation\n1. Branch 1 current: $I_1 = \\frac{12\\text{ V}}{4.0\\ \\Omega} = 3.0\\text{ A}$\n2. Branch 2 current: $I_2 = \\frac{12\\text{ V}}{6.0\\ \\Omega} = 2.0\\text{ A}$\n3. Total current: $I_{\\text{total}} = 3.0\\text{ A} + 2.0\\text{ A} = 5.0\\text{ A}$\n\nEquivalently:\n$$R_p = \\frac{4.0 \\times 6.0}{4.0 + 6.0} = \\frac{24}{10} = 2.4\\ \\Omega$$\n$$I_{\\text{total}} = \\frac{12\\text{ V}}{2.4\\ \\Omega} = 5.0\\text{ A}$$\n\n### Distractor Analysis\n- **A (1.2 A)**: Student mistakenly treated the resistors as in series ($R_{\\text{series}} = 4.0 + 6.0 = 10.0\\ \\Omega$) giving $I = 12 / 10 = 1.2\\text{ A}$.\n- **B (2.0 A)**: Student calculated only the current through the $6.0\\ \\Omega$ branch, neglecting the other branch.\n- **C (5.0 A) [Correct]**: Accurately sums parallel currents ($3.0\\text{ A} + 2.0\\text{ A} = 5.0\\text{ A}$).\n- **D (10.0 A)**: Calculation error adding individual resistances directly and multiplying.",
+    "options": [
+      { "label": "A", "content_markdown": "$1.2\\text{ A}$", "is_correct": false },
+      { "label": "B", "content_markdown": "$2.0\\text{ A}$", "is_correct": false },
+      { "label": "C", "content_markdown": "$5.0\\text{ A}$", "is_correct": true },
+      { "label": "D", "content_markdown": "$10.0\\text{ A}$", "is_correct": false }
+    ]
+  }
+]
+
+================================================================================
+6. TYPESCRIPT INGESTION PIPELINE (GOOGLE GEN AI SDK + SUPABASE CLIENT)
+================================================================================
+
+Below is a complete, executable Node.js / TypeScript script that reads Cambridge
+Question Paper & Mark Scheme files, queries Gemini 3.8 Flash with structured JSON
+enforcement, and upserts the records into Supabase with relational integrity.
+
+```typescript
+import { GoogleGenAI, Type, Schema } from '@google/genai';
+import { createClient } from '@supabase/supabase-js';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// 1. Initialize Clients
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || ''
+});
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+);
+
+// 2. Define TypeScript Ingestion Types
+interface ParsedOption {
+  label: 'A' | 'B' | 'C' | 'D';
+  content_markdown: string;
+  is_correct: boolean;
+}
+
+interface ParsedQuestion {
+  question_number: number;
+  topic_name: string;
+  cambridge_source_ref: string;
+  stem_markdown: string;
+  has_diagram: boolean;
+  diagram_description: string | null;
+  image_url: string | null;
+  explanation_markdown: string;
+  options: ParsedOption[];
+}
+
+interface ParsedExamPaperPayload {
+  subject_code: string;
+  subject_name: string;
+  series: string;
+  paper_code: string;
+  year: number;
+  questions: ParsedQuestion[];
+}
+
+// 3. Define Structured Output Schema for Gemini 3.8 Flash
+const ingestionResponseSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    subject_code: { type: Type.STRING },
+    subject_name: { type: Type.STRING },
+    series: { type: Type.STRING },
+    paper_code: { type: Type.STRING },
+    year: { type: Type.INTEGER },
+    questions: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          question_number: { type: Type.INTEGER },
+          topic_name: { type: Type.STRING },
+          cambridge_source_ref: { type: Type.STRING },
+          stem_markdown: { type: Type.STRING },
+          has_diagram: { type: Type.BOOLEAN },
+          diagram_description: { type: Type.STRING, nullable: true },
+          image_url: { type: Type.STRING, nullable: true },
+          explanation_markdown: { type: Type.STRING },
+          options: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                label: { type: Type.STRING, enum: ['A', 'B', 'C', 'D'] },
+                content_markdown: { type: Type.STRING },
+                is_correct: { type: Type.BOOLEAN }
+              },
+              required: ['label', 'content_markdown', 'is_correct']
+            }
+          }
+        },
+        required: [
+          'question_number',
+          'topic_name',
+          'cambridge_source_ref',
+          'stem_markdown',
+          'has_diagram',
+          'explanation_markdown',
+          'options'
+        ]
+      }
+    }
+  },
+  required: ['subject_code', 'subject_name', 'series', 'paper_code', 'year', 'questions']
+};
+
+// 4. Ingestion Worker Function
+export async function ingestCambridgePaper(
+  qpPdfPath: string,
+  msPdfPath: string
+): Promise<void> {
+  console.log(`[Ingest] Reading QP: ${qpPdfPath} and MS: ${msPdfPath}...`);
+
+  const qpBuffer = fs.readFileSync(qpPdfPath);
+  const msBuffer = fs.readFileSync(msPdfPath);
+
+  const systemPrompt = `You are an expert Cambridge Assessment International Education (CAIE) Examination Ingestion Specialist.
+Extract all multiple-choice questions from the provided Question Paper (QP) and cross-reference answers with the Mark Scheme (MS).
+Ensure:
+1. All math/formulas are strictly in KaTeX ($...$ inline, $$...$$ block). Currency is escaped (\\$10).
+2. The explanation provides concept, derivation, and diagnostic distractor breakdown.
+3. Every question maps to a valid syllabus topic.
+4. Output must strictly conform to the JSON schema.`;
+
+  console.log('[Ingest] Querying Gemini 3.8 Flash with multimodal PDF inputs...');
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3.8-flash',
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: qpBuffer.toString('base64')
+            }
+          },
+          {
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: msBuffer.toString('base64')
+            }
+          },
+          {
+            text: 'Extract all multiple-choice questions from this Cambridge Question Paper and correlate with the Mark Scheme. Output strictly valid structured JSON matching the schema.'
+          }
+        ]
+      }
+    ],
+    config: {
+      systemInstruction: systemPrompt,
+      responseMimeType: 'application/json',
+      responseSchema: ingestionResponseSchema,
+      temperature: 0.1
+    }
+  });
+
+  const rawJson = response.text;
+  if (!rawJson) {
+    throw new Error('Received empty response from Gemini');
+  }
+
+  const payload: ParsedExamPaperPayload = JSON.parse(rawJson);
+  console.log(`[Ingest] Parsed ${payload.questions.length} questions for ${payload.subject_name} (${payload.subject_code}).`);
+
+  // 5. Persist Relational Data to Supabase
+
+  // 5a. Upsert Subject
+  const { data: subjectData, error: subjectError } = await supabase
+    .from('subjects')
+    .upsert(
+      { code: payload.subject_code, name: payload.subject_name },
+      { onConflict: 'code' }
+    )
+    .select('id')
+    .single();
+
+  if (subjectError) throw subjectError;
+  const subjectId = subjectData.id;
+
+  // 5b. Upsert Paper
+  const { data: paperData, error: paperError } = await supabase
+    .from('papers')
+    .upsert(
+      {
+        subject_id: subjectId,
+        series: payload.series,
+        paper_code: payload.paper_code,
+        year: payload.year
+      },
+      { onConflict: 'subject_id,year,series,paper_code' }
+    )
+    .select('id')
+    .single();
+
+  if (paperError) throw paperError;
+  const paperId = paperData.id;
+
+  // 5c. Collect & Upsert Unique Topics
+  const topicMap = new Map<string, string>();
+  const uniqueTopics = Array.from(new Set(payload.questions.map((q) => q.topic_name)));
+
+  for (let i = 0; i < uniqueTopics.length; i++) {
+    const topicName = uniqueTopics[i];
+    const { data: topicData, error: topicError } = await supabase
+      .from('topics')
+      .upsert(
+        { subject_id: subjectId, name: topicName, order_index: i + 1 },
+        { onConflict: 'subject_id,name' }
+      )
+      .select('id')
+      .single();
+
+    if (topicError) throw topicError;
+    topicMap.set(topicName, topicData.id);
+  }
+
+  // 5d. Upsert Questions & Options
+  for (const q of payload.questions) {
+    const topicId = topicMap.get(q.topic_name) || null;
+
+    const { data: questionData, error: questionError } = await supabase
+      .from('questions')
+      .upsert(
+        {
+          subject_id: subjectId,
+          paper_id: paperId,
+          topic_id: topicId,
+          question_number: q.question_number,
+          stem_markdown: q.stem_markdown,
+          image_url: q.image_url,
+          explanation_markdown: q.explanation_markdown,
+          cambridge_source_ref: q.cambridge_source_ref,
+          active: true
+        },
+        { onConflict: 'paper_id,question_number' }
+      )
+      .select('id')
+      .single();
+
+    if (questionError) {
+      console.error(`Error inserting Q${q.question_number}:`, questionError);
+      continue;
+    }
+
+    const questionId = questionData.id;
+
+    // Insert Options
+    const optionsPayload = q.options.map((opt) => ({
+      question_id: questionId,
+      label: opt.label,
+      content_markdown: opt.content_markdown,
+      is_correct: opt.is_correct
+    }));
+
+    const { error: optionsError } = await supabase
+      .from('question_options')
+      .upsert(optionsPayload, { onConflict: 'question_id,label' });
+
+    if (optionsError) {
+      console.error(`Error inserting options for Q${q.question_number}:`, optionsError);
+    }
+  }
+
+  console.log(`[Ingest] Successfully ingested Paper ${payload.paper_code} (${payload.year}) into Supabase!`);
+}
+```
+================================================================================
+END OF SPECIFICATION
+================================================================================

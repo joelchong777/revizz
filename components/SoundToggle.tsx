@@ -44,10 +44,10 @@ export function SoundToggle({ className }: SoundToggleProps) {
       aria-label={soundOn ? 'Mute sound effects' : 'Enable sound effects'}
       title={soundOn ? 'Sound is ON (Click to mute)' : 'Sound is OFF (Click to unmute)'}
       className={cn(
-        'relative inline-flex items-center justify-center p-2 rounded-2xl border-b-4 transition-all duration-100 select-none cursor-pointer active:translate-y-1 active:border-b-0',
+        'relative inline-flex items-center justify-center p-2 rounded-2xl border-2 border-b-4 border-slate-800 shadow-chunky transition-all duration-100 select-none cursor-pointer active:translate-y-0.5 active:border-b-2 active:shadow-sm',
         soundOn
-          ? 'bg-teal-50 text-teal-700 border-teal-500 hover:bg-teal-100'
-          : 'bg-slate-100 text-slate-400 border-slate-300 hover:bg-slate-200 hover:text-slate-600',
+          ? 'bg-brand-teal text-slate-900 hover:brightness-110'
+          : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600',
         className
       )}
     >

@@ -8,6 +8,7 @@ import { TopicMasteryList } from './TopicMasteryList';
 import { Sparkles, AlertCircle, Play, BookOpen, Layers } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Badge } from './ui/badge';
+import { Select } from './ui/select';
 
 interface StartFlowProps {
   onStart: (config: QuizRoundConfig) => void;
@@ -133,13 +134,12 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
               <label className="block text-[11px] sm:text-xs font-black text-slate-500 mb-1.5 sm:mb-2 uppercase tracking-wider">
                 Subject
               </label>
-              <select
-                className="w-full bg-slate-50 border-2 border-slate-800 text-slate-800 font-bold rounded-2xl p-3 sm:p-3.5 text-xs sm:text-sm outline-none focus:border-brand-indigo transition-colors min-h-[48px]"
+              <Select
+                options={[{ value: 'Economics 0455', label: 'Economics 0455 (Cambridge IGCSE)' }]}
                 value={config.subject}
-                onChange={(e) => updateConfig({ subject: e.target.value })}
-              >
-                <option value="Economics 0455">Economics 0455 (Cambridge IGCSE)</option>
-              </select>
+                onChange={(value) => updateConfig({ subject: value })}
+                className="w-full"
+              />
             </div>
 
             {/* Mode */}
@@ -179,19 +179,20 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
                 <label className="block text-[11px] sm:text-xs font-black text-slate-500 mb-1.5 sm:mb-2 uppercase tracking-wider">
                   Target Topic
                 </label>
-                <select
-                  className="w-full bg-slate-50 border-2 border-slate-800 text-slate-800 font-bold rounded-2xl p-3 sm:p-3.5 text-xs sm:text-sm outline-none focus:border-brand-indigo transition-colors min-h-[48px]"
+                <Select
+                  options={[
+                    { value: 'all', label: 'All Topics (Comprehensive)' },
+                    { value: 'topic_1', label: '1. The Basic Economic Problem' },
+                    { value: 'topic_2', label: '2. The Allocation of Resources' },
+                    { value: 'topic_3', label: '3. Microeconomic Decision Makers' },
+                    { value: 'topic_4', label: '4. Government and the Macroeconomy' },
+                    { value: 'topic_5', label: '5. Economic Development' },
+                    { value: 'topic_6', label: '6. International Trade and Globalisation' }
+                  ]}
                   value={config.sourceValue}
-                  onChange={(e) => updateConfig({ sourceValue: e.target.value })}
-                >
-                  <option value="all">All Topics (Comprehensive)</option>
-                  <option value="topic_1">1. The Basic Economic Problem</option>
-                  <option value="topic_2">2. The Allocation of Resources</option>
-                  <option value="topic_3">3. Microeconomic Decision Makers</option>
-                  <option value="topic_4">4. Government and the Macroeconomy</option>
-                  <option value="topic_5">5. Economic Development</option>
-                  <option value="topic_6">6. International Trade and Globalisation</option>
-                </select>
+                  onChange={(value) => updateConfig({ sourceValue: value })}
+                  className="w-full"
+                />
               </div>
             )}
 

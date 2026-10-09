@@ -92,7 +92,7 @@ export function TopicMasteryList({
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Subject Overall Mastery Card */}
-      <div className="card-playful p-5 bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/40 border-indigo-200">
+      <div className="p-5 bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/40 rounded-2xl border-2 border-b-4 border-slate-800 shadow-chunky">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-brand-indigo/10 flex items-center justify-center text-brand-indigo font-black">
@@ -125,7 +125,7 @@ export function TopicMasteryList({
               {overallPercentage}% ({totalMasteredAll}/{totalQuestionsAll})
             </span>
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+          <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border-2 border-slate-800 shadow-sm">
             <div
               className={`h-full rounded-full transition-all duration-700 ease-out ${overallBadge.progressColorClass}`}
               style={{ width: `${overallPercentage}%` }}
@@ -152,7 +152,7 @@ export function TopicMasteryList({
         {topicStats.map((stat) => (
           <div
             key={stat.topic.id}
-            className="card-playful p-4 hover:border-slate-300 transition-all bg-white"
+            className="p-4 transition-all bg-white rounded-2xl border-2 border-b-4 border-slate-800 shadow-chunky"
           >
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex-1 min-w-0">
@@ -177,7 +177,7 @@ export function TopicMasteryList({
               <button
                 type="button"
                 onClick={() => handlePractice(stat.topic.id, stat.topic.name)}
-                className="btn-chunky-teal text-xs py-2 px-3 font-black shadow-xs flex-shrink-0 flex items-center gap-1"
+                className="bg-brand-teal text-white text-xs py-2 px-3 font-black rounded-xl border-2 border-b-4 border-slate-800 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-sm flex-shrink-0 flex items-center gap-1 transition-all"
                 title={`Practice questions for ${stat.topic.name}`}
               >
                 <span>Practice</span>
@@ -191,7 +191,7 @@ export function TopicMasteryList({
                 <span>{stat.masteredCount} of {stat.totalQuestions} questions mastered</span>
                 <span className="font-black text-slate-700">{stat.percentage}%</span>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border-2 border-slate-800 shadow-sm">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ease-out ${stat.badge.progressColorClass}`}
                   style={{ width: `${stat.percentage}%` }}

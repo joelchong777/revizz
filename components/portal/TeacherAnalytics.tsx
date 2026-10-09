@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Select } from '@/components/ui/select';
 
 export default function TeacherAnalytics() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,26 +31,26 @@ export default function TeacherAnalytics() {
     <div className="max-w-7xl mx-auto space-y-8">
       {/* 4-Column KPI Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-sm">
+        <div className="bg-white p-6 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky">
           <div className="text-slate-500 text-sm font-bold uppercase mb-1">Total Students Enrolled</div>
           <div className="text-4xl font-black text-slate-800">142</div>
         </div>
-        <div className="bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-sm">
+        <div className="bg-white p-6 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky">
           <div className="text-slate-500 text-sm font-bold uppercase mb-1">Total Questions Attempted</div>
           <div className="text-4xl font-black text-slate-800">12,405</div>
         </div>
-        <div className="bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-sm">
+        <div className="bg-white p-6 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky">
           <div className="text-slate-500 text-sm font-bold uppercase mb-1">Cohort Average Accuracy %</div>
           <div className="text-4xl font-black text-green-600">68%</div>
         </div>
-        <div className="bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-sm">
+        <div className="bg-white p-6 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky">
           <div className="text-slate-500 text-sm font-bold uppercase mb-1">Lowest-Performing Syllabus Topic</div>
           <div className="text-xl font-black text-amber-600 leading-tight">Government & Macroeconomy <span className="text-2xl">⚠️</span></div>
         </div>
       </div>
 
       {/* Full-Width Class Topic Mastery Heatmap */}
-      <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-sm">
+      <div className="bg-white p-8 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky">
         <h2 className="text-2xl font-black text-slate-800 mb-6">Class Topic Mastery Heatmap</h2>
         <div className="space-y-6">
           {topics.map((topic, i) => {
@@ -74,18 +76,19 @@ export default function TeacherAnalytics() {
       </div>
 
       {/* Comprehensive Student Roster Table */}
-      <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-sm">
+      <div className="bg-white p-8 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <h2 className="text-2xl font-black text-slate-800">Student Roster</h2>
           <div className="flex gap-4">
-            <select 
-              value={filter} 
-              onChange={(e) => setFilter(e.target.value)}
-              className="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400"
-            >
-              <option value="All">All Students</option>
-              <option value="Frontier Students 🎓">Frontier Students 🎓</option>
-            </select>
+              <Select
+                value={filter}
+                onChange={(val) => setFilter(val)}
+                options={[
+                  { value: 'All', label: 'All Students' },
+                  { value: 'Frontier Students 🎓', label: 'Frontier Students 🎓' }
+                ]}
+                className="w-48"
+              />
             <input 
               type="text" 
               placeholder="Search by student name..." 
@@ -135,7 +138,7 @@ export default function TeacherAnalytics() {
       </div>
 
       {/* Most-Missed Questions Grid */}
-      <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-sm">
+      <div className="bg-white p-8 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky">
         <h2 className="text-2xl font-black text-slate-800 mb-6">Most-Missed Questions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
@@ -143,13 +146,13 @@ export default function TeacherAnalytics() {
             { text: "In a free market economy, how are prices determined?", ref: "0455/11 O/N 22 Q08", acc: "31%", wrong: "A: Government decree" },
             { text: "Which policy is most likely to reduce cyclical unemployment?", ref: "0455/12 F/M 24 Q21", acc: "35%", wrong: "D: Increasing interest rates" }
           ].map((q, i) => (
-            <div key={i} className="p-6 rounded-2xl bg-slate-50 border-2 border-slate-100 flex flex-col gap-4">
+            <div key={i} className="p-6 rounded-2xl bg-slate-50 border-2 border-b-4 border-slate-800 shadow-sm flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">{q.ref}</div>
                 <div className="text-sm font-black text-red-500">{q.acc} Correct</div>
               </div>
               <div className="text-base font-bold text-slate-800 leading-snug flex-1">"{q.text}"</div>
-              <div className="text-sm font-bold text-slate-600 bg-white p-4 rounded-xl border-2 border-slate-200">
+              <div className="text-sm font-bold text-slate-600 bg-white p-4 rounded-xl border-2 border-b-4 border-slate-800">
                 Most common mistake: <br/>
                 <span className="text-rose-600 text-base">{q.wrong}</span>
               </div>
