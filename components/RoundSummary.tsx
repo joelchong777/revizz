@@ -1,16 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { ChevronDown, ChevronUp, Sparkles, Flame, CheckCircle2, RotateCcw, XCircle, Trophy } from 'lucide-react';
 import { MissedQuestionItem } from '../hooks/useQuizGame';
 import { playFanfare, playPop } from '../lib/audio';
-import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 interface RoundSummaryProps {
   totalXP: number;
@@ -35,7 +34,7 @@ export function RoundSummary({
   onPlayAgain,
   onHome,
 }: RoundSummaryProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [openMissedIndex, setOpenMissedIndex] = useState<number | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
   const totalAnswered = correctFirstTryCount + correctRetryCount + wrongCount;
@@ -44,277 +43,192 @@ export function RoundSummary({
     : 0;
 
   useEffect(() => {
-    // Audio celebration
     playFanfare();
 
-    // Visual confetti celebration
     if (typeof window !== 'undefined') {
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (!prefersReducedMotion) {
         confetti({
-          particleCount: 100,
-          spread: 80,
-          origin: { y: 0.5 },
-          colors: ['#FACC15', '#14B8A6', '#6366F1', '#FB7185', '#22C55E'],
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#c67139', '#7a8a5e', '#ffc6a5', '#ccdbb2', '#201e1d'],
         });
       }
     }
   }, []);
 
-  const toggleExpand = (id: string) => {
+  const toggleMissed = (index: number) => {
     playPop();
-    setExpandedId(prev => (prev === id ? null : id));
+    setOpenMissedIndex((prev) => (prev === index ? null : index));
   };
 
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: shouldReduceMotion
-        ? { duration: 0.1 }
-        : {
-            staggerChildren: 0.12,
-            delayChildren: 0.05,
-          },
-    },
-  };
+  const title =
+    accuracy >= 80
+      ? 'Brilliant round!'
+      : accuracy >= 50
+      ? 'Solid round!'
+      : 'Round complete';
 
-  const itemVariants: Variants = {
-    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: shouldReduceMotion
-        ? { duration: 0.1 }
-        : {
-            type: 'spring' as const,
-            stiffness: 320,
-            damping: 24,
-          },
+  const subtitle = `Cambridge Economics 0455 · ${totalAnswered} Questions Answered`;
+
+  const stats = [
+    {
+      label: 'XP earned',
+      value: `+${totalXP}`,
+      bg: 'bg-accent-300',
     },
-  };
+    {
+      label: 'Peak streak',
+      value: `🔥 ${peakStreak}×`,
+      bg: 'bg-accent-200',
+    },
+    {
+      label: '1st-try accuracy',
+      value: `${accuracy}%`,
+      bg: 'bg-accent-2-300',
+    },
+    {
+      label: 'Questions',
+      value: `${correctFirstTryCount}/${totalAnswered}`,
+      bg: 'bg-neutral-100',
+    },
+  ];
+
+  const letters = ['A', 'B', 'C', 'D'];
 
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-full max-w-lg mx-auto py-4 sm:py-6 px-1 sm:px-4 flex flex-col gap-4 sm:gap-6"
+      initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+      className="w-full max-w-[480px] mx-auto py-5 px-4 pb-12 flex flex-col gap-4.5 select-none"
     >
-      {/* 1. Header Banner & XP Card (Staggered spring entrance) */}
-      <motion.div
-        variants={itemVariants}
-        className="card-playful border-2 border-b-4 border-slate-800 text-center relative overflow-hidden bg-gradient-to-b from-white to-amber-50/60 p-5 sm:p-6"
-      >
-        {/* Decorative Badge */}
-        <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-brand-yellow border-b-4 border-amber-500 shadow-playful mb-3 animate-bounce">
-          <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-950" />
-        </div>
-
-        <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mb-1">
-          Round Complete!
-        </h1>
-        <p className="text-slate-500 font-bold text-xs sm:text-sm max-w-xs mx-auto">
-          Sensational revision workout! Here is your performance breakdown:
-        </p>
-
-        {/* Flying XP Highlight with spring pop */}
-        <motion.div
-          initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 450, damping: 16, delay: 0.2 }}
-          className="mt-4 sm:mt-5 inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 border-b-4 border-amber-600 shadow-chunky text-amber-950 font-black text-lg sm:text-2xl tracking-wide select-none"
-        >
-          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-amber-900" style={{ animationDuration: '4s' }} />
-          <span>+{totalXP} XP EARNED</span>
-        </motion.div>
-      </motion.div>
-
-      {/* 2. Performance Stats Cards (Staggered spring entrance) */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-2.5 sm:gap-3">
-        {/* Accuracy Stat */}
-        <div className="card-playful p-3.5 sm:p-4 flex flex-col justify-between border-teal-200 bg-teal-50/40">
-          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-teal-700 truncate">
-            Accuracy (1st Try)
+      {/* 1. Giant Circular Score Badge + Title */}
+      <div className="flex items-center gap-4">
+        {/* Giant Circular Score Badge */}
+        <div className="w-[104px] h-[104px] flex-none rounded-full bg-accent-300 border-[3px] border-text shadow-[5px_5px_0_#201e1d] flex flex-col items-center justify-center -rotate-6">
+          <span className="font-heading text-4xl leading-none text-text">
+            {correctFirstTryCount}/{totalAnswered}
           </span>
-          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-2xl sm:text-3xl font-black text-teal-800">{accuracy}%</span>
-          </div>
-          <div className="w-full bg-teal-200/60 rounded-full h-1.5 sm:h-2 mt-2 overflow-hidden">
-            <div
-              className="bg-brand-teal h-full rounded-full transition-all duration-1000"
-              style={{ width: `${accuracy}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Peak Streak */}
-        <div className="card-playful p-3.5 sm:p-4 flex flex-col justify-between border-orange-200 bg-orange-50/40">
-          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-orange-700 flex items-center gap-1 truncate">
-            <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500 flex-shrink-0" /> Peak Streak
-          </span>
-          <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
-            <span className="text-2xl sm:text-3xl font-black text-orange-800">{peakStreak}</span>
-            <span className="text-xs sm:text-sm font-bold text-orange-600">in a row</span>
-          </div>
-          <span className="text-[11px] sm:text-xs font-semibold text-orange-500 mt-1 truncate">
-            {peakStreak >= 5 ? 'Unstoppable! 🔥' : peakStreak >= 3 ? 'On fire! ⚡' : 'Keep building! 🌱'}
-          </span>
-        </div>
-      </motion.div>
-
-      {/* 3. Answer Breakdown Details */}
-      <motion.div variants={itemVariants} className="card-playful border-2 border-b-4 border-slate-800 p-4 sm:p-5 space-y-2.5 sm:space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Round Breakdown</h3>
-
-        <div className="flex items-center justify-between py-1.5 sm:py-2 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green flex-shrink-0" />
-            <span className="font-bold text-slate-700 text-xs sm:text-sm">First-Try Correct</span>
-          </div>
-          <span className="font-black text-base sm:text-lg text-brand-green-dark">
-            {correctFirstTryCount}
+          <span className="text-[11px] font-bold tracking-[0.08em] uppercase text-text mt-0.5">
+            correct
           </span>
         </div>
 
-        <div className="flex items-center justify-between py-1.5 sm:py-2 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 flex-shrink-0" />
-            <span className="font-bold text-slate-700 text-xs sm:text-sm">Retry Correct (+5 XP)</span>
-          </div>
-          <span className="font-black text-base sm:text-lg text-amber-700">
-            {correctRetryCount}
-          </span>
+        {/* Title and Subtitle */}
+        <div className="flex-1 min-w-0">
+          <h1 className="font-heading text-[32px] sm:text-[34px] leading-tight text-text mb-1">
+            {title}
+          </h1>
+          <p className="text-sm font-semibold text-neutral-700 m-0 leading-snug">
+            {subtitle}
+          </p>
         </div>
+      </div>
 
-        <div className="flex items-center justify-between py-1.5 sm:py-2">
-          <div className="flex items-center gap-2">
-            <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-brand-coral flex-shrink-0" />
-            <span className="font-bold text-slate-700 text-xs sm:text-sm">Incorrect / Timeout</span>
+      {/* 2. 4-Card Stats Grid */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {stats.map((s, idx) => (
+          <div
+            key={idx}
+            className={cn(
+              'flex flex-col gap-0.5 p-3.5 rounded-[22px] border-2 border-text shadow-offset-3',
+              s.bg
+            )}
+          >
+            <span className="text-xs font-bold tracking-[0.04em] uppercase text-neutral-800">
+              {s.label}
+            </span>
+            <span className="font-heading text-[28px] leading-tight text-text truncate">
+              {s.value}
+            </span>
           </div>
-          <span className="font-black text-base sm:text-lg text-brand-coral-dark">
-            {wrongCount}
-          </span>
-        </div>
-      </motion.div>
+        ))}
+      </div>
 
-      {/* 4. List of Missed Questions */}
-      <motion.div variants={itemVariants} className="card-playful border-2 border-b-4 border-slate-800 p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-black text-base sm:text-lg text-slate-900 tracking-tight">
-              Missed Questions
-            </h3>
-            <Badge variant="coral">
-              {missedQuestions.length}
-            </Badge>
-          </div>
-          <span className="text-[11px] sm:text-xs font-bold text-slate-400">
-            Tap card to inspect
-          </span>
-        </div>
+      {/* 3. Missed Questions Accordion */}
+      <div className="flex flex-col gap-2.5">
+        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+          Missed questions · {missedQuestions.length}
+        </h2>
 
         {missedQuestions.length === 0 ? (
-          <div className="text-center py-5 sm:py-6 px-4 bg-emerald-50 rounded-2xl border-2 border-dashed border-emerald-200">
-            <span className="text-3xl block mb-2">🌟</span>
-            <p className="font-black text-emerald-900 text-base">Flawless Round!</p>
-            <p className="text-emerald-700 font-semibold text-xs mt-1">
-              You answered all questions correctly on your first try!
-            </p>
+          <div className="p-3.5 sm:px-4 rounded-[22px] bg-accent-2-200 border-2 border-text font-bold text-sm text-text">
+            Clean sweep — nothing to review. 👑
           </div>
         ) : (
-          <div className="space-y-2.5 sm:space-y-3">
-            {missedQuestions.map((item) => {
-              const isExpanded = expandedId === item.question.id;
-              const correctOption = item.question.options.find(
+          <div className="flex flex-col gap-2.5">
+            {missedQuestions.map((item, idx) => {
+              const isOpen = openMissedIndex === idx;
+              const correctIdx = item.question.options.findIndex(
                 (opt) => opt.id === item.question.correct_option_id
               );
+              const correctLetter = correctIdx >= 0 ? letters[correctIdx] : 'A';
+              const correctOption = item.question.options[correctIdx];
+
+              const steps = [
+                `Review syllabus concept: ${item.question.stem_markdown.replace(/[*#$]/g, '').slice(0, 90)}...`,
+                `Correct answer is Option ${correctLetter}: "${correctOption?.text_markdown.replace(/[*#$]/g, '') || ''}".`,
+                `This question has been queued to your Review Pile for spaced repetition practice.`,
+              ];
 
               return (
                 <div
                   key={item.question.id}
-                  className="rounded-2xl border-2 border-b-4 border-slate-800 overflow-hidden bg-white transition-all shadow-xs"
+                  className="rounded-[22px] bg-neutral-100 border-2 border-text shadow-offset-3 overflow-hidden"
                 >
-                  {/* Card Header Preview */}
+                  {/* Accordion Trigger */}
                   <button
                     type="button"
-                    onClick={() => toggleExpand(item.question.id)}
-                    className="w-full p-3 sm:p-4 flex items-start justify-between gap-2.5 sm:gap-3 text-left hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => toggleMissed(idx)}
+                    className="w-full flex items-center gap-2.5 p-3 px-3.5 bg-transparent border-0 cursor-pointer text-left transition-colors hover:bg-neutral-200/50"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 flex-wrap">
-                        <span className="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-300 font-black text-xs text-slate-700">
-                          Q{item.questionNumber}
-                        </span>
-
-                        {/* Status Badge */}
-                        {item.outcome === 'retry-correct' ? (
-                          <Badge variant="amber">
-                            Correct on retry (+5 XP)
-                          </Badge>
-                        ) : (
-                          <Badge variant="coral">
-                            Needs review (0 XP)
-                          </Badge>
-                        )}
-                      </div>
-
-                      <p className="text-xs sm:text-sm font-semibold text-slate-800 line-clamp-2 break-words">
+                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                      <span className="text-[11px] font-bold text-neutral-700">
+                        {item.question.citation?.replace('Cambridge IGCSE ', '') || `Question ${item.questionNumber}`}
+                      </span>
+                      <span className="text-sm font-semibold text-text leading-snug line-clamp-2">
                         {item.question.stem_markdown.replace(/[*#$]/g, '')}
-                      </p>
+                      </span>
                     </div>
-
-                    <div className="text-slate-400 mt-0.5 flex-shrink-0">
-                      {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-slate-600" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5" />
+                    <span
+                      className={cn(
+                        'inline-flex transition-transform duration-200 text-text flex-shrink-0',
+                        isOpen && 'rotate-180'
                       )}
-                    </div>
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.75"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </span>
                   </button>
 
-                  {/* Expanded Detail View with KaTeX overflow protection */}
-                  {isExpanded && (
-                    <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 text-xs sm:text-sm space-y-2.5 sm:space-y-3">
-                      <div>
-                        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                          Full Question Stem
-                        </span>
-                        <div className="prose text-xs sm:text-sm max-w-none text-slate-900 font-medium bg-white p-3 rounded-xl border border-slate-200 break-words overflow-x-auto leading-relaxed">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
+                  {/* Expanded Content */}
+                  {isOpen && (
+                    <div className="flex flex-col gap-2 px-3.5 pb-3.5 border-t border-neutral-300/80 pt-3">
+                      <span className="self-start px-3 py-1 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-[13px] text-text">
+                        Answer {correctLetter} · {correctOption?.text_markdown.replace(/[*#$]/g, '')}
+                      </span>
+                      <div className="flex flex-col gap-1.5 mt-1">
+                        {steps.map((st, stepIdx) => (
+                          <span
+                            key={stepIdx}
+                            className="text-[13px] leading-relaxed text-text font-medium"
                           >
-                            {item.question.stem_markdown}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-
-                      {correctOption && (
-                        <div>
-                          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-                            Correct Answer
+                            {stepIdx + 1}. {st}
                           </span>
-                          <div className="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-300 font-bold text-emerald-950 flex items-start gap-2 break-words overflow-x-auto">
-                            <span className="text-emerald-600 flex-shrink-0 font-black">✓</span>
-                            <div className="flex-1 min-w-0">
-                              <ReactMarkdown
-                                remarkPlugins={[remarkMath]}
-                                rehypePlugins={[rehypeKatex]}
-                              >
-                                {correctOption.text_markdown}
-                              </ReactMarkdown>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {item.question.citation && (
-                        <p className="text-[11px] sm:text-xs font-semibold text-slate-400 italic">
-                          Source: {item.question.citation}
-                        </p>
-                      )}
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -322,42 +236,46 @@ export function RoundSummary({
             })}
           </div>
         )}
-      </motion.div>
+      </div>
 
-      {/* 5. Chunky 3D Action Buttons */}
-      <motion.div variants={itemVariants} className="flex flex-col gap-2.5 sm:gap-3 pt-2">
+      {/* 4. Action Pills */}
+      <div className="flex flex-col gap-2.5 mt-2">
         {missedQuestions.length > 0 && (
-          <motion.button
-            whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+          <button
             type="button"
-            onClick={onReviewMissed}
-            className="btn-chunky-coral w-full py-3.5 sm:py-4 px-4 sm:px-6 text-base sm:text-lg font-black tracking-wide shadow-chunky cursor-pointer min-h-[52px]"
+            onClick={() => {
+              playPop();
+              onReviewMissed();
+            }}
+            className="w-full py-[15px] px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
           >
-            Review Missed Questions ({missedQuestions.length})
-          </motion.button>
+            Review missed questions 🧠
+          </button>
         )}
 
-        <motion.button
-          whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
-          whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          type="button"
-          onClick={onPlayAgain}
-          className="btn-chunky-indigo w-full py-3.5 sm:py-4 px-4 sm:px-6 text-base sm:text-lg font-black tracking-wide shadow-chunky cursor-pointer min-h-[52px]"
-        >
-          Play Again
-        </motion.button>
-
-        <motion.button
-          whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
-          whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-          type="button"
-          onClick={onHome}
-          className="btn-chunky-slate w-full py-3 sm:py-3.5 px-4 sm:px-6 text-sm sm:text-base font-bold text-slate-700 shadow-chunky cursor-pointer min-h-[48px]"
-        >
-          Home
-        </motion.button>
-      </motion.div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              playPop();
+              onPlayAgain();
+            }}
+            className="py-[13px] px-4 rounded-full bg-accent-2-300 hover:bg-accent-2-400 text-text border-2 border-text shadow-offset-4 font-heading text-base cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
+          >
+            Play again 🔄
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              playPop();
+              onHome();
+            }}
+            className="py-[13px] px-4 rounded-full bg-neutral-100 hover:bg-neutral-200 text-text border-2 border-text shadow-offset-4 font-heading text-base cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
+          >
+            Home 🏠
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 }

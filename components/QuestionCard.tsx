@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Question } from '../hooks/useQuizGame';
+import { cn } from '@/lib/utils';
 
 interface QuestionCardProps {
   question: Question;
@@ -39,21 +40,19 @@ export function QuestionCard({
   currentStreak,
   isEndless,
   onFinish,
-  totalXP
+  totalXP,
 }: QuestionCardProps) {
   const shouldReduceMotion = useReducedMotion();
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const lowTimeAnnouncedRef = useRef(false);
 
-  const [liveAnnouncement, setLiveAnnouncement] = React.useState('');
-  const lowTimeAnnouncedRef = React.useRef(false);
-
-  // Reset low-time announced flag when question changes and announce question header
-  React.useEffect(() => {
+  // Screen reader announcements
+  useEffect(() => {
     lowTimeAnnouncedRef.current = false;
     setLiveAnnouncement(`Question ${questionNumber} of ${totalQuestions}.`);
   }, [question.id, questionNumber, totalQuestions]);
 
-  // Low time warning (< 10s)
-  React.useEffect(() => {
+  useEffect(() => {
     if (
       isTimed &&
       timeLeft < 10 &&
@@ -67,30 +66,23 @@ export function QuestionCard({
     }
   }, [isTimed, timeLeft, status]);
 
-  // Answer state changes announcement
-  React.useEffect(() => {
+  useEffect(() => {
     if (status === 'first-wrong') {
       setLiveAnnouncement('Incorrect option selected. You have one retry remaining.');
     } else if (status === 'answered') {
       if (firstWrongOptionId) {
         setLiveAnnouncement('Correct on retry! You earned 5 XP.');
       } else {
-        setLiveAnnouncement('Correct answer! You earned 10 XP.');
+        setLiveAnnouncement('Correct answer! You earned XP.');
       }
     } else if (status === 'timeout') {
       setLiveAnnouncement("Time's up for this question.");
     }
   }, [status, firstWrongOptionId]);
 
-  // Keyboard Hotkeys:
-  // - 1 / A / a -> Option A (index 0)
-  // - 2 / B / b -> Option B (index 1)
-  // - 3 / C / c -> Option C (index 2)
-  // - 4 / D / d -> Option D (index 3)
-  // - Enter / Space -> Next question when answered/timeout
-  React.useEffect(() => {
+  // Keyboard Hotkeys: 1-4, A-D, Enter / Space
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Guard against typing in form inputs, textareas, etc.
       const target = e.target as HTMLElement | null;
       const isInput =
         target?.tagName === 'INPUT' ||
@@ -99,34 +91,32 @@ export function QuestionCard({
 
       if (isInput) return;
 
-      // When answered or timeout: Enter or Space calls onNext()
       if (status === 'answered' || status === 'timeout') {
         if (e.key === 'Enter' || e.key === ' ') {
-          // If the user is specifically focusing an element marked with data-no-hotkey, let it handle naturally
-          if (target?.closest('button[data-no-hotkey="true"]')) {
-            return;
-          }
+          if (target?.closest('button[data-no-hotkey="true"]')) return;
           e.preventDefault();
           onNext();
           return;
         }
       }
 
-      // During active question round: 1-4, A-D select options
       if (status === 'unanswered' || status === 'first-wrong') {
         const key = e.key.toUpperCase();
         const keyIndexMap: Record<string, number> = {
-          '1': 0, 'A': 0,
-          '2': 1, 'B': 1,
-          '3': 2, 'C': 2,
-          '4': 3, 'D': 3,
+          '1': 0,
+          A: 0,
+          '2': 1,
+          B: 1,
+          '3': 2,
+          C: 2,
+          '4': 3,
+          D: 3,
         };
 
         if (key in keyIndexMap) {
           const idx = keyIndexMap[key];
           const option = question.options[idx];
           if (option) {
-            // Prevent selecting the disabled firstWrongOptionId in retry mode
             if (status === 'first-wrong' && option.id === firstWrongOptionId) {
               return;
             }
@@ -144,126 +134,204 @@ export function QuestionCard({
     };
   }, [status, question.options, firstWrongOptionId, onAnswer, onNext]);
 
-  const getOptionStyle = (optId: string) => {
-    let base = "w-full min-h-[56px] p-3.5 sm:p-4 text-left rounded-2xl border-2 border-b-4 font-bold relative text-base sm:text-lg mb-3 sm:mb-3.5 transition-all select-none focus-visible:ring-4 focus-visible:ring-indigo-400 focus-visible:outline-none ";
-    
-    // Default style (unanswered)
-    if (status === 'unanswered') {
-      return base + "border-slate-800 border-b-slate-800 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-800 shadow-chunky cursor-pointer active:translate-y-0.5 active:border-b-2";
-    }
-
-    if (status === 'first-wrong') {
-      if (optId === firstWrongOptionId) {
-        // Disabled, grey
-        return base + "border-slate-300 border-b-slate-300 bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed shadow-none";
-      }
-      return base + "border-slate-800 border-b-slate-800 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-800 shadow-chunky cursor-pointer active:translate-y-0.5 active:border-b-2";
-    }
-
-    // answered or timeout
-    if (status === 'answered' || status === 'timeout') {
-      if (optId === question.correct_option_id) {
-        // Correct option
-        return base + "border-emerald-500 border-b-emerald-700 bg-emerald-50 text-emerald-950 shadow-none";
-      }
-      
-      if (optId === selectedOptionId && optId !== question.correct_option_id) {
-        // The wrong one picked
-        return base + "border-rose-400 border-b-rose-600 bg-rose-50 text-rose-950 shadow-none opacity-85";
-      }
-
-      if (optId === firstWrongOptionId) {
-        return base + "border-slate-300 border-b-slate-300 bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed shadow-none";
-      }
-
-      // Other non-picked, non-correct options
-      return base + "border-slate-200 border-b-slate-200 bg-slate-50 text-slate-400 opacity-50 cursor-not-allowed shadow-none";
-    }
-
-    return base + "border-slate-800 border-b-slate-800 bg-white text-slate-800 shadow-chunky";
-  };
-
   const letters = ['A', 'B', 'C', 'D'];
+  const correctOptionIndex = question.options.findIndex(
+    (o) => o.id === question.correct_option_id
+  );
+  const correctLetter = correctOptionIndex >= 0 ? letters[correctOptionIndex] : 'A';
+  const correctOption = question.options[correctOptionIndex];
+
+  const isResolved = status === 'answered' || status === 'timeout';
+  const isRetry = status === 'first-wrong';
+
+  // Multiplier logic
+  const streakMultiplier = currentStreak >= 5 ? 1.5 : currentStreak >= 3 ? 1.2 : 1.0;
+  const potentialGain = Math.round(10 * streakMultiplier);
+
+  // Solved feedback gain
+  let gainedXP = 0;
+  if (status === 'answered') {
+    if (firstWrongOptionId) {
+      gainedXP = 5;
+    } else if (selectedOptionId === question.correct_option_id) {
+      gainedXP = potentialGain;
+    }
+  }
+
+  // Timer metrics
+  const urgent = timeLeft <= 15;
+  const timeLabel = `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`;
+  const timePct = `${Math.min(100, Math.max(0, (timeLeft / 90) * 100))}%`;
+  const timerBg = urgent ? 'bg-accent-200' : 'bg-neutral-100';
+  const timerFill = urgent ? 'bg-accent-600' : 'bg-accent-2-500';
+
+  // Streak badge color
+  const streakBg =
+    currentStreak >= 5
+      ? 'bg-accent-300'
+      : currentStreak >= 3
+      ? 'bg-accent-200'
+      : 'bg-neutral-100';
+
+  // Progress percentage
+  const progressPct = isEndless
+    ? `${((questionNumber % 10) * 10) + (isResolved ? 10 : 0)}%`
+    : `${((questionNumber - (isResolved ? 0 : 1)) / totalQuestions) * 100}%`;
+
+  // Feedback details
+  const isFirstTryCorrect =
+    status === 'answered' &&
+    !firstWrongOptionId &&
+    selectedOptionId === question.correct_option_id;
+  const isRetryCorrect =
+    status === 'answered' &&
+    firstWrongOptionId &&
+    selectedOptionId === question.correct_option_id;
+  const isFailed = status === 'timeout' || (status === 'answered' && !isFirstTryCorrect && !isRetryCorrect);
+
+  const fbEmoji = isFirstTryCorrect ? '🎉' : isRetryCorrect ? '👍' : status === 'timeout' ? '⏰' : '🧩';
+  const fbTitle = isFirstTryCorrect
+    ? 'Nailed it!'
+    : isRetryCorrect
+    ? 'Got there on retry'
+    : status === 'timeout'
+    ? 'Time’s up'
+    : 'Not this time';
+  const fbSub = isFirstTryCorrect
+    ? `First try · ${streakMultiplier.toFixed(1)}× streak bonus`
+    : isRetryCorrect
+    ? 'Half XP · added to your Review Pile'
+    : `Answer ${correctLetter} · queued to your Review Pile`;
+  const fbBg = isFirstTryCorrect
+    ? 'bg-accent-2-300'
+    : isRetryCorrect
+    ? 'bg-accent-300'
+    : 'bg-accent-200';
+
+  // Generated step by step explanations
+  const explanationSteps = [
+    `Carefully examine the syllabus core statement: "${question.stem_markdown.replace(/[*#$]/g, '').slice(0, 95)}..."`,
+    `Identify key requirement: Option ${correctLetter} ("${correctOption?.text_markdown.replace(/[*#$]/g, '') || ''}") provides the precise, direct definition/relationship.`,
+    `Verify against alternatives to ensure distractors are eliminated.`,
+  ];
+
+  // Distractor breakdown
+  const distractorBreakdown = question.options
+    .filter((opt) => opt.id !== question.correct_option_id)
+    .map((opt) => {
+      const idx = question.options.findIndex((o) => o.id === opt.id);
+      return {
+        letter: letters[idx],
+        text: `"${opt.text_markdown.replace(/[*#$]/g, '')}" represents a common distractor or addresses an unrelated syllabus mechanism.`,
+      };
+    });
 
   return (
-    <div className="flex flex-col h-full w-full max-w-lg mx-auto pb-28 sm:pb-6">
-      {/* Screen Reader Live Announcements */}
+    <div className="w-full max-w-[480px] mx-auto py-3 px-4 pb-12 flex flex-col gap-3.5 select-none">
+      {/* Screen reader live region */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {liveAnnouncement}
       </div>
 
-      {/* Top Bar */}
-      <div className="flex justify-between items-center mb-3 sm:mb-4">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="bg-white px-2.5 sm:px-3 py-1.5 rounded-full font-black text-slate-700 shadow-xs text-xs sm:text-sm border border-slate-200">
-            {isEndless ? `Q${questionNumber}` : `Q${questionNumber} / ${totalQuestions}`}
-          </div>
-          {currentStreak >= 3 && (
-            <motion.div
-              initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 450, damping: 15 }}
-              className="bg-amber-100 text-amber-900 px-2.5 sm:px-3 py-1.5 rounded-full font-black shadow-xs text-xs sm:text-sm border border-amber-300 flex items-center gap-1 animate-bounce"
-            >
-              🔥 {currentStreak}
-            </motion.div>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <motion.div
-            key={`xp-${totalXP}`}
-            initial={shouldReduceMotion ? false : { scale: 1.15 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 18 }}
-            className="bg-brand-indigo text-white px-2.5 sm:px-3 py-1.5 rounded-full font-black shadow-xs text-xs sm:text-sm"
+      {/* Top Bar: Circular Quit Button + Progress Bar + Question Counter */}
+      <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={onFinish}
+          data-no-hotkey="true"
+          title="Quit round"
+          className="w-9 h-9 flex-none rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
           >
-            {totalXP} XP
-          </motion.div>
-          <button 
-            type="button"
-            onClick={onFinish}
-            data-no-hotkey="true"
-            title="Finish round early"
-            className="text-xs bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-full font-bold hover:bg-slate-300 transition-colors cursor-pointer active:translate-y-0.5 focus-visible:ring-4 focus-visible:ring-indigo-400 focus-visible:outline-none"
-          >
-            Finish
-          </button>
-        </div>
-      </div>
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
 
-      {/* Timer Bar */}
-      {isTimed && (
-        <div className="w-full bg-slate-200 rounded-full h-2 sm:h-2.5 mb-4 sm:mb-6 overflow-hidden border border-slate-200">
-          <div 
-            className={`h-full rounded-full transition-all duration-1000 ease-linear ${timeLeft <= 15 ? 'bg-brand-coral' : 'bg-brand-teal'}`}
-            style={{ width: `${Math.min(100, Math.max(0, (timeLeft / 90) * 100))}%` }}
+        <div className="flex-1 h-[18px] rounded-full bg-neutral-100 border-2 border-text overflow-hidden">
+          <div
+            className="h-full bg-accent-2-500 border-r-2 border-text transition-all duration-500 ease-out"
+            style={{ width: progressPct }}
           />
         </div>
-      )}
 
-      {/* Question Content: Bouncy Spring Card Entry with KaTeX overflow protection & CLS containment */}
-      <motion.div
-        key={`card-${question.id}`}
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={
-          shouldReduceMotion
-            ? { duration: 0.1 }
-            : { type: "spring" as const, stiffness: 350, damping: 22 }
-        }
-        className="card-playful p-4 sm:p-6 mb-4 sm:mb-6 border-2 border-b-4 border-slate-800 bg-white shadow-chunky rounded-2xl overflow-hidden"
-      >
-        <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
-          <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {question.citation || 'Practice Question'}
-          </span>
-          {question.topic_id && (
-            <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600">
-              {question.topic_id.replace('topic_', 'Topic ')}
+        <span className="font-bold text-sm text-text whitespace-nowrap">
+          {isEndless
+            ? `Question ${questionNumber} · ∞`
+            : `Question ${questionNumber} of ${totalQuestions}`}
+        </span>
+      </div>
+
+      {/* Second Row: Timer Pill + Streak Multiplier Chip */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {isTimed ? (
+          <div
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-text shadow-offset-2',
+              timerBg,
+              urgent && !isResolved && 'animate-pulse'
+            )}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-text flex-shrink-0"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span className="font-bold text-sm tabular-nums text-text">
+              {timeLabel}
             </span>
+            <span className="w-16 h-2 rounded-full bg-neutral-100 border-[1.5px] border-text overflow-hidden block">
+              <span
+                className={cn('block h-full transition-all duration-1000 ease-linear', timerFill)}
+                style={{ width: timePct }}
+              />
+            </span>
+          </div>
+        ) : (
+          <span className="px-3 py-1.5 rounded-full bg-accent-2-200 border-2 border-text font-bold text-[13px] text-text">
+            Chill · untimed
+          </span>
+        )}
+
+        <span
+          className={cn(
+            'ml-auto px-3 py-1.5 rounded-full border-2 border-text shadow-offset-2 font-bold text-[13px] text-text whitespace-nowrap',
+            streakBg
           )}
+        >
+          🔥 {currentStreak} · {streakMultiplier.toFixed(1)}× · +{potentialGain} XP
+        </span>
+      </div>
+
+      {/* Third Row: Question Card */}
+      <div className="flex flex-col gap-3 p-[18px] rounded-[28px] bg-neutral-100 border-2 border-text shadow-offset-4">
+        <div className="flex flex-wrap gap-1.5">
+          <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
+            {question.citation || 'Cambridge IGCSE'}
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-[1.5px] border-text text-[11px] font-bold">
+            {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
+          </span>
         </div>
-        <div className="prose text-base sm:text-lg max-w-none text-slate-800 break-words overflow-x-auto leading-relaxed min-h-[72px] contain-content">
+
+        <div className="text-[17px] leading-relaxed font-semibold text-text break-words overflow-x-auto min-h-[48px]">
           <ReactMarkdown
             remarkPlugins={[remarkMath]}
             rehypePlugins={[rehypeKatex]}
@@ -271,135 +339,240 @@ export function QuestionCard({
             {question.stem_markdown}
           </ReactMarkdown>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Options with Stagger/Spring and Gestures */}
-      <motion.div
-        key={`options-${question.id}`}
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={
-          shouldReduceMotion
-            ? { duration: 0.1 }
-            : { type: "spring" as const, stiffness: 320, damping: 24, delay: 0.05 }
-        }
-        role="radiogroup"
-        aria-label="Answer options"
-        className="flex-1"
-      >
+      {/* Fourth Row: Retry Alert on First Wrong Attempt */}
+      {isRetry && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+          className="flex items-center gap-2.5 p-3 px-3.5 rounded-[20px] bg-accent-300 border-2 border-text shadow-offset-3"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-text flex-shrink-0"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <div className="flex flex-col leading-[1.2]">
+            <span className="font-heading text-base text-text">
+              1 retry left · 50% XP
+            </span>
+            <span className="text-xs font-semibold text-text">
+              Streak reset. Pick another option.
+            </span>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Fifth Row: Options List (Pill Buttons) */}
+      <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Answer options">
         {question.options.map((opt, i) => {
+          const isCorrect = opt.id === question.correct_option_id;
+          const isPicked = selectedOptionId === opt.id;
+          const isFirstWrongPick = firstWrongOptionId === opt.id;
+
+          const showCheck = isResolved && isCorrect;
+          const showX = (isRetry && isFirstWrongPick) || (isResolved && isPicked && !isCorrect);
           const isDisabled =
-            status === 'answered' ||
-            status === 'timeout' ||
-            (status === 'first-wrong' && opt.id === firstWrongOptionId);
-          const isFirstWrong =
-            status === 'first-wrong' && opt.id === firstWrongOptionId;
-          const isRevealedCorrect =
-            (status === 'answered' || status === 'timeout') &&
-            opt.id === question.correct_option_id;
+            isResolved || (isRetry && isFirstWrongPick);
 
-          let optionAnimate: Record<string, any> = { x: 0, scale: 1 };
-          let optionTransition: any = {
-            type: "spring" as const,
-            stiffness: 400,
-            damping: 25,
-          };
+          let bg = 'bg-neutral-100';
+          let chipBg = 'bg-bg';
+          let chipFg = 'text-text';
+          let opacity = 'opacity-100';
+          let shadow = 'shadow-offset-3';
 
-          if (!shouldReduceMotion) {
-            if (isFirstWrong) {
-              // Realistic shake physics on 1st wrong attempt
-              optionAnimate = { x: [-10, 10, -8, 8, -4, 4, 0] };
-              optionTransition = { duration: 0.45, ease: "easeInOut" as const };
-            } else if (isRevealedCorrect) {
-              // Pop bounce on correct answer
-              optionAnimate = { scale: [1, 1.08, 1] };
-              optionTransition = {
-                duration: 0.4,
-                type: "spring" as const,
-                stiffness: 500,
-                damping: 15,
-              };
-            }
+          if (showCheck) {
+            bg = 'bg-accent-2-300';
+            chipBg = 'bg-accent-2-600';
+            chipFg = 'text-neutral-100';
+          } else if (showX) {
+            bg = 'bg-accent-200';
+            chipBg = 'bg-accent-600';
+            chipFg = 'text-neutral-100';
+            shadow = 'shadow-none';
+            opacity = isFirstWrongPick && isResolved ? 'opacity-70' : 'opacity-100';
+          } else if (isResolved) {
+            opacity = 'opacity-50';
+          } else if (isRetry && isFirstWrongPick) {
+            opacity = 'opacity-50';
+            shadow = 'shadow-none';
           }
 
           return (
-            <motion.button
+            <button
               key={opt.id}
               type="button"
               role="radio"
               aria-checked={selectedOptionId === opt.id}
               aria-disabled={isDisabled}
-              onClick={() => onAnswer(opt.id)}
               disabled={isDisabled}
-              className={getOptionStyle(opt.id)}
-              animate={optionAnimate}
-              transition={optionTransition}
-              whileHover={
-                !isDisabled && !shouldReduceMotion ? { scale: 1.015 } : undefined
-              }
-              whileTap={
-                !isDisabled && !shouldReduceMotion ? { scale: 0.97 } : undefined
-              }
+              onClick={() => onAnswer(opt.id)}
+              className={cn(
+                'flex items-center gap-3 p-2.5 pr-3.5 rounded-full border-2 border-text text-left transition-all',
+                bg,
+                opacity,
+                shadow,
+                !isDisabled
+                  ? 'cursor-pointer hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                  : 'cursor-default'
+              )}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <span
-                    className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs sm:text-sm font-black flex-shrink-0 transition-colors ${
-                      (status === 'answered' || status === 'timeout') && opt.id === question.correct_option_id
-                        ? 'bg-emerald-200 text-emerald-950'
-                        : (status === 'answered' || status === 'timeout') && opt.id === selectedOptionId
-                        ? 'bg-rose-200 text-rose-950'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {letters[i]}
-                  </span>
-                  <div className="flex-1 leading-snug text-left break-words overflow-x-auto min-w-0">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
-                    >
-                      {opt.text_markdown}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-                <span
-                  className="hidden md:inline-flex items-center text-[11px] font-black px-1.5 py-0.5 rounded-lg bg-slate-100 border border-slate-300 text-slate-500 ml-2 flex-shrink-0"
-                  aria-hidden="true"
+              {/* Circular Letter Chip */}
+              <span
+                className={cn(
+                  'w-[38px] h-[38px] flex-none rounded-full border-2 border-text flex items-center justify-center font-heading text-[17px]',
+                  chipBg,
+                  chipFg
+                )}
+              >
+                {letters[i]}
+              </span>
+
+              {/* Option Text Markdown */}
+              <span className="flex-1 text-base font-semibold text-text break-words min-w-0">
+                <ReactMarkdown
+                  remarkPlugins={[remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
                 >
-                  [{letters[i]} / {i + 1}]
+                  {opt.text_markdown}
+                </ReactMarkdown>
+              </span>
+
+              {/* Status Stamp / Hotkey Tag */}
+              {showCheck ? (
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="#728157"
+                  stroke="#f9f4ed"
+                  strokeWidth="2.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="flex-shrink-0"
+                >
+                  <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
+                  <path d="m8 12 3 3 5-6" />
+                </svg>
+              ) : showX ? (
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="#b2622d"
+                  stroke="#f9f4ed"
+                  strokeWidth="2.75"
+                  strokeLinecap="round"
+                  className="flex-shrink-0"
+                >
+                  <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
+                  <path d="m15 9-6 6" />
+                  <path d="m9 9 6 6" />
+                </svg>
+              ) : !isResolved ? (
+                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-[6px] border-[1.5px] border-neutral-500 text-neutral-700 text-[11px] font-bold font-mono flex-shrink-0">
+                  {i + 1}
                 </span>
-              </div>
-            </motion.button>
+              ) : null}
+            </button>
           );
         })}
-      </motion.div>
+      </div>
 
-      {/* Sticky Bottom Action Bar on Mobile / Inline on Tablet+Desktop */}
-      {(status === 'answered' || status === 'timeout') && (
+      {/* Sixth Row: Feedback Panel on Answer / Timeout */}
+      {isResolved && (
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring" as const, stiffness: 380, damping: 24 }}
-          className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-sm border-t border-slate-200 sm:relative sm:border-0 sm:bg-transparent sm:p-0 sm:mt-4 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] sm:shadow-none sm:z-auto"
+          initial={shouldReduceMotion ? { opacity: 0 } : { y: 16, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          className={cn(
+            'flex flex-col gap-3.5 p-[18px] rounded-[28px] border-2 border-text shadow-offset-4',
+            fbBg
+          )}
         >
-          <div className="max-w-lg mx-auto w-full">
-            {status === 'timeout' && (
-              <p className="text-brand-coral font-black text-center mb-2 text-sm sm:text-base">Time&apos;s up!</p>
-            )}
-            {status === 'answered' && firstWrongOptionId && (
-              <p className="text-brand-amber font-black text-center mb-2 text-sm sm:text-base">Correct on retry! (+5 XP)</p>
-            )}
-            <motion.button
-              whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
-              whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
-              onClick={onNext}
-              className="btn-chunky-indigo w-full py-3.5 sm:py-4 px-6 text-base sm:text-lg font-black tracking-wide shadow-chunky cursor-pointer min-h-[52px] focus-visible:ring-4 focus-visible:ring-indigo-400 focus-visible:outline-none"
-            >
-              Next Question ➔
-            </motion.button>
+          {/* Feedback Header */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-3xl leading-none">{fbEmoji}</span>
+            <div className="flex flex-col leading-[1.15] flex-1 min-w-0">
+              <span className="font-heading text-[21px] text-text truncate">
+                {fbTitle}
+              </span>
+              <span className="text-[13px] font-semibold text-text">
+                {fbSub}
+              </span>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-bold text-sm text-text whitespace-nowrap">
+              +{gainedXP} XP
+            </span>
           </div>
+
+          {/* Step by Step Explanation */}
+          <div className="flex flex-col gap-2 p-3.5 rounded-[20px] bg-neutral-100 border-2 border-text">
+            <h6 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+              Step by step
+            </h6>
+            {explanationSteps.map((step, idx) => (
+              <div key={idx} className="flex gap-2.5 items-start">
+                <span className="w-[22px] h-[22px] flex-none rounded-full bg-accent-2-300 border-[1.5px] border-text flex items-center justify-center text-xs font-bold text-text">
+                  {idx + 1}
+                </span>
+                <span className="text-sm leading-relaxed text-text">
+                  {step}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Distractor Breakdown */}
+          {distractorBreakdown.length > 0 && (
+            <div className="flex flex-col gap-2 p-3.5 rounded-[20px] bg-neutral-100 border-2 border-text">
+              <h6 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+                Why the distractors are wrong
+              </h6>
+              {distractorBreakdown.map((item, idx) => (
+                <div key={idx} className="flex gap-2.5 items-start">
+                  <span className="w-[22px] h-[22px] flex-none rounded-full bg-accent-200 border-[1.5px] border-text flex items-center justify-center text-xs font-heading text-text">
+                    {item.letter}
+                  </span>
+                  <span className="text-sm leading-relaxed text-text">
+                    {item.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Next Question CTA Pill */}
+          <button
+            type="button"
+            onClick={onNext}
+            className="w-full py-3.5 px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
+          >
+            {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
+          </button>
         </motion.div>
+      )}
+
+      {/* Endless round end button */}
+      {isEndless && (
+        <button
+          type="button"
+          onClick={onFinish}
+          className="self-center bg-transparent border-0 font-bold text-sm underline underline-offset-4 cursor-pointer text-accent-700 hover:text-accent-800 transition-colors mt-2"
+        >
+          End endless round
+        </button>
       )}
     </div>
   );

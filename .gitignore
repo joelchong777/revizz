@@ -33,3 +33,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch / local data
+Economics (0455)/
+staging/
+/page*.png
+
+# python
+__pycache__/
+*.pyc

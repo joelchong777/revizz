@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { QuizRoundConfig } from '../hooks/useQuizGame';
-import { getReviewPileCount, subscribeMasteryChanges } from '@/lib/mastery';
+import { getReviewPileCount, subscribeMasteryChanges, getFirstTryCorrectIds } from '@/lib/mastery';
 import { playPop } from '@/lib/audio';
 import { TopicMasteryList } from './TopicMasteryList';
-import { Sparkles, AlertCircle, Play, BookOpen, Layers } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
-import { Badge } from './ui/badge';
-import { Select } from './ui/select';
+import { CAMBRIDGE_TOPICS, CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import { useAuth } from '@/lib/auth';
+import { cn } from '@/lib/utils';
 
 interface StartFlowProps {
   onStart: (config: QuizRoundConfig) => void;
@@ -16,29 +15,64 @@ interface StartFlowProps {
   onPracticeTopic: (topicId: string, topicName: string) => void;
 }
 
+interface SubjectItem {
+  key: string;
+  name: string;
+  code: string;
+  emoji: string;
+}
+
+const SUBJECTS: SubjectItem[] = [
+  { key: 'phy', name: 'Physics', code: '0625', emoji: '⚛️' },
+  { key: 'econ', name: 'Economics', code: '0455', emoji: '📊' },
+  { key: 'chem', name: 'Chemistry', code: '0620', emoji: '🧪' },
+  { key: 'bio', name: 'Biology', code: '0610', emoji: '🧬' },
+];
+
 export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlowProps) {
-  const [activeTab, setActiveTab] = useState<'quick' | 'mastery'>('quick');
+  const { userProfile } = useAuth();
+  const [selectedSubjectKey, setSelectedSubjectKey] = useState<string>('econ');
+  const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'review'>('standard');
+  const [roundLength, setRoundLength] = useState<3 | 5 | 10 | 'endless'>(5);
+  const [isTimed, setIsTimed] = useState<boolean>(true);
   const [reviewCount, setReviewCount] = useState<number>(0);
-  const [config, setConfig] = useState<QuizRoundConfig>({
-    subject: 'Economics 0455',
-    sourceType: 'topic',
-    sourceValue: 'all',
-    roundLength: 5,
-    isTimed: true
-  });
+  const [isMasteryOpen, setIsMasteryOpen] = useState<boolean>(false);
+  const [tierCounts, setTierCounts] = useState({ master: 0, proficient: 0, novice: 0 });
 
   useEffect(() => {
-    setReviewCount(getReviewPileCount());
-
-    const unsubscribe = subscribeMasteryChanges(() => {
+    const updateStats = () => {
       setReviewCount(getReviewPileCount());
-    });
+      const masteredSet = new Set(getFirstTryCorrectIds());
+      let master = 0;
+      let proficient = 0;
+      let novice = 0;
+
+      CAMBRIDGE_TOPICS.forEach((topic) => {
+        const qCount = CAMBRIDGE_QUESTIONS.filter((q) => q.topic_id === topic.id).length;
+        const mCount = CAMBRIDGE_QUESTIONS.filter(
+          (q) => q.topic_id === topic.id && masteredSet.has(q.id)
+        ).length;
+        const pct = qCount > 0 ? Math.round((mCount / qCount) * 100) : 0;
+        if (pct > 80) master++;
+        else if (pct >= 50) proficient++;
+        else novice++;
+      });
+
+      setTierCounts({ master, proficient, novice });
+    };
+
+    updateStats();
+    const unsubscribe = subscribeMasteryChanges(updateStats);
 
     const saved = localStorage.getItem('revizz_last_config');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setConfig(parsed);
+        if (parsed.roundLength) setRoundLength(parsed.roundLength);
+        if (typeof parsed.isTimed === 'boolean') setIsTimed(parsed.isTimed);
+        if (parsed.sourceType === 'review') setSelectedMode('review');
+        else if (parsed.sourceType === 'topic') setSelectedMode('topic');
+        else setSelectedMode('standard');
       } catch {
         // ignore
       }
@@ -49,230 +83,350 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
     };
   }, []);
 
+  const currentSubject = SUBJECTS.find((s) => s.key === selectedSubjectKey) || SUBJECTS[1];
+  const firstName = userProfile?.display_name ? userProfile.display_name.split(' ')[0] : 'Alex';
+
   const handleStart = () => {
     playPop();
-    localStorage.setItem('revizz_last_config', JSON.stringify(config));
-    onStart(config);
+
+    if (selectedMode === 'review') {
+      onStartReview();
+      return;
+    }
+
+    const fullSubjectName = `${currentSubject.name} ${currentSubject.code}`;
+    const roundConfig: QuizRoundConfig = {
+      subject: fullSubjectName,
+      sourceType: selectedMode === 'topic' ? 'topic' : 'random',
+      sourceValue: selectedMode === 'topic' ? 'all' : 'random',
+      roundLength,
+      isTimed,
+    };
+
+    localStorage.setItem('revizz_last_config', JSON.stringify(roundConfig));
+    onStart(roundConfig);
   };
 
-  const handleReviewClick = () => {
+  const handleSubjectSelect = (key: string) => {
     playPop();
-    onStartReview();
+    setSelectedSubjectKey(key);
   };
 
-  const updateConfig = (updates: Partial<QuizRoundConfig>) => {
+  const handleModeSelect = (mode: 'standard' | 'topic' | 'review') => {
     playPop();
-    setConfig(prev => ({ ...prev, ...updates }));
+    setSelectedMode(mode);
   };
 
-  const switchTab = (tab: 'quick' | 'mastery') => {
+  const handleLengthSelect = (len: 3 | 5 | 10 | 'endless') => {
     playPop();
-    setActiveTab(tab);
+    setRoundLength(len);
+  };
+
+  const handleTimerSelect = (timed: boolean) => {
+    playPop();
+    setIsTimed(timed);
   };
 
   return (
-    <div className="flex flex-col w-full max-w-lg mx-auto py-3 sm:py-4 px-1 sm:px-2 space-y-4 sm:space-y-5">
+    <div className="w-full max-w-[480px] mx-auto py-5 px-4 pb-12 flex flex-col gap-5 select-none">
       {/* Title Header */}
-      <div className="text-center pt-2 pb-1">
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight flex items-center justify-center gap-2">
-          Revizz <span className="text-brand-yellow drop-shadow-xs">⚡</span>
+      <div>
+        <h1 className="font-heading text-4xl text-text leading-tight mb-1">
+          Ready, {firstName}?
         </h1>
-        <p className="text-slate-500 font-bold text-xs sm:text-sm mt-1">
-          Tactile Cambridge IGCSE Revision
+        <p className="text-[15px] text-neutral-700 font-semibold m-0">
+          Pick a subject, set the rules, go.
         </p>
       </div>
 
-      {/* Prominent Bouncy Card: Dedicated "Review Mistakes" Practice Mode */}
-      {reviewCount > 0 && (
-        <div className="card-playful bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border-2 border-rose-300 p-4 sm:p-5 shadow-playful relative overflow-hidden">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 text-rose-800 font-black text-xs sm:text-sm mb-1">
-                <span className="text-base sm:text-lg">🎯</span>
-                <span>Weak Spot Workout</span>
-              </div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 leading-snug break-words">
-                Review Mistakes ({reviewCount} Question{reviewCount > 1 ? 's' : ''} waiting)
-              </h2>
-              <p className="text-xs font-semibold text-slate-600 mt-1">
-                Target the questions you previously missed until you achieve 1st-try mastery!
-              </p>
-            </div>
-          </div>
+      {/* 1. Subject Selection */}
+      <div className="flex flex-col gap-2.5">
+        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+          Subject
+        </h2>
+        <div className="grid grid-cols-2 gap-2.5">
+          {SUBJECTS.map((s) => {
+            const isSelected = selectedSubjectKey === s.key;
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => handleSubjectSelect(s.key)}
+                className={cn(
+                  'flex items-center gap-2.5 p-3 sm:px-3.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
+                  isSelected
+                    ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
+                    : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                )}
+              >
+                <span className="text-[22px] leading-none">{s.emoji}</span>
+                <span className="flex flex-col leading-[1.15] min-w-0">
+                  <span className="font-heading text-base text-text truncate">{s.name}</span>
+                  <span className="text-xs font-bold opacity-75 text-text">{s.code}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {selectedSubjectKey !== 'econ' && (
+          <p className="text-xs text-neutral-700 font-semibold m-0">
+            Preview bank: rounds use Cambridge Economics 0455 questions for every subject.
+          </p>
+        )}
+      </div>
 
-          <div className="mt-3 sm:mt-4">
-            <button
-              type="button"
-              onClick={handleReviewClick}
-              className="btn-chunky-coral w-full py-3 sm:py-3.5 px-4 text-sm sm:text-base font-black shadow-chunky flex items-center justify-center gap-2 min-h-[48px]"
-            >
-              <span>Practice Now</span>
-              <Play className="w-4 h-4 fill-white" />
-            </button>
+      {/* 2. Mode Selection */}
+      <div className="flex flex-col gap-2.5">
+        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+          Mode
+        </h2>
+        <div className="flex flex-col gap-2.5">
+          {/* Mode 1: Standard Exam Round */}
+          <button
+            type="button"
+            onClick={() => handleModeSelect('standard')}
+            className={cn(
+              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              selectedMode === 'standard'
+                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
+                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+            )}
+          >
+            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
+              🎲
+            </span>
+            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="font-heading text-[17px] text-text leading-tight">
+                Standard exam round
+              </span>
+              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
+                Randomised pool across the syllabus
+              </span>
+            </span>
+          </button>
+
+          {/* Mode 2: Topic Practice */}
+          <button
+            type="button"
+            onClick={() => handleModeSelect('topic')}
+            className={cn(
+              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              selectedMode === 'topic'
+                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
+                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+            )}
+          >
+            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
+              📚
+            </span>
+            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="font-heading text-[17px] text-text leading-tight">
+                Topic practice
+              </span>
+              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
+                Drill chapter by chapter, in syllabus order
+              </span>
+            </span>
+          </button>
+
+          {/* Mode 3: Review Pile */}
+          <button
+            type="button"
+            onClick={() => handleModeSelect('review')}
+            className={cn(
+              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              selectedMode === 'review'
+                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
+                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+            )}
+          >
+            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
+              🧠
+            </span>
+            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="font-heading text-[17px] text-text leading-tight">
+                Review pile
+              </span>
+              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
+                Spaced repetition of questions you missed
+              </span>
+            </span>
+            {reviewCount > 0 && (
+              <span className="min-w-[28px] h-7 px-2 rounded-full bg-accent-600 text-neutral-100 border-2 border-text flex items-center justify-center font-bold text-[13px]">
+                {reviewCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Round Length */}
+      <div className="flex flex-col gap-2.5">
+        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+          Round length
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { val: 3 as const, label: '3 Qs' },
+            { val: 5 as const, label: '5 Qs' },
+            { val: 10 as const, label: '10 Qs' },
+            { val: 'endless' as const, label: 'Endless ∞' },
+          ].map((item) => {
+            const isSelected = roundLength === item.val;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => handleLengthSelect(item.val)}
+                className={cn(
+                  'px-4 py-2 rounded-full border-2 border-text font-bold text-sm cursor-pointer transition-all select-none',
+                  isSelected
+                    ? 'bg-text text-neutral-100 shadow-none translate-x-[2px] translate-y-[2px]'
+                    : 'bg-neutral-100 text-text shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                )}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Timer Selection */}
+      <div className="flex flex-col gap-2.5">
+        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+          Timer
+        </h2>
+        <div className="grid grid-cols-2 gap-2">
+          {/* Chill / Untimed */}
+          <button
+            type="button"
+            onClick={() => handleTimerSelect(false)}
+            className={cn(
+              'flex flex-col items-start gap-0.5 px-4 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
+              !isTimed
+                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
+                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+            )}
+          >
+            <span className="font-heading text-base text-text">Chill</span>
+            <span className="text-xs font-semibold opacity-85 text-text">Untimed</span>
+          </button>
+
+          {/* Exam / Timed */}
+          <button
+            type="button"
+            onClick={() => handleTimerSelect(true)}
+            className={cn(
+              'flex flex-col items-start gap-0.5 px-4 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
+              isTimed
+                ? 'bg-accent-300 shadow-none translate-x-[3px] translate-y-[3px]'
+                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+            )}
+          >
+            <span className="font-heading text-base text-text">Exam</span>
+            <span className="text-xs font-semibold opacity-85 text-text">90 s per question</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 5. Topic Mastery Card Trigger */}
+      <button
+        type="button"
+        onClick={() => {
+          playPop();
+          setIsMasteryOpen(true);
+        }}
+        className="flex items-center gap-3 p-3.5 sm:p-4 rounded-[24px] bg-surface border-2 border-text shadow-offset-4 cursor-pointer text-left transition-all active:translate-x-1 active:translate-y-1 active:shadow-none hover:brightness-[0.98]"
+      >
+        <span className="flex flex-col gap-1.5 flex-1 min-w-0">
+          <span className="font-heading text-[17px] text-text leading-tight truncate">
+            Topic mastery · {currentSubject.name}
+          </span>
+          <span className="flex gap-1.5 flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-xs text-text">
+              👑 {tierCounts.master} Master
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-accent-300 border-[1.5px] border-text font-bold text-xs text-text">
+              ⚡ {tierCounts.proficient} Proficient
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-neutral-200 border-[1.5px] border-text font-bold text-xs text-text">
+              🌱 {tierCounts.novice} Novice
+            </span>
+          </span>
+        </span>
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-text flex-shrink-0"
+        >
+          <path d="M5 12h14" />
+          <path d="m12 5 7 7-7 7" />
+        </svg>
+      </button>
+
+      {/* 6. Hero CTA: START ROUND 🚀 */}
+      <button
+        type="button"
+        onClick={handleStart}
+        className="w-full py-[18px] px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-6 font-heading text-2xl tracking-[0.03em] cursor-pointer transition-all active:translate-x-[6px] active:translate-y-[6px] active:shadow-none select-none flex items-center justify-center gap-2"
+      >
+        START ROUND 🚀
+      </button>
+
+      {/* Topic Mastery Drawer Modal */}
+      {isMasteryOpen && (
+        <div
+          onClick={() => setIsMasteryOpen(false)}
+          className="fixed inset-0 z-40 bg-neutral-900/50 backdrop-blur-xs flex items-end justify-center"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[480px] max-h-[86vh] overflow-y-auto p-5 sm:p-6 pb-8 rounded-t-[32px] bg-bg border-2 border-b-0 border-text flex flex-col gap-3.5 animate-in slide-in-from-bottom duration-300"
+          >
+            <div className="flex items-center gap-2.5">
+              <h3 className="font-heading text-2xl text-text m-0 flex-1">
+                Topic mastery
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsMasteryOpen(false)}
+                className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-[13px] text-neutral-700 font-semibold m-0">
+              {currentSubject.name} {currentSubject.code} · first-try accuracy per syllabus chapter. 🌱 under 50% · ⚡ 50–80% · 👑 over 80%
+            </p>
+
+            <TopicMasteryList
+              subject={`${currentSubject.name} ${currentSubject.code}`}
+              onPracticeTopic={(topicId, topicName) => {
+                setIsMasteryOpen(false);
+                onPracticeTopic(topicId, topicName);
+              }}
+            />
           </div>
         </div>
       )}
-
-      {/* Mode Navigation Tabs using Radix Tabs */}
-      <Tabs value={activeTab} onValueChange={(val) => switchTab(val as 'quick' | 'mastery')}>
-        <TabsList>
-          <TabsTrigger value="quick" className="flex items-center justify-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Quick Round</span>
-          </TabsTrigger>
-          <TabsTrigger value="mastery" className="flex items-center justify-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Topic Mastery</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Tab 1: Quick Round Configuration */}
-        <TabsContent value="quick">
-          <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-playful border-2 border-slate-800 space-y-4 sm:space-y-5">
-            {/* Subject */}
-            <div>
-              <label className="block text-[11px] sm:text-xs font-black text-slate-500 mb-1.5 sm:mb-2 uppercase tracking-wider">
-                Subject
-              </label>
-              <Select
-                options={[{ value: 'Economics 0455', label: 'Economics 0455 (Cambridge IGCSE)' }]}
-                value={config.subject}
-                onChange={(value) => updateConfig({ subject: value })}
-                className="w-full"
-              />
-            </div>
-
-            {/* Mode */}
-            <div>
-              <label className="block text-[11px] sm:text-xs font-black text-slate-500 mb-1.5 sm:mb-2 uppercase tracking-wider">
-                Practice Mode
-              </label>
-              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => updateConfig({ sourceType: 'topic', sourceValue: 'all' })}
-                  className={`py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl font-black text-xs sm:text-sm transition-all border-2 select-none min-h-[48px] flex items-center justify-center text-center ${
-                    config.sourceType === 'topic'
-                      ? 'border-slate-800 bg-brand-indigo text-white shadow-none translate-y-0.5'
-                      : 'border-slate-200 bg-white text-slate-700 shadow-chunky hover:bg-slate-50'
-                  }`}
-                >
-                  By Syllabus Topic
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateConfig({ sourceType: 'random', sourceValue: 'random' })}
-                  className={`py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl font-black text-xs sm:text-sm transition-all border-2 select-none min-h-[48px] flex items-center justify-center text-center ${
-                    config.sourceType === 'random'
-                      ? 'border-slate-800 bg-brand-indigo text-white shadow-none translate-y-0.5'
-                      : 'border-slate-200 bg-white text-slate-700 shadow-chunky hover:bg-slate-50'
-                  }`}
-                >
-                  Random Shuffle 🎲
-                </button>
-              </div>
-            </div>
-
-            {/* Topic Selector if topic mode selected */}
-            {config.sourceType === 'topic' && (
-              <div>
-                <label className="block text-[11px] sm:text-xs font-black text-slate-500 mb-1.5 sm:mb-2 uppercase tracking-wider">
-                  Target Topic
-                </label>
-                <Select
-                  options={[
-                    { value: 'all', label: 'All Topics (Comprehensive)' },
-                    { value: 'topic_1', label: '1. The Basic Economic Problem' },
-                    { value: 'topic_2', label: '2. The Allocation of Resources' },
-                    { value: 'topic_3', label: '3. Microeconomic Decision Makers' },
-                    { value: 'topic_4', label: '4. Government and the Macroeconomy' },
-                    { value: 'topic_5', label: '5. Economic Development' },
-                    { value: 'topic_6', label: '6. International Trade and Globalisation' }
-                  ]}
-                  value={config.sourceValue}
-                  onChange={(value) => updateConfig({ sourceValue: value })}
-                  className="w-full"
-                />
-              </div>
-            )}
-
-            {/* Questions Length Selector */}
-            <div>
-              <label className="block text-[11px] sm:text-xs font-black text-slate-500 mb-1.5 sm:mb-2 uppercase tracking-wider">
-                Round Length
-              </label>
-              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
-                {[
-                  { label: '3 Qs', val: 3 },
-                  { label: '5 Qs', val: 5 },
-                  { label: '10 Qs', val: 10 },
-                  { label: 'Endless', val: 'endless' }
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => updateConfig({ roundLength: item.val as any })}
-                    className={`py-2.5 sm:py-3 px-1 sm:px-2 rounded-xl font-black text-xs sm:text-sm transition-all border-2 select-none text-center min-h-[44px] flex items-center justify-center ${
-                      config.roundLength === item.val
-                        ? 'border-slate-800 bg-brand-yellow text-amber-950 shadow-none translate-y-0.5'
-                        : 'border-slate-200 bg-white text-slate-700 shadow-chunky hover:bg-slate-50'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Timer Toggle */}
-            <div>
-              <label className="block text-[11px] sm:text-xs font-black text-slate-500 mb-1.5 sm:mb-2 uppercase tracking-wider">
-                Timer Pressure
-              </label>
-              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => updateConfig({ isTimed: false })}
-                  className={`py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl font-black text-xs sm:text-sm transition-all border-2 select-none min-h-[48px] flex items-center justify-center text-center ${
-                    !config.isTimed
-                      ? 'border-slate-800 bg-brand-teal text-white shadow-none translate-y-0.5'
-                      : 'border-slate-200 bg-white text-slate-700 shadow-chunky hover:bg-slate-50'
-                  }`}
-                >
-                  Chill (Untimed)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateConfig({ isTimed: true })}
-                  className={`py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl font-black text-xs sm:text-sm transition-all border-2 select-none min-h-[48px] flex items-center justify-center text-center ${
-                    config.isTimed
-                      ? 'border-slate-800 bg-brand-coral text-white shadow-none translate-y-0.5'
-                      : 'border-slate-200 bg-white text-slate-700 shadow-chunky hover:bg-slate-50'
-                  }`}
-                >
-                  Exam (90s / Q)
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleStart}
-              className="btn-chunky-indigo w-full py-3.5 sm:py-4 px-6 text-base sm:text-lg font-black tracking-wide shadow-chunky mt-2 min-h-[52px]"
-            >
-              START ROUND 🚀
-            </button>
-          </div>
-        </TabsContent>
-
-        {/* Tab 2: Topic Mastery Visual List */}
-        <TabsContent value="mastery">
-          <TopicMasteryList
-            subject={config.subject}
-            onPracticeTopic={onPracticeTopic}
-          />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

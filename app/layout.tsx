@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import { Caprasimo, Figtree } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AppShell } from "@/components/AppShell";
+
+const caprasimo = Caprasimo({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const figtree = Figtree({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Revizz - Cambridge MCQ Revision",
@@ -13,7 +28,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#FFFDF7",
+  themeColor: "#f5ead8",
 };
 
 export default function RootLayout({
@@ -22,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${caprasimo.variable} ${figtree.variable}`}>
       <head>
         {/* Preload critical KaTeX font subsets for instant formula rendering */}
         <link
@@ -54,7 +69,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className="antialiased min-h-screen bg-amber-50/50 text-slate-900 selection:bg-amber-200">
+      <body className="antialiased min-h-screen font-body bg-bg text-text selection:bg-accent-300/40">
         <AppShell>{children}</AppShell>
       </body>
     </html>
