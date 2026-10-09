@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Touch responsiveness - eliminate 300ms tap delay on mobile devices */
+  html,
+  body,
+  button,
+  a {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth keyboard focus-visible outlines for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-amber-500 ring-offset-2 ring-offset-amber-50 transition-shadow duration-75;
+  }
+}
+
+/* KaTeX font display fallback & font loading optimization */
+@font-face {
+  font-family: 'KaTeX_Main';
+  src: url('/fonts/KaTeX_Main-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KaTeX_Math';
+  src: url('/fonts/KaTeX_Math-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KaTeX_Size1';
+  src: url('/fonts/KaTeX_Size1-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KaTeX_AMS';
+  src: url('/fonts/KaTeX_AMS-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.katex {
+  text-rendering: optimizeLegibility;
+}
+
+@layer components {
+  /* Tactile chunky 3D button utility classes */
+  .btn-chunky {
+    @apply inline-flex items-center justify-center font-bold rounded-2xl border-b-4 transition-all duration-75 select-none cursor-pointer active:translate-y-1 active:border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2;
+  }
+
+  .btn-chunky-yellow {
+    @apply btn-chunky bg-brand-yellow text-amber-950 border-amber-500 hover:bg-yellow-300;
+  }
+
+  .btn-chunky-teal {
+    @apply btn-chunky bg-brand-teal text-white border-teal-700 hover:bg-teal-400;
+  }
+
+  .btn-chunky-coral {
+    @apply btn-chunky bg-brand-coral text-white border-rose-700 hover:bg-rose-400;
+  }
+
+  .btn-chunky-indigo {
+    @apply btn-chunky bg-brand-indigo text-white border-indigo-700 hover:bg-indigo-400;
+  }
+
+  .btn-chunky-green {
+    @apply btn-chunky bg-brand-green text-white border-green-700 hover:bg-green-400;
+  }
+
+  .btn-chunky-slate {
+    @apply btn-chunky bg-white text-slate-700 border-slate-300 hover:bg-slate-50;
+  }
+
+  /* Card styles with rounded-3xl borders and soft playful shadows */
+  .card-playful {
+    @apply rounded-3xl border-2 border-slate-200/90 bg-white p-5 shadow-[0_8px_0_0_rgba(0,0,0,0.06)] transition-all;
+  }
+
+  .card-playful-interactive {
+    @apply card-playful hover:border-slate-300 hover:translate-y-[-2px] hover:shadow-[0_10px_0_0_rgba(0,0,0,0.07)] active:translate-y-1 active:shadow-[0_2px_0_0_rgba(0,0,0,0.06)];
+  }
+
+  /* Responsive student framed canvas container */
+  .student-canvas-container {
+    @apply w-full max-w-xl mx-auto md:my-8 md:p-6 md:rounded-3xl md:border-4 md:border-slate-800 md:shadow-[0_16px_0_0_rgba(15,23,42,0.15)] bg-amber-50/60 min-h-screen md:min-h-[85vh] flex flex-col;
+  }
+
+  .contain-content {
+    contain: content;
+  }
+}
+
+/* Reduced motion accessibility support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .btn-chunky {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .card-playful-interactive {
+    transform: none !important;
+    transition: none !important;
+  }
+}
