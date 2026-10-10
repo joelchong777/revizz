@@ -29,7 +29,7 @@ export default function AdminCMS({
 }: AdminCMSProps) {
   const [activeTab, setActiveTab] = useState<'editor' | 'flagged' | 'staged'>(initialView);
 
-  const defaultQuestion = CAMBRIDGE_QUESTIONS[0];
+  const defaultQuestion = CAMBRIDGE_QUESTIONS.find(q => q.id === questionId) || CAMBRIDGE_QUESTIONS[0];
 
   // Question Editor state (2g)
   const [paper, setPaper] = useState('0455/12');
@@ -75,6 +75,40 @@ export default function AdminCMS({
 
   const [selectedPreviewOption, setSelectedPreviewOption] = useState<string>('D');
   const [publishSuccess, setPublishSuccess] = useState(false);
+
+  React.useEffect(() => {
+    const q = CAMBRIDGE_QUESTIONS.find(q => q.id === questionId) || CAMBRIDGE_QUESTIONS[0];
+    if (q) {
+      setTopic(q.topic || 'The basic economic problem');
+      setStem(q.stem_markdown || 'Why will scarcity always exist?');
+      setOptions([
+        {
+          letter: 'A',
+          text: q.options[0]?.text_markdown || 'Option A',
+          reason: q.options[0]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          isCorrect: q.options[0]?.id === q.correct_option_id,
+        },
+        {
+          letter: 'B',
+          text: q.options[1]?.text_markdown || 'Option B',
+          reason: q.options[1]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          isCorrect: q.options[1]?.id === q.correct_option_id,
+        },
+        {
+          letter: 'C',
+          text: q.options[2]?.text_markdown || 'Option C',
+          reason: q.options[2]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          isCorrect: q.options[2]?.id === q.correct_option_id,
+        },
+        {
+          letter: 'D',
+          text: q.options[3]?.text_markdown || 'Option D',
+          reason: q.options[3]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          isCorrect: q.options[3]?.id === q.correct_option_id,
+        },
+      ]);
+    }
+  }, [questionId]);
 
   // Flagged questions state (2h)
   const [selectedFlag, setSelectedFlag] = useState<string | null>(null);

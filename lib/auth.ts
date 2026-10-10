@@ -14,6 +14,7 @@ export interface SignInOptions {
   redirectTo?: string;
   scopes?: string;
   queryParams?: { [key: string]: string };
+  skipBrowserRedirect?: boolean;
 }
 
 /**
@@ -102,8 +103,8 @@ export const normalizeAuthError = (error: unknown): AuthCustomError => {
 
   if (error instanceof Error) {
     const structured = error as AuthCustomError;
-    if (!structured.code && code) structured.code = String(code);
-    if (!structured.status && typeof code === 'number') structured.status = code;
+    if (!structured.code) structured.code = code ? String(code) : 'AUTH_ERROR';
+    if (!structured.status) structured.status = typeof code === 'number' ? code : 400;
     return structured;
   }
 
@@ -127,11 +128,28 @@ export const signInWithGoogle = async (options?: SignInOptions) => {
         redirectTo: options?.redirectTo ?? (typeof window !== 'undefined' ? window.location.origin : ''),
         scopes: options?.scopes,
         queryParams: options?.queryParams,
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
       throw normalizeAuthError(error);
+    }
+
+    if (data?.url) {
+      try {
+        const probe = await fetch(data.url, { method: 'GET' });
+        if (!probe.ok && probe.type !== 'opaqueredirect') {
+          const errorBody = await probe.json().catch(() => null);
+          throw normalizeAuthError(errorBody || new Error(`OAuth provider error (${probe.status})`));
+        }
+
+        if (typeof window !== 'undefined') {
+          window.location.assign(data.url);
+        }
+      } catch (probeErr: any) {
+        throw normalizeAuthError(probeErr);
+      }
     }
 
     return data;

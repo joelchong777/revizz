@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import IngestionHub from '@/components/portal/IngestionHub';
 import { CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import QuestionBankView from './QuestionBankView';
 
 export interface AdminToolsProps {
   initialView?: 'assign' | 'bank' | 'importer';
@@ -489,181 +490,11 @@ export default function AdminTools({
           SUB-TAB 2: QUESTION BANK BROWSER (Mockup 2f)
           ======================================================== */}
       {activeSubTab === 'bank' && (
-        <div className="flex flex-col gap-4">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-            <div>
-              <span className="text-xs font-bold text-[#645c50]">Question bank</span>
-              <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                {questionBankItems.length} questions
-              </h2>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => {
-                  window.location.href = '/portal?tab=compiler';
-                }}
-                className="px-3.5 py-2 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-semibold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer"
-              >
-                <FileText className="w-3.5 h-3.5" /> Compile Test Paper (PDF)
-              </button>
-              <button
-                onClick={() => {
-                  setActiveSubTab('importer');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5" /> Import paper (PDF)
-              </button>
-              <button
-                onClick={() => onOpenEditor?.('new')}
-                className="px-4 py-2 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading text-xs font-black hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" /> New question
-              </button>
-            </div>
-          </div>
-
-          {/* Search & Filter Pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative min-w-[240px]">
-              <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82796a]" />
-              <input
-                type="text"
-                placeholder="Search stems, IDs, citations..."
-                value={bankSearch}
-                onChange={(e) => setBankSearch(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
-              />
-            </div>
-            <span className="px-3 py-1.5 rounded-full bg-[#201e1d] text-[#f9f4ed] text-xs font-bold">
-              Economics 0455 ✕
-            </span>
-            <span className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-semibold cursor-pointer">
-              Paper ▾
-            </span>
-            <span className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-semibold cursor-pointer">
-              Session ▾
-            </span>
-            <span className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-semibold cursor-pointer">
-              Topic ▾
-            </span>
-            <span className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-semibold cursor-pointer">
-              Difficulty ▾
-            </span>
-            <span className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-semibold cursor-pointer">
-              Status ▾
-            </span>
-          </div>
-
-          {/* Status Counter Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold">
-            <button
-              onClick={() => setBankStatusFilter('All')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              All {questionBankItems.length}
-            </button>
-            <button
-              onClick={() => setBankStatusFilter('Live')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              Live {questionBankItems.filter((q) => q.st === 'Live').length}
-            </button>
-            <button
-              onClick={() => setBankStatusFilter('Agent draft')}
-              className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
-                bankStatusFilter === 'Agent draft' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              <span>Agent drafts</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
-                {questionBankItems.filter((q) => q.st === 'Agent draft').length}
-              </span>
-            </button>
-            <button
-              onClick={() => setBankStatusFilter('Needs review')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              Needs review {questionBankItems.filter((q) => q.st === 'Needs review').length}
-            </button>
-            <button
-              onClick={() => setBankStatusFilter('Flagged')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              Flagged {questionBankItems.filter((q) => q.st === 'Flagged').length}
-            </button>
-          </div>
-
-          {/* Bank Table */}
-          <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <div className="min-w-[840px]">
-                <div className="grid grid-cols-[130px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
-                  <span>ID</span>
-                  <span>Stem</span>
-                  <span>Citation</span>
-                  <span>Topic</span>
-                  <span>Difficulty</span>
-                  <span>1st try</span>
-                  <span>Status</span>
-                  <span>Updated</span>
-                </div>
-
-                <div className="divide-y divide-[#eee7db]">
-                  {filteredBankItems.map((item, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => onOpenEditor?.(item.id)}
-                      className="grid grid-cols-[130px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 items-center py-2.5 text-xs hover:bg-[#eee7db]/60 cursor-pointer rounded-xl transition-colors px-1"
-                    >
-                      <span className="font-mono font-bold text-[#201e1d] truncate" title={item.id}>{item.id}</span>
-                      <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
-                        {item.stem}
-                      </span>
-                      <span className="text-[#645c50] truncate" title={item.cite}>{item.cite}</span>
-                      <span className="text-[#474238] truncate" title={item.topic}>{item.topic}</span>
-                      <span className="font-medium">{item.diff}</span>
-                      <span className="font-black text-[#201e1d]">{item.acc}</span>
-                      <span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
-                        >
-                          {item.st}
-                        </span>
-                      </span>
-                      <span className="text-[#645c50]">{item.upd}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bulk Agent Actions Card */}
-          <div className="flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs">
-            <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
-            <span className="flex-1 leading-snug text-[#201e1d]">
-              <b>Bulk agent actions:</b> write explanations for items that have none · check
-              citations against source papers · find near-duplicates
-            </span>
-            <button
-              onClick={() => alert(`Agent scanning ${filteredBankItems.length} filtered questions in background...`)}
-              className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#728157] font-bold text-xs text-[#3d472b] hover:bg-[#ccdbb2] active:translate-y-0.5 whitespace-nowrap"
-            >
-              Run on filtered ({filteredBankItems.length})
-            </button>
-          </div>
-        </div>
+        <QuestionBankView 
+          onOpenEditor={onOpenEditor || (() => {})} 
+          onNavigateToCompiler={() => { window.location.href = '/portal?tab=compiler'; }} 
+          onNavigateToImporter={() => { setActiveSubTab('importer'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+        />
       )}
 
       {/* ========================================================

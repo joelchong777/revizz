@@ -7,6 +7,9 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { cn } from '@/lib/utils';
 import { Question, QuestionStatus } from '@/hooks/useQuizGame';
+import { IngestionOptionsEditor } from './IngestionOptionsEditor';
+import { IngestionLivePreview } from './IngestionLivePreview';
+import { IngestionDiagnostics } from './IngestionDiagnostics';
 
 export interface IngestionQuestionEditorProps {
   question: StagingQuestion;
@@ -94,12 +97,6 @@ export function IngestionQuestionEditor({
         onNextQuestion();
       } else if (e.key === 'ArrowLeft' && onPrevQuestion) {
         onPrevQuestion();
-      } else {
-        const key = e.key.toUpperCase();
-        if (['1', 'A'].includes(key)) setCorrectOption('A');
-        else if (['2', 'B'].includes(key)) setCorrectOption('B');
-        else if (['3', 'C'].includes(key)) setCorrectOption('C');
-        else if (['4', 'D'].includes(key)) setCorrectOption('D');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -230,48 +227,22 @@ export function IngestionQuestionEditor({
         </div>
 
         {/* Options Editor */}
-        <div className="flex flex-col gap-4">
-          <label className="font-bold uppercase text-sm tracking-wider">Options</label>
-          {(question.options || []).map((opt, idx) => (
-            <div 
-              key={opt.label}
-              className={cn(
-                "flex flex-col gap-3 p-4 rounded-2xl border-2 shadow-offset-2 transition-colors",
-                opt.is_correct ? "bg-[#f0fae1] border-[#8fa073]" : "bg-white border-text"
-              )}
-            >
-              <div className="flex items-center justify-between gap-4">
-                <button
-                  tabIndex={0}
-                  onClick={() => setCorrectOption(opt.label as any)}
-                  className={cn(
-                    "flex-shrink-0 w-10 h-10 rounded-full border-2 border-text flex items-center justify-center font-heading text-lg transition-transform active:scale-95",
-                    opt.is_correct ? "bg-accent-2-500 text-neutral-100" : "bg-neutral-200 text-text hover:bg-neutral-300"
-                  )}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setCorrectOption(opt.label as any);
-                    }
-                  }}
-                >
-                  {opt.label}
-                </button>
-                <input
-                  type="text"
-                  value={opt.content_markdown}
-                  onChange={(e) => updateOption(idx, 'content_markdown', e.target.value)}
-                  className="flex-1 p-2.5 rounded-xl border-2 border-text bg-neutral-100 outline-none font-mono text-sm focus:border-accent"
-                  placeholder={`Option ${opt.label} markdown...`}
-                />
-              </div>
-              <div className="pl-14 text-sm break-words min-h-[24px]">
-                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                  {opt.content_markdown}
-                </ReactMarkdown>
-              </div>
-            </div>
-          ))}
+        <div className="flex flex-col gap-2">
+          <label className="font-bold uppercase text-sm tracking-wider">MCQ Options (A-D)</label>
+          <IngestionOptionsEditor
+            options={question.options || []}
+            onChangeOption={(label, content) => {
+              const currentOpts = question.options || [];
+              const exists = currentOpts.some((o) => o.label === label);
+              const newOpts = exists
+                ? currentOpts.map((o) =>
+                    o.label === label ? { ...o, content_markdown: content } : o
+                  )
+                : [...currentOpts, { label, content_markdown: content, is_correct: false }];
+              handleUpdate({ ...question, options: newOpts });
+            }}
+            onSetCorrect={(label) => setCorrectOption(label)}
+          />
         </div>
 
         {/* Explanation */}
@@ -286,41 +257,25 @@ export function IngestionQuestionEditor({
             placeholder={"1. Concept & Economic Principle\n2. Step-by-Step Derivation\n3. Diagnostic Distractor Analysis"}
           />
         </div>
+
+        {/* Real-Time QA Diagnostics & KaTeX Linter */}
+        <div className="pt-2">
+          <IngestionDiagnostics
+            question={question}
+            onUpdateQuestion={handleUpdate}
+          />
+        </div>
       </div>
 
       {/* RIGHT: Simulator */}
       <div className={cn("flex flex-col", !showSimulator && "hidden lg:flex")}>
         <div className="sticky top-8 w-full max-w-xl mx-auto flex flex-col gap-4">
-          <div className="flex items-center justify-between bg-white p-3 rounded-2xl border-2 border-text shadow-offset-2">
-            <span className="font-bold text-sm">Live Student Simulator</span>
-            <button 
-              onClick={resetSimulator}
-              className="text-xs font-bold px-3 py-1.5 rounded-full border-2 border-text bg-accent-200 hover:bg-accent-300 active:translate-y-0.5 active:shadow-none"
-            >
-              Reset State
-            </button>
-          </div>
-          
-          <div className="bg-[#f9f4ed] rounded-3xl border-4 border-[#201e1d] shadow-[0_16px_0_0_rgba(32,30,29,0.15)] overflow-hidden min-h-[600px] flex flex-col">
-            <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
-              <QuestionCard
-                question={previewQuestion}
-                questionNumber={question.question_number}
-                totalQuestions={totalQuestions}
-                status={simulatorStatus}
-                timeLeft={90}
-                isTimed={true}
-                onAnswer={handleSimAnswer}
-                onNext={resetSimulator}
-                selectedOptionId={simSelectedOption}
-                firstWrongOptionId={simFirstWrong}
-                currentStreak={3} // Mock streak for preview
-                isEndless={false}
-                onFinish={() => {}}
-                totalXP={120}
-              />
-            </div>
-          </div>
+          <IngestionLivePreview
+            question={question}
+            questionIndex={questionIndex}
+            totalQuestions={totalQuestions}
+            onNext={onNextQuestion}
+          />
         </div>
       </div>
 

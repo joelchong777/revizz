@@ -1,274 +1,296 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { StagingPaper, StagingQuestion, validateStagingPaper } from "@/types/ingestion";
+import React, { useEffect } from "react";
+import { useIngestionStore } from "@/lib/ingestion/useIngestionStore";
+import IngestionHeader from "./IngestionHeader";
 import IngestionQuestionNav from "./IngestionQuestionNav";
-import IngestionQuestionEditor from "./IngestionQuestionEditor";
-
-type TabMode = "studio" | "sql" | "json";
-type PublishStatus = "idle" | "validating" | "publishing" | "success" | "error";
+import { IngestionStemEditor } from "./IngestionStemEditor";
+import IngestionOptionsEditor from "./IngestionOptionsEditor";
+import IngestionMediaPanel from "./IngestionMediaPanel";
+import IngestionLivePreview from "./IngestionLivePreview";
+import IngestionDiagnostics from "./IngestionDiagnostics";
+import IngestionModals from "./IngestionModals";
+import IngestionAuditDrawer from "./IngestionAuditDrawer";
+import type { StagingQuestion } from "@/types/ingestion";
+import { Plus, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function IngestionHub() {
-  const [paper, setPaper] = useState<StagingPaper | null>(null);
-  const [selectedIdx, setSelectedIdx] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<TabMode>("studio");
-  const [publishStatus, setPublishStatus] = useState<PublishStatus>("idle");
-  const [publishMessage, setPublishMessage] = useState<string>("");
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    paper,
+    selectedIdx,
+    showLivePreview,
+    isSettingsModalOpen,
+    isPayloadModalOpen,
+    isAuditDrawerOpen,
+    publishStatus,
+    publishMessage,
+    selectedQuestion,
+    loadPreset,
+    loadJson,
+    updatePaperMetadata,
+    setSelectedIdx,
+    addQuestion,
+    deleteQuestion,
+    duplicateQuestion,
+    moveQuestion,
+    updateQuestion,
+    setCorrectOption,
+    publishToSupabase,
+    setShowLivePreview,
+    setIsSettingsModalOpen,
+    setIsPayloadModalOpen,
+    setIsAuditDrawerOpen,
+    setPublishStatus,
+  } = useIngestionStore();
 
   const questions = paper?.questions || [];
-  const syllabusTopics = paper?.syllabus_topics || [];
+  const currentQuestion: StagingQuestion | null =
+    selectedQuestion || questions[selectedIdx] || null;
 
+  // Initial fetch: Load default preset paper
   useEffect(() => {
-    // Initial fetch
-    fetch("/api/ingest/staged-paper?id=0455_s24_12")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load preset");
-        return res.json();
-      })
-      .then((data) => {
-        const paperData = data?.paper || data;
-        setPaper(paperData);
-      })
-      .catch((err) => {
-        console.error(err);
-        setPaper({
-          subject: { code: "0455", name: "Economics", icon: "📈" },
-          paper: { series: "s", paper_code: "12", year: 2024 },
-          syllabus_topics: [],
-          questions: [],
-        });
-      });
-  }, []);
+    if (!paper) {
+      loadPreset("0455_s24_12");
+    }
+  }, [paper, loadPreset]);
 
-  const handleLoadPreset = () => {
-    fetch("/api/ingest/staged-paper?id=0455_s24_12")
-      .then((res) => res.json())
-      .then((data) => {
-        const paperData = data?.paper || data;
-        setPaper(paperData);
-      })
-      .catch(console.error);
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Handler for uploading JSON file via Header / Modals
+  const handleFileUpload = (file: File) => {
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = (e) => {
       try {
-        const json = JSON.parse(ev.target?.result as string);
-        const paperData = json?.paper || json;
-        setPaper(paperData);
+        const json = JSON.parse(e.target?.result as string);
+        loadJson(json);
       } catch (err) {
-        console.error("Failed to parse JSON", err);
+        console.error("Failed to parse uploaded JSON file", err);
       }
     };
     reader.readAsText(file);
   };
 
-  const validateSchema = () => {
-    if (!paper) return;
-    const result = validateStagingPaper(paper);
-    if (result.success) {
-      alert("Validation successful!");
-    } else {
-      alert("Validation errors:\\n" + result.errors?.join("\\n"));
-    }
-  };
-
-  const generateSQL = () => {
-    if (!paper) return "";
-    let sql = `-- Batch SQL for ${paper.subject?.code || ""} ${paper.paper?.series || ""}${paper.paper?.year || ""} ${paper.paper?.paper_code || ""}\\n\\n`;
-    (paper.questions || []).forEach((q) => {
-      sql += `INSERT INTO questions (question_number, stem) VALUES (${q.question_number}, $stem_${q.question_number}$${q.stem_markdown}$stem_${q.question_number}$);\\n`;
-    });
-    return sql;
-  };
-
-  const downloadFile = (content: string, filename: string, type: string) => {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleExportJSON = () => {
-    if (!paper) return;
-    const result = validateStagingPaper(paper);
-    if (!result.success) {
-      alert("Fix validation errors before exporting:\\n" + result.errors?.join("\\n"));
-      return;
-    }
-    downloadFile(JSON.stringify(paper, null, 2), "paper.json", "application/json");
-  };
-
-  const handleExportSQL = () => {
-    downloadFile(generateSQL(), "batch.sql", "text/plain");
-  };
-
-  const handlePushLive = async () => {
-    if (!paper) return;
-    setPublishStatus("validating");
-    const result = validateStagingPaper(paper);
-    if (!result.success) {
-      setPublishStatus("error");
-      setPublishMessage(result.errors?.join(", ") || "Validation failed");
-      return;
-    }
-
-    setPublishStatus("publishing");
+  // Handler for pasting JSON string directly
+  const handlePasteJson = (jsonString: string) => {
     try {
-      const res = await fetch("/api/ingest/publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paper),
-      });
-      if (!res.ok) throw new Error("Publish failed");
-      setPublishStatus("success");
-      setPublishMessage("Successfully published!");
-    } catch (err: any) {
-      setPublishStatus("error");
-      setPublishMessage(err.message || "Unknown error");
+      const json = JSON.parse(jsonString);
+      loadJson(json);
+    } catch (err) {
+      console.error("Failed to parse pasted JSON", err);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f5ead8] font-body p-8 flex flex-col gap-6">
-      {/* Top Header */}
-      <header className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] shadow-offset-4 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <h1 className="font-heading text-2xl text-[#201e1d]">Ingestion Hub</h1>
-          <div className="flex gap-2">
-            <span className="px-3 py-1 bg-[#ffe1d0] border-2 border-[#201e1d] rounded-full text-sm font-bold text-[#c67139]">Economics 0455</span>
-            <span className="px-3 py-1 bg-[#f0fae1] border-2 border-[#201e1d] rounded-full text-sm font-bold text-[#8fa073]">s24</span>
-            <span className="px-3 py-1 bg-[#ffc6a5] border-2 border-[#201e1d] rounded-full text-sm font-bold text-[#201e1d]">12</span>
-          </div>
-        </div>
-        <div className="flex gap-4">
-          <button
-            onClick={handleLoadPreset}
-            className="px-4 py-2 bg-[#ffe1d0] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d] transition-all"
-          >
-            Load Preset
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 bg-[#ccdbb2] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d] transition-all"
-          >
-            Upload JSON
-          </button>
-          <input type="file" accept=".json" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#f5ead8] font-body p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
+        {/* Top Header */}
+        <IngestionHeader
+          paper={paper}
+          onLoadPreset={(presetId) => loadPreset(presetId || "0455_s24_12")}
+          onUploadJson={handleFileUpload}
+          onOpenSettings={() => setIsSettingsModalOpen(true)}
+          onOpenPayloads={() => setIsPayloadModalOpen(true)}
+          onOpenAudit={() => setIsAuditDrawerOpen(true)}
+          onPublish={publishToSupabase}
+          publishStatus={publishStatus}
+          publishMessage={publishMessage}
+          showLivePreview={showLivePreview}
+          onTogglePreview={() => setShowLivePreview((prev) => !prev)}
+        />
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col gap-6">
-        {/* Tabs & Action Bar */}
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-4 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] shadow-offset-4 p-4">
-          <div className="flex gap-2">
-            {(["studio", "sql", "json"] as const).map((tab) => (
+        {/* Publish / Validate Status Feedback Banner */}
+        {publishStatus !== "idle" && publishMessage && (
+          <div
+            className={`p-4 border-2 border-[#201e1d] rounded-2xl font-bold flex items-center justify-between gap-4 shadow-offset-2 ${
+              publishStatus === "validating" || publishStatus === "publishing"
+                ? "bg-[#ffe1d0] text-[#c67139]"
+                : publishStatus === "success"
+                ? "bg-[#f0fae1] text-[#15803d]"
+                : "bg-[#fee2e2] text-[#b91c1c]"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              {publishStatus === "validating" || publishStatus === "publishing" ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : publishStatus === "success" ? (
+                <CheckCircle2 className="w-5 h-5 text-[#15803d]" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-[#b91c1c]" />
+              )}
+              <span className="text-sm">{publishMessage}</span>
+            </div>
+            {publishStatus !== "publishing" && publishStatus !== "validating" && (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 border-2 border-[#201e1d] rounded-xl font-bold transition-all shadow-offset-2 active:translate-y-0.5 active:shadow-none uppercase ${
-                  activeTab === tab ? "bg-[#c67139] text-white" : "bg-white text-[#201e1d]"
-                }`}
+                onClick={() => setPublishStatus("idle")}
+                className="text-xs font-black uppercase underline hover:opacity-80 cursor-pointer"
               >
-                {tab}
+                Dismiss
               </button>
-            ))}
-          </div>
-
-          <div className="flex gap-3 flex-wrap">
-            <button onClick={validateSchema} className="px-4 py-2 bg-[#ffe1d0] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d]">Validate Schema</button>
-            <button onClick={handleExportJSON} className="px-4 py-2 bg-[#f0fae1] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d]">Export JSON</button>
-            <button onClick={handleExportSQL} className="px-4 py-2 bg-[#ccdbb2] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d]">Export Batch SQL</button>
-            <button onClick={handlePushLive} className="px-4 py-2 bg-[#8fa073] text-white border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold">Push to Supabase Live</button>
-            <button onClick={() => window.open('/play', '_blank')} className="px-4 py-2 bg-[#ffc6a5] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d]">Test in Game</button>
-          </div>
-        </div>
-
-        {/* Publish Status Feedback */}
-        {publishStatus !== "idle" && (
-          <div className={`p-4 border-2 border-[#201e1d] rounded-xl font-bold ${
-            publishStatus === 'validating' || publishStatus === 'publishing' ? 'bg-[#ffe1d0] text-[#c67139]' :
-            publishStatus === 'success' ? 'bg-[#f0fae1] text-[#8fa073]' : 'bg-[#ffc6a5] text-red-600'
-          }`}>
-            Status: {publishStatus.toUpperCase()} {publishMessage && `- ${publishMessage}`}
+            )}
           </div>
         )}
 
-        {/* Workspace Area */}
-        <div className="flex-1 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] shadow-offset-4 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-          {activeTab === "studio" && paper && (
-            <>
-              <div className="w-full md:w-1/3 xl:w-1/4 border-b-2 md:border-b-0 md:border-r-2 border-[#201e1d] p-4 bg-[#f9f4ed] overflow-y-auto">
-                <IngestionQuestionNav
-                  questions={questions}
-                  selectedIdx={selectedIdx}
-                  onSelectIdx={setSelectedIdx}
-                  expectedCount={questions.length || 30}
-                  syllabusTopics={syllabusTopics}
+        {/* Main 3-Column Studio Layout */}
+        <div className="flex flex-col lg:flex-row items-start gap-6">
+          {/* Column 1 (Left ~25%): Question Navigation Matrix */}
+          <div className="w-full lg:w-72 xl:w-80 shrink-0">
+            <IngestionQuestionNav
+              questions={questions}
+              selectedIdx={selectedIdx}
+              onSelectIdx={setSelectedIdx}
+              onAddQuestion={addQuestion}
+              onDuplicateQuestion={duplicateQuestion}
+              onDeleteQuestion={deleteQuestion}
+              onMoveQuestion={moveQuestion}
+              syllabusTopics={paper?.syllabus_topics || []}
+              paper={paper || undefined}
+            />
+          </div>
+
+          {/* Column 2 (Center ~45%): Core Question Editors */}
+          <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
+            {currentQuestion ? (
+              <>
+                {/* Stem Markdown & KaTeX Formula Editor */}
+                <IngestionStemEditor
+                  questionNumber={currentQuestion.question_number || selectedIdx + 1}
+                  stemMarkdown={currentQuestion.stem_markdown || ""}
+                  citation={currentQuestion.cambridge_source_ref || ""}
+                  onChangeStem={(newStem) => {
+                    updateQuestion(selectedIdx, {
+                      ...currentQuestion,
+                      stem_markdown: newStem,
+                    });
+                  }}
+                  onChangeCitation={(newCitation) => {
+                    updateQuestion(selectedIdx, {
+                      ...currentQuestion,
+                      cambridge_source_ref: newCitation,
+                    });
+                  }}
                 />
+
+                {/* 4 Stacked MCQ Options Editor */}
+                <IngestionOptionsEditor
+                  options={currentQuestion.options || []}
+                  onChangeOption={(label, content) => {
+                    const nextOptions = (currentQuestion.options || []).map((opt) =>
+                      opt.label === label ? { ...opt, content_markdown: content } : opt
+                    );
+                    updateQuestion(selectedIdx, {
+                      ...currentQuestion,
+                      options: nextOptions,
+                    });
+                  }}
+                  onSetCorrect={(label) => {
+                    setCorrectOption(label);
+                  }}
+                />
+
+                {/* Diagram Lightbox, Syllabus Topic & Derivation Panel */}
+                <IngestionMediaPanel
+                  diagram={currentQuestion.diagram}
+                  topicName={currentQuestion.topic_name || ""}
+                  syllabusTopics={paper?.syllabus_topics || []}
+                  explanationMarkdown={currentQuestion.explanation_markdown || ""}
+                  onUpdateDiagram={(diag) => {
+                    updateQuestion(selectedIdx, {
+                      ...currentQuestion,
+                      diagram: {
+                        ...currentQuestion.diagram,
+                        has_diagram: diag.has_diagram,
+                        image_url: diag.image_url,
+                        alt_description: diag.alt_description,
+                      },
+                    });
+                  }}
+                  onUpdateTopic={(topicName) => {
+                    updateQuestion(selectedIdx, {
+                      ...currentQuestion,
+                      topic_name: topicName,
+                    });
+                  }}
+                  onUpdateExplanation={(explanation) => {
+                    updateQuestion(selectedIdx, {
+                      ...currentQuestion,
+                      explanation_markdown: explanation,
+                    });
+                  }}
+                />
+              </>
+            ) : (
+              <div className="flex-1 bg-white border-2 border-[#201e1d] rounded-2xl p-8 shadow-offset-4 flex flex-col items-center justify-center text-center gap-4 min-h-[420px]">
+                <div className="w-16 h-16 rounded-3xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center text-3xl shadow-offset-2">
+                  📝
+                </div>
+                <div>
+                  <h3 className="font-heading text-2xl text-[#201e1d]">No Question Selected</h3>
+                  <p className="text-sm font-bold text-[#645c50] mt-1 max-w-md">
+                    Select a question from the navigation panel or create a new question to start editing.
+                  </p>
+                </div>
+                <button
+                  onClick={addQuestion}
+                  className="px-5 py-2.5 bg-[#facc15] hover:bg-[#fde047] border-2 border-[#201e1d] rounded-xl font-bold text-sm text-[#201e1d] shadow-offset-2 active:translate-y-0.5 active:shadow-none flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add First Question</span>
+                </button>
               </div>
-              <div className="flex-1 p-6 overflow-y-auto bg-[#f9f4ed]">
-                {questions[selectedIdx] ? (
-                  <IngestionQuestionEditor
-                    question={questions[selectedIdx]}
+            )}
+          </div>
+
+          {/* Column 3 (Right ~30%, Toggleable via Header Button): Live Simulator & Real-time Diagnostics */}
+          {showLivePreview && (
+            <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-6">
+              {currentQuestion ? (
+                <>
+                  {/* Interactive Student Gameboy Simulator */}
+                  <IngestionLivePreview
+                    question={currentQuestion}
                     questionIndex={selectedIdx}
                     totalQuestions={questions.length}
-                    syllabusTopics={syllabusTopics}
-                    onChange={(newQ: StagingQuestion) => {
-                      const newQuestions = [...questions];
-                      newQuestions[selectedIdx] = newQ;
-                      setPaper({ ...paper, questions: newQuestions });
+                    onNext={() => {
+                      if (selectedIdx < questions.length - 1) {
+                        setSelectedIdx(selectedIdx + 1);
+                      }
                     }}
                   />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-[#8fa073] font-bold">Select a question or add one</div>
-                )}
-              </div>
-            </>
-          )}
 
-          {activeTab === "sql" && (
-            <div className="p-6 flex-1 flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <h2 className="font-heading text-xl">Batch SQL Preview</h2>
-                <div className="flex gap-2">
-                  <button onClick={() => navigator.clipboard.writeText(generateSQL())} className="px-3 py-1 bg-white border-2 border-[#201e1d] rounded-lg shadow-offset-2 active:translate-y-0.5 font-bold text-sm">Copy SQL</button>
+                  {/* Real-time Diagnostics & KaTeX Linter Panel */}
+                  <IngestionDiagnostics
+                    question={currentQuestion}
+                    onUpdateQuestion={(updated) => updateQuestion(selectedIdx, updated)}
+                    onFixKaTeX={(fixed) => updateQuestion(selectedIdx, fixed)}
+                  />
+                </>
+              ) : (
+                <div className="p-6 bg-white border-2 border-[#201e1d] rounded-2xl text-center text-xs font-bold text-[#645c50]">
+                  Select a question to inspect live simulation and real-time QA diagnostics.
                 </div>
-              </div>
-              <textarea
-                readOnly
-                value={generateSQL()}
-                className="w-full flex-1 p-4 bg-black text-[#ccdbb2] font-mono text-sm border-2 border-[#201e1d] rounded-xl focus:outline-none"
-              />
-            </div>
-          )}
-
-          {activeTab === "json" && (
-            <div className="p-6 flex-1 flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <h2 className="font-heading text-xl">Raw JSON</h2>
-                <div className="flex gap-2">
-                  <button onClick={() => navigator.clipboard.writeText(JSON.stringify(paper, null, 2))} className="px-3 py-1 bg-white border-2 border-[#201e1d] rounded-lg shadow-offset-2 active:translate-y-0.5 font-bold text-sm">Copy JSON</button>
-                </div>
-              </div>
-              <textarea
-                readOnly
-                value={JSON.stringify(paper, null, 2)}
-                className="w-full flex-1 p-4 bg-black text-[#ffe1d0] font-mono text-sm border-2 border-[#201e1d] rounded-xl focus:outline-none"
-              />
+              )}
             </div>
           )}
         </div>
-      </main>
+      </div>
+
+      {/* Overlays: Paper Settings & Raw Payloads (SQL/JSON) */}
+      <IngestionModals
+        paper={paper}
+        isSettingsOpen={isSettingsModalOpen}
+        onCloseSettings={() => setIsSettingsModalOpen(false)}
+        onSaveSettings={(meta) => updatePaperMetadata(meta)}
+        isPayloadOpen={isPayloadModalOpen}
+        onClosePayload={() => setIsPayloadModalOpen(false)}
+        onUploadJson={handleFileUpload}
+        onPasteJson={handlePasteJson}
+      />
+
+      {/* Overlays: Bulk Quality Assurance Audit Drawer */}
+      <IngestionAuditDrawer
+        isOpen={isAuditDrawerOpen}
+        onClose={() => setIsAuditDrawerOpen(false)}
+        paper={paper}
+        onSelectQuestion={(idx) => setSelectedIdx(idx)}
+      />
     </div>
   );
 }
