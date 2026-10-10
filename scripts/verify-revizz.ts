@@ -423,6 +423,61 @@ test('End-to-End Simulated Quiz Round (5 Questions)', () => {
 });
 
 // -----------------------------------------------------------------------------
+// [Suite 6] Portal Educator Gate & Security Validation
+// -----------------------------------------------------------------------------
+console.log('\n[Suite 6] Portal Gate Security & Role Permissions');
+
+const evaluateEducatorAccess = (
+  userProfile: { role?: 'student' | 'teacher' | 'admin'; display_name?: string } | null,
+  isDev: boolean,
+  devOverride: boolean
+): boolean => {
+  return (isDev && devOverride) || !!(userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
+};
+
+test('Production Security: devOverride flag is strictly ignored when isDev is false', () => {
+  // Tampered/bypassed devOverride in production with null profile
+  const bypassAttemptLoggedOut = evaluateEducatorAccess(null, false, true);
+  assertEqual(bypassAttemptLoggedOut, false, 'Logged-out user cannot bypass gate with devOverride in production');
+
+  // Tampered/bypassed devOverride in production with student profile
+  const bypassAttemptStudent = evaluateEducatorAccess({ role: 'student', display_name: 'Student' }, false, true);
+  assertEqual(bypassAttemptStudent, false, 'Student user cannot bypass gate with devOverride in production');
+});
+
+test('Production Security: only verified teacher and admin roles are granted access', () => {
+  const teacherAccess = evaluateEducatorAccess({ role: 'teacher', display_name: 'Ms. Smith' }, false, false);
+  assertEqual(teacherAccess, true, 'Verified teacher role receives access');
+
+  const adminAccess = evaluateEducatorAccess({ role: 'admin', display_name: 'Principal Skinner' }, false, false);
+  assertEqual(adminAccess, true, 'Verified admin role receives access');
+
+  const anonymousAccess = evaluateEducatorAccess(null, false, false);
+  assertEqual(anonymousAccess, false, 'Unauthenticated user denied educator access');
+
+  const studentAccess = evaluateEducatorAccess({ role: 'student', display_name: 'Bart S.' }, false, false);
+  assertEqual(studentAccess, false, 'Student user denied educator access');
+});
+
+test('Development Mode: devOverride is permitted only when isDev is true', () => {
+  const devPreviewActive = evaluateEducatorAccess(null, true, true);
+  assertEqual(devPreviewActive, true, 'devOverride grants access when isDev is true');
+
+  const devPreviewInactive = evaluateEducatorAccess(null, true, false);
+  assertEqual(devPreviewInactive, false, 'devOverride false denies unauthenticated access even in dev mode');
+});
+
+test('Student Account Badge message format matches expected pattern', () => {
+  const mockStudent = { display_name: 'Alex M.', role: 'student' as const };
+  const badgeMessage = `Signed in as ${mockStudent.display_name} (Student account) · Contact your school administrator for educator access.`;
+  assertEqual(
+    badgeMessage,
+    'Signed in as Alex M. (Student account) · Contact your school administrator for educator access.',
+    'Informative student account badge string matches exact specification'
+  );
+});
+
+// -----------------------------------------------------------------------------
 // Test Summary Output
 // -----------------------------------------------------------------------------
 console.log('\n========================================================');

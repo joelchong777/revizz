@@ -13,7 +13,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'inline-flex w-full items-center justify-center rounded-2xl bg-slate-200/70 p-1.5 text-slate-600 border-2 border-slate-200/80 shadow-inner select-none',
+      'inline-flex w-full items-center justify-center rounded-2xl bg-[#eee7db] p-1.5 text-[#201e1d] border-[1.5px] border-[#dcd3c4] select-none',
       className
     )}
     {...props}
@@ -28,9 +28,9 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-black transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:pointer-events-none disabled:opacity-50',
-      'data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-chunky data-[state=active]:border-b-2 data-[state=active]:border-slate-300',
-      'data-[state=inactive]:text-slate-600 hover:data-[state=inactive]:text-slate-900',
+      'inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-xl px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] disabled:pointer-events-none disabled:opacity-50',
+      'data-[state=active]:bg-[#ffe1d0] data-[state=active]:text-[#201e1d] data-[state=active]:font-bold data-[state=active]:shadow-offset-2',
+      'data-[state=inactive]:text-[#645c50] hover:data-[state=inactive]:text-[#201e1d]',
       className
     )}
     {...props}
@@ -45,7 +45,7 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      'mt-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2',
+      'mt-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2',
       className
     )}
     {...props}

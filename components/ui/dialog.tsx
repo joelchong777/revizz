@@ -11,7 +11,20 @@ const DialogTrigger = DialogPrimitive.Trigger;
 
 const DialogPortal = DialogPrimitive.Portal;
 
-const DialogClose = DialogPrimitive.Close;
+const DialogClose = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Close>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Close
+    ref={ref}
+    className={cn(
+      'rounded-full p-1.5 text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors',
+      className
+    )}
+    {...props}
+  />
+));
+DialogClose.displayName = DialogPrimitive.Close.displayName;
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
@@ -38,14 +51,14 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-3xl border-2 border-b-4 border-slate-800 bg-white p-6 shadow-chunky duration-200',
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] p-6 shadow-offset-4 text-[#201e1d] duration-200',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400">
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1.5 text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors focus:outline-none focus:ring-2 focus:ring-[#201e1d]">
         <X className="h-5 w-5" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -85,7 +98,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-xl font-black text-slate-900 tracking-tight', className)}
+    className={cn('text-xl font-black text-[#201e1d] tracking-tight', className)}
     {...props}
   />
 ));
@@ -97,7 +110,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm font-semibold text-slate-500', className)}
+    className={cn('text-sm font-semibold text-[#645c50]', className)}
     {...props}
   />
 ));

@@ -501,6 +501,14 @@ export default function AdminTools({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => {
+                  window.location.href = '/portal?tab=compiler';
+                }}
+                className="px-3.5 py-2 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-semibold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" /> Compile Test Paper (PDF)
+              </button>
+              <button
+                onClick={() => {
                   setActiveSubTab('importer');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}

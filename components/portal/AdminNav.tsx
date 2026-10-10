@@ -14,7 +14,8 @@ import {
   Building2, 
   Sparkles,
   ArrowRightLeft,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 
 export interface AdminNavProps {
@@ -177,6 +178,23 @@ export default function AdminNav({
             >
               <Send className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
               {!compact && <span>Assign rounds</span>}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleNavClick('compiler')}
+              className={navItemClass('compiler')}
+              title="Test compiler"
+            >
+              <FileText className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
+              {!compact && (
+                <>
+                  <span className="flex-1 text-left">Test compiler</span>
+                  <span className="px-1.5 py-0.5 rounded bg-[#ffe1d0] text-[#c67139] text-[9px] font-black uppercase tracking-wide">
+                    New
+                  </span>
+                </>
+              )}
             </button>
 
             <button

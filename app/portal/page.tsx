@@ -10,12 +10,14 @@ import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import TeacherAnalytics from '@/components/portal/TeacherAnalytics';
 import IngestionHub from '@/components/portal/IngestionHub';
+import TestCompilerHub from '@/components/portal/compiler/TestCompilerHub';
 import { fetchWeeklyLeaderboard, LeaderboardEntry } from '@/lib/leaderboard';
 
 const NAV_LABELS: Record<string, string> = {
   overview: 'Overview',
   roster: 'Classes & students',
   assign: 'Assign rounds',
+  compiler: 'Test compiler',
   mastery: 'Mastery analytics',
   xp: 'Leaderboard & XP',
   bank: 'Question bank',
@@ -97,7 +99,7 @@ function PortalContent() {
     } else if (normalized === 'analytics') {
       setActiveNav('roster');
       setRole('teacher');
-    } else if (['roster', 'mastery', 'overview', 'assign', 'xp', 'school'].includes(normalized)) {
+    } else if (['roster', 'mastery', 'overview', 'assign', 'compiler', 'xp', 'school'].includes(normalized)) {
       setActiveNav(normalized);
       setRole('teacher');
     } else if (normalized === 'ingestion' || normalized === 'importer') {
@@ -124,7 +126,7 @@ function PortalContent() {
   };
 
   // Auth gate
-  if (loading && !devOverride) {
+  if (loading && !(isDev && devOverride)) {
     return (
       <div className="min-h-screen bg-[#f5ead8] flex items-center justify-center p-6 font-body">
         <div className="max-w-md w-full bg-[#f9f4ed] rounded-[28px] p-8 border-2 border-[#201e1d] shadow-offset-4 text-center space-y-6 animate-pulse">
@@ -137,7 +139,7 @@ function PortalContent() {
     );
   }
 
-  const isEducator = devOverride || (userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
+  const isEducator = (isDev && devOverride) || (userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
 
   if (!isEducator) {
     return (
@@ -156,19 +158,27 @@ function PortalContent() {
           <div className="space-y-3 pt-4 border-t-2 border-[#dcd3c4]">
             {!userProfile ? (
               <button
+                type="button"
                 onClick={() => signInWithGoogle()}
                 className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5"
               >
                 Sign In with Google
               </button>
-            ) : null}
+            ) : (
+              <div className="p-3 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-2xl border-2 border-[#201e1d] leading-relaxed text-center">
+                Signed in as {userProfile.display_name} (Student account) · Contact your school administrator for educator access.
+              </div>
+            )}
 
-            <button
-              onClick={() => setDevOverride(true)}
-              className="w-full py-3 bg-[#f0fae1] text-[#272e1b] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#e1eecc] transition-all active:translate-y-0.5"
-            >
-              Preview as Teacher / Admin (Dev)
-            </button>
+            {isDev && (
+              <button
+                type="button"
+                onClick={() => setDevOverride(true)}
+                className="w-full py-3 bg-[#f0fae1] text-[#272e1b] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#e1eecc] transition-all active:translate-y-0.5"
+              >
+                Preview as Teacher / Admin (Dev)
+              </button>
+            )}
 
             <Link
               href="/"
@@ -204,6 +214,8 @@ function PortalContent() {
             }}
           />
         );
+      case 'compiler':
+        return <TestCompilerHub key="compiler" />;
       case 'mastery':
         return (
           <TeacherAnalytics

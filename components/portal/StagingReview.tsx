@@ -198,15 +198,15 @@ export default function StagingReview() {
   return (
     <div className="flex flex-col space-y-6">
       {/* Top Bar */}
-      <div className="bg-white p-4 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-4 rounded-[28px] p-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
           <span className="text-2xl">📋</span>
           <div>
-            <h2 className="text-xl font-black text-slate-800">
+            <h2 className="text-xl font-black text-[#201e1d]">
               {paperData.subject.name} {paperData.subject.code}/{paperData.paper.paper_code}{' '}
               {paperData.paper.series.toUpperCase()}/{paperData.paper.year} (Staged)
             </h2>
-            <div className="text-sm font-bold text-slate-500 uppercase">
+            <div className="text-sm font-bold text-[#645c50] uppercase">
               Batch ID: BATCH-{paperData.subject.code}-{paperData.paper.series.toUpperCase()}
               {paperData.paper.year}-{paperData.paper.paper_code}
             </div>
@@ -216,7 +216,7 @@ export default function StagingReview() {
           <div className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-xl font-bold border-2 border-emerald-300">
             {validatedCount} / {totalCount} Validated ✅
           </div>
-          <div className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-xl font-bold border-2 border-indigo-300">
+          <div className="bg-[#ffe1d0] text-[#c67139] px-4 py-2 rounded-xl font-bold border-2 border-[#c67139]/40">
             {diagramCount} Diagrams Extracted 🖼️
           </div>
         </div>
@@ -236,8 +236,8 @@ export default function StagingReview() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
         {/* Left Column: Navigator List */}
-        <div className="lg:col-span-1 bg-white p-4 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky max-h-[800px] overflow-y-auto">
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 border-b-2 border-slate-100 pb-2">
+        <div className="lg:col-span-1 bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-4 rounded-[28px] p-4 max-h-[800px] overflow-y-auto">
+          <h3 className="text-sm font-black text-[#201e1d] uppercase tracking-wider mb-4 border-b-2 border-[#eee7db] pb-2">
             Questions ({totalCount})
           </h3>
           <div className="space-y-2">
@@ -245,10 +245,10 @@ export default function StagingReview() {
               <button
                 key={q.id}
                 onClick={() => setSelectedQuestionIdx(idx)}
-                className={`w-full text-left p-3 rounded-xl font-bold text-sm flex items-center justify-between border-2 transition-all ${
+                className={`w-full text-left p-3 rounded-xl font-bold text-sm flex items-center justify-between border-2 transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
                   selectedQuestionIdx === idx
-                    ? 'border-indigo-600 bg-indigo-50 shadow-[0_2px_0_rgb(79,70,229)] translate-y-[-2px]'
-                    : 'border-slate-200 hover:border-slate-400 bg-white'
+                    ? 'border-[#c67139] bg-[#ffe1d0] text-[#201e1d] shadow-offset-2'
+                    : 'border-[#dcd3c4] hover:border-[#201e1d] bg-[#f9f4ed] text-[#201e1d]'
                 }`}
               >
                 <span>Q{idx + 1}</span>
@@ -262,13 +262,13 @@ export default function StagingReview() {
         </div>
 
         {/* Center/Right Column: Interactive Split-pane */}
-        <div className="lg:col-span-3 bg-white p-6 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky space-y-6">
+        <div className="lg:col-span-3 bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-4 rounded-[28px] p-6 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="bg-slate-800 text-white px-3 py-1 rounded-lg text-xs font-black">
+              <span className="bg-[#201e1d] text-[#f9f4ed] px-3 py-1 rounded-lg text-xs font-black">
                 {activeQuestion.citation}
               </span>
-              <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg text-xs font-bold">
+              <span className="bg-[#ffe1d0] text-[#c67139] px-3 py-1 rounded-lg text-xs font-bold border border-[#c67139]/30">
                 {activeQuestion.topic}
               </span>
             </div>
@@ -278,9 +278,9 @@ export default function StagingReview() {
                   status: activeQuestion.status === 'complete' ? 'review' : 'complete',
                 })
               }
-              className={`px-4 py-2 rounded-xl font-bold text-sm border-2 shadow-sm transition-all active:translate-y-0.5 active:shadow-none ${
+              className={`px-4 py-2 rounded-xl font-bold text-sm border-2 shadow-offset-2 transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
                 activeQuestion.status === 'complete'
-                  ? 'bg-slate-100 border-slate-300 text-slate-600'
+                  ? 'bg-[#eee7db] border-[#dcd3c4] text-[#645c50]'
                   : 'bg-emerald-100 border-emerald-400 text-emerald-800'
               }`}
             >
@@ -292,20 +292,20 @@ export default function StagingReview() {
             {/* Inline Editor */}
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
                   Stem (KaTeX supported)
                 </label>
                 <textarea
                   rows={3}
-                  className="w-full bg-slate-50 border-2 border-slate-800 rounded-xl px-3 py-2 font-mono text-sm text-slate-700 outline-none focus:border-indigo-400"
+                  className="w-full bg-[#fdfbf7] border-2 border-[#201e1d] rounded-xl px-3 py-2 font-mono text-sm text-[#201e1d] outline-none focus:border-[#c67139] shadow-offset-2"
                   value={activeQuestion.stem_markdown}
                   onChange={(e) => handleUpdateActiveQuestion({ stem_markdown: e.target.value })}
                 />
               </div>
 
               {activeQuestion.has_diagram && activeQuestion.image_url && (
-                <div className="p-3 bg-white rounded-xl border-2 border-slate-300 flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                <div className="p-3 bg-[#fdfbf7] rounded-xl border-2 border-[#dcd3c4] flex flex-col items-center">
+                  <span className="text-[10px] font-bold text-[#645c50] uppercase tracking-wider mb-1">
                     Extracted Diagram
                   </span>
                   <img
@@ -317,7 +317,7 @@ export default function StagingReview() {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Options</label>
+                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">Options</label>
                 <div className="space-y-2">
                   {activeQuestion.options.map((opt, i) => (
                     <div key={opt.id} className="flex items-center gap-2">
@@ -325,14 +325,14 @@ export default function StagingReview() {
                         className={`w-6 h-6 rounded flex items-center justify-center font-bold text-xs ${
                           activeQuestion.correct_option_id === opt.id
                             ? 'bg-emerald-500 text-white'
-                            : 'bg-slate-200 text-slate-600'
+                            : 'bg-[#eee7db] text-[#645c50]'
                         }`}
                       >
                         {['A', 'B', 'C', 'D'][i]}
                       </div>
                       <input
                         type="text"
-                        className="flex-1 bg-slate-50 border-2 border-slate-300 rounded-lg px-2 py-1 text-sm font-medium outline-none focus:border-indigo-400"
+                        className="flex-1 bg-[#fdfbf7] border-2 border-[#dcd3c4] rounded-lg px-2 py-1 text-sm font-medium text-[#201e1d] outline-none focus:border-[#c67139]"
                         value={opt.text_markdown}
                         onChange={(e) => {
                           const newOptions = [...activeQuestion.options];
@@ -346,12 +346,12 @@ export default function StagingReview() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
                   Explanation
                 </label>
                 <textarea
                   rows={3}
-                  className="w-full bg-slate-50 border-2 border-slate-800 rounded-xl px-3 py-2 font-mono text-sm text-slate-700 outline-none focus:border-indigo-400"
+                  className="w-full bg-[#fdfbf7] border-2 border-[#201e1d] rounded-xl px-3 py-2 font-mono text-sm text-[#201e1d] outline-none focus:border-[#c67139] shadow-offset-2"
                   value={activeQuestion.explanation_markdown}
                   onChange={(e) =>
                     handleUpdateActiveQuestion({ explanation_markdown: e.target.value })
@@ -361,8 +361,8 @@ export default function StagingReview() {
             </div>
 
             {/* Live Preview */}
-            <div className="bg-slate-100 p-4 rounded-2xl border-2 border-slate-300 shadow-inner flex flex-col items-center">
-              <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest w-full text-center">
+            <div className="bg-[#eee7db] p-4 rounded-[28px] border-2 border-[#dcd3c4] flex flex-col items-center">
+              <div className="text-xs font-bold text-[#645c50] mb-2 uppercase tracking-widest w-full text-center">
                 Live Preview
               </div>
               <div className="w-full pointer-events-auto scale-90 origin-top">
@@ -389,23 +389,23 @@ export default function StagingReview() {
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="bg-white p-6 rounded-3xl border-2 border-b-4 border-slate-800 shadow-chunky flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-4 rounded-[28px] p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
         <a
           href="/portal?nav=ingestion"
-          className="w-full sm:w-auto px-5 py-3 bg-white text-slate-700 font-bold text-sm rounded-2xl border-2 border-slate-300 hover:bg-slate-50 transition-all text-center"
+          className="w-full sm:w-auto px-5 py-3 bg-[#f9f4ed] text-[#201e1d] font-bold text-sm rounded-2xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#eee7db] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all text-center"
         >
           Open Ingestion Studio 🛠️
         </a>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <button
             onClick={handleExportJSON}
-            className="w-full sm:w-auto px-6 py-3 bg-slate-100 text-slate-700 font-bold text-lg rounded-2xl border-2 border-b-4 border-slate-800 shadow-sm hover:bg-slate-200 active:translate-y-[2px] active:border-b-2 transition-all"
+            className="w-full sm:w-auto px-6 py-3 bg-[#eee7db] text-[#201e1d] font-bold text-lg rounded-2xl border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#dcd3c4] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
           >
             Export Staging JSON 💾
           </button>
           <button
             onClick={handlePublish}
-            className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white font-black text-lg rounded-2xl shadow-[0_4px_0_rgb(67,56,202)] hover:translate-y-[2px] hover:shadow-[0_2px_0_rgb(67,56,202)] active:translate-y-[4px] active:shadow-none transition-all"
+            className="w-full sm:w-auto px-8 py-3 bg-[#c67139] text-white font-black text-lg rounded-2xl border-2 border-[#201e1d] shadow-offset-4 hover:bg-[#b2622d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
           >
             Approve & Publish to Supabase Live 🚀
           </button>
