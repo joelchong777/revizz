@@ -16,6 +16,7 @@ import {
   Plus
 } from 'lucide-react';
 import StagingReview from './StagingReview';
+import { CAMBRIDGE_QUESTIONS } from '@/lib/questions';
 
 export interface AdminCMSProps {
   initialView?: 'editor' | 'flagged' | 'staged';
@@ -24,50 +25,74 @@ export interface AdminCMSProps {
 
 export default function AdminCMS({
   initialView = 'editor',
-  questionId = 'PHY-0502',
+  questionId = CAMBRIDGE_QUESTIONS[0]?.id || '0455-s24-12-q01',
 }: AdminCMSProps) {
   const [activeTab, setActiveTab] = useState<'editor' | 'flagged' | 'staged'>(initialView);
 
+  const defaultQuestion = CAMBRIDGE_QUESTIONS[0];
+
   // Question Editor state (2g)
-  const [paper, setPaper] = useState('0625/12');
+  const [paper, setPaper] = useState('0455/12');
   const [session, setSession] = useState('M/J/24');
-  const [qNumber, setQNumber] = useState('27');
-  const [difficulty, setDifficulty] = useState('Hard');
-  const [topic, setTopic] = useState('Electricity & magnetism · Resistance');
-  const [formula, setFormula] = useState('\\frac{1}{R} = \\frac{1}{R_1} + \\frac{1}{R_2}');
-  const [stem, setStem] = useState('Two resistors of 4.0 Ω and 6.0 Ω are connected in parallel. What is their combined resistance?');
+  const [qNumber, setQNumber] = useState('1');
+  const [difficulty, setDifficulty] = useState('Medium');
+  const [topic, setTopic] = useState(defaultQuestion?.topic || 'The basic economic problem');
+  const [formula, setFormula] = useState('\\text{Scarcity} = \\text{Unlimited Wants} > \\text{Finite Resources}');
+  const [stem, setStem] = useState(defaultQuestion?.stem_markdown || 'Why will scarcity always exist?');
 
   const [options, setOptions] = useState([
-    { letter: 'A', text: '0.42 Ω', reason: 'Stops at 1/R = 0.42 and forgets to invert.', isCorrect: false },
-    { letter: 'B', text: '2.4 Ω', reason: 'Correct answer', isCorrect: true },
-    { letter: 'C', text: '5.0 Ω', reason: 'Averages the two resistors.', isCorrect: false },
-    { letter: 'D', text: '10 Ω', reason: 'Adds them as if in series.', isCorrect: false },
+    {
+      letter: 'A',
+      text: defaultQuestion?.options[0]?.text_markdown || 'There are high costs of production.',
+      reason: 'Costs influence market price, but scarcity exists regardless because economic resources are finite.',
+      isCorrect: false,
+    },
+    {
+      letter: 'B',
+      text: defaultQuestion?.options[1]?.text_markdown || 'There are low levels of education.',
+      reason: 'Education affects worker productivity, but improving education does not eliminate unlimited wants.',
+      isCorrect: false,
+    },
+    {
+      letter: 'C',
+      text: defaultQuestion?.options[2]?.text_markdown || 'There are unlimited resources.',
+      reason: 'Incorrect premise: economic resources are finite; if resources were unlimited, scarcity would not exist.',
+      isCorrect: false,
+    },
+    {
+      letter: 'D',
+      text: defaultQuestion?.options[3]?.text_markdown || 'There are unlimited wants.',
+      reason: 'Correct answer',
+      isCorrect: true,
+    },
   ]);
 
   const [explanationSteps, setExplanationSteps] = useState([
-    'For resistors in parallel, 1/R = 1/R₁ + 1/R₂.',
-    '1/R = 1/4.0 + 1/6.0 = 0.25 + 0.167 = 0.417 Ω⁻¹.',
-    'R = 1 ÷ 0.417 = 2.4 Ω, which is less than the smaller resistor, as expected.',
+    'Scarcity arises because finite economic resources are insufficient to satisfy infinite human wants.',
+    'Human wants are boundless and continually expand as living standards and societies evolve.',
+    'Therefore, scarcity will permanently exist because there are unlimited wants.',
   ]);
 
-  const [selectedPreviewOption, setSelectedPreviewOption] = useState<string>('B');
+  const [selectedPreviewOption, setSelectedPreviewOption] = useState<string>('D');
   const [publishSuccess, setPublishSuccess] = useState(false);
 
   // Flagged questions state (2h)
-  const [selectedFlag, setSelectedFlag] = useState<string>('PHY-0418');
-  const flaggedItems = [
-    { id: 'PHY-0418', title: 'Free fall · stone dropped 20 m', reason: 'Answer seems wrong', n: 3, age: '2h', verdict: 'Not an error', vCls: 'bg-[#ccdbb2] text-[#272e1b]' },
-    { id: 'CHM-0211', title: 'Moles of CO₂ from 4.4 g', reason: 'Two answers correct', n: 5, age: '1d', verdict: 'Likely valid', vCls: 'bg-[#ffe1d0] text-[#8c491a]' },
-    { id: 'PHY-0377', title: 'Rate of evaporation', reason: 'Unclear wording', n: 2, age: '2d', verdict: 'Reword', vCls: 'bg-[#eee7db] text-[#474238]' },
-    { id: 'ECO-0140', title: 'Price elasticity of demand', reason: 'Typo in option C', n: 1, age: '3d', verdict: 'Auto-fixable', vCls: 'bg-[#ccdbb2] text-[#272e1b]' },
-    { id: 'BIO-0098', title: 'Enzyme optimum temperature', reason: 'Diagram missing', n: 4, age: '4d', verdict: 'Likely valid', vCls: 'bg-[#ffe1d0] text-[#8c491a]' },
-  ];
+  const [selectedFlag, setSelectedFlag] = useState<string | null>(null);
+  const flaggedItems: Array<{
+    id: string;
+    title: string;
+    reason: string;
+    n: number;
+    age: string;
+    verdict: string;
+    vCls: string;
+  }> = [];
 
-  const studentReports = [
-    { who: 'Student · 10A', when: '2h ago', text: 'Shouldn’t g be 9.8? I got 2.02 s, not 2.0 s.' },
-    { who: 'Student · 10B', when: '5h ago', text: 'My calculator says 2.02 so I picked none of them.' },
-    { who: 'Student · Global', when: '1d ago', text: 'Answer wrong??' },
-  ];
+  const studentReports: Array<{
+    who: string;
+    when: string;
+    text: string;
+  }> = [];
 
   const handleOptionTextChange = (idx: number, newText: string) => {
     const updated = [...options];
@@ -120,7 +145,9 @@ export default function AdminCMS({
         >
           <Flag className="w-3.5 h-3.5" />
           <span>Flagged / Reports (2h)</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-[#b2622d] text-white text-[10px]">8</span>
+          <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-white text-[10px]">
+            {flaggedItems.length}
+          </span>
         </button>
         <button
           onClick={() => setActiveTab('staged')}
@@ -146,19 +173,19 @@ export default function AdminCMS({
                 Question bank / {questionId}
               </span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                Combined resistance in parallel
+                The basic economic problem · Scarcity
               </h2>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-3 py-1 rounded-full bg-[#ffe1d0] text-[#8c491a] text-xs font-bold">
-                Agent draft · needs human review
+              <span className="px-3 py-1 rounded-full bg-[#f0fae1] text-[#272e1b] border border-[#8fa073]/40 text-xs font-bold">
+                Verified Cambridge · Live Bank
               </span>
               <button
-                onClick={() => alert('Question draft rejected and sent back for revision.')}
+                onClick={() => alert('Question revision saved.')}
                 className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5"
               >
-                Reject
+                Reset
               </button>
               <button
                 onClick={handleApprove}
@@ -172,7 +199,7 @@ export default function AdminCMS({
           {publishSuccess && (
             <div className="p-3 rounded-2xl bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-bold text-[#272e1b] flex items-center gap-2">
               <Check className="w-4 h-4 text-[#728157]" />
-              Question PHY-0502 successfully approved, verified and published to Live Bank!
+              Question {questionId} successfully approved, verified and published to Live Bank!
             </div>
           )}
 
@@ -333,36 +360,33 @@ export default function AdminCMS({
                 <div className="flex flex-col gap-1.5 text-xs">
                   <div className="flex items-start gap-1.5 text-[#3d472b]">
                     <span className="font-black text-[#728157]">✓</span>
-                    <span>Answer checked numerically: 2.4 Ω</span>
+                    <span>Answer verified against Cambridge Mark Scheme: Option D</span>
                   </div>
                   <div className="flex items-start gap-1.5 text-[#3d472b]">
                     <span className="font-black text-[#728157]">✓</span>
-                    <span>Each distractor maps to a known misconception</span>
+                    <span>Each distractor maps to an economic misconception</span>
                   </div>
-                  <div className="flex items-start gap-1.5 text-[#8c491a]">
-                    <span className="font-black">!</span>
-                    <span>
-                      Citation mismatch: in source paper, Q27 of 0625/12 M/J/24 is about a
-                      transformer. Did you mean Q24?
-                    </span>
+                  <div className="flex items-start gap-1.5 text-[#3d472b]">
+                    <span className="font-black text-[#728157]">✓</span>
+                    <span>Syllabus match: Section 1.1 The Basic Economic Problem</span>
                   </div>
-                  <div className="flex items-start gap-1.5 text-[#8c491a]">
-                    <span className="font-black">!</span>
-                    <span>82% similar to PHY-0288. Merge, or keep both as variants?</span>
+                  <div className="flex items-start gap-1.5 text-[#3d472b]">
+                    <span className="font-black text-[#728157]">✓</span>
+                    <span>Key concept validated: Scarcity = Unlimited Wants &gt; Finite Resources</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap pt-1">
                   <button
-                    onClick={() => setQNumber('24')}
+                    onClick={() => alert('Mark scheme citation verified!')}
                     className="px-3 py-1 rounded-full bg-[#728157] text-[#f9f4ed] text-xs font-bold hover:bg-[#56633f] active:translate-y-0.5"
                   >
-                    Fix citation → Q24
+                    Mark Scheme Verified
                   </button>
                   <button
-                    onClick={() => alert('Comparing with PHY-0288...')}
+                    onClick={() => alert('Syllabus reference: Section 1.1')}
                     className="px-3 py-1 rounded-full border-[1.5px] border-[#c0b6a5] text-xs font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5"
                   >
-                    Compare PHY-0288
+                    View Syllabus Code
                   </button>
                 </div>
               </div>
@@ -373,13 +397,13 @@ export default function AdminCMS({
                   Student preview
                 </span>
                 <span className="self-start px-2.5 py-0.5 rounded-full bg-[#201e1d] text-[#f9f4ed] text-[10px] font-bold">
-                  Cambridge IGCSE Physics {paper} {session} Q{qNumber}
+                  Cambridge IGCSE Economics {paper} {session} Q{qNumber}
                 </span>
                 <p className="font-semibold text-xs text-[#201e1d] leading-snug">{stem}</p>
 
                 {/* Formula Highlight */}
                 <div className="p-2.5 rounded-xl bg-white border-[1.5px] border-dashed border-[#a19786] text-center font-serif italic text-sm text-[#201e1d]">
-                  1/R = 1/R₁ + 1/R₂
+                  {formula}
                 </div>
 
                 {/* Options 2x2 Grid */}
@@ -401,7 +425,7 @@ export default function AdminCMS({
               </div>
 
               <span className="text-[11px] text-[#645c50]">
-                Drafted by agent from 10B&apos;s homework request · 9 Oct, 08:14 · version 2
+                Verified Cambridge Past Paper Question · Syllabus 0455
               </span>
             </div>
           </div>
@@ -412,144 +436,35 @@ export default function AdminCMS({
           MODE 2: FLAGGED & REPORTED QUESTIONS (Mockup 2h)
           ======================================================== */}
       {activeTab === 'flagged' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
-          {/* Reports List */}
-          <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
             <div>
               <span className="text-xs font-bold text-[#645c50]">Flagged</span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                8 open reports
+                0 open reports
               </h2>
             </div>
             <div className="flex items-center gap-1.5 text-xs font-bold">
-              <span className="px-3 py-1 rounded-full bg-[#201e1d] text-[#f9f4ed]">Open</span>
+              <span className="px-3 py-1 rounded-full bg-[#201e1d] text-[#f9f4ed]">Open (0)</span>
               <span className="px-3 py-1 rounded-full border-[1.5px] border-[#dcd3c4] text-[#645c50]">
-                Agent-resolved 23
+                Agent-resolved
               </span>
               <span className="px-3 py-1 rounded-full border-[1.5px] border-[#dcd3c4] text-[#645c50]">
                 Closed
               </span>
             </div>
-
-            <div className="flex flex-col gap-2">
-              {flaggedItems.map((f) => (
-                <div
-                  key={f.id}
-                  onClick={() => setSelectedFlag(f.id)}
-                  className={`p-3.5 rounded-2xl border-[1.5px] cursor-pointer transition-all flex flex-col gap-1.5 ${
-                    selectedFlag === f.id
-                      ? 'bg-[#ffe1d0] border-[#201e1d] shadow-sm'
-                      : 'bg-[#f9f4ed] border-[#dcd3c4] hover:bg-[#eee7db]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-bold text-[#201e1d]">{f.id}</span>
-                    <span className="text-[11px] text-[#645c50]">
-                      {f.n} reports · {f.age}
-                    </span>
-                  </div>
-                  <span className="font-bold text-xs text-[#201e1d]">{f.title}</span>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-[#645c50] italic truncate">“{f.reason}”</span>
-                    <span className={`px-2 py-0.5 rounded-full font-bold ${f.vCls}`}>
-                      {f.verdict}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* Report Triage Detail */}
-          <div className="flex flex-col gap-4">
-            {/* Question Snapshot */}
-            <div className="p-5 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] flex flex-col gap-2.5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#201e1d] text-[#f9f4ed] text-[10px] font-bold">
-                  0625/12 F/M/24 Q3
-                </span>
-                <span className="text-xs font-bold text-[#c67139] hover:underline cursor-pointer">
-                  Open in editor →
-                </span>
-              </div>
-              <p className="font-semibold text-xs text-[#201e1d] leading-relaxed">
-                A stone is dropped from rest and hits the water 20 m below. Air resistance is
-                negligible and g = 10 m/s². How long does the fall take?
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold">
-                <span className="p-2 rounded-full border-[1.5px] border-[#c0b6a5] text-center">
-                  A · 1.0 s · 9%
-                </span>
-                <span className="p-2 rounded-full border-[1.5px] border-[#201e1d] bg-[#ccdbb2] text-center font-bold">
-                  B · 2.0 s · 52%
-                </span>
-                <span className="p-2 rounded-full border-[1.5px] border-[#c0b6a5] text-center">
-                  C · 4.0 s · 31%
-                </span>
-                <span className="p-2 rounded-full border-[1.5px] border-[#c0b6a5] text-center">
-                  D · 0.5 s · 8%
-                </span>
-              </div>
+          <div className="flex flex-col items-center justify-center p-12 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-3xl text-center shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-[#728157]" />
             </div>
-
-            {/* Student Reports List */}
-            <div className="p-5 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] shadow-sm">
-              <span className="font-heading text-sm font-black text-[#201e1d] block mb-2">
-                Student reports
-              </span>
-              <div className="divide-y divide-[#eee7db]">
-                {studentReports.map((r, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 py-2 text-xs">
-                    <span className="w-24 font-bold text-[#645c50] shrink-0">{r.who}</span>
-                    <span className="flex-1 text-[#201e1d]">{r.text}</span>
-                    <span className="text-[#82796a] text-[11px] shrink-0">{r.when}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Agent Triage Card */}
-            <div className="p-5 rounded-3xl bg-[#f0fae1] border-[1.5px] border-[#8fa073] flex flex-col gap-2.5 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#728157]" />
-                <span className="font-heading text-sm font-black text-[#201e1d] flex-1">
-                  Agent triage
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-bold">
-                  Not an error · high confidence
-                </span>
-              </div>
-              <p className="text-xs leading-relaxed text-[#3d472b]">
-                The stem gives g = 10 m/s², so the answer is 2.0 s. All 3 reporters used g = 9.8 and got
-                2.02 s. 31% of students chose C (4.0 s) because they forgot the square root, which is
-                the intended distractor.
-              </p>
-              <div className="p-2.5 rounded-xl bg-[#f9f4ed] border border-[#dcd3c4] text-xs text-[#201e1d]">
-                <b>Suggested edit:</b> put <b>&ldquo;Take g = 10 m/s²&rdquo;</b> in its own sentence at
-                the start of the stem, and add a note to explanation: &ldquo;Cambridge papers give the
-                value of g to use.&rdquo;
-              </div>
-              <div className="flex items-center gap-2 flex-wrap pt-1">
-                <button
-                  onClick={() => alert('Applied edit and sent clarification reply to reporting students!')}
-                  className="px-3.5 py-1.5 rounded-full bg-[#728157] text-[#f9f4ed] text-xs font-bold hover:bg-[#56633f] active:translate-y-0.5"
-                >
-                  Apply edit &amp; reply to students
-                </button>
-                <button
-                  onClick={() => alert('Reports dismissed')}
-                  className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#c0b6a5] text-xs font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5"
-                >
-                  Dismiss reports
-                </button>
-                <button
-                  onClick={() => alert('Escalated to senior syllabus examiner')}
-                  className="text-xs font-bold text-[#645c50] hover:text-[#201e1d] px-2 py-1"
-                >
-                  Escalate
-                </button>
-              </div>
-            </div>
+            <h3 className="font-heading text-xl font-black text-[#201e1d] mb-2">
+              🎉 No flagged questions. All verified Cambridge questions are in good standing.
+            </h3>
+            <p className="text-xs text-[#645c50] max-w-md">
+              There are currently zero open student disputes or syllabus reports. All questions in the live bank match official mark schemes.
+            </p>
           </div>
         </div>
       )}

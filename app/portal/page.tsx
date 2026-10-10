@@ -10,6 +10,7 @@ import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import TeacherAnalytics from '@/components/portal/TeacherAnalytics';
 import IngestionHub from '@/components/portal/IngestionHub';
+import { fetchWeeklyLeaderboard, LeaderboardEntry } from '@/lib/leaderboard';
 
 const NAV_LABELS: Record<string, string> = {
   overview: 'Overview',
@@ -24,6 +25,21 @@ const NAV_LABELS: Record<string, string> = {
   school: 'School & licence',
 };
 
+const getInitials = (name?: string) => {
+  if (!name) return '??';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+};
+
+const getTier = (xp: number) => {
+  if (xp >= 1000) return '👑 Master';
+  if (xp >= 300) return '⚡ Proficient';
+  return '🌱 Novice';
+};
+
 function PortalContent() {
   const { userProfile, loading } = useAuth();
   const searchParams = useSearchParams();
@@ -33,6 +49,34 @@ function PortalContent() {
   const [activeNav, setActiveNav] = useState<string>('overview');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | undefined>(undefined);
+
+  // Leaderboard state
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeNav === 'xp') {
+      let mounted = true;
+      setLeaderboardLoading(true);
+      fetchWeeklyLeaderboard()
+        .then((entries) => {
+          if (mounted) {
+            setLeaderboard(entries);
+            setLeaderboardLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching leaderboard in portal:', err);
+          if (mounted) {
+            setLeaderboard([]);
+            setLeaderboardLoading(false);
+          }
+        });
+      return () => {
+        mounted = false;
+      };
+    }
+  }, [activeNav]);
 
   // Dev override to quickly preview UI in development
   const isDev = process.env.NODE_ENV === 'development';
@@ -177,7 +221,7 @@ function PortalContent() {
                   Leaderboard & XP Milestones 🏆
                 </h1>
                 <p className="text-sm font-medium text-[#645c50] mt-1">
-                  Weekly study streaks, student XP rankings, and active mastery momentum for 10B Physics.
+                  Weekly study streaks, student XP rankings, and active mastery momentum.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -198,82 +242,118 @@ function PortalContent() {
               </div>
             </div>
 
-            {/* Top 3 Podium Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* 1st Place */}
-              <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-4 flex flex-col items-center text-center relative overflow-hidden order-1 sm:order-2 sm:-translate-y-2">
-                <div className="absolute top-2 right-2 text-2xl">🥇</div>
-                <div className="w-14 h-14 rounded-full border-2 border-[#201e1d] bg-[#ccdbb2] flex items-center justify-center font-black text-lg text-[#201e1d] shadow-offset-2 mb-3">
-                  PS
+            {leaderboardLoading ? (
+              <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-12 shadow-offset-4 text-center">
+                <div className="text-3xl animate-bounce">⏳</div>
+                <p className="text-sm font-bold text-[#645c50] mt-2">Loading leaderboard standings...</p>
+              </div>
+            ) : leaderboard.length < 3 ? (
+              <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-8 sm:p-12 shadow-offset-4 text-center space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
+                  🏆
                 </div>
-                <span className="font-heading text-lg font-black text-[#201e1d]">Priya S.</span>
-                <span className="text-xs font-bold text-[#645c50] mt-0.5">12 Day Streak 🔥</span>
-                <div className="mt-3 px-3 py-1 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-xs font-black text-[#272e1b]">
-                  1,280 XP
+                <div className="space-y-1">
+                  <h2 className="font-heading text-xl font-black text-[#201e1d]">Leaderboard Standings</h2>
+                  <p className="text-sm font-medium text-[#645c50] max-w-md mx-auto">
+                    No student activity recorded on the leaderboard yet. Students will appear here as they complete rounds and earn XP!
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveNav('assign')}
+                    className="px-5 py-2.5 text-xs sm:text-sm font-bold rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5"
+                  >
+                    Assign Challenge Round
+                  </button>
                 </div>
               </div>
-
-              {/* 2nd Place */}
-              <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-3 flex flex-col items-center text-center relative order-2 sm:order-1">
-                <div className="absolute top-2 right-2 text-2xl">🥈</div>
-                <div className="w-12 h-12 rounded-full border-2 border-[#201e1d] bg-[#ffe1d0] flex items-center justify-center font-black text-base text-[#201e1d] shadow-offset-2 mb-3">
-                  OK
-                </div>
-                <span className="font-heading text-base font-black text-[#201e1d]">Omar K.</span>
-                <span className="text-xs font-bold text-[#645c50] mt-0.5">7 Day Streak 🔥</span>
-                <div className="mt-3 px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] text-xs font-black text-[#643312]">
-                  1,105 XP
-                </div>
-              </div>
-
-              {/* 3rd Place */}
-              <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-3 flex flex-col items-center text-center relative order-3">
-                <div className="absolute top-2 right-2 text-2xl">🥉</div>
-                <div className="w-12 h-12 rounded-full border-2 border-[#201e1d] bg-[#ffe1d0] flex items-center justify-center font-black text-base text-[#201e1d] shadow-offset-2 mb-3">
-                  ML
-                </div>
-                <span className="font-heading text-base font-black text-[#201e1d]">Mei L.</span>
-                <span className="text-xs font-bold text-[#645c50] mt-0.5">3 Day Streak 🔥</span>
-                <div className="mt-3 px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] text-xs font-black text-[#643312]">
-                  960 XP
-                </div>
-              </div>
-            </div>
-
-            {/* Cohort XP Leaderboard Table */}
-            <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-4 overflow-hidden">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b-[1.5px] border-[#dcd3c4]">
-                <h2 className="font-heading text-lg font-black text-[#201e1d]">Cohort Standings</h2>
-                <span className="text-xs font-bold text-[#645c50]">Class 10B · 8 Active Students</span>
-              </div>
-              <div className="divide-y divide-[#eee7db]">
-                {[
-                  { rank: 1, name: 'Priya S.', xp: 1280, streak: 12, acc: '86%', tier: '👑 Master' },
-                  { rank: 2, name: 'Omar K.', xp: 1105, streak: 7, acc: '79%', tier: '⚡ Proficient' },
-                  { rank: 3, name: 'Mei L.', xp: 960, streak: 3, acc: '72%', tier: '⚡ Proficient' },
-                  { rank: 4, name: 'Hana O.', xp: 610, streak: 5, acc: '70%', tier: '⚡ Proficient' },
-                  { rank: 5, name: 'Alex M.', xp: 340, streak: 4, acc: '66%', tier: '⚡ Proficient' },
-                  { rank: 6, name: 'Jonah R.', xp: 310, streak: 0, acc: '44%', tier: '🌱 Novice' },
-                  { rank: 7, name: 'Sara A.', xp: 285, streak: 0, acc: '51%', tier: '⚡ Proficient' },
-                  { rank: 8, name: 'Leo T.', xp: 240, streak: 1, acc: '48%', tier: '🌱 Novice' },
-                ].map((student) => (
-                  <div key={student.rank} className="py-2.5 flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 text-center font-black text-xs text-[#645c50]">#{student.rank}</span>
-                      <span className="font-bold text-[#201e1d]">{student.name}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#eee7db] text-[#474238] font-medium hidden sm:inline-block">
-                        {student.tier}
-                      </span>
+            ) : (
+              <>
+                {/* Top 3 Podium Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* 1st Place */}
+                  <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-4 flex flex-col items-center text-center relative overflow-hidden order-1 sm:order-2 sm:-translate-y-2">
+                    <div className="absolute top-2 right-2 text-2xl">🥇</div>
+                    <div className="w-14 h-14 rounded-full border-2 border-[#201e1d] bg-[#ccdbb2] flex items-center justify-center font-black text-lg text-[#201e1d] shadow-offset-2 mb-3">
+                      {getInitials(leaderboard[0].display_name)}
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs text-[#645c50]">{student.streak > 0 ? `${student.streak}d streak` : 'Inactive'}</span>
-                      <span className="text-xs font-bold text-[#201e1d]">{student.acc}</span>
-                      <span className="font-black text-[#c67139] w-16 text-right">{student.xp} XP</span>
+                    <span className="font-heading text-lg font-black text-[#201e1d]">
+                      {leaderboard[0].display_name}
+                    </span>
+                    <span className="text-xs font-bold text-[#645c50] mt-0.5">
+                      {(leaderboard[0].current_streak ?? 0) > 0 ? `${leaderboard[0].current_streak} Day Streak 🔥` : 'Active Streak 🔥'}
+                    </span>
+                    <div className="mt-3 px-3 py-1 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-xs font-black text-[#272e1b]">
+                      {(leaderboard[0].total_xp || 0).toLocaleString()} XP
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  {/* 2nd Place */}
+                  <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-3 flex flex-col items-center text-center relative order-2 sm:order-1">
+                    <div className="absolute top-2 right-2 text-2xl">🥈</div>
+                    <div className="w-12 h-12 rounded-full border-2 border-[#201e1d] bg-[#ffe1d0] flex items-center justify-center font-black text-base text-[#201e1d] shadow-offset-2 mb-3">
+                      {getInitials(leaderboard[1].display_name)}
+                    </div>
+                    <span className="font-heading text-base font-black text-[#201e1d]">
+                      {leaderboard[1].display_name}
+                    </span>
+                    <span className="text-xs font-bold text-[#645c50] mt-0.5">
+                      {(leaderboard[1].current_streak ?? 0) > 0 ? `${leaderboard[1].current_streak} Day Streak 🔥` : 'Active Streak 🔥'}
+                    </span>
+                    <div className="mt-3 px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] text-xs font-black text-[#643312]">
+                      {(leaderboard[1].total_xp || 0).toLocaleString()} XP
+                    </div>
+                  </div>
+
+                  {/* 3rd Place */}
+                  <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-3 flex flex-col items-center text-center relative order-3">
+                    <div className="absolute top-2 right-2 text-2xl">🥉</div>
+                    <div className="w-12 h-12 rounded-full border-2 border-[#201e1d] bg-[#ffe1d0] flex items-center justify-center font-black text-base text-[#201e1d] shadow-offset-2 mb-3">
+                      {getInitials(leaderboard[2].display_name)}
+                    </div>
+                    <span className="font-heading text-base font-black text-[#201e1d]">
+                      {leaderboard[2].display_name}
+                    </span>
+                    <span className="text-xs font-bold text-[#645c50] mt-0.5">
+                      {(leaderboard[2].current_streak ?? 0) > 0 ? `${leaderboard[2].current_streak} Day Streak 🔥` : 'Active Streak 🔥'}
+                    </span>
+                    <div className="mt-3 px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] text-xs font-black text-[#643312]">
+                      {(leaderboard[2].total_xp || 0).toLocaleString()} XP
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cohort XP Leaderboard Table */}
+                <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-5 shadow-offset-4 overflow-hidden">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b-[1.5px] border-[#dcd3c4]">
+                    <h2 className="font-heading text-lg font-black text-[#201e1d]">Cohort Standings</h2>
+                    <span className="text-xs font-bold text-[#645c50]">{leaderboard.length} Active Students</span>
+                  </div>
+                  <div className="divide-y divide-[#eee7db]">
+                    {leaderboard.map((student, idx) => (
+                      <div key={student.id || idx} className="py-2.5 flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 text-center font-black text-xs text-[#645c50]">#{student.rank ?? idx + 1}</span>
+                          <span className="font-bold text-[#201e1d]">{student.display_name}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-[#eee7db] text-[#474238] font-medium hidden sm:inline-block">
+                            {getTier(student.total_xp || 0)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs text-[#645c50]">
+                            {(student.current_streak ?? 0) > 0 ? `${student.current_streak}d streak` : 'Inactive'}
+                          </span>
+                          <span className="font-black text-[#c67139] w-16 text-right">
+                            {(student.total_xp || 0).toLocaleString()} XP
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         );
       case 'bank':

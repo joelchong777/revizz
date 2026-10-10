@@ -18,6 +18,7 @@ import {
   Filter
 } from 'lucide-react';
 import IngestionHub from '@/components/portal/IngestionHub';
+import { CAMBRIDGE_QUESTIONS } from '@/lib/questions';
 
 export interface AdminToolsProps {
   initialView?: 'assign' | 'bank' | 'importer';
@@ -31,13 +32,13 @@ export default function AdminTools({
   const [activeSubTab, setActiveSubTab] = useState<'assign' | 'bank' | 'importer'>(initialView);
 
   // Homework Assigner State (2c)
-  const [aiPrompt, setAiPrompt] = useState('Build 10B a homework round on their weakest Electricity subtopics');
-  const [selectedClass, setSelectedClass] = useState('10B Physics · 26');
-  const [subject, setSubject] = useState('⚛️ Physics 0625');
+  const [aiPrompt, setAiPrompt] = useState('Build 10 Economics a homework round on their weakest Allocation of Resources subtopics');
+  const [selectedClass, setSelectedClass] = useState('10 Economics · 26');
+  const [subject, setSubject] = useState('📈 Economics 0455');
   const [topics, setTopics] = useState<string[]>([
-    'Electricity · Resistance',
-    'Electricity · Power',
-    'Electricity · Circuits',
+    'The basic economic problem',
+    'The allocation of resources',
+    'Microeconomic decision makers',
   ]);
   const [roundLength, setRoundLength] = useState<number | 'Custom'>(8);
   const [timerMode, setTimerMode] = useState<'Chill' | 'Exam'>('Exam');
@@ -50,35 +51,118 @@ export default function AdminTools({
 
   // Assigned Questions Dataset
   const assignQs = [
-    { id: 'PHY-0502', stem: 'Two resistors of 4.0 Ω and 6.0 Ω in parallel…', topic: 'Electricity', acc: 'new', agent: true },
-    { id: 'PHY-0244', stem: 'A lamp is rated 12 V, 24 W. What current does it draw…', topic: 'Electricity', acc: '41%', agent: false },
-    { id: 'PHY-0251', stem: 'Which circuit has the lowest total resistance?', topic: 'Electricity', acc: '38%', agent: false },
-    { id: 'PHY-0507', stem: 'A 3.0 Ω and 6.0 Ω resistor are in series with a 9.0 V cell…', topic: 'Electricity', acc: 'new', agent: true },
-    { id: 'PHY-0262', stem: 'The p.d. across a resistor doubles. What happens to…', topic: 'Electricity', acc: '52%', agent: false },
+    {
+      id: CAMBRIDGE_QUESTIONS[0]?.id || '0455-s24-12-q01',
+      stem: CAMBRIDGE_QUESTIONS[0]?.stem_markdown || 'Why will scarcity always exist?',
+      topic: CAMBRIDGE_QUESTIONS[0]?.topic || 'The basic economic problem',
+      acc: '78%',
+      agent: false,
+    },
+    {
+      id: CAMBRIDGE_QUESTIONS[1]?.id || '0455-s24-12-q02',
+      stem: CAMBRIDGE_QUESTIONS[1]?.stem_markdown || 'A student decides to take up a two-year apprenticeship...',
+      topic: CAMBRIDGE_QUESTIONS[1]?.topic || 'The basic economic problem',
+      acc: '41%',
+      agent: false,
+    },
+    {
+      id: CAMBRIDGE_QUESTIONS[2]?.id || '0455-s24-12-q03',
+      stem: CAMBRIDGE_QUESTIONS[2]?.stem_markdown || 'The diagram shows a country’s production possibility curve (PPC)...',
+      topic: CAMBRIDGE_QUESTIONS[2]?.topic || 'The basic economic problem',
+      acc: '38%',
+      agent: false,
+    },
+    {
+      id: CAMBRIDGE_QUESTIONS[3]?.id || '0455-s24-12-q04',
+      stem: CAMBRIDGE_QUESTIONS[3]?.stem_markdown || 'What is not a macroeconomic topic?',
+      topic: CAMBRIDGE_QUESTIONS[3]?.topic || 'The allocation of resources',
+      acc: 'new',
+      agent: true,
+    },
+    {
+      id: CAMBRIDGE_QUESTIONS[4]?.id || '0455-s24-12-q05',
+      stem: CAMBRIDGE_QUESTIONS[4]?.stem_markdown || 'What is likely to cause an extension in demand for a firm’s fruit drink?',
+      topic: CAMBRIDGE_QUESTIONS[4]?.topic || 'The allocation of resources',
+      acc: '52%',
+      agent: false,
+    },
   ];
 
   // Question Bank State (2f)
   const [bankSearch, setBankSearch] = useState('');
   const [bankStatusFilter, setBankStatusFilter] = useState<string>('All');
 
-  const questionBankItems = [
-    { id: 'PHY-0412', stem: 'A car starts from rest and accelerates uniformly…', cite: '0625/12 M/J/23 Q4', topic: 'Motion · Kinematics', diff: 'Easy', acc: '81%', st: 'Live', stCls: 'bg-[#ccdbb2] text-[#272e1b]', upd: '2 Oct' },
-    { id: 'PHY-0413', stem: 'A car of mass 1200 kg has an acceleration of 2.5 m/s²…', cite: '0625/22 O/N/22 Q6', topic: 'Motion · Forces', diff: 'Medium', acc: '64%', st: 'Live', stCls: 'bg-[#ccdbb2] text-[#272e1b]', upd: '2 Oct' },
-    { id: 'PHY-0418', stem: 'A stone is dropped from rest and hits the water 20 m below…', cite: '0625/12 F/M/24 Q3', topic: 'Motion · Free fall', diff: 'Medium', acc: '52%', st: 'Flagged', stCls: 'bg-[#ffe1d0] text-[#643312]', upd: '7 Oct' },
-    { id: 'PHY-0421', stem: 'A metal block has a mass of 540 g and a volume of 200 cm³…', cite: '0625/22 M/J/22 Q5', topic: 'Motion · Density', diff: 'Easy', acc: '77%', st: 'Live', stCls: 'bg-[#ccdbb2] text-[#272e1b]', upd: '28 Sep' },
-    { id: 'PHY-0430', stem: 'A trolley of mass 2.0 kg moves at 3.0 m/s…', cite: '0625/12 O/N/23 Q9', topic: 'Motion · Energy', diff: 'Easy', acc: '69%', st: 'Live', stCls: 'bg-[#ccdbb2] text-[#272e1b]', upd: '28 Sep' },
-    { id: 'PHY-0502', stem: 'Two resistors of 4.0 Ω and 6.0 Ω are connected in parallel…', cite: '0625/12 M/J/24 Q27', topic: 'Electricity · Resistance', diff: 'Hard', acc: '—', st: 'Agent draft', stCls: 'bg-[#ffe1d0] text-[#8c491a]', upd: 'Today' },
-    { id: 'PHY-0503', stem: 'A wave has a frequency of 50 Hz and a wavelength of…', cite: '0625/22 M/J/24 Q19', topic: 'Waves · Properties', diff: 'Medium', acc: '—', st: 'Agent draft', stCls: 'bg-[#ffe1d0] text-[#8c491a]', upd: 'Today' },
-    { id: 'PHY-0377', stem: 'Which change increases the rate of evaporation of a liquid?', cite: '0625/12 O/N/21 Q14', topic: 'Thermal · Particles', diff: 'Medium', acc: '58%', st: 'Needs review', stCls: 'bg-[#eee7db] text-[#474238]', upd: '19 Sep' },
-  ];
+  const questionBankItems = CAMBRIDGE_QUESTIONS.map((q, idx) => {
+    const qNum = idx + 1;
+    let st: 'Live' | 'Agent draft' | 'Needs review' | 'Flagged' = 'Live';
+    let stCls = 'bg-[#ccdbb2] text-[#272e1b]';
 
+    if (qNum === 20 || qNum === 27) {
+      st = 'Agent draft';
+      stCls = 'bg-[#ffe1d0] text-[#8c491a]';
+    } else if (qNum === 10 || qNum === 14) {
+      st = 'Needs review';
+      stCls = 'bg-[#eee7db] text-[#474238]';
+    } else if (qNum === 3 || qNum === 6) {
+      st = 'Flagged';
+      stCls = 'bg-[#ffe1d0] text-[#643312]';
+    }
+
+    const difficulties: Array<'Easy' | 'Medium' | 'Hard'> = [
+      'Easy', 'Easy', 'Medium', 'Easy', 'Medium', 'Hard', 'Medium', 'Hard', 'Medium', 'Medium',
+      'Easy', 'Hard', 'Easy', 'Medium', 'Easy', 'Medium', 'Hard', 'Medium', 'Hard', 'Medium',
+      'Easy', 'Medium', 'Easy', 'Hard', 'Medium', 'Easy', 'Hard', 'Hard', 'Medium', 'Hard'
+    ];
+    const accuracies = [
+      '86%', '74%', '58%', '81%', '69%', '44%', '62%', '49%', '57%', '51%',
+      '83%', '46%', '79%', '53%', '77%', '65%', '48%', '61%', '43%', '—',
+      '82%', '67%', '76%', '55%', '63%', '88%', '—', '47%', '59%', '52%'
+    ];
+    const updateDates = [
+      '2 Oct', '2 Oct', '7 Oct', '28 Sep', '28 Sep', 'Today', 'Today', '19 Sep', '2 Oct', '7 Oct',
+      '28 Sep', '19 Sep', '2 Oct', '28 Sep', 'Today', '2 Oct', '19 Sep', '28 Sep', 'Today', 'Today',
+      '2 Oct', '28 Sep', '2 Oct', '19 Sep', '28 Sep', '2 Oct', 'Today', '19 Sep', '28 Sep', '2 Oct'
+    ];
+
+    const diff = difficulties[idx] || 'Medium';
+    const acc = accuracies[idx] || '65%';
+    const upd = updateDates[idx] || '2 Oct';
+
+    const cite = q.citation
+      ? q.citation
+          .replace('Cambridge IGCSE Economics ', '')
+          .replace('May/June ', 'M/J/')
+          .replace('October/November ', 'O/N/')
+          .replace('Feb/March ', 'F/M/')
+      : `0455/12 M/J/24 Q${qNum}`;
+
+    return {
+      id: q.id,
+      stem: q.stem_markdown,
+      cite,
+      topic: q.topic || 'Economics',
+      diff,
+      acc,
+      st,
+      stCls,
+      upd,
+    };
+  });
+
+  const filteredBankItems = questionBankItems.filter(
+    (q) =>
+      (bankStatusFilter === 'All' || q.st === bankStatusFilter) &&
+      (q.stem.toLowerCase().includes(bankSearch.toLowerCase()) ||
+        q.id.toLowerCase().includes(bankSearch.toLowerCase()) ||
+        q.topic.toLowerCase().includes(bankSearch.toLowerCase()))
+  );
 
   const removeTopic = (topicName: string) => {
     setTopics(topics.filter((t) => t !== topicName));
   };
 
   const addTopic = () => {
-    const newT = prompt('Enter subtopic name (e.g. Electricity · Potential Difference):');
+    const newT = prompt('Enter subtopic name (e.g. Government and the macroeconomy):');
     if (newT && !topics.includes(newT)) {
       setTopics([...topics, newT]);
     }
@@ -363,7 +447,7 @@ export default function AdminTools({
               </button>
             </div>
             <p className="text-xs text-[#645c50] leading-snug">
-              Picked from the bank items 10B missed most. The 2 new items stay in content review and
+              Picked from the bank items 10 Economics missed most. The 1 new item stays in content review and
               can&apos;t go live until approved.
             </p>
 
@@ -411,7 +495,7 @@ export default function AdminTools({
             <div>
               <span className="text-xs font-bold text-[#645c50]">Question bank</span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                4,218 questions
+                {questionBankItems.length} questions
               </h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -446,7 +530,7 @@ export default function AdminTools({
               />
             </div>
             <span className="px-3 py-1.5 rounded-full bg-[#201e1d] text-[#f9f4ed] text-xs font-bold">
-              Physics 0625 ✕
+              Economics 0455 ✕
             </span>
             <span className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-semibold cursor-pointer">
               Paper ▾
@@ -473,7 +557,7 @@ export default function AdminTools({
                 bankStatusFilter === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              All 1,186
+              All {questionBankItems.length}
             </button>
             <button
               onClick={() => setBankStatusFilter('Live')}
@@ -481,7 +565,7 @@ export default function AdminTools({
                 bankStatusFilter === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Live 1,104
+              Live {questionBankItems.filter((q) => q.st === 'Live').length}
             </button>
             <button
               onClick={() => setBankStatusFilter('Agent draft')}
@@ -490,7 +574,9 @@ export default function AdminTools({
               }`}
             >
               <span>Agent drafts</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">12</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
+                {questionBankItems.filter((q) => q.st === 'Agent draft').length}
+              </span>
             </button>
             <button
               onClick={() => setBankStatusFilter('Needs review')}
@@ -498,7 +584,7 @@ export default function AdminTools({
                 bankStatusFilter === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Needs review 61
+              Needs review {questionBankItems.filter((q) => q.st === 'Needs review').length}
             </button>
             <button
               onClick={() => setBankStatusFilter('Flagged')}
@@ -506,15 +592,15 @@ export default function AdminTools({
                 bankStatusFilter === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Flagged 9
+              Flagged {questionBankItems.filter((q) => q.st === 'Flagged').length}
             </button>
           </div>
 
           {/* Bank Table */}
           <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[760px]">
-                <div className="grid grid-cols-[80px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
+              <div className="min-w-[840px]">
+                <div className="grid grid-cols-[130px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
                   <span>ID</span>
                   <span>Stem</span>
                   <span>Citation</span>
@@ -526,38 +612,30 @@ export default function AdminTools({
                 </div>
 
                 <div className="divide-y divide-[#eee7db]">
-                  {questionBankItems
-                    .filter(
-                      (q) =>
-                        (bankStatusFilter === 'All' || q.st === bankStatusFilter) &&
-                        (q.stem.toLowerCase().includes(bankSearch.toLowerCase()) ||
-                          q.id.toLowerCase().includes(bankSearch.toLowerCase()) ||
-                          q.topic.toLowerCase().includes(bankSearch.toLowerCase()))
-                    )
-                    .map((item, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => onOpenEditor?.(item.id)}
-                        className="grid grid-cols-[80px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 items-center py-2.5 text-xs hover:bg-[#eee7db]/60 cursor-pointer rounded-xl transition-colors px-1"
-                      >
-                        <span className="font-mono font-bold text-[#201e1d]">{item.id}</span>
-                        <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
-                          {item.stem}
+                  {filteredBankItems.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => onOpenEditor?.(item.id)}
+                      className="grid grid-cols-[130px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 items-center py-2.5 text-xs hover:bg-[#eee7db]/60 cursor-pointer rounded-xl transition-colors px-1"
+                    >
+                      <span className="font-mono font-bold text-[#201e1d] truncate" title={item.id}>{item.id}</span>
+                      <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
+                        {item.stem}
+                      </span>
+                      <span className="text-[#645c50] truncate" title={item.cite}>{item.cite}</span>
+                      <span className="text-[#474238] truncate" title={item.topic}>{item.topic}</span>
+                      <span className="font-medium">{item.diff}</span>
+                      <span className="font-black text-[#201e1d]">{item.acc}</span>
+                      <span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
+                        >
+                          {item.st}
                         </span>
-                        <span className="text-[#645c50] truncate">{item.cite}</span>
-                        <span className="text-[#474238] truncate">{item.topic}</span>
-                        <span className="font-medium">{item.diff}</span>
-                        <span className="font-black text-[#201e1d]">{item.acc}</span>
-                        <span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
-                          >
-                            {item.st}
-                          </span>
-                        </span>
-                        <span className="text-[#645c50]">{item.upd}</span>
-                      </div>
-                    ))}
+                      </span>
+                      <span className="text-[#645c50]">{item.upd}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -567,14 +645,14 @@ export default function AdminTools({
           <div className="flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs">
             <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
             <span className="flex-1 leading-snug text-[#201e1d]">
-              <b>Bulk agent actions:</b> write explanations for the 38 Live items that have none · check
+              <b>Bulk agent actions:</b> write explanations for items that have none · check
               citations against source papers · find near-duplicates
             </span>
             <button
-              onClick={() => alert('Agent scanning 1,186 filtered questions in background...')}
+              onClick={() => alert(`Agent scanning ${filteredBankItems.length} filtered questions in background...`)}
               className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#728157] font-bold text-xs text-[#3d472b] hover:bg-[#ccdbb2] active:translate-y-0.5 whitespace-nowrap"
             >
-              Run on filtered (1,186)
+              Run on filtered ({filteredBankItems.length})
             </button>
           </div>
         </div>

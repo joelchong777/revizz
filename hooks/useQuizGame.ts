@@ -18,6 +18,8 @@ export type Question = {
   citation?: string;
   topic?: string;
   topic_id?: string;
+  has_diagram?: boolean;
+  image_url?: string;
 };
 
 export type QuizRoundConfig = {

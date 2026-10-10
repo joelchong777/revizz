@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   Sparkles, 
   Search, 
@@ -22,59 +23,114 @@ export interface TeacherAnalyticsProps {
   onNavigateToAssign?: (prefill?: string) => void;
 }
 
+export interface RosterStudent {
+  id: string;
+  name: string;
+  init: string;
+  last: string;
+  xp: string;
+  streak: number;
+  acc: number;
+  weak: string;
+  tier: string;
+  tagCls: string;
+  avBg: string;
+  flag: string;
+}
+
+export interface HeatRow {
+  name: string;
+  cells: number[];
+}
+
 export default function TeacherAnalytics({ 
   initialView = 'roster',
   onNavigateToAssign 
 }: TeacherAnalyticsProps) {
   const [currentView, setCurrentView] = useState<'roster' | 'mastery'>(initialView);
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<RosterStudent | null>(null);
   const [selectedClass, setSelectedClass] = useState('10B Physics');
   const [searchTerm, setSearchTerm] = useState('');
   const [agentNoticeDismissed, setAgentNoticeDismissed] = useState(false);
 
-  // Roster dataset
-  const rosterData = [
-    { name: 'Priya S.', init: 'PS', last: '2h ago', xp: '1,280', streak: 12, acc: 86, weak: 'Waves', tier: '👑 Master', tagCls: 'bg-[#ccdbb2] text-[#272e1b]', avBg: '#ccdbb2', flag: '' },
-    { name: 'Omar K.', init: 'OK', last: 'Today', xp: '1,105', streak: 7, acc: 79, weak: 'Thermal', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', avBg: '#ffe1d0', flag: '' },
-    { name: 'Mei L.', init: 'ML', last: 'Yesterday', xp: '960', streak: 3, acc: 72, weak: 'Electricity', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', avBg: '#ffe1d0', flag: '' },
-    { name: 'Hana O.', init: 'HO', last: '5h ago', xp: '610', streak: 5, acc: 70, weak: 'Nuclear', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', avBg: '#ffe1d0', flag: '' },
-    { name: 'Alex M.', init: 'AM', last: '1h ago', xp: '340', streak: 4, acc: 66, weak: 'Waves', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', avBg: '#ffe1d0', flag: '' },
-    { name: 'Sara A.', init: 'SA', last: '9 days ago', xp: '285', streak: 0, acc: 51, weak: 'Space', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', avBg: '#ffe1d0', flag: 'Inactive' },
-    { name: 'Leo T.', init: 'LT', last: 'Today', xp: '240', streak: 1, acc: 48, weak: 'Thermal', tier: '🌱 Novice', tagCls: 'bg-[#eee7db] text-[#474238]', avBg: '#eee7db', flag: 'Backlog' },
-    { name: 'Jonah R.', init: 'JR', last: '3 days ago', xp: '310', streak: 0, acc: 44, weak: 'Electricity', tier: '🌱 Novice', tagCls: 'bg-[#eee7db] text-[#474238]', avBg: '#ffe1d0', flag: 'Dropping' },
-  ];
+  // Roster dataset fetched from Supabase profiles
+  const [rosterData, setRosterData] = useState<RosterStudent[]>([]);
+  const [loadingRoster, setLoadingRoster] = useState(true);
 
-  // Jonah Rahman detail data
-  const jonahChapters = [
-    { n: 'Motion, forces & energy', w: '62%', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', bar: '#f6a06b' },
-    { n: 'Thermal physics', w: '51%', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', bar: '#f6a06b' },
-    { n: 'Waves', w: '47%', tier: '🌱 Novice', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#c0b6a5' },
-    { n: 'Electricity & magnetism', w: '29%', tier: '🌱 Novice', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#c0b6a5' },
-    { n: 'Nuclear physics', w: '40%', tier: '🌱 Novice', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#c0b6a5' },
-    { n: 'Space physics', w: '55%', tier: '⚡ Proficient', tagCls: 'bg-[#ffe1d0] text-[#643312]', bar: '#f6a06b' },
-  ];
-
-  const jonahRounds = [
-    { date: 'Tue 6 Oct', mode: 'Homework · Electricity · 8 Qs', score: '3/8', xp: '+34', time: '11m 02s' },
-    { date: 'Mon 5 Oct', mode: 'Exam round · 10 Qs', score: '4/10', xp: '+48', time: '14m 40s' },
-    { date: 'Fri 2 Oct', mode: 'Review pile · 6 Qs', score: '4/6', xp: '+45', time: '6m 12s' },
-    { date: 'Wed 30 Sep', mode: 'Topic practice · Waves · 5 Qs', score: '2/5', xp: '+25', time: '4m 51s' },
-  ];
-
-  // Mastery heatmap data
+  // Mastery heatmap data - empty until dynamic student rounds are recorded
+  const [heatRows, setHeatRows] = useState<HeatRow[]>([]);
   const chapters = ['Motion', 'Thermal', 'Waves', 'Electricity', 'Nuclear', 'Space'];
-  const heatRows = [
-    { name: '10A', cells: [84, 71, 49, 66, 58, 62] },
-    { name: '10B', cells: [69, 55, 52, 31, 44, 50] },
-    { name: 'Y10 avg', cells: [77, 63, 50, 49, 51, 56] },
-    { name: 'Global', cells: [72, 60, 54, 57, 49, 53] },
-  ];
+  const [mostMissedQuestions, setMostMissedQuestions] = useState<
+    Array<{ id: string; stem: string; first: string; second: string }>
+  >([]);
 
-  const mostMissedQuestions = [
-    { id: 'PHY-0251', stem: 'Which circuit has the lowest total resistance?', first: '38%', second: '17%' },
-    { id: 'PHY-0244', stem: 'A lamp is rated 12 V, 24 W. What current does it draw?', first: '41%', second: '29%' },
-    { id: 'PHY-0318', stem: 'A wave travels 12 m in 4.0 s. Its wavelength is 0.5 m…', first: '45%', second: '40%' },
-  ];
+  useEffect(() => {
+    let mounted = true;
+    async function loadProfiles() {
+      try {
+        setLoadingRoster(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, display_name, total_xp, current_streak')
+          .order('total_xp', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching profiles for teacher roster:', error);
+          if (mounted) setRosterData([]);
+        } else if (mounted) {
+          if (!data || data.length === 0) {
+            setRosterData([]);
+          } else {
+            const mapped: RosterStudent[] = data.map((p) => {
+              const name = p.display_name || 'Anonymous Student';
+              const parts = name.trim().split(/\s+/);
+              const init =
+                parts.length > 1
+                  ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                  : name.slice(0, 2).toUpperCase();
+              const xpVal = p.total_xp || 0;
+              const streak = p.current_streak || 0;
+              const isMaster = xpVal >= 1000;
+              const isProficient = xpVal >= 300;
+              const tier = isMaster ? '👑 Master' : isProficient ? '⚡ Proficient' : '🌱 Novice';
+              const tagCls = isMaster
+                ? 'bg-[#ccdbb2] text-[#272e1b]'
+                : isProficient
+                ? 'bg-[#ffe1d0] text-[#643312]'
+                : 'bg-[#eee7db] text-[#474238]';
+              const avBg = isMaster ? '#ccdbb2' : isProficient ? '#ffe1d0' : '#eee7db';
+
+              return {
+                id: p.id,
+                name,
+                init,
+                last: streak > 0 ? 'Recently active' : 'Inactive',
+                xp: xpVal.toLocaleString(),
+                streak,
+                acc: 0,
+                weak: '—',
+                tier,
+                tagCls,
+                avBg,
+                flag: streak === 0 ? 'Inactive' : '',
+              };
+            });
+            setRosterData(mapped);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load roster profiles:', err);
+        if (mounted) setRosterData([]);
+      } finally {
+        if (mounted) setLoadingRoster(false);
+      }
+    }
+
+    loadProfiles();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredRoster = rosterData.filter((r) =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -88,10 +144,19 @@ export default function TeacherAnalytics({
   };
 
   /* ==========================================================
-     VIEW: STUDENT DETAIL (Jonah Rahman Deep-Dive 2b)
+     VIEW: STUDENT DETAIL
      ========================================================== */
   if (selectedStudent) {
-    const isJonah = selectedStudent.name.includes('Jonah');
+    const firstName = selectedStudent.name.split(' ')[0];
+    const studentChapters = [
+      { n: 'Motion, forces & energy', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4' },
+      { n: 'Thermal physics', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4' },
+      { n: 'Waves', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4' },
+      { n: 'Electricity & magnetism', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4' },
+      { n: 'Nuclear physics', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4' },
+      { n: 'Space physics', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4' },
+    ];
+
     return (
       <div className="flex flex-col gap-5 p-2 sm:p-4 text-[#201e1d] font-body">
         {/* Navigation Breadcrumb */}
@@ -146,14 +211,14 @@ export default function TeacherAnalytics({
             <button
               onClick={() => {
                 if (onNavigateToAssign) {
-                  onNavigateToAssign(`Custom review round for ${selectedStudent.name} on ${selectedStudent.weak}`);
+                  onNavigateToAssign(`Custom review round for ${selectedStudent.name}`);
                 } else {
                   alert(`Intervention assigned to ${selectedStudent.name}!`);
                 }
               }}
               className="px-4 py-2 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading text-xs font-black hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none"
             >
-              Assign to {selectedStudent.name.split(' ')[0]}
+              Assign to {firstName}
             </button>
           </div>
         </div>
@@ -165,25 +230,31 @@ export default function TeacherAnalytics({
             <div className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">
               {selectedStudent.acc}%
             </div>
-            <span className="text-xs font-bold text-[#8c491a]">−27 pts in 7 days</span>
+            <span className="text-xs font-bold text-[#645c50]">Class baseline</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] flex flex-col gap-1">
-            <span className="text-xs font-bold text-[#645c50]">Retry success</span>
-            <div className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">38%</div>
-            <span className="text-xs font-bold text-[#645c50]">Class avg 55%</span>
+            <span className="text-xs font-bold text-[#645c50]">Streak</span>
+            <div className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">
+              {selectedStudent.streak}d
+            </div>
+            <span className="text-xs font-bold text-[#645c50]">Current streak</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] flex flex-col gap-1">
-            <span className="text-xs font-bold text-[#645c50]">Review pile</span>
-            <div className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">24</div>
-            <span className="text-xs font-bold text-[#8c491a]">+9 this week</span>
+            <span className="text-xs font-bold text-[#645c50]">Total XP</span>
+            <div className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">
+              {selectedStudent.xp}
+            </div>
+            <span className="text-xs font-bold text-[#56633f]">All-time score</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] flex flex-col gap-1">
-            <span className="text-xs font-bold text-[#645c50]">Homework</span>
-            <div className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">2 / 3</div>
-            <span className="text-xs font-bold text-[#56633f]">1 due Fri</span>
+            <span className="text-xs font-bold text-[#645c50]">Mastery Tier</span>
+            <div className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
+              {selectedStudent.tier}
+            </div>
+            <span className="text-xs font-bold text-[#645c50]">Current status</span>
           </div>
         </div>
 
@@ -193,7 +264,7 @@ export default function TeacherAnalytics({
           <div className="p-5 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] flex flex-col gap-3">
             <h3 className="font-heading text-lg font-black text-[#201e1d]">Topic mastery</h3>
             <div className="flex flex-col gap-2.5">
-              {jonahChapters.map((ch, idx) => (
+              {studentChapters.map((ch, idx) => (
                 <div
                   key={idx}
                   className="grid grid-cols-[140px_1fr_40px_90px] sm:grid-cols-[160px_1fr_40px_100px] gap-2 items-center text-xs"
@@ -204,7 +275,7 @@ export default function TeacherAnalytics({
                   <div className="h-2.5 rounded-full bg-[#eee7db] overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
-                      style={{ width: ch.w, backgroundColor: ch.bar }}
+                      style={{ width: '0%', backgroundColor: ch.bar }}
                     />
                   </div>
                   <span className="font-bold text-right text-[#474238]">{ch.w}</span>
@@ -228,35 +299,32 @@ export default function TeacherAnalytics({
                   Suggested intervention
                 </span>
                 <span className="text-[11px] font-bold text-[#3d472b]">
-                  Agent · based on 19 answers
+                  Agent diagnostic
                 </span>
               </div>
               <p className="text-xs leading-relaxed text-[#3d472b]">
-                6 of Jonah’s 8 Electricity misses are on combining resistors in parallel. On retries he
-                usually picks the &ldquo;added in series&rdquo; option, which points to a misconception
-                rather than careless slips.
+                {selectedStudent.weak !== '—'
+                  ? `${firstName} shows potential focus areas in ${selectedStudent.weak}. A short targeted review round will help reinforce core concepts.`
+                  : `No active misconceptions detected yet for ${firstName}. Assign practice rounds to generate real-time diagnostic insights.`}
               </p>
-              <div className="p-3 rounded-2xl bg-[#f9f4ed] text-xs font-medium text-[#201e1d] border border-[#dcd3c4]">
-                <b>5-Q Topic Practice</b> · combined resistance · Chill (untimed) · before Fri homework
-              </div>
               <div className="flex items-center gap-2 flex-wrap pt-1">
                 <button
-                  onClick={() => alert(`Assigned 5-Q Topic Practice to ${selectedStudent.name}`)}
+                  onClick={() => {
+                    if (onNavigateToAssign) {
+                      onNavigateToAssign(`Practice round for ${firstName}`);
+                    } else {
+                      alert(`Assigned review round to ${firstName}!`);
+                    }
+                  }}
                   className="px-3.5 py-1.5 rounded-full bg-[#728157] text-[#f9f4ed] text-xs font-bold hover:bg-[#56633f] active:translate-y-0.5"
                 >
-                  Assign to Jonah
-                </button>
-                <button
-                  onClick={() => onNavigateToAssign?.('Edit questions for Jonah')}
-                  className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#c0b6a5] text-xs font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5"
-                >
-                  Edit questions
+                  Assign to {firstName}
                 </button>
                 <button
                   onClick={() => setSelectedStudent(null)}
                   className="text-xs font-bold text-[#645c50] hover:text-[#201e1d] px-2 py-1"
                 >
-                  Dismiss
+                  Back
                 </button>
               </div>
             </div>
@@ -264,19 +332,8 @@ export default function TeacherAnalytics({
             {/* Recent Rounds */}
             <div className="p-5 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4]">
               <h3 className="font-heading text-lg font-black text-[#201e1d] mb-2">Recent rounds</h3>
-              <div className="divide-y divide-[#eee7db]">
-                {jonahRounds.map((rnd, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-[80px_1fr_40px_45px_60px] gap-2 items-center py-2.5 text-xs"
-                  >
-                    <span className="text-[#645c50] font-medium">{rnd.date}</span>
-                    <span className="font-bold text-[#201e1d] truncate">{rnd.mode}</span>
-                    <span className="font-black text-[#201e1d]">{rnd.score}</span>
-                    <span className="font-bold text-[#56633f]">{rnd.xp}</span>
-                    <span className="text-right text-[#645c50]">{rnd.time}</span>
-                  </div>
-                ))}
+              <div className="py-6 text-center text-xs text-[#645c50]">
+                No rounds recorded yet for {firstName}. Completed rounds will appear here.
               </div>
             </div>
           </div>
@@ -330,35 +387,45 @@ export default function TeacherAnalytics({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <div className="min-w-[600px] flex flex-col gap-2">
-              {/* Columns Header */}
-              <div className="grid grid-cols-[100px_repeat(6,1fr)] gap-2 text-xs font-bold text-[#645c50]">
-                <span></span>
-                {chapters.map((ch, idx) => (
-                  <span key={idx} className="text-center font-bold">
-                    {ch}
-                  </span>
-                ))}
-              </div>
-
-              {/* Rows */}
-              {heatRows.map((row, idx) => (
-                <div key={idx} className="grid grid-cols-[100px_repeat(6,1fr)] gap-2 items-center">
-                  <span className="font-black text-sm text-[#201e1d]">{row.name}</span>
-                  {row.cells.map((cell, cIdx) => (
-                    <span
-                      key={cIdx}
-                      className="h-11 rounded-2xl grid place-items-center font-black text-sm border border-black/5 transition-transform hover:scale-105"
-                      style={{ backgroundColor: getHeatBg(cell) }}
-                    >
-                      {cell}%
+          {heatRows.length === 0 ? (
+            <div className="py-12 px-4 text-center flex flex-col items-center justify-center space-y-2">
+              <div className="text-3xl">📊</div>
+              <h3 className="font-heading text-base font-black text-[#201e1d]">No Mastery Data Recorded Yet</h3>
+              <p className="text-xs font-semibold text-[#645c50] max-w-md">
+                Class scores will populate automatically as students complete assigned syllabus practice rounds.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="min-w-[600px] flex flex-col gap-2">
+                {/* Columns Header */}
+                <div className="grid grid-cols-[100px_repeat(6,1fr)] gap-2 text-xs font-bold text-[#645c50]">
+                  <span></span>
+                  {chapters.map((ch, idx) => (
+                    <span key={idx} className="text-center font-bold">
+                      {ch}
                     </span>
                   ))}
                 </div>
-              ))}
+
+                {/* Rows */}
+                {heatRows.map((row, idx) => (
+                  <div key={idx} className="grid grid-cols-[100px_repeat(6,1fr)] gap-2 items-center">
+                    <span className="font-black text-sm text-[#201e1d]">{row.name}</span>
+                    {row.cells.map((cell, cIdx) => (
+                      <span
+                        key={cIdx}
+                        className="h-11 rounded-2xl grid place-items-center font-black text-sm border border-black/5 transition-transform hover:scale-105"
+                        style={{ backgroundColor: getHeatBg(cell) }}
+                      >
+                        {cell}%
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Two-Column Diagnostics */}
@@ -366,27 +433,35 @@ export default function TeacherAnalytics({
           {/* Most-Missed Questions */}
           <div className="p-5 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4]">
             <h3 className="font-heading text-lg font-black text-[#201e1d] mb-2">
-              Most-missed questions · 10B
+              Most-missed questions · {selectedClass}
             </h3>
-            <div className="grid grid-cols-[70px_1fr_60px_60px] gap-2 py-2 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
-              <span>ID</span>
-              <span>Question</span>
-              <span>1st try</span>
-              <span>Retry</span>
-            </div>
-            <div className="divide-y divide-[#eee7db]">
-              {mostMissedQuestions.map((q, idx) => (
-                <div
-                  key={idx}
-                  className="grid grid-cols-[70px_1fr_60px_60px] gap-2 items-center py-2.5 text-xs"
-                >
-                  <span className="font-mono font-bold text-[#645c50]">{q.id}</span>
-                  <span className="font-medium text-[#201e1d] line-clamp-1">{q.stem}</span>
-                  <span className="font-bold text-[#201e1d]">{q.first}</span>
-                  <span className="font-bold text-[#8c491a]">{q.second}</span>
+            {mostMissedQuestions.length === 0 ? (
+              <div className="py-8 text-center text-xs text-[#645c50]">
+                No missed questions recorded yet. Data will appear as students practice.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-[70px_1fr_60px_60px] gap-2 py-2 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
+                  <span>ID</span>
+                  <span>Question</span>
+                  <span>1st try</span>
+                  <span>Retry</span>
                 </div>
-              ))}
-            </div>
+                <div className="divide-y divide-[#eee7db]">
+                  {mostMissedQuestions.map((q, idx) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-[70px_1fr_60px_60px] gap-2 items-center py-2.5 text-xs"
+                    >
+                      <span className="font-mono font-bold text-[#645c50]">{q.id}</span>
+                      <span className="font-medium text-[#201e1d] line-clamp-1">{q.stem}</span>
+                      <span className="font-bold text-[#201e1d]">{q.first}</span>
+                      <span className="font-bold text-[#8c491a]">{q.second}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* What the Agent Sees Card */}
@@ -398,22 +473,16 @@ export default function TeacherAnalytics({
               </span>
             </div>
             <p className="text-xs leading-relaxed text-[#3d472b]">
-              10B&apos;s Electricity score fell after the 21 Sep homework. PHY-0251 and PHY-0244 have
-              retry rates under 30%, so students are failing even after a hint. That suggests the
-              explanation itself is unclear, not just the topic.
+              {heatRows.length === 0
+                ? `No learning bottlenecks detected yet for ${selectedClass}. Once students complete practice rounds, diagnostic insights and retry analysis will appear here.`
+                : `${selectedClass}'s mastery data is active. Diagnostic insights and retry analysis are continuously calculated from recent practice rounds.`}
             </p>
             <div className="flex items-center gap-2 flex-wrap pt-1">
               <button
-                onClick={() => alert('Sent review request to content team!')}
+                onClick={() => onNavigateToAssign?.()}
                 className="px-3.5 py-1.5 rounded-full bg-[#728157] text-[#f9f4ed] text-xs font-bold hover:bg-[#56633f] active:translate-y-0.5"
               >
-                Send to content team
-              </button>
-              <button
-                onClick={() => onNavigateToAssign?.('Re-teach round for 10B on Electricity')}
-                className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#c0b6a5] text-xs font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5"
-              >
-                Plan a re-teach
+                Assign round
               </button>
             </div>
           </div>
@@ -432,9 +501,9 @@ export default function TeacherAnalytics({
         <div>
           <span className="text-xs font-bold text-[#645c50]">Classes & students</span>
           <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-            10B Physics{' '}
+            {selectedClass}{' '}
             <span className="font-body text-base font-semibold text-[#645c50]">
-              0625 · 26 students
+              0625 · {rosterData.length} {rosterData.length === 1 ? 'student' : 'students'}
             </span>
           </h2>
         </div>
@@ -501,94 +570,130 @@ export default function TeacherAnalytics({
       </div>
 
       {/* Contextual AI Agent Recommendation Banner */}
-      {!agentNoticeDismissed && (
+      {!agentNoticeDismissed && rosterData.length > 0 && (
         <div className="flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs">
           <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
           <span className="flex-1 leading-snug text-[#201e1d]">
-            <b>Agent:</b> 3 students are flagged. Jonah and Leo share a weak spot (series vs parallel
-            resistance), so one 5-Q review round could cover both.
+            <b>Agent:</b> Tracking {rosterData.length} active {rosterData.length === 1 ? 'student' : 'students'} in {selectedClass}. Practice rounds will generate automatic recommendations.
           </span>
           <button
-            onClick={() => onNavigateToAssign?.('5-Q Review Round on series vs parallel resistance for Jonah and Leo')}
+            onClick={() => onNavigateToAssign?.()}
             className="px-3 py-1.5 rounded-full bg-[#728157] text-[#f9f4ed] font-bold text-xs whitespace-nowrap hover:bg-[#56633f] active:translate-y-0.5"
           >
-            Draft round for 2
+            Assign round
           </button>
         </div>
       )}
 
       {/* Student Roster Table */}
       <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <div className="min-w-[760px]">
-            {/* Table Header */}
-            <div className="grid grid-cols-[28px_1.5fr_1fr_0.8fr_0.7fr_0.8fr_1fr_1fr_0.8fr] gap-2.5 pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
-              <span></span>
-              <span>Student</span>
-              <span>Last active</span>
-              <span>XP</span>
-              <span>Streak</span>
-              <span>1st-try</span>
-              <span>Weakest topic</span>
-              <span>Tier</span>
-              <span>Status</span>
+        {loadingRoster ? (
+          <div className="py-12 text-center text-xs font-bold text-[#645c50]">
+            Loading student roster...
+          </div>
+        ) : rosterData.length === 0 ? (
+          <div className="py-12 px-4 text-center flex flex-col items-center justify-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-[#eee7db] border border-[#201e1d] flex items-center justify-center text-2xl">
+              👥
             </div>
-
-            {/* Rows */}
-            <div className="divide-y divide-[#eee7db]">
-              {filteredRoster.map((r, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setSelectedStudent(r)}
-                  className="grid grid-cols-[28px_1.5fr_1fr_0.8fr_0.7fr_0.8fr_1fr_1fr_0.8fr] gap-2.5 items-center py-2.5 text-xs hover:bg-[#eee7db]/50 cursor-pointer transition-colors rounded-xl px-1"
-                >
-                  <span className="w-4 h-4 rounded border-[1.5px] border-[#a19786] block" />
-                  <div className="flex items-center gap-2 font-bold text-[#201e1d]">
-                    <span
-                      className="w-7 h-7 rounded-full border-[1.5px] border-[#201e1d] grid place-items-center text-[10px] font-bold shrink-0"
-                      style={{ backgroundColor: r.avBg }}
-                    >
-                      {r.init}
-                    </span>
-                    <span>{r.name}</span>
-                  </div>
-                  <span className="text-[#645c50]">{r.last}</span>
-                  <span className="font-bold text-[#201e1d]">{r.xp}</span>
-                  <span className="font-semibold">🔥 {r.streak}</span>
-                  <span className="font-black text-[#201e1d]">{r.acc}%</span>
-                  <span className="text-[#474238] font-medium">{r.weak}</span>
-                  <span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${r.tagCls}`}
-                    >
-                      {r.tier}
-                    </span>
-                  </span>
-                  <span>
-                    {r.flag ? (
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#b2622d] text-white text-[11px] font-bold whitespace-nowrap">
-                        {r.flag}
-                      </span>
-                    ) : (
-                      <span className="text-[#a19786] text-xs">—</span>
-                    )}
-                  </span>
-                </div>
-              ))}
+            <p className="text-sm font-semibold text-[#645c50] max-w-md">
+              No students registered yet in this cohort. Share your school invite code or assign a round to begin tracking analytics.
+            </p>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => alert('Opening student invite drawer...')}
+                className="px-4 py-2 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all"
+              >
+                Invite students
+              </button>
+              <button
+                onClick={() => onNavigateToAssign?.()}
+                className="px-4 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-2 hover:bg-[#eee7db] transition-all"
+              >
+                Assign round
+              </button>
             </div>
           </div>
-        </div>
+        ) : filteredRoster.length === 0 ? (
+          <div className="py-8 text-center text-xs text-[#645c50]">
+            No students match &ldquo;{searchTerm}&rdquo;
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="min-w-[760px]">
+              {/* Table Header */}
+              <div className="grid grid-cols-[28px_1.5fr_1fr_0.8fr_0.7fr_0.8fr_1fr_1fr_0.8fr] gap-2.5 pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
+                <span></span>
+                <span>Student</span>
+                <span>Last active</span>
+                <span>XP</span>
+                <span>Streak</span>
+                <span>1st-try</span>
+                <span>Weakest topic</span>
+                <span>Tier</span>
+                <span>Status</span>
+              </div>
+
+              {/* Rows */}
+              <div className="divide-y divide-[#eee7db]">
+                {filteredRoster.map((r, idx) => (
+                  <div
+                    key={r.id || idx}
+                    onClick={() => setSelectedStudent(r)}
+                    className="grid grid-cols-[28px_1.5fr_1fr_0.8fr_0.7fr_0.8fr_1fr_1fr_0.8fr] gap-2.5 items-center py-2.5 text-xs hover:bg-[#eee7db]/50 cursor-pointer transition-colors rounded-xl px-1"
+                  >
+                    <span className="w-4 h-4 rounded border-[1.5px] border-[#a19786] block" />
+                    <div className="flex items-center gap-2 font-bold text-[#201e1d]">
+                      <span
+                        className="w-7 h-7 rounded-full border-[1.5px] border-[#201e1d] grid place-items-center text-[10px] font-bold shrink-0"
+                        style={{ backgroundColor: r.avBg }}
+                      >
+                        {r.init}
+                      </span>
+                      <span>{r.name}</span>
+                    </div>
+                    <span className="text-[#645c50]">{r.last}</span>
+                    <span className="font-bold text-[#201e1d]">{r.xp}</span>
+                    <span className="font-semibold">🔥 {r.streak}</span>
+                    <span className="font-black text-[#201e1d]">{r.acc}%</span>
+                    <span className="text-[#474238] font-medium">{r.weak}</span>
+                    <span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${r.tagCls}`}
+                      >
+                        {r.tier}
+                      </span>
+                    </span>
+                    <span>
+                      {r.flag ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#b2622d] text-white text-[11px] font-bold whitespace-nowrap">
+                          {r.flag}
+                        </span>
+                      ) : (
+                        <span className="text-[#a19786] text-xs">—</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 text-xs text-[#645c50] border-t border-[#dcd3c4] mt-2">
-          <span>Showing {filteredRoster.length} of 26 · sorted by XP</span>
-          <button
-            onClick={() => alert('Showing all 26 students')}
-            className="font-bold text-[#c67139] hover:underline"
-          >
-            Show all →
-          </button>
-        </div>
+        {rosterData.length > 0 && (
+          <div className="flex items-center justify-between pt-3 text-xs text-[#645c50] border-t border-[#dcd3c4] mt-2">
+            <span>Showing {filteredRoster.length} of {rosterData.length} · sorted by XP</span>
+            {filteredRoster.length < rosterData.length && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="font-bold text-[#c67139] hover:underline"
+              >
+                Show all →
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

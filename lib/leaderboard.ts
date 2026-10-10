@@ -6,6 +6,7 @@ export interface LeaderboardEntry {
   display_name: string;
   total_xp: number;
   is_school_account: boolean;
+  current_streak?: number;
   rank?: number;
 }
 
@@ -14,7 +15,7 @@ export const fetchWeeklyLeaderboard = async (): Promise<LeaderboardEntry[]> => {
   // Fallback to total_xp as per requirement: "Calculate weekly XP (or total XP of opt-in users as fallback if attempts are fresh)"
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, total_xp, is_school_account')
+    .select('id, display_name, total_xp, is_school_account, current_streak')
     .eq('opt_in_leaderboard', true)
     .order('total_xp', { ascending: false })
     .limit(10);
