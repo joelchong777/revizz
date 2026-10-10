@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useAuth, signInWithGoogle } from '@/lib/auth';
 import { useSearchParams } from 'next/navigation';
-import { Menu, ArrowRightLeft } from 'lucide-react';
+import { Menu, ArrowRightLeft, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import AdminNav from '@/components/portal/AdminNav';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
@@ -52,6 +52,12 @@ function PortalContent() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | undefined>(undefined);
 
+  // Auth & error states
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showOAuthGuide, setShowOAuthGuide] = useState(false);
+  const [copiedCallback, setCopiedCallback] = useState(false);
+
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
@@ -82,7 +88,7 @@ function PortalContent() {
 
   // Dev override to quickly preview UI in development
   const isDev = process.env.NODE_ENV === 'development';
-  const [devOverride, setDevOverride] = useState(isDev);
+  const [devOverride, setDevOverride] = useState(false);
   const [guestMode, setGuestMode] = useState(false);
 
   // Sync with searchParams
@@ -90,8 +96,12 @@ function PortalContent() {
     const guestParam = searchParams?.get('guest');
     const demoParam = searchParams?.get('demo');
     const modeParam = searchParams?.get('mode');
+    const devParam = searchParams?.get('dev');
     if (guestParam === 'true' || demoParam === 'true' || modeParam === 'guest') {
       setGuestMode(true);
+    }
+    if (isDev && devParam === 'true') {
+      setDevOverride(true);
     }
 
     const tab = searchParams?.get('tab') || searchParams?.get('nav');
@@ -116,7 +126,7 @@ function PortalContent() {
     } else if (['bank', 'flagged', 'editor'].includes(normalized)) {
       setActiveNav(normalized);
     }
-  }, [searchParams]);
+  }, [searchParams, isDev]);
 
   const handleToggleRole = () => {
     setRole((prev) => {
@@ -131,6 +141,24 @@ function PortalContent() {
   const handleSelectNav = (tab: string) => {
     setActiveNav(tab);
     setMobileNavOpen(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (isSigningIn) return;
+    setIsSigningIn(true);
+    setAuthError(null);
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error('Google Sign-In failed:', err);
+      const rawMsg =
+        err?.msg ||
+        err?.message ||
+        (typeof err === 'string' ? err : 'Google OAuth is not configured in Supabase');
+      setAuthError(rawMsg);
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   // Auth gate
@@ -151,8 +179,8 @@ function PortalContent() {
 
   if (!isEducator) {
     return (
-      <div className="min-h-screen bg-[#f5ead8] p-6 flex flex-col items-center justify-center font-body text-[#201e1d]">
-        <div className="max-w-md w-full bg-[#f9f4ed] rounded-[28px] p-8 border-2 border-[#201e1d] shadow-offset-4 text-center space-y-6">
+      <div className="min-h-screen bg-[#f5ead8] p-4 sm:p-6 flex flex-col items-center justify-center font-body text-[#201e1d]">
+        <div className={`w-full ${authError ? 'max-w-lg' : 'max-w-md'} bg-[#f9f4ed] rounded-[28px] p-6 sm:p-8 border-2 border-[#201e1d] shadow-offset-4 text-center space-y-6 transition-all duration-150`}>
           <div className="w-16 h-16 mx-auto rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
             🎓
           </div>
@@ -163,22 +191,134 @@ function PortalContent() {
             </p>
           </div>
 
+          {authError && (
+            <div className="w-full bg-[#fff2eb] border-2 border-[#201e1d] rounded-2xl p-5 shadow-offset-3 text-left space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-xl shrink-0">
+                  ⚠️
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-base sm:text-lg font-black text-[#201e1d] font-heading leading-snug">
+                    Google Sign-In is not configured in Supabase
+                  </h2>
+                  <p className="text-xs sm:text-sm font-medium text-[#645c50] leading-relaxed">
+                    Google OAuth credentials have not been enabled in the project dashboard yet, and you can enter immediately using Guest / Demo mode.
+                  </p>
+                  {typeof authError === 'string' && (
+                    <div className="mt-1.5 p-1.5 px-2 bg-[#eee7db] rounded-lg border border-[#dcd3c4] font-mono text-[11px] text-[#8c491a] break-words">
+                      Error: {authError}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Big primary CTA button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setGuestMode(true);
+                  setDevOverride(true);
+                  setAuthError(null);
+                }}
+                className="w-full py-3.5 px-4 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm sm:text-base rounded-2xl border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>🎓</span> Enter as Demo Educator / Admin
+              </button>
+
+              {/* Collapsible guide */}
+              <div className="pt-2 border-t-[1.5px] border-[#dcd3c4]">
+                <button
+                  type="button"
+                  onClick={() => setShowOAuthGuide(!showOAuthGuide)}
+                  className="w-full py-2 px-3 text-xs font-bold text-[#645c50] hover:text-[#201e1d] bg-[#f9f4ed] border-[1.5px] border-[#201e1d] rounded-xl flex items-center justify-between transition-colors cursor-pointer shadow-offset-2 active:translate-y-0.5"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span>🛠️</span>
+                    <span>How to enable Google OAuth</span>
+                  </span>
+                  {showOAuthGuide ? (
+                    <ChevronUp className="w-4 h-4 text-[#201e1d]" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-[#201e1d]" />
+                  )}
+                </button>
+
+                {showOAuthGuide && (
+                  <div className="mt-3 p-3.5 bg-[#f9f4ed] rounded-xl border-2 border-[#201e1d] space-y-3 font-body">
+                    <div>
+                      <div className="text-[11px] font-black text-[#645c50] uppercase tracking-wider mb-1">
+                        Callback URL
+                      </div>
+                      <div className="flex items-center gap-2 p-2 rounded-xl bg-[#eee7db] border border-[#201e1d] font-mono text-[11px] text-[#201e1d]">
+                        <span className="flex-1 select-all break-all">
+                          https://dmvahcaxixvhgxidmkqs.supabase.co/auth/v1/callback
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                              navigator.clipboard.writeText('https://dmvahcaxixvhgxidmkqs.supabase.co/auth/v1/callback');
+                              setCopiedCallback(true);
+                              setTimeout(() => setCopiedCallback(false), 2000);
+                            }
+                          }}
+                          className="px-2 py-1 rounded-lg bg-[#ffe1d0] border border-[#201e1d] hover:bg-[#ffc6a5] text-[10px] font-bold flex items-center gap-1 shrink-0 cursor-pointer shadow-offset-2 active:translate-y-0.5"
+                          title="Copy callback URL"
+                        >
+                          {copiedCallback ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-600" />
+                              <span>Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-1 text-xs text-[#474238]">
+                      <div className="font-bold text-[#201e1d]">Setup instructions:</div>
+                      <ol className="list-decimal list-inside space-y-1 font-medium pl-1 text-[12px] leading-relaxed">
+                        <li>Create Web OAuth client in Google Cloud Console</li>
+                        <li>Enable Google provider in Supabase Dashboard (Authentication &gt; Providers &gt; Google)</li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3 pt-4 border-t-2 border-[#dcd3c4]">
-            <button
-              type="button"
-              onClick={() => setGuestMode(true)}
-              className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer font-body"
-            >
-              <span>🎓</span> Enter as Guest Educator / Admin (Demo)
-            </button>
+            {!authError && (
+              <button
+                type="button"
+                onClick={() => setGuestMode(true)}
+                className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer font-body"
+              >
+                <span>🎓</span> Enter as Guest Educator / Admin (Demo)
+              </button>
+            )}
 
             {!userProfile ? (
               <button
                 type="button"
-                onClick={() => signInWithGoogle()}
-                className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5"
+                disabled={isSigningIn}
+                onClick={handleGoogleSignIn}
+                className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
               >
-                Sign In with Google
+                {isSigningIn ? (
+                  <>
+                    <span className="inline-block animate-spin">⏳</span>
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <span>Sign In with Google</span>
+                )}
               </button>
             ) : (
               <div className="p-3 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-2xl border-2 border-[#201e1d] leading-relaxed text-center">
@@ -577,27 +717,110 @@ function PortalContent() {
         {/* Scrollable Main Content Area */}
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
           {guestMode && !userProfile && (
-            <div className="mb-6 p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🎓</span>
-                <span>Guest Educator Mode · Full interactive preview of teaching and curriculum tools</span>
+            <div className="space-y-4 mb-6">
+              <div className="p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🎓</span>
+                  <span>Guest Educator Mode · Full interactive preview of teaching and curriculum tools</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={isSigningIn}
+                    onClick={handleGoogleSignIn}
+                    className="px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] hover:bg-[#ffc6a5] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    {isSigningIn ? (
+                      <>
+                        <span className="inline-block animate-spin text-[10px]">⏳</span>
+                        <span>Signing in...</span>
+                      </>
+                    ) : (
+                      <span>Sign In with Google</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGuestMode(false)}
+                    className="px-3 py-1 rounded-full bg-[#eee7db] border border-[#201e1d] hover:bg-[#dcd3c4] transition-colors cursor-pointer"
+                  >
+                    Exit Guest
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => signInWithGoogle()}
-                  className="px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] hover:bg-[#ffc6a5] transition-colors cursor-pointer"
-                >
-                  Sign In with Google
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGuestMode(false)}
-                  className="px-3 py-1 rounded-full bg-[#eee7db] border border-[#201e1d] hover:bg-[#dcd3c4] transition-colors cursor-pointer"
-                >
-                  Exit Guest
-                </button>
-              </div>
+
+              {authError && (
+                <div className="p-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-3 text-xs text-[#201e1d] space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-xl">⚠️</span>
+                      <div className="space-y-1">
+                        <h3 className="font-heading font-black text-sm text-[#201e1d]">
+                          Google Sign-In is not configured in Supabase
+                        </h3>
+                        <p className="font-medium text-[#645c50] leading-relaxed">
+                          Google OAuth credentials have not been enabled in the project dashboard yet. You are currently in Guest / Demo mode with full educator preview access.
+                        </p>
+                        {typeof authError === 'string' && (
+                          <div className="mt-1 p-1 px-2 bg-[#eee7db] rounded border border-[#dcd3c4] font-mono text-[10px] text-[#8c491a] inline-block">
+                            Error: {authError}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAuthError(null)}
+                      className="px-2.5 py-1 rounded-lg bg-[#eee7db] border border-[#201e1d] hover:bg-[#dcd3c4] text-[11px] font-bold cursor-pointer shrink-0"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+
+                  <div className="pt-2 border-t-[1.5px] border-[#dcd3c4]">
+                    <button
+                      type="button"
+                      onClick={() => setShowOAuthGuide(!showOAuthGuide)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-[#645c50] hover:text-[#201e1d] cursor-pointer"
+                    >
+                      <span>🛠️ How to enable Google OAuth</span>
+                      {showOAuthGuide ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {showOAuthGuide && (
+                      <div className="mt-2.5 p-3 bg-[#f9f4ed] rounded-xl border-2 border-[#201e1d] space-y-2">
+                        <div>
+                          <div className="text-[10px] font-black text-[#645c50] uppercase tracking-wider mb-1">
+                            Callback URL
+                          </div>
+                          <div className="flex items-center gap-2 p-1.5 rounded-lg bg-[#eee7db] border border-[#dcd3c4] font-mono text-[11px]">
+                            <span className="flex-1 select-all break-all">
+                              https://dmvahcaxixvhgxidmkqs.supabase.co/auth/v1/callback
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                                  navigator.clipboard.writeText('https://dmvahcaxixvhgxidmkqs.supabase.co/auth/v1/callback');
+                                  setCopiedCallback(true);
+                                  setTimeout(() => setCopiedCallback(false), 2000);
+                                }
+                              }}
+                              className="px-2 py-0.5 rounded bg-[#ffe1d0] border border-[#201e1d] text-[10px] font-bold hover:bg-[#ffc6a5] cursor-pointer shadow-offset-2 active:translate-y-0.5"
+                            >
+                              {copiedCallback ? 'Copied' : 'Copy'}
+                            </button>
+                          </div>
+                        </div>
+                        <ol className="list-decimal list-inside space-y-0.5 text-[#474238] font-medium text-[11px]">
+                          <li>Create Web OAuth client in Google Cloud Console</li>
+                          <li>Enable Google provider in Supabase Dashboard (Authentication &gt; Providers &gt; Google)</li>
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {renderContent()}

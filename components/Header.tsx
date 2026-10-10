@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useAnimation, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useAuth, signInWithGoogle } from '../lib/auth';
+import { useAuth, signInWithGoogle, isProviderNotEnabledError } from '../lib/auth';
 import { syncGuestDataToUser } from '../lib/sync';
 import { isSoundEnabled, setSoundEnabled, playPop, subscribeSoundState } from '@/lib/audio';
 import LeaderboardModal from './LeaderboardModal';
@@ -52,12 +52,12 @@ export function Header({
     }
   };
 
-  // Auto-dismiss sync toast message after 3.5s
+  // Auto-dismiss sync toast message after 5s
   useEffect(() => {
     if (!syncToastMessage) return;
     const timer = setTimeout(() => {
       setSyncToastMessage(null);
-    }, 3500);
+    }, 5000);
     return () => clearTimeout(timer);
   }, [syncToastMessage]);
 
@@ -137,8 +137,32 @@ export function Header({
     if (confirmed) {
       try {
         await signInWithGoogle();
-      } catch (e) {
-        console.error(e);
+      } catch (e: any) {
+        console.error('Sign-in error:', e);
+        const errMsg = e?.message || e?.error_description || String(e || '');
+        const errCode = e?.code || '';
+        const isProviderNotEnabled =
+          isProviderNotEnabledError(e) ||
+          errCode === 'PROVIDER_NOT_ENABLED' ||
+          errCode === 'validation_failed' ||
+          /provider.*not enabled/i.test(errMsg) ||
+          /validation/i.test(errMsg) ||
+          /not enabled/i.test(errMsg) ||
+          /unsupported provider/i.test(errMsg) ||
+          errMsg.includes('PROVIDER_NOT_ENABLED');
+
+        const notice = (isProviderNotEnabled || !errMsg)
+          ? "Notice: Google Sign-In is currently disabled on this demo instance. Your XP and streaks continue to be saved locally on your device!"
+          : errMsg;
+
+        setSyncToastMessage(notice);
+        if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+          try {
+            window.alert(notice);
+          } catch {
+            // Ignore if alerts are restricted in environment
+          }
+        }
       }
     }
   };
@@ -175,7 +199,9 @@ export function Header({
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             role="status"
             aria-live="polite"
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-accent-2-200 border-2 border-text text-text font-bold rounded-2xl shadow-offset-3 text-xs sm:text-sm flex items-center gap-2"
+            onClick={() => setSyncToastMessage(null)}
+            title="Click to dismiss"
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 max-w-[92vw] sm:max-w-md bg-accent-2-200 border-2 border-text text-text font-bold rounded-2xl shadow-offset-3 text-xs sm:text-sm flex items-center justify-center text-center gap-2 cursor-pointer leading-snug"
           >
             <span>{syncToastMessage}</span>
           </motion.div>
