@@ -17,6 +17,9 @@ export default function IngestionHub() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const questions = paper?.questions || [];
+  const syllabusTopics = paper?.syllabus_topics || [];
+
   useEffect(() => {
     // Initial fetch
     fetch("/api/ingest/staged-paper?id=0455_s24_12")
@@ -24,7 +27,10 @@ export default function IngestionHub() {
         if (!res.ok) throw new Error("Failed to load preset");
         return res.json();
       })
-      .then((data) => setPaper(data))
+      .then((data) => {
+        const paperData = data?.paper || data;
+        setPaper(paperData);
+      })
       .catch((err) => {
         console.error(err);
         setPaper({
@@ -39,7 +45,10 @@ export default function IngestionHub() {
   const handleLoadPreset = () => {
     fetch("/api/ingest/staged-paper?id=0455_s24_12")
       .then((res) => res.json())
-      .then((data) => setPaper(data))
+      .then((data) => {
+        const paperData = data?.paper || data;
+        setPaper(paperData);
+      })
       .catch(console.error);
   };
 
@@ -50,7 +59,8 @@ export default function IngestionHub() {
     reader.onload = (ev) => {
       try {
         const json = JSON.parse(ev.target?.result as string);
-        setPaper(json);
+        const paperData = json?.paper || json;
+        setPaper(paperData);
       } catch (err) {
         console.error("Failed to parse JSON", err);
       }
@@ -70,8 +80,8 @@ export default function IngestionHub() {
 
   const generateSQL = () => {
     if (!paper) return "";
-    let sql = `-- Batch SQL for ${paper.subject.code} ${paper.paper.series}${paper.paper.year} ${paper.paper.paper_code}\\n\\n`;
-    paper.questions.forEach((q) => {
+    let sql = `-- Batch SQL for ${paper.subject?.code || ""} ${paper.paper?.series || ""}${paper.paper?.year || ""} ${paper.paper?.paper_code || ""}\\n\\n`;
+    (paper.questions || []).forEach((q) => {
       sql += `INSERT INTO questions (question_number, stem) VALUES (${q.question_number}, $stem_${q.question_number}$${q.stem_markdown}$stem_${q.question_number}$);\\n`;
     });
     return sql;
@@ -199,22 +209,22 @@ export default function IngestionHub() {
             <>
               <div className="w-full md:w-1/3 xl:w-1/4 border-b-2 md:border-b-0 md:border-r-2 border-[#201e1d] p-4 bg-[#f9f4ed] overflow-y-auto">
                 <IngestionQuestionNav
-                  questions={paper.questions}
+                  questions={questions}
                   selectedIdx={selectedIdx}
                   onSelectIdx={setSelectedIdx}
-                  expectedCount={paper.questions.length || 30}
-                  syllabusTopics={paper.syllabus_topics}
+                  expectedCount={questions.length || 30}
+                  syllabusTopics={syllabusTopics}
                 />
               </div>
               <div className="flex-1 p-6 overflow-y-auto bg-[#f9f4ed]">
-                {paper.questions[selectedIdx] ? (
+                {questions[selectedIdx] ? (
                   <IngestionQuestionEditor
-                    question={paper.questions[selectedIdx]}
+                    question={questions[selectedIdx]}
                     questionIndex={selectedIdx}
-                    totalQuestions={paper.questions.length}
-                    syllabusTopics={paper.syllabus_topics}
+                    totalQuestions={questions.length}
+                    syllabusTopics={syllabusTopics}
                     onChange={(newQ: StagingQuestion) => {
-                      const newQuestions = [...paper.questions];
+                      const newQuestions = [...questions];
                       newQuestions[selectedIdx] = newQ;
                       setPaper({ ...paper, questions: newQuestions });
                     }}

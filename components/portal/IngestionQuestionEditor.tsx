@@ -47,11 +47,11 @@ export function IngestionQuestionEditor({
   const previewQuestion: Question = {
     id: `preview-${question.question_number}`,
     stem_markdown: question.stem_markdown,
-    options: question.options.map((opt) => ({
+    options: (question.options || []).map((opt) => ({
       id: opt.label,
       text_markdown: opt.content_markdown,
     })),
-    correct_option_id: question.options.find((o) => o.is_correct)?.label || 'A',
+    correct_option_id: (question.options || []).find((o) => o.is_correct)?.label || 'A',
     citation: question.cambridge_source_ref,
     topic: question.topic_name,
   };
@@ -108,13 +108,13 @@ export function IngestionQuestionEditor({
   };
 
   const updateOption = (idx: number, optField: keyof StagingOption, value: any) => {
-    const newOpts = [...question.options];
+    const newOpts = [...(question.options || [])];
     newOpts[idx] = { ...newOpts[idx], [optField]: value };
     handleUpdate({ ...question, options: newOpts });
   };
 
   const setCorrectOption = (label: 'A'|'B'|'C'|'D') => {
-    const newOpts = question.options.map(opt => ({
+    const newOpts = (question.options || []).map(opt => ({
       ...opt,
       is_correct: opt.label === label
     }));
@@ -229,7 +229,7 @@ export function IngestionQuestionEditor({
         {/* Options Editor */}
         <div className="flex flex-col gap-4">
           <label className="font-bold uppercase text-sm tracking-wider">Options</label>
-          {question.options.map((opt, idx) => (
+          {(question.options || []).map((opt, idx) => (
             <div 
               key={opt.label}
               className={cn(
