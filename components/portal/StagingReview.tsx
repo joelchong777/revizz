@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import QuestionCard from '@/components/QuestionCard';
-import stagingData from '@/staging/0455_s24_12.json';
+import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
 
 interface StagedQuestion {
   id: string;
@@ -16,35 +16,128 @@ interface StagedQuestion {
   status: 'complete' | 'review';
 }
 
-const initialStagedQuestions: StagedQuestion[] = stagingData.questions.map((q) => {
-  const options = q.options.map((opt) => ({
-    id: `opt-${opt.label.toLowerCase()}`,
-    text_markdown: opt.content_markdown,
-  }));
-  const correctOpt = q.options.find((opt) => opt.is_correct);
-  const correct_option_id = correctOpt
-    ? `opt-${correctOpt.label.toLowerCase()}`
-    : options[0]?.id || 'opt-a';
-
-  return {
-    id: `0455-s24-12-q${String(q.question_number).padStart(2, '0')}`,
-    stem_markdown: q.stem_markdown,
-    options,
-    correct_option_id,
-    explanation_markdown: q.explanation_markdown || '',
-    citation: q.cambridge_source_ref,
-    topic_id: q.topic_name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    topic: q.topic_name,
-    has_diagram: Boolean(q.diagram?.has_diagram),
-    image_url: q.diagram && 'image_url' in q.diagram ? (q.diagram.image_url as string) : undefined,
-    status: (q.diagram?.has_diagram ? 'review' : 'complete') as 'complete' | 'review',
+interface StagedPaperMetadata {
+  subject: {
+    code: string;
+    name: string;
+    icon?: string;
   };
-});
+  paper: {
+    series: string;
+    paper_code: string;
+    year: number;
+  };
+  syllabus_topics: { name: string; order_index: number }[];
+}
+
+const DEFAULT_PAPER_DATA: StagedPaperMetadata = {
+  subject: {
+    code: '0455',
+    name: 'Economics',
+    icon: 'trending-up',
+  },
+  paper: {
+    series: 's',
+    paper_code: '12',
+    year: 2024,
+  },
+  syllabus_topics: CAMBRIDGE_TOPICS.map((t) => ({
+    name: t.name,
+    order_index: t.orderIndex,
+  })),
+};
+
+const initialStagedQuestions: StagedQuestion[] = CAMBRIDGE_QUESTIONS.map((q, idx) => ({
+  id: q.id || `0455-s24-12-q${String(idx + 1).padStart(2, '0')}`,
+  stem_markdown: q.stem_markdown,
+  options: q.options.map((opt) => ({
+    id: opt.id,
+    text_markdown: opt.text_markdown,
+  })),
+  correct_option_id: q.correct_option_id,
+  explanation_markdown: (q as any).explanation_markdown || '',
+  citation: q.citation || `Cambridge IGCSE Economics 0455/12 May/June 2024 Q${idx + 1}`,
+  topic_id: q.topic_id || (q.topic ? q.topic.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'general'),
+  topic: q.topic || 'General',
+  has_diagram: Boolean(q.has_diagram),
+  image_url: q.image_url,
+  status: (q.has_diagram ? 'review' : 'complete') as 'complete' | 'review',
+}));
 
 export default function StagingReview() {
+  const [paperData, setPaperData] = useState<StagedPaperMetadata>(DEFAULT_PAPER_DATA);
   const [selectedQuestionIdx, setSelectedQuestionIdx] = useState(0);
   const [stagedQuestions, setStagedQuestions] = useState<StagedQuestion[]>(initialStagedQuestions);
   const [publishMessage, setPublishMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/ingest/staged-paper?id=0455_s24_12')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (!isMounted) return;
+        const paper = data?.paper || data;
+        if (paper && Array.isArray(paper.questions) && paper.questions.length > 0) {
+          if (paper.subject && paper.paper) {
+            setPaperData({
+              subject: {
+                code: paper.subject.code || DEFAULT_PAPER_DATA.subject.code,
+                name: paper.subject.name || DEFAULT_PAPER_DATA.subject.name,
+                icon: paper.subject.icon || DEFAULT_PAPER_DATA.subject.icon,
+              },
+              paper: {
+                series: paper.paper.series || DEFAULT_PAPER_DATA.paper.series,
+                paper_code: paper.paper.paper_code || DEFAULT_PAPER_DATA.paper.paper_code,
+                year: Number(paper.paper.year) || DEFAULT_PAPER_DATA.paper.year,
+              },
+              syllabus_topics: Array.isArray(paper.syllabus_topics)
+                ? paper.syllabus_topics
+                : DEFAULT_PAPER_DATA.syllabus_topics,
+            });
+          }
+          const loaded: StagedQuestion[] = paper.questions.map((q: any) => {
+            const options = (q.options || []).map((opt: any) => ({
+              id: opt.id || `opt-${(opt.label || 'a').toLowerCase()}`,
+              text_markdown: opt.content_markdown || opt.text_markdown || '',
+            }));
+            const correctOpt = (q.options || []).find((opt: any) => opt.is_correct);
+            const correct_option_id = correctOpt
+              ? (correctOpt.id || `opt-${(correctOpt.label || 'a').toLowerCase()}`)
+              : (q.correct_option_id || options[0]?.id || 'opt-a');
+
+            return {
+              id: q.id || `0455-s24-12-q${String(q.question_number || 1).padStart(2, '0')}`,
+              stem_markdown: q.stem_markdown || '',
+              options,
+              correct_option_id,
+              explanation_markdown: q.explanation_markdown || '',
+              citation: q.cambridge_source_ref || q.citation || '',
+              topic_id:
+                q.topic_id ||
+                (q.topic_name ? q.topic_name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'general'),
+              topic: q.topic_name || q.topic || 'General',
+              has_diagram: Boolean(q.diagram?.has_diagram ?? q.has_diagram),
+              image_url: q.diagram?.image_url || q.image_url,
+              status: ((q.diagram?.has_diagram ?? q.has_diagram) ? 'review' : 'complete') as
+                | 'complete'
+                | 'review',
+            };
+          });
+          setStagedQuestions(loaded);
+        }
+      })
+      .catch((err) => {
+        // Fallback already initialized in state from CAMBRIDGE_QUESTIONS
+        console.warn('Using fallback CAMBRIDGE_QUESTIONS for staging review:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const activeQuestion = stagedQuestions[selectedQuestionIdx] || stagedQuestions[0];
 
@@ -60,9 +153,9 @@ export default function StagingReview() {
 
   const handleExportJSON = () => {
     const exportData = {
-      subject: stagingData.subject,
-      paper: stagingData.paper,
-      syllabus_topics: stagingData.syllabus_topics,
+      subject: paperData.subject,
+      paper: paperData.paper,
+      syllabus_topics: paperData.syllabus_topics,
       questions: stagedQuestions.map((q, idx) => ({
         question_number: idx + 1,
         cambridge_source_ref: q.citation,
@@ -86,14 +179,14 @@ export default function StagingReview() {
       'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', '0455_s24_12_staged_reviewed.json');
+    downloadAnchor.setAttribute('download', `${paperData.subject.code}_${paperData.paper.series}${paperData.paper.year}_${paperData.paper.paper_code}_staged_reviewed.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
   };
 
   const handlePublish = () => {
-    const batchId = `BATCH-${stagingData.subject.code}-${stagingData.paper.series.toUpperCase()}${stagingData.paper.year}-${stagingData.paper.paper_code}`;
+    const batchId = `BATCH-${paperData.subject.code}-${paperData.paper.series.toUpperCase()}${paperData.paper.year}-${paperData.paper.paper_code}`;
     setPublishMessage(`Batch ${batchId} approved! All ${totalCount} questions staged to Supabase Live Bank.`);
     setTimeout(() => setPublishMessage(null), 5000);
   };
@@ -110,12 +203,12 @@ export default function StagingReview() {
           <span className="text-2xl">📋</span>
           <div>
             <h2 className="text-xl font-black text-slate-800">
-              {stagingData.subject.name} {stagingData.subject.code}/{stagingData.paper.paper_code}{' '}
-              {stagingData.paper.series.toUpperCase()}/{stagingData.paper.year} (Staged)
+              {paperData.subject.name} {paperData.subject.code}/{paperData.paper.paper_code}{' '}
+              {paperData.paper.series.toUpperCase()}/{paperData.paper.year} (Staged)
             </h2>
             <div className="text-sm font-bold text-slate-500 uppercase">
-              Batch ID: BATCH-{stagingData.subject.code}-{stagingData.paper.series.toUpperCase()}
-              {stagingData.paper.year}-{stagingData.paper.paper_code}
+              Batch ID: BATCH-{paperData.subject.code}-{paperData.paper.series.toUpperCase()}
+              {paperData.paper.year}-{paperData.paper.paper_code}
             </div>
           </div>
         </div>

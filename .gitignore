@@ -37,6 +37,7 @@ next-env.d.ts
 # scratch / local data
 Economics (0455)/
 staging/
+!staging/0455_s24_12.json
 /page*.png
 
 # python

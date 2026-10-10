@@ -1,0 +1,1080 @@
+{
+  "subject": {
+    "code": "0455",
+    "name": "Economics",
+    "icon": "trending-up"
+  },
+  "paper": {
+    "series": "s",
+    "paper_code": "12",
+    "year": 2024
+  },
+  "syllabus_topics": [
+    {
+      "name": "The basic economic problem",
+      "order_index": 1
+    },
+    {
+      "name": "The allocation of resources",
+      "order_index": 2
+    },
+    {
+      "name": "Microeconomic decision makers",
+      "order_index": 3
+    },
+    {
+      "name": "Government and the macroeconomy",
+      "order_index": 4
+    },
+    {
+      "name": "Economic development",
+      "order_index": 5
+    },
+    {
+      "name": "International trade and globalisation",
+      "order_index": 6
+    }
+  ],
+  "questions": [
+    {
+      "question_number": 1,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q1",
+      "topic_name": "The basic economic problem",
+      "stem_markdown": "Why will scarcity always exist?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "There are high costs of production.",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "There are low levels of education.",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "There are unlimited resources.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "There are unlimited wants.",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nScarcity is the fundamental economic problem facing all societies. It arises because finite (limited) economic resources (land, labour, capital, enterprise) are insufficient to satisfy infinite (unlimited) human wants and needs:\n\n$$\\text{Scarcity} = \\text{Unlimited Wants} > \\text{Finite Resources}$$\n\n### Step-by-Step Analysis\n1. Human wants are boundless and continually expand as living standards, technology, and societies evolve.\n2. Even if an economy expands production, new desires inevitably emerge, meaning wants can never be completely satisfied.\n3. Because the resources available to produce goods and services remain strictly limited, wants will always exceed available resources.\n4. Therefore, scarcity will permanently exist because there are **unlimited wants**.\n\n### Distractor Analysis\n- **A (There are high costs of production)**: High production costs influence product prices and firm profitability, but scarcity exists regardless of cost because total economic resources are finite.\n- **B (There are low levels of education)**: Education levels impact the quality and productivity of labour, but raising education levels does not eliminate unlimited human wants.\n- **C (There are unlimited resources)**: Incorrect economic premise. Economic resources are scarce (finite); if resources were truly unlimited, scarcity would not exist.\n- **D (There are unlimited wants) [Correct]**: Accurately identifies that human desires are infinite, ensuring that finite resources can never satisfy all wants.",
+      "status": "active"
+    },
+    {
+      "question_number": 2,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q2",
+      "topic_name": "The basic economic problem",
+      "stem_markdown": "A student decides to take up a two-year apprenticeship for which she will earn \\$10,000 per year. After that, she expects to earn \\$25,000 per year. She could take an unskilled job which pays \\$16,000 per year instead of the apprenticeship.\n\nWhat is the opportunity cost in the two years of completing the apprenticeship?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "\\$10,000",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "\\$12,000",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "\\$25,000",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "\\$32,000",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nOpportunity cost is the next best alternative foregone when an economic choice is made. In monetary terms, the opportunity cost over the specified period is the net financial earnings sacrificed by choosing the apprenticeship instead of the alternative job:\n\n$$\\text{Opportunity Cost} = \\text{Total Earnings from Alternative Foregone} - \\text{Total Earnings from Chosen Option}$$\n\n### Step-by-Step Derivation\n1. **Identify the time horizon**: The question specifies a **two-year** duration for completing the apprenticeship.\n2. **Calculate total earnings from the chosen option (apprenticeship)**:\n   $$2 \\times \\$10,000 = \\$20,000$$\n3. **Calculate total earnings from the next best alternative (unskilled job)**:\n   $$2 \\times \\$16,000 = \\$32,000$$\n4. **Calculate the opportunity cost (net income sacrificed over 2 years)**:\n   $$\\text{Opportunity Cost} = \\$32,000 - \\$20,000 = \\$12,000$$\n   *(Equivalently, the student sacrifices $\\$16,000 - \\$10,000 = \\$6,000$ per year, which over two years equals $2 \\times \\$6,000 = \\$12,000$.)*\n\n### Distractor Analysis\n- **A (\\$10,000)**: Candidate selects the one-year income received from the apprenticeship itself, confusing income received with opportunity cost foregone.\n- **B (\\$12,000) [Correct]**: Accurately computes the net earnings sacrificed over the two years ($2 \\times \\$16,000 - 2 \\times \\$10,000 = \\$12,000$).\n- **C (\\$25,000)**: Candidate chooses the expected future salary after completing the training, which is a future anticipated return rather than a cost incurred during the two-year apprenticeship.\n- **D (\\$32,000)**: Candidate calculates the gross earnings from the unskilled job ($2 \\times \\$16,000 = \\$32,000$), failing to deduct the \\$20,000 actually earned while doing the apprenticeship.",
+      "status": "active"
+    },
+    {
+      "question_number": 3,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q3",
+      "topic_name": "The basic economic problem",
+      "stem_markdown": "The diagram shows a country’s production possibility curve (PPC).\n\nWhich current combination of capital and consumer goods would produce the greatest number of consumer goods in the future?",
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 424,
+          "xmin": 398,
+          "ymax": 587,
+          "xmax": 690,
+          "page_number": 2
+        },
+        "image_url": "/questions/0455_2024_s_12_q3.png",
+        "storage_path": "0455_2024_s_12_q3.png",
+        "alt_description": "Production possibility curve (PPC) diagram showing capital goods on the vertical axis and consumer goods on the horizontal axis with points P, R, U, O, S, V, Q."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "O and Q",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "P and O",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "R and S",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "U and V",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nA **Production Possibility Curve (PPC)** displays the maximum combinations of two goods an economy can produce using all available resources efficiently.\n- **Consumer goods**: Goods produced for present consumption that satisfy immediate consumer wants (e.g. food, clothing), but do not enhance future production.\n- **Capital goods**: Man-made resources (e.g. machinery, factories, equipment, technology) used to produce other goods and services.\n\nInvesting in capital goods expands an economy's productive capacity, shifting the PPC outward in the future.\n\n### Step-by-Step Derivation\n1. **Understand the question's objective**: The question asks which current combination produces the **greatest number of consumer goods in the future** (not in the present period).\n2. **Evaluate the role of capital accumulation**: To maximize consumer goods production in the future, the economy must invest the maximum possible amount in capital goods today.\n3. **Examine the options from the diagram**:\n   - **Combination P and O**: Located at the vertical intercept, dedicating **all** available resources to producing capital goods ($OP$) and zero consumer goods in the current period.\n   - **Combination R and S**: Produces $OR$ capital goods and $OS$ consumer goods ($OR < OP$).\n   - **Combination U and V**: Produces $OU$ capital goods and $OV$ consumer goods ($OU < OR$).\n   - **Combination O and Q**: Located at the horizontal intercept, producing maximum consumer goods ($OQ$) today, but zero capital goods.\n4. Because point **P and O** maximizes the current creation of capital goods, it yields the greatest outward shift of the PPC, maximizing the economy's future productive capacity and enabling the highest output of consumer goods in the future.\n\n### Distractor Analysis\n*(Note: As highlighted in the Principal Examiner Report, only 14% of candidates answered this question correctly, with 33% picking A and 33% picking D due to overlooking the future dimension).*\n- **A (O and Q)**: Common misconception (33% of candidates). Produces the greatest number of consumer goods *now* (in the current period), but zero capital goods, resulting in no economic growth or capital accumulation for the future.\n- **B (P and O) [Correct]**: By devoting all current output to capital goods ($OP$), the country maximally expands its productive potential and shifts the PPC outward, enabling the largest future production of consumer goods.\n- **C (R and S)**: Produces more capital goods than D or A, but fewer than combination P and O.\n- **D (U and V)**: Common distractor (33% of candidates). Produces a high level of consumer goods today ($OV$), but very few capital goods ($OU$), generating minimal future growth.",
+      "status": "active"
+    },
+    {
+      "question_number": 4,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q4",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "What is not a macroeconomic topic?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "the growth in Chinese Gross Domestic Product",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "the level of Consumer Prices Index inflation in the UK",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "the level of unemployment in Spain",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "the total output of the German car industry",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\n- **Macroeconomics**: The study of aggregate economic behavior and the economy as a whole, focusing on national and international aggregates such as Gross Domestic Product (GDP), inflation, total national unemployment, and the balance of payments.\n- **Microeconomics**: The study of individual economic units, specific markets, consumers, workers, firms, or individual industries (e.g. car manufacturing, agriculture).\n\n### Step-by-Step Derivation\n1. **Analyze each topic**:\n   - *Growth in Chinese Gross Domestic Product (GDP)*: Measures the aggregate output of the entire Chinese economy $\\to$ Core **macroeconomic** topic.\n   - *Level of Consumer Prices Index (CPI) inflation in the UK*: Measures the aggregate rate of change in the general price level across the UK $\\to$ Core **macroeconomic** topic.\n   - *Level of unemployment in Spain*: Measures total nationwide unemployment in the Spanish economy $\\to$ Core **macroeconomic** topic.\n   - *Total output of the German car industry*: Examines production in one specific market/industry (the motor vehicle sector), rather than the aggregate output of Germany $\\to$ **Microeconomic** topic.\n2. The question asks for what is **not** a macroeconomic topic.\n3. Therefore, the total output of the German car industry is a microeconomic topic, making **D** the correct answer.\n\n### Distractor Analysis\n- **A (the growth in Chinese Gross Domestic Product)**: GDP is the primary macroeconomic measure of aggregate economic output and national economic growth.\n- **B (the level of Consumer Prices Index inflation in the UK)**: CPI inflation is a primary macroeconomic indicator measuring the purchasing power and general price level across the whole economy.\n- **C (the level of unemployment in Spain)**: National unemployment measures the overall state of the aggregate labour market across the entire country.\n- **D (the total output of the German car industry) [Correct]**: Analyzes an individual market/industry rather than the whole economy, which falls under microeconomics.",
+      "status": "active"
+    },
+    {
+      "question_number": 5,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q5",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "What is likely to cause an extension in demand for a firm’s fruit drink?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a period of hot weather",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "a reduction in the cost of producing the drink",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "a rival firm leaving the market",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "a successful advertising campaign by the firm",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\n- **Extension in Demand**: A movement **along** the existing demand curve downwards and to the right, caused solely by a **decrease in the price of the good itself**.\n- **Increase in Demand**: A **shift of the entire demand curve** to the right, caused by non-price determinants (e.g. consumer tastes, advertising, weather, prices/numbers of competitors).\n\n### Step-by-Step Derivation\n1. **Identify the necessary condition for an extension in demand**:\n   $$\\text{Price of the fruit drink falls } (P \\downarrow) \\implies \\text{Quantity demanded increases along the curve } (Q_d \\uparrow)$$\n2. **Analyze how production cost reduction operates (Option B)**:\n   - A fall in the cost of producing the fruit drink increases firms' profit margins at each price level, shifting the market **supply curve to the right** ($S_1 \\to S_2$).\n   - The increase in supply leads to a surplus at the original price, causing the **equilibrium price to fall** ($P_1 \\to P_2$).\n   - As the market price drops, consumers expand their quantity demanded along the demand curve $\\to$ an **extension in demand**.\n3. **Compare with Options A, C, and D**:\n   - Hot weather, rival firm exit, and advertising campaigns are all non-price factors that increase consumer willingness and ability to buy at any given price, causing a rightward **shift of the demand curve** (an *increase in demand*), not an extension along it.\n\n### Distractor Analysis\n*(Note: As highlighted in the Principal Examiner Report, only 46% of candidates answered correctly. 24% chose D and 18% chose A because candidates frequently confuse a shift in demand with an extension in demand).*\n- **A (a period of hot weather)**: Increases consumer preferences for refreshing beverages, causing an outward shift of the entire demand curve (an *increase in demand*).\n- **B (a reduction in the cost of producing the drink) [Correct]**: Increases supply, lowering the market equilibrium price. This price drop causes consumers to buy more along the curve, which is an *extension in demand*.\n- **C (a rival firm leaving the market)**: Reduces available substitutes, shifting the firm's demand curve to the right (an *increase in demand*).\n- **D (a successful advertising campaign by the firm)**: Enhances brand awareness and consumer loyalty, shifting the entire demand curve to the right (an *increase in demand*).",
+      "status": "active"
+    },
+    {
+      "question_number": 6,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q6",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "Supermarkets sell petrol (gas) outside their stores. They reduce the price of petrol below other suppliers to attract more customers to buy goods in the store when they buy more petrol.\n\nIf this were successful, how might it be shown on demand and supply diagrams?\n\n| | demand and supply diagram for petrol | demand and supply diagram for the store’s goods |\n| :---: | :--- | :--- |\n| **A** | shift of the demand curve to the left | shift of the supply curve to the left |\n| **B** | shift of the demand curve to the right | shift of the demand curve to the left |\n| **C** | shift of the supply curve to the left | shift of the supply curve to the right |\n| **D** | shift of the supply curve to the right | shift of the demand curve to the right |",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "petrol: shift of the demand curve to the left | store’s goods: shift of the supply curve to the left",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "petrol: shift of the demand curve to the right | store’s goods: shift of the demand curve to the left",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "petrol: shift of the supply curve to the left | store’s goods: shift of the supply curve to the right",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "petrol: shift of the supply curve to the right | store’s goods: shift of the demand curve to the right",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\n1. **Supply Shifts and Pricing Decisions**: In a competitive market, a firm or retailer lowering its price and expanding the quantity supplied to the market is represented by a rightward (outward) shift of the market supply curve ($S_1 \\to S_2$). An increase in supply creates downward pressure on the equilibrium price and increases equilibrium quantity traded.\n2. **Complementary Retail Demand (Loss Leader Strategy)**: When supermarkets discount petrol to entice drivers to visit their store, petrol and supermarket in-store goods act as complementary goods in consumption / joint retail visits. Lower petrol prices increase customer footfall, leading to an increase in demand for the store's goods, which shifts the store's demand curve to the right ($D_1 \\to D_2$).\n\n### Step-by-Step Derivation\n1. **Market for Petrol**: Supermarkets deliberately offer more petrol at lower prices than other suppliers. In a supply and demand framework for the petrol market, an increase in petrol supply by supermarkets shifts the supply curve to the **right**, lowering market price and extending quantity demanded.\n2. **Market for Store's Goods**: Because customers buy more petrol at the supermarket site, they also enter the supermarket to purchase in-store groceries and merchandise. At any given price level of store goods, more consumers are now demanding products. This shifts the demand curve for the store's goods to the **right**.\n3. Combining both diagrams:\n   - Petrol diagram: **shift of the supply curve to the right**\n   - Store's goods diagram: **shift of the demand curve to the right**\n   This corresponds precisely to option **D**.\n\n### Distractor Analysis\n- **A**: Petrol: A leftward shift of the demand curve would lower price, but would also reduce quantity traded, failing to describe supermarkets proactively cutting prices to sell more petrol. Store's goods: A leftward shift of the supply curve would mean lower supply and higher store prices, contradicting retail expansion.\n- **B**: Petrol: A rightward shift of the demand curve would drive petrol prices *up*, the opposite of supermarkets cutting petrol prices. Store's goods: A leftward shift of demand indicates falling store sales, which contradicts the stated strategy of attracting more store customers.\n- **C**: Petrol: A leftward shift of the supply curve would cause petrol prices to *rise* and quantity traded to fall. Store's goods: A rightward shift of supply addresses producer supply capacity rather than consumer purchasing behavior driven by greater customer numbers.\n- **D [Correct]**: Accurately shows an outward supply shift for petrol lowering price and expanding quantity, and an outward demand shift for store goods as extra footfall boosts store purchases.",
+      "status": "active"
+    },
+    {
+      "question_number": 7,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q7",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "Which statement describes a market in disequilibrium?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "Excess demand results from a government maximum price below the equilibrium price.",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "The point where the demand and supply curves cross.",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "Price changes cause further changes in both demand and supply.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "The quantity demanded by consumers equals the quantity supplied by producers.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\n- **Market Equilibrium**: A state of balance where the quantity demanded equals the quantity supplied ($Q_d = Q_s$), with no tendency for price or quantity to change. Geometrically, it is the intersection point of the market demand and supply curves.\n- **Market Disequilibrium**: Any market state where quantity demanded does not equal quantity supplied ($Q_d \\neq Q_s$) at the prevailing price:\n  - **Excess supply (surplus)**: Occurs when $Q_s > Q_d$, often caused by a legally enforced minimum price set above equilibrium.\n  - **Excess demand (shortage)**: Occurs when $Q_d > Q_s$, often caused by a legally enforced maximum price (price ceiling) set below equilibrium.\n\n### Step-by-Step Derivation\n1. When a government sets an effective maximum price below the free-market equilibrium price, producers receive a lower price and reduce the quantity they are willing to supply ($Q_s$ contracts).\n2. Concurrently, consumers face a lower price and increase the quantity they wish to buy ($Q_d$ extends).\n3. This creates a situation where quantity demanded exceeds quantity supplied ($Q_d > Q_s$), resulting in **excess demand** (a shortage).\n4. Because the price cannot legally rise to clear the market, the market remains in persistent **disequilibrium**.\n5. Thus, option **A** correctly describes a market in disequilibrium.\n\n### Distractor Analysis\n- **A [Correct]**: Setting a maximum price below equilibrium generates persistent excess demand ($Q_d > Q_s$), which is the canonical definition of market disequilibrium.\n- **B (The point where the demand and supply curves cross)**: This defines market **equilibrium**, where supply and demand intersect and the market clears ($Q_d = Q_s$).\n- **C (Price changes cause further changes in both demand and supply)**: Flawed economic reasoning; changes in price cause movements *along* existing demand and supply curves (changes in quantity demanded/supplied), not shifts in demand and supply curves themselves.\n- **D (The quantity demanded by consumers equals the quantity supplied by producers)**: This is the exact condition of market **equilibrium** ($Q_d = Q_s$), not disequilibrium.",
+      "status": "active"
+    },
+    {
+      "question_number": 8,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q8",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "In response to an increase in price from \\$5 per kg to \\$6 per kg, a farmer increased supply from 400 kg to 500 kg per week.\n\nWhat is the price elasticity of supply?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "0.8",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "0.9",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "1.2",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "1.25",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nPrice Elasticity of Supply ($\\text{PES}$) measures the responsiveness of quantity supplied to a change in price:\n$$\\text{PES} = \\frac{\\% \\Delta Q_s}{\\% \\Delta P}$$\nwhere:\n$$\\% \\Delta Q_s = \\frac{Q_2 - Q_1}{Q_1} \\times 100\\%$$\n$$\\% \\Delta P = \\frac{P_2 - P_1}{P_1} \\times 100\\%$$\n\n### Step-by-Step Derivation\n1. **Initial and new values**:\n   - Initial quantity $Q_1 = 400\\text{ kg}$, new quantity $Q_2 = 500\\text{ kg}$\n   - Initial price $P_1$ = \\$5, new price $P_2$ = \\$6\n2. **Calculate percentage change in quantity supplied (\\% \\Delta Q_s)**:\n   $$\\% \\Delta Q_s = \\frac{500 - 400}{400} \\times 100\\% = \\frac{100}{400} \\times 100\\% = +25\\%$$\n3. **Calculate percentage change in price (\\% \\Delta P)**:\n   $$\\% \\Delta P = \\frac{6 - 5}{5} \\times 100\\% = \\frac{1}{5} \\times 100\\% = +20\\%$$\n4. **Calculate \\text{PES}**:\n   $$\\text{PES} = \\frac{+25\\%}{+20\\%} = \\frac{25}{20} = 1.25$$\n   Since $\\text{PES} > 1$, supply is price elastic over this range. Option **D** is correct.\n\n### Distractor Analysis\n- **A (0.8)**: Inversion error; divided $\\% \\Delta P$ by $\\% \\Delta Q_s$ ($\\frac{20\\%}{25\\%} = 0.8$), confusing the numerator and denominator.\n- **B (0.9)**: Calculation error resulting from using the new quantity ($500\\text{ kg}$) or new price (\\$6) as the denominator, or miscalculating percentage ratios.\n- **C (1.2)**: Calculation error dividing the final price by the original price ($\\frac{6}{5} = 1.2$), ignoring the percentage change in quantity supplied.\n- **D (1.25) [Correct]**: Accurately computes $\\frac{\\% \\Delta Q_s}{\\% \\Delta P} = \\frac{25\\%}{20\\%} = 1.25$.",
+      "status": "active"
+    },
+    {
+      "question_number": 9,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q9",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "Which government measure is most likely to cause a fall both in price and in quantity traded?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "indirect tax",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "maximum price",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "minimum price",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "subsidy",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nGovernment interventions affect market equilibrium price ($P$) and quantity traded ($Q$) differently:\n- **Indirect Tax**: Shifts the supply curve to the left ($S \\to S_1$). Market price rises ($P \\uparrow$) and quantity traded falls ($Q \\downarrow$).\n- **Maximum Price (Price Ceiling)**: A legal ceiling set *below* the equilibrium price. The legal transaction price falls ($P \\downarrow$). However, at this lower price, suppliers reduce quantity supplied ($Q_s < Q_e$). Because transactions require willing sellers, the quantity traded falls ($Q \\downarrow$) to $Q_s$.\n- **Minimum Price (Price Floor)**: A legal floor set *above* the equilibrium price. The price rises ($P \\uparrow$), but quantity demanded contracts ($Q \\downarrow$).\n- **Subsidy**: Shifts the supply curve to the right ($S \\to S_2$). Market price falls ($P \\downarrow$) and quantity traded expands ($Q \\uparrow$).\n\n### Step-by-Step Derivation\n1. We are looking for a measure where **both** price falls ($P \\downarrow$) AND quantity traded falls ($Q \\downarrow$).\n2. Evaluate each measure:\n   - **Indirect tax**: Price paid by consumers increases ($P \\uparrow$), quantity falls ($Q \\downarrow$). (Price does not fall).\n   - **Maximum price**: The legal transaction price falls to the ceiling level ($P_{\\text{max}} < P_e$). At this lower price, producers contract their supply to $Q_s$. Since buyers cannot purchase more than producers supply, quantity traded falls from $Q_e$ to $Q_s$ ($Q \\downarrow$). Both price and quantity traded fall!\n   - **Minimum price**: The legal price rises ($P_{\\text{min}} > P_e$). (Price does not fall).\n   - **Subsidy**: Market price falls ($P \\downarrow$), but producers increase output so quantity traded rises ($Q \\uparrow$). (Quantity does not fall).\n3. Therefore, only a **maximum price** causes a fall in both price and quantity traded. Option **B** is correct.\n\n### Distractor Analysis\n- **A (indirect tax)**: An indirect tax increases production costs, shifting supply upwards/leftwards. This causes the market price to *rise*, even though quantity traded falls.\n- **B (maximum price) [Correct]**: Imposing an effective price ceiling lowers the price charged to consumers and contracts quantity supplied, causing both price and actual quantity traded to fall.\n- **C (minimum price)**: An effective minimum price is set above equilibrium, which forces the market price to *rise*, while quantity demanded contracts.\n- **D (subsidy)**: A subsidy reduces production costs and shifts supply rightwards, which lowers market price but *increases* quantity traded.",
+      "status": "active"
+    },
+    {
+      "question_number": 10,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q10",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "The diagrams show the wage rates of cleaners ($OW_c$) and nurses ($OW_n$).\n\nWhat is the result if a national minimum wage of $OM$ is introduced?\n\n| | wage rates of cleaners | wage rates of nurses |\n| :---: | :---: | :---: |\n| **A** | fall | rise |\n| **B** | no change | fall |\n| **C** | rise | fall |\n| **D** | rise | no change |",
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 276,
+          "xmin": 138,
+          "ymax": 429,
+          "xmax": 864,
+          "page_number": 4
+        },
+        "image_url": "/questions/0455_2024_s_12_q10.png",
+        "storage_path": "0455_2024_s_12_q10.png",
+        "alt_description": "Two demand and supply diagrams showing wage rates versus employment: cleaners with equilibrium wage Wc and minimum wage M; nurses with equilibrium wage Wn and minimum wage M."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "cleaners: fall | nurses: rise",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "cleaners: no change | nurses: fall",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "cleaners: rise | nurses: fall",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "cleaners: rise | nurses: no change",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\n- **Determination of Wages**: In a free labour market, the equilibrium wage rate is determined at the intersection of the demand for labour ($D$) and the supply of labour ($S$).\n- **National Minimum Wage (NMW)**:\n  - A legally imposed wage floor below which employers cannot pay their workers.\n  - **Binding / Effective**: If the minimum wage ($OM$) is set **above** the free-market equilibrium wage ($OM > OW$), employers must legally raise wages to $OM$. The wage rate **rises**.\n  - **Non-binding / Ineffective**: If the minimum wage ($OM$) is set **below** the free-market equilibrium wage ($OM < OW$), the prevailing market wage is already compliant with the law. The wage rate remains at equilibrium with **no change**.\n\n### Step-by-Step Derivation\n1. **Cleaners' Labour Market**:\n   - The initial equilibrium wage rate is $OW_c$.\n   - The national minimum wage $OM$ is positioned on the vertical axis **above** $W_c$ ($OM > OW_c$).\n   - Because $OM$ is above the market wage, the minimum wage is binding. Employers must legally increase the wage rate to $OM$.\n   - Therefore, the wage rate of cleaners will **rise**.\n2. **Nurses' Labour Market**:\n   - The initial equilibrium wage rate is $OW_n$.\n   - The national minimum wage $OM$ is positioned on the vertical axis **below** $W_n$ ($OM < OW_n$).\n   - Because nurses are already earning a wage higher than the legal minimum, the minimum wage has no binding effect on this market. Market forces continue to set the wage at $OW_n$.\n   - Therefore, the wage rate of nurses will experience **no change**.\n3. Combining both outcomes:\n   - Wage rates of cleaners: **rise**\n   - Wage rates of nurses: **no change**\n   This corresponds to option **D**.\n\n### Distractor Analysis\n- **A (fall | rise)**: Incorrectly claims cleaners' wages fall (a minimum wage never forces wages below the market level) and nurses' wages rise (nurses already earn above $OM$).\n- **B (no change | fall)**: Reverses the status of the two occupations and incorrectly predicts a fall in nurses' wages.\n- **C (rise | fall)**: Correctly identifies that cleaners' wages will rise, but mistakenly predicts that nurses' wages fall to $OM$. Employers are not forced or incentivised to cut higher wages to the minimum wage floor.\n- **D (rise | no change) [Correct]**: Accurately recognizes that the minimum wage is binding for low-wage cleaners ($OM > OW_c$, causing wages to rise) and non-binding for higher-paid nurses ($OM < OW_n$, leaving wages unchanged).",
+      "status": "active"
+    },
+    {
+      "question_number": 11,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q11",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "What would cause a decrease in spending by households in a country?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a reduction in disposable income",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "a reduction in the rate of sales tax",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "lower interest rates",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "lower savings",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nHousehold consumer expenditure ($C$) is primarily determined by disposable income ($Y_d$), which represents gross income ($Y$) minus direct taxes ($T$) plus government transfer payments ($B$):\n$$Y_d = Y - T + B$$\nDisposable income is allocated between consumption ($C$) and saving ($S$):\n$$Y_d = C + S$$\nCeteris paribus, consumption varies directly with disposable income. When disposable income declines, households have less purchasing power, leading to a contraction in consumer spending.\n\n### Step-by-Step Derivation\n1. A reduction in disposable income directly diminishes the funds households have available to spend on goods and services after paying taxes.\n2. Faced with tighter financial constraints, households must cut back on their discretionary purchases and overall living expenditures.\n3. Therefore, a reduction in disposable income causes a direct decrease in household spending.\n\n### Distractor Analysis\n- **A (a reduction in disposable income) [Correct]**: Directly reduces households' net purchasing power, decreasing their ability to spend on consumer goods and services.\n- **B (a reduction in the rate of sales tax)**: Lower sales taxes (e.g. VAT or GST) reduce retail prices. This raises households' real disposable income, encouraging higher consumer spending rather than a decrease.\n- **C (lower interest rates)**: Lower interest rates reduce the reward for saving and lower the cost of borrowing (loans, credit cards, mortgages). This stimulates households to borrow more and spend more.\n- **D (lower savings)**: If households reduce their savings out of a given income, the portion spent on consumption must increase ($C = Y_d - S$). Furthermore, drawing down accumulated savings finances additional consumption expenditure.",
+      "status": "active"
+    },
+    {
+      "question_number": 12,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q12",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "Which combination shows the advantages of a small firm over a larger firm?\n\n| | better communication | greater independence | lower average cost |\n| :---: | :---: | :---: | :---: |\n| **A** | no | no | yes |\n| **B** | no | yes | no |\n| **C** | yes | yes | no |\n| **D** | yes | yes | yes |",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "better communication: no | greater independence: no | lower average cost: yes",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "better communication: no | greater independence: yes | lower average cost: no",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "better communication: yes | greater independence: yes | lower average cost: no",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "better communication: yes | greater independence: yes | lower average cost: yes",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nThe scale of a firm influences its organizational structure and cost efficiency:\n- **Small firms** typically have shorter chains of command and fewer management layers, facilitating faster, direct communication and reduced bureaucratic friction. Furthermore, small business owners (e.g. sole proprietors) maintain full entrepreneurial independence and autonomous decision-making.\n- **Large firms** benefit from **economies of scale** (e.g. bulk buying, technical, financial, and managerial economies), allowing them to spread fixed costs over higher volumes and achieve lower average total costs ($ATC = \\frac{TC}{Q}$) than small firms.\n\n### Step-by-Step Derivation\n1. **Better communication**: With fewer employees and short reporting channels, communication between management and staff in a small firm is faster and clearer, avoiding large-firm communication diseconomies (**yes**).\n2. **Greater independence**: Owners of small firms are free to manage operations without bureaucratic shareholder approvals or corporate hierarchies (**yes**).\n3. **Lower average cost**: Small firms operate at lower output levels and cannot exploit internal economies of scale to the same extent as large firms. Consequently, their average costs of production are typically higher, not lower (**no**).\n4. Therefore, the combination showing the true advantages of a small firm is **yes** for better communication, **yes** for greater independence, and **no** for lower average cost (Row **C**).\n\n### Distractor Analysis\n- **A**: Incorrectly suggests that small firms have lower average costs while denying communication and independence benefits. Small firms face higher average costs due to the lack of economies of scale.\n- **B**: Recognizes greater independence but incorrectly denies better communication. Small firm size naturally enables easier, direct interpersonal communication.\n- **C [Correct]**: Accurately identifies that small firms benefit from superior communication and entrepreneurial independence, but face higher average costs than large firms that benefit from economies of scale.\n- **D**: Incorrectly claims that small firms achieve lower average costs. Achieving minimum efficient scale and lower unit costs is a primary advantage of large firms.",
+      "status": "active"
+    },
+    {
+      "question_number": 13,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q13",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "What is a variable cost for a firm?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "the cost of raw materials",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "the interest payment on existing loans",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "the rent on the factory",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "the insurance on the factory buildings",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nIn the short run, a firm's total costs ($TC$) are divided into fixed costs ($FC$) and variable costs ($VC$):\n$$TC = FC + VC$$\n- **Fixed costs ($FC$)**: Costs that do not change as output changes. They must be paid even if output is zero ($Q = 0$).\n- **Variable costs ($VC$)**: Costs that vary directly with the quantity of output produced ($Q$). If output is zero, variable costs are zero ($VC = 0$).\n\n### Step-by-Step Derivation\n1. Analyze how each cost item responds to changes in output volume:\n   - Producing additional units requires purchasing additional components and raw materials. If production ceases, raw material purchases drop to zero.\n   - Therefore, the cost of raw materials changes directly with output, making it a **variable cost**.\n2. By contrast, loan interest, factory rent, and building insurance must be paid regardless of the number of units produced.\n3. Hence, Option A is the correct answer.\n\n### Distractor Analysis\n- **A (the cost of raw materials) [Correct]**: Varies directly with production output; increasing output requires more raw materials, while zero output incurs zero raw material costs.\n- **B (the interest payment on existing loans)**: Fixed financial overhead that must be paid according to contracted debt schedules, irrespective of current production levels.\n- **C (the rent on the factory)**: Fixed property overhead governed by lease terms that remains constant regardless of whether factory production rises, falls, or stops.\n- **D (the insurance on the factory buildings)**: Fixed overhead expense paid annually or periodically to insure property assets, unaffected by day-to-day manufacturing volume.",
+      "status": "active"
+    },
+    {
+      "question_number": 14,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q14",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "The table shows the daily average revenue and units of output sold for a firm producing bicycles over a five day period.\n\n| day | average revenue (\\$) | units of output sold |\n| :---: | :---: | :---: |\n| 1 | 200 | 2 |\n| 2 | 160 | 4 |\n| 3 | 120 | 8 |\n| 4 | 80 | 14 |\n| 5 | 40 | 16 |\n\nWhat can be concluded from the table?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "The firm's highest total revenue occurs at 2 units of output sold.",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "The firm's highest total revenue occurs at 14 units of output sold.",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "The firm's prices are always greater than total revenue.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "The firm's total revenue always increases as output rises.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nAverage revenue ($AR$) is defined as total revenue divided by quantity sold, which is identical to selling price ($P$):\n$$AR = \\frac{TR}{Q} = P$$\nTotal revenue ($TR$) is total earnings from sales, calculated by multiplying average revenue ($AR$) by the quantity of output sold ($Q$):\n$$TR = AR \\times Q = P \\times Q$$\n\n### Step-by-Step Derivation\nCalculate Total Revenue ($TR$) for each day:\n- **Day 1**: $TR_1 = \\$200 \\times 2 = \\$400$\n- **Day 2**: $TR_2 = \\$160 \\times 4 = \\$640$\n- **Day 3**: $TR_3 = \\$120 \\times 8 = \\$960$\n- **Day 4**: $TR_4 = \\$80 \\times 14 = \\$1120$\n- **Day 5**: $TR_5 = \\$40 \\times 16 = \\$640$\n\nComparing the total revenues across all output levels:\n$$\\$1120 > \\$960 > \\$640 > \\$400$$\nThe maximum total revenue is **\\$1120**, which occurs on Day 4 when **14 units of output are sold**.\n\n### Distractor Analysis\n- **A (The firm's highest total revenue occurs at 2 units of output sold)**: Confuses highest *price / average revenue* (\\$200 on Day 1) with highest *total revenue*. At 2 units, total revenue is only \\$400, the lowest across the five days.\n- **B (The firm's highest total revenue occurs at 14 units of output sold) [Correct]**: Correctly computes $TR = AR \\times Q = \\$80 \\times 14 = \\$1120$, which exceeds all other days' total revenues.\n- **C (The firm's prices are always greater than total revenue)**: Price equals average revenue ($P = AR$). Because quantity sold is greater than 1 for all days ($Q \\ge 2$), total revenue ($P \\times Q$) is always greater than the unit price ($P$), never smaller.\n- **D (The firm's total revenue always increases as output rises)**: Overlooks Day 5; when output rises from 14 to 16 units, average revenue drops steeply from \\$80 to \\$40, causing total revenue to fall from \\$1120 to \\$640.",
+      "status": "active"
+    },
+    {
+      "question_number": 15,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q15",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "Which function of money acts as a measure of value?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a medium of exchange",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "a standard of deferred payment",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "a store of wealth",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "a unit of account",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nMoney performs four fundamental economic functions:\n1. **Unit of account (measure of value)**: Provides a common denominator and standard numerical unit in terms of which prices are quoted and the economic value of different goods, services, and assets is measured and compared.\n2. **Medium of exchange**: Acts as an intermediary instrument widely accepted in payments for goods and services, eliminating the need for a double coincidence of wants in barter.\n3. **Store of value (store of wealth)**: Allows purchasing power to be preserved and transferred from the present to the future.\n4. **Standard of deferred payment**: Allows goods and services to be acquired today with payment agreed at a specified future date (credit and loans).\n\n### Step-by-Step Derivation\n1. The question specifically asks for the function that acts as a **measure of value**.\n2. A measure of value allows people to place a price tag on items (e.g. \\$5 for a book, \\$20 for a shirt) so their relative economic worth can be readily understood and compared.\n3. In economic terms, this function is known as a **unit of account** (Option D).\n\n### Distractor Analysis\n*(Examiner Report note: Answered correctly by only 38% of candidates, with widespread confusion among the other functions)*:\n- **A (a medium of exchange)**: Chosen by 28% of candidates; this function refers to facilitating transactions and trading, not quantifying or quoting value.\n- **B (a standard of deferred payment)**: Chosen by 13% of candidates; this function facilitates contracts involving future payments and borrowing.\n- **C (a store of wealth)**: Chosen by 21% of candidates; this function refers to saving purchasing power over time to spend in the future, rather than measuring value.\n- **D (a unit of account) [Correct]**: The precise economic term for money's function as a measure of value and pricing benchmark.",
+      "status": "active"
+    },
+    {
+      "question_number": 16,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q16",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "What are the features of a highly competitive market when compared with a monopoly market?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "price: higher | profit: higher",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "price: higher | profit: lower",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "price: lower | profit: higher",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "price: lower | profit: lower",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Market Structure\nIn microeconomics, market structures differ fundamentally by the number of firms, barriers to entry, and pricing power:\n- **Monopoly**: A single seller dominates the market with high barriers to entry. Because it has substantial market power (is a price maker), it restricts output to charge a higher price and can sustain abnormal (supernormal) profits in the long run.\n- **Highly competitive market**: Many firms produce similar or identical goods with low or negligible barriers to entry. Because firms are price takers facing elastic demand, intense competition drives market prices down toward average cost ($P = MC$ or $P = AC$). In the long run, freedom of entry ensures that abnormal profits are competed away, leaving firms with only normal profit.\n\n### Step-by-Step Derivation\n1. **Price comparison**: Fierce competition among numerous rival suppliers forces firms to keep prices as low as possible to retain customers. In contrast, a monopoly restricts output to charge high prices. Hence, prices in a highly competitive market are **lower**.\n2. **Profit comparison**: Any supernormal profits in a competitive market attract new entrants, expanding market supply and eroding excess profits down to normal profits. A monopoly maintains supernormal profits due to high barriers to entry. Hence, profits in a highly competitive market are **lower**.\n3. Combining both characteristics: compared with a monopoly, a highly competitive market features **lower price** and **lower profit** (Option D).\n\n### Distractor Analysis\n- **A (price: higher | profit: higher)**: Inverts both characteristics. Higher prices and sustained supernormal profits are classic features of a monopoly exercising market power, not a competitive market.\n- **B (price: higher | profit: lower)**: Mistakenly asserts that competitive firms can charge higher prices despite strong competition and close substitutes.\n- **C (price: lower | profit: higher)**: Correctly identifies that competition reduces prices, but incorrectly asserts that competitive firms achieve higher profits than a monopoly protected by barriers to entry.\n- **D (price: lower | profit: lower) [Correct]**: Accurately identifies that competitive pressures force prices downward and eliminate supernormal profits, resulting in both lower prices and lower profits.",
+      "status": "active"
+    },
+    {
+      "question_number": 17,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q17",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "What is **not** a role of central government in a mixed economy?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "providing demerit goods",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "providing merit goods",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "providing public goods",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "stabilising the economy",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & The Role of Government\nIn a **mixed economy**, resources are allocated by both the private sector (via the price mechanism) and the public sector (via government intervention). The central government intervenes to correct market failures and manage the macroeconomy:\n- **Demerit goods**: Goods that are harmful to consumers and society (e.g. tobacco, alcohol), generating negative externalities and being overconsumed in a free market due to imperfect information. The role of government is to *discourage, tax, heavily regulate, or ban* demerit goods—never to provide them.\n- **Merit goods**: Goods with positive externalities that are underconsumed in a free market (e.g. healthcare, education). Governments provide or subsidise them to ensure universal access.\n- **Public goods**: Non-excludable and non-rival goods (e.g. national defence, street lighting). Because of the free-rider problem, private firms cannot produce them profitably, so the central government provides them funded by taxation.\n- **Economic stabilisation**: Governments use fiscal and monetary policies to control inflation, minimise unemployment, and smooth fluctuations across the business cycle.\n\n### Step-by-Step Derivation\n1. The question specifically asks which function is **not** a role of central government.\n2. Central governments actively provide public goods (eliminating missing markets) and merit goods (correcting underconsumption).\n3. Central governments actively manage aggregate demand and macroeconomic indicators to stabilise the economy.\n4. Because demerit goods create negative externalities and social costs, governments actively penalise, restrict, or tax them; they do not supply or promote them.\n5. Therefore, **providing demerit goods** is **not** a government role (Option A).\n\n### Distractor Analysis\n*(Note: Question 17 was identified in the Principal Examiner Report as one of the questions answered correctly by most candidates).*\n- **A (providing demerit goods) [Correct]**: Governments discourage and restrict demerit goods; providing them would worsen market failure and harm social welfare.\n- **B (providing merit goods)**: Supplying merit goods like basic education and healthcare is a primary function of the public sector in a mixed economy.\n- **C (providing public goods)**: Direct state provision of non-excludable public goods (such as defence and police services) is necessary because private markets fail entirely to provide them.\n- **D (stabilising the economy)**: Macroeconomic management using fiscal, monetary, and supply-side policies to maintain stable prices and steady growth is a core duty of central government.",
+      "status": "active"
+    },
+    {
+      "question_number": 18,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q18",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "A government wishes to prevent deflation.\n\nWhich combination of policies would be the most effective in achieving this aim?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "interest rate: increase | government spending: increase",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "interest rate: increase | government spending: reduce",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "interest rate: reduce | government spending: increase",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "interest rate: reduce | government spending: reduce",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Deflationary Policy Response\n**Deflation** is a persistent fall in the general price level of goods and services throughout an economy. It is typically caused by insufficient aggregate demand ($AD = C + I + G + (X - M)$) and excess capacity.\nTo prevent or reverse deflation, the government and central bank implement **expansionary (reflationary) policies** to stimulate aggregate demand:\n- **Monetary policy**: **Reducing interest rates** lowers borrowing costs for households and businesses and reduces the incentive to save. This stimulates consumer spending on credit ($C$) and capital investment by firms ($I$).\n- **Fiscal policy**: **Increasing government spending** ($G$) directly injects purchasing power into the circular flow of income, creating jobs and boosting aggregate demand directly.\n\n### Step-by-Step Derivation\n1. Preventing deflation requires boosting aggregate demand ($AD$) to put upward pressure on prices and output.\n2. **Interest rate decision**: Cutting the base rate makes loans cheaper and saving less rewarding, increasing consumer spending ($C$) and business investment ($I$). Therefore, the central bank should **reduce** interest rates.\n3. **Government spending decision**: Higher public expenditure on infrastructure, public sector wages, and services directly increases the $G$ component of aggregate demand. Therefore, the government should **increase** spending.\n4. Both policies shift the aggregate demand curve to the right, raising real GDP and lifting price levels out of deflation.\n5. Therefore, the combination is **reduce interest rate** and **increase government spending** (Option C).\n\n### Distractor Analysis\n- **A (interest rate: increase | government spending: increase)**: Increasing interest rates is a contractionary monetary policy that dampens consumption and investment, conflicting with the objective of preventing deflation.\n- **B (interest rate: increase | government spending: reduce)**: Both actions represent contractionary (deflationary) policies: raising borrowing costs and cutting public spending depress aggregate demand, causing or worsening deflation.\n- **C (interest rate: reduce | government spending: increase) [Correct]**: Successfully pairs expansionary monetary policy (lowering interest rates to boost private spending) with expansionary fiscal policy (increasing government spending to inject demand directly).\n- **D (interest rate: reduce | government spending: reduce)**: Cutting government spending is contractionary fiscal policy, which pulls demand out of the economy and undermines the stimulus provided by lower interest rates.",
+      "status": "active"
+    },
+    {
+      "question_number": 19,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q19",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "The diagram shows the impact of a tax introduced on a product.\n\nWhich area represents the amount of tax paid by the consumer?",
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 112,
+          "xmin": 326,
+          "ymax": 324,
+          "xmax": 677,
+          "page_number": 7
+        },
+        "image_url": "/questions/0455_2024_s_12_q19.png",
+        "storage_path": "0455_2024_s_12_q19.png",
+        "alt_description": "Supply and demand diagram illustrating the impact of an indirect tax on a product, shifting the supply curve vertically upwards from S1 to S2. The price paid by consumers rises from P1 to P2, while quantity falls from Q1 to Q2, identifying points E, F, G, and H on the price and quantity axes."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "HP1FG",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "HP2EG",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "OP2EQ2",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "P1P2EF",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Tax Incidence\nWhen an indirect tax is levied on a product, it increases unit production costs, causing the market supply curve to shift vertically upwards by the per-unit amount of the tax from $S_1$ to $S_2$:\n- **Per-unit tax**: The vertical distance between the two supply curves at the new quantity $Q_2$, which is distance $EG$ (equal to $P_2 - H$).\n- **Total tax revenue collected**: $\\text{Tax per unit} \\times \\text{Quantity} = (P_2 - H) \\times Q_2 = \\text{Area } HP_2EG$.\n- **Consumer tax incidence (consumer burden)**: The portion of the tax passed forward to consumers through a higher price: $(P_2 - P_1) \\times Q_2 = \\text{Area } P_1P_2EF$.\n- **Producer tax incidence (producer burden)**: The portion of the tax absorbed by producers through a lower net price received: $(P_1 - H) \\times Q_2 = \\text{Area } HP_1FG$.\n\n### Step-by-Step Derivation\n1. Before the tax, the initial equilibrium is at point $F$ (intersection of $D$ and $S_1$), where consumers pay price $P_1$ and buy quantity $Q_1$.\n2. After the indirect tax is introduced, supply shifts to $S_2$. The new equilibrium is at point $E$ (intersection of $D$ and $S_2$), where consumers now pay higher price $P_2$ for quantity $Q_2$.\n3. Consumers pay an additional $(P_2 - P_1)$ per unit on all $Q_2$ units purchased.\n4. Geometrically, this rectangular area has a height of $(P_2 - P_1)$ and a width of $Q_2$, which corresponds to area **$P_1P_2EF$**.\n5. Therefore, the amount of tax paid by the consumer is represented by area **$P_1P_2EF$** (Option D).\n\n### Distractor Analysis\n- **A (HP1FG)**: Represents the **producer burden** (the tax absorbed by suppliers), as producers receive a net price of $H$ per unit rather than $P_1$ on the $Q_2$ units sold.\n- **B (HP2EG)**: Represents the **total tax revenue** collected by the government (combining both consumer burden $P_1P_2EF$ and producer burden $HP_1FG$).\n- **C (OP2EQ2)**: Represents the **total consumer expenditure** (and total gross revenue earned by firms) at the new equilibrium price $P_2$ and quantity $Q_2$.\n- **D (P1P2EF) [Correct]**: Accurately delineates the consumer burden of the tax, bounded by original price $P_1$, new price $P_2$, point $E$, and vertical projection point $F$.",
+      "status": "active"
+    },
+    {
+      "question_number": 20,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q20",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "Which statement about supply-side policy is correct?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "It aims to increase the productive potential of the economy.",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "It aims to increase total demand in the economy.",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "It involves changes in the equilibrium foreign exchange rate.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "It involves changes in the rate of interest.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Supply-Side Policies\n**Supply-side policies** are government measures designed to increase aggregate supply ($AS$) by enhancing the productive capacity, efficiency, and competitiveness of an economy:\n- **Objective**: Expand the economy's maximum potential output by improving the quantity and/or quality of the factors of production (land, labour, capital, enterprise).\n- **Instruments**: Investment in education and worker training, improvements in transport and digital infrastructure, deregulation, privatisation, labour market flexibility, and enterprise incentives/subsidies.\n- **Diagrammatic effect**: Shifts the Long-Run Aggregate Supply ($LRAS$) curve and the Production Possibility Curve ($PPC$) outwards to the right, enabling non-inflationary long-term economic growth.\n\n### Step-by-Step Derivation\n1. Define the fundamental purpose of supply-side policies: boosting aggregate supply ($AS$) and expanding national productive capacity.\n2. **Evaluate Option A**: \"It aims to increase the productive potential of the economy.\" By expanding and upskilling factor inputs, supply-side measures increase the ceiling of what the economy can produce. This statement is accurate.\n3. **Evaluate Option B**: Influencing total demand in the economy is the objective of demand-side policies (fiscal and monetary policy), not supply-side policy.\n4. **Evaluate Option C**: Managing or adjusting the foreign exchange rate is the realm of exchange rate or external policy, not core supply-side policy.\n5. **Evaluate Option D**: Changing interest rates is the central instrument of monetary policy controlled by the central bank.\n6. Therefore, Option A is the only correct statement.\n\n### Distractor Analysis\n- **A (It aims to increase the productive potential of the economy.) [Correct]**: Accurately defines the core aim of supply-side policy, which is to shift $LRAS$ rightwards and expand the productive capacity of the economy.\n- **B (It aims to increase total demand in the economy.)**: Confuses supply-side policy with demand-side policy (such as expansionary fiscal or monetary policy designed to stimulate aggregate demand $AD$).\n- **C (It involves changes in the equilibrium foreign exchange rate.)**: Pertains to exchange rate policy and foreign currency intervention, which affect external balance rather than domestic productive capacity.\n- **D (It involves changes in the rate of interest.)**: Central bank adjustment of interest rates is monetary policy, not supply-side policy.",
+      "status": "active"
+    },
+    {
+      "question_number": 21,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q21",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "Which change is most likely to cause faster economic growth in the short run?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "an increase in net emigration",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "an increase in the birth rate",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "an increase in the death rate",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "an increase in the retirement age",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Economic Principles\nShort-run economic growth refers to an increase in real output (real Gross Domestic Product) produced by an economy over a brief time horizon. It occurs either when aggregate demand increases or when the active labour force expands, enabling firms to immediately produce more goods and services from available factor inputs.\n\n### Step-by-Step Analysis\n1. Raising the statutory retirement age requires workers to stay in the workforce longer before drawing state pensions.\n2. This immediately expands the size of the economically active labour supply in the short run, preventing an immediate contraction in the labor force.\n3. With more active workers employed and earning wages, businesses can maintain or increase production levels immediately, leading to a rise in total national output (real GDP).\n\n### Distractor Analysis\n- **A (an increase in net emigration)**: Net emigration means more people are leaving the country than entering. This depletes the domestic labour force and reduces total consumer expenditure, causing economic output to contract rather than grow.\n- **B (an increase in the birth rate)**: An increase in newborns raises the dependent population. These children will not enter the productive workforce for at least 16 to 18 years, so there is zero immediate expansion in labour supply. In the short run, this diverts resources toward childcare and medical care without increasing output.\n- **C (an increase in the death rate)**: A higher death rate reduces total population and shrinks the available labor supply and aggregate demand, which harms short-run output.\n- **D (an increase in the retirement age) [Correct]**: By immediately preventing workers from retiring and keeping them economically active, the labour supply is augmented, causing an immediate boost to productive potential and actual output in the short run.",
+      "status": "active"
+    },
+    {
+      "question_number": 22,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q22",
+      "topic_name": "Economic development",
+      "stem_markdown": "How is the pattern of employment likely to change when a country becomes more developed?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "from rural employment to urban employment",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "from skilled employment to primary employment",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "from technical employment to manual employment",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "from tertiary employment to secondary employment",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Economic Principles\nEconomic development is typically accompanied by structural transformation in the economy. As productivity rises and industrialisation occurs:\n1. **Sectoral Shift**: The proportion of output and employment shifts away from the primary sector (agriculture and raw material extraction) towards the secondary sector (manufacturing) and ultimately towards the tertiary sector (services).\n2. **Geographic Shift (Urbanisation)**: Agricultural mechanisation reduces the demand for rural farm labour, while growing manufacturing factories and service industries concentrate in metropolitan areas. This triggers rural-to-urban migration, shifting employment from rural areas to urban centres.\n\n### Step-by-Step Analysis\n1. In developing economies, the majority of the population works in rural areas in subsistence agriculture.\n2. As economic development progresses, mechanisation in farming reduces rural labor requirements, and higher-paying jobs emerge in industrial and service clusters in cities.\n3. Consequently, workers migrate from rural agrarian settings to urban industrial and commercial hubs, leading to a structural shift from rural employment to urban employment.\n\n### Distractor Analysis\n- **A (from rural employment to urban employment) [Correct]**: Accurately reflects the universal demographic and economic trend of urbanisation and structural change that accompanies economic development.\n- **B (from skilled employment to primary employment)**: Primary employment (farming, mining, fishing) shrinks as a share of the workforce during development, while education and training increase the demand and supply of skilled labour. This option inverts the expected direction of change.\n- **C (from technical employment to manual employment)**: Advanced economies invest heavily in automation and digital technology, replacing manual labor with skilled and technical jobs. Shifting towards manual labor would indicate economic regression.\n- **D (from tertiary employment to secondary employment)**: Mature, developed economies transition towards tertiary (services) and quaternary sectors, often experiencing deindustrialisation (a relative decline in secondary manufacturing employment). The movement is from secondary to tertiary, not the reverse.",
+      "status": "active"
+    },
+    {
+      "question_number": 23,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q23",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "Which item is **least** likely to be included in the Consumer Prices Index (CPI)?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "domestic cooking oil",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "homemade clothes",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "milk",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "personal mobile phones",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Economic Principles\nThe Consumer Prices Index (CPI) measures the average percentage change in the general price level of a representative \"basket of goods and services\" typically purchased by households over time.\n\nTo be included in the CPI:\n1. The product must be bought and sold in formal market transactions with measurable monetary prices.\n2. The item must be widely purchased by typical households (determined by national family expenditure surveys).\n\nNon-market production, self-provided services, and non-commercial DIY activities are strictly excluded because they do not involve formal market exchange and have no recorded retail prices.\n\n### Step-by-Step Analysis\n1. Homemade clothes are produced and consumed within the domestic household without passing through retail markets.\n2. Because no monetary transaction occurs, there is no retail market price for statistical agencies to survey or monitor.\n3. Therefore, homemade clothing cannot be included in the CPI basket of consumer goods and services.\n\n### Distractor Analysis\n- **A (domestic cooking oil)**: A staple consumer food item purchased regularly by households at supermarkets and retail stores; standard item in the food and non-alcoholic beverages section of the CPI basket.\n- **B (homemade clothes) [Correct]**: Homemade items are non-market output produced for own consumption. Because they are not traded on the market and lack a price tag, they are excluded from the CPI.\n- **C (milk)**: An essential everyday dairy product consumed by a large percentage of households, making it a permanent fixture in the CPI food basket.\n- **D (personal mobile phones)**: Widely owned consumer electronic goods and services; explicitly included in the communication sub-index of the CPI basket.",
+      "status": "active"
+    },
+    {
+      "question_number": 24,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q24",
+      "topic_name": "Economic development",
+      "stem_markdown": "The table shows statistics for four countries A, B, C and D.\n\n| Country | Average years of schooling | Life expectancy (years) | GDP per head (\\$) |\n| :--- | :---: | :---: | :---: |\n| A | 6 | 45 | 200 |\n| B | 7 | 47 | 200 |\n| C | 9 | 60 | 220 |\n| D | 12 | 59 | 1500 |\n\nAccording to the data provided, which country has the lowest standard of living?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "A",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "B",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "C",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "D",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Economic Principles\nThe standard of living reflects the overall material and non-material well-being of people in a country. Economists evaluate living standards using a combination of:\n1. **Material indicators**: Gross Domestic Product (GDP) per head, measuring average income and purchasing power.\n2. **Health indicators**: Life expectancy at birth, reflecting healthcare access, nutrition, and sanitation.\n3. **Educational indicators**: Average years of schooling, measuring literacy, human capital, and educational attainment.\n\nThese three components mirror the dimensions of the United Nations Human Development Index (HDI).\n\n### Step-by-Step Analysis\nLet us evaluate the data for each country across all three metrics:\n- **Country A**: GDP per head = \\$200; Life expectancy = 45 years; Schooling = 6 years.\n- **Country B**: GDP per head = \\$200; Life expectancy = 47 years; Schooling = 7 years.\n- **Country C**: GDP per head = \\$220; Life expectancy = 60 years; Schooling = 9 years.\n- **Country D**: GDP per head = \\$1500; Life expectancy = 59 years; Schooling = 12 years.\n\nComparing the two lowest-income countries (A and B):\n1. Both have the lowest GDP per head of \\$200.\n2. Country A has a lower life expectancy (45 years vs 47 years in B).\n3. Country A has fewer years of schooling (6 years vs 7 years in B).\n\nBecause Country A has the lowest life expectancy, the lowest schooling, and is tied for the lowest GDP per head, Country A undeniably has the lowest overall standard of living.\n\n### Distractor Analysis\n- **A (Country A) [Correct]**: Ranks lowest or tied-lowest in all three human development indicators (\\$200 income, 45 years life expectancy, 6 years schooling).\n- **B (Country B)**: Although Country B shares the lowest GDP per head of \\$200 with Country A, its life expectancy is higher by 2 years (47 vs 45) and average schooling is higher by 1 year (7 vs 6), so its standard of living is superior to Country A.\n- **C (Country C)**: Country C has a higher GDP per head (\\$220), significantly longer life expectancy (60 years), and more education (9 years) than Countries A and B.\n- **D (Country D)**: Country D has by far the highest GDP per head (\\$1500) and schooling (12 years), with a high life expectancy (59 years), indicating the highest standard of living among all four countries.",
+      "status": "active"
+    },
+    {
+      "question_number": 25,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q25",
+      "topic_name": "Economic development",
+      "stem_markdown": "Economic development in country X has progressed at a greater rate than in country Y .\n\nWhat is the most likely explanation of this difference in economic development between country X and country Y?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "Country X has a higher level of spending on education than country Y .",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "Country X has a higher level of unemployment than country Y .",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "Country Y has a higher level of investment spending than country X.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "Country Y has a higher level of spending on healthcare than country X.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Economic Principles\nEconomic development is a broad measure of economic well-being and social progress that includes improvements in standards of living, health, literacy, poverty reduction, and human capital accumulation, in addition to GDP growth.\n\nA primary driver of rapid economic development is government and private investment in human capital (education and training):\n- Education increases worker skills, adaptability, and labour productivity.\n- Better-educated workers earn higher incomes, stimulate technological innovation, and improve health awareness.\n- Consequently, higher investment in education substantially accelerates the rate of economic development.\n\n### Step-by-Step Analysis\n1. The question states that economic development in Country X progressed faster than in Country Y.\n2. Higher spending on education in Country X equips its workforce with greater skills, improves literacy, and raises productivity relative to Country Y.\n3. This creates a sustainable foundation for higher living standards, structural economic modernisation, and accelerated economic development in Country X compared to Country Y.\n\n### Distractor Analysis\n- **A (Country X has a higher level of spending on education than country Y.) [Correct]**: Greater spending on education enhances human capital and worker productivity, directly accelerating the rate of economic development in Country X.\n- **B (Country X has a higher level of unemployment than country Y.)**: Higher unemployment results in lost potential output, reduced household incomes, poverty, and lower government tax revenue, which retards economic development rather than accelerating it.\n- **C (Country Y has a higher level of investment spending than country X.)**: Higher investment spending by Country Y in capital infrastructure and machinery would typically boost Country Y's economic growth and development, which contradicts the premise that Country X developed faster.\n- **D (Country Y has a higher level of spending on healthcare than country X.)**: Higher healthcare expenditure improves worker vitality and life expectancy in Country Y, which would promote development in Country Y rather than Country X.",
+      "status": "active"
+    },
+    {
+      "question_number": 26,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q26",
+      "topic_name": "Economic development",
+      "stem_markdown": "A rise in which factor would cause an increase in the population growth rate of a country?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "birth rate",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "death rate",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "infant mortality rate",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "net emigration",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nThe rate of population growth is determined by the rate of natural increase combined with net migration:\n$$\\text{Population Growth Rate} = (\\text{Birth Rate} - \\text{Death Rate}) + (\\text{Immigration} - \\text{Emigration})$$\n\n### Step-by-Step Derivation\n1. **Birth rate** is the number of live births per 1,000 of the population per year.\n2. When the birth rate rises (assuming death rates and net migration remain constant), the natural increase of the population increases.\n3. Therefore, an increase in the birth rate directly raises the population growth rate of a country.\n\n### Distractor Analysis\n- **A (birth rate) [Correct]**: Directly increases the rate of natural increase, increasing overall population growth.\n- **B (death rate)**: A higher death rate increases the number of deaths, which reduces natural increase and lowers the population growth rate.\n- **C (infant mortality rate)**: An increase in infant mortality means more infants die before their first birthday, which reduces surviving additions to the population and dampens growth.\n- **D (net emigration)**: Net emigration occurs when more people leave the country than enter. A rise in net emigration reduces the population growth rate.",
+      "status": "active"
+    },
+    {
+      "question_number": 27,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q27",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "The diagram shows the market for an imported good with equilibrium at point X.\n\nThe country imposes a tariff on this good.\n\nIs the new equilibrium at point A, B, C or D?",
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 176,
+          "xmin": 316,
+          "ymax": 441,
+          "xmax": 686,
+          "page_number": 9
+        },
+        "image_url": "/questions/0455_2024_s_12_q27.png",
+        "storage_path": "0455_2024_s_12_q27.png",
+        "alt_description": "Market diagram for imported goods with equilibrium X, showing shifts in demand (D to D1) and supply (S, S1, S2) with labeled intersection points A, B, C, D to identify tariff equilibrium."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "A",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "B",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "C",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "D",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nA tariff is an indirect tax placed on imported goods. In a microeconomic supply and demand model:\n- Imposing an indirect tax raises production/import costs per unit for suppliers.\n- This causes the market supply curve to shift vertically upwards / to the left by the amount of the tariff (from $S$ to $S_1$).\n- The market demand curve $D$ does not shift; instead, consumers react to higher prices by contracting their quantity demanded along curve $D$.\n\n### Step-by-Step Derivation\n1. The initial market equilibrium is at point X, where the initial supply curve $S$ intersects the demand curve $D$.\n2. Imposing a tariff increases the unit cost of supplying the imported good, shifting the supply curve vertically upwards to $S_1$.\n3. Consumer demand remains on the curve $D$. As price rises, consumers move along curve $D$.\n4. The new equilibrium occurs at the intersection of the new supply curve $S_1$ and the original demand curve $D$, which is point **B**.\n\n### Distractor Analysis\n- **A**: Represents a shift of both supply to $S_1$ and demand leftwards to $D_1$. A tariff affects supply costs; it does not shift the demand curve inwards.\n- **B [Correct]**: Accurately shows the upward shift in supply from $S$ to $S_1$ intersecting the original demand curve $D$ at a higher price and lower quantity.\n- **C**: Represents a downward shift of supply to $S_2$, which would occur under an import subsidy or fall in production costs, not a tariff.\n- **D**: Represents both a supply expansion to $S_2$ and an inward shift in demand to $D_1$.",
+      "status": "active"
+    },
+    {
+      "question_number": 28,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q28",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "The diagram shows the market for the Chinese yuan (¥) priced in US dollars (\\$).\n\nWhat could have caused the change in demand for the yuan from $D_1$ to $D_2$?",
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 535,
+          "xmin": 306,
+          "ymax": 715,
+          "xmax": 697,
+          "page_number": 9
+        },
+        "image_url": "/questions/0455_2024_s_12_q28.png",
+        "storage_path": "0455_2024_s_12_q28.png",
+        "alt_description": "Foreign exchange market diagram showing the market for Chinese yuan (¥) priced in US dollars ($), with supply curve S1 and a leftward shift in demand from D1 to D2."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a decrease in foreign direct investment in China",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "a decrease in the level of tariffs levied by China on imports",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "an increase in the buying of yuan by central banks",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "an increase in the Chinese rate of interest",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nIn the foreign exchange market, the demand for a country's currency (Chinese yuan, ¥) is generated by foreigners who wish to buy that country's goods, services, or assets:\n- Foreign purchases of domestic exports\n- Inward Foreign Direct Investment (FDI)\n- Inward portfolio investment and \"hot money\" flows seeking high interest rates\n- Central bank purchases of foreign exchange reserves\n\nA shift from $D_1$ to $D_2$ represents a **decrease in demand** for the yuan.\n\n### Step-by-Step Derivation\n1. Inward Foreign Direct Investment (FDI) involves foreign firms building factories or investing in enterprises located in China. To make these investments, foreign investors must sell their home currencies and buy Chinese yuan.\n2. If there is a decrease in foreign direct investment in China, foreign firms need to purchase fewer yuan.\n3. This decrease in foreign demand shifts the demand curve for yuan to the left, from $D_1$ to $D_2$.\n\n### Distractor Analysis\n- **A (a decrease in foreign direct investment in China) [Correct]**: Fewer foreign enterprises investing in China means reduced demand for yuan, causing the leftward shift from $D_1$ to $D_2$.\n- **B (a decrease in the level of tariffs levied by China on imports)**: Lower Chinese tariffs make foreign imports cheaper for Chinese consumers. This increases Chinese spending on imports, increasing the *supply* of yuan (shifting the supply curve rightwards to buy foreign currencies), not shifting demand.\n- **C (an increase in the buying of yuan by central banks)**: Central bank purchases of yuan increase foreign exchange demand for yuan, which would shift the demand curve to the right.\n- **D (an increase in the Chinese rate of interest)**: Higher domestic interest rates attract short-term financial capital (\"hot money\") from abroad seeking higher returns, which increases demand for yuan and shifts demand to the right.",
+      "status": "active"
+    },
+    {
+      "question_number": 29,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q29",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "The table shows the average exchange rate of the UK pound (£) to the US dollar (\\$), that is the amount of \\$ that can be bought with £1.\n\n| year | exchange rate<br>UK£ / US\\$ |\n| :---: | :---: |\n| 1 | 1.64 |\n| 2 | 1.52 |\n| 3 | 1.35 |\n| 4 | 1.25 |\n\nWhat is a likely effect of this change on the UK economy?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "decreased cost-push inflation",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "decreased current account deficit",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "increased quantity of imports",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "increased trade deficit",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nWhen £1 buys fewer US dollars (falling consecutively from \\$1.64 to \\$1.25), the UK pound has experienced a **depreciation** in its exchange rate.\n- **Exports**: Become cheaper in foreign currencies (US dollars), increasing export demand and competitiveness.\n- **Imports**: Become more expensive in domestic currency (£), reducing import demand.\n- **Current account / Trade balance**: When export revenue rises and import expenditure falls, the trade balance improves, reducing any deficit.\n\n### Step-by-Step Derivation\n1. Over the 4-year period, the exchange rate fell steadily from \\$1.64 to \\$1.25 per £1. This represents a significant depreciation of the UK pound.\n2. For foreign buyers, UK exports now require fewer US dollars, making UK goods more price-competitive abroad and increasing export sales.\n3. For UK consumers and firms, US goods cost more pounds, causing a contraction in the quantity of imports demanded.\n4. Higher export revenues combined with lower import expenditures improve the net trade balance, resulting in a **decreased current account deficit**.\n\n### Distractor Analysis\n- **A (decreased cost-push inflation)**: A weaker pound increases the cost of imported raw materials, components, and fuel, which triggers *increased* cost-push inflation rather than decreased.\n- **B (decreased current account deficit) [Correct]**: Depreciation boosts exports and dampens imports, narrowing the trade gap and reducing the current account deficit.\n- **C (increased quantity of imports)**: Higher prices of imported foreign goods cause a contraction in import demand, so the quantity of imports falls, not rises.\n- **D (increased trade deficit)**: Because depreciation stimulates export earnings and reduces import expenditure, it tends to reduce the trade deficit, not increase it.",
+      "status": "active"
+    },
+    {
+      "question_number": 30,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/12 May/June 2024 Q30",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "The table shows components of Japan’s current account balance in trillion yen (¥) for 2 years.\n\n| year | balance of goods<br>(¥ trillion) | balance of services<br>(¥ trillion) | balance of primary income<br>(¥ trillion) | balance of secondary income<br>(¥ trillion) |\n| :---: | :---: | :---: | :---: | :---: |\n| 1 | –1.61 | –1.76 | 14.04 | –1.11 |\n| 2 | –5.23 | –2.33 | 13.55 | –1.02 |\n\nWhich balance improved between year 1 and year 2?",
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "balance of goods",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "balance of primary income",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "balance of secondary income",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "balance of services",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Formula\nAn improvement in a balance of payments component means the net balance has moved in a positive direction (either a surplus has grown larger, or a deficit has grown smaller):\n$$\\Delta \\text{Balance} = \\text{Balance}_{\\text{Year 2}} - \\text{Balance}_{\\text{Year 1}} > 0$$\n\n### Step-by-Step Derivation\nCalculate the net change for each of the four components from Year 1 to Year 2:\n1. **Balance of goods**:\n   $$-5.23 - (-1.61) = -3.62\\text{ trillion yen}$$\n   The deficit widened significantly (deteriorated).\n2. **Balance of services**:\n   $$-2.33 - (-1.76) = -0.57\\text{ trillion yen}$$\n   The deficit widened (deteriorated).\n3. **Balance of primary income**:\n   $$13.55 - 14.04 = -0.49\\text{ trillion yen}$$\n   The surplus decreased (deteriorated).\n4. **Balance of secondary income**:\n   $$-1.02 - (-1.11) = +0.09\\text{ trillion yen}$$\n   The deficit narrowed from $-1.11$ to $-1.02$ trillion yen. Because the balance became less negative, it **improved** by $0.09$ trillion yen.\n\n### Distractor Analysis\n- **A (balance of goods)**: The deficit widened from $-1.61$ to $-5.23$ trillion yen, which is a deterioration.\n- **B (balance of primary income)**: The surplus decreased from $+14.04$ to $+13.55$ trillion yen, which is a deterioration.\n- **C (balance of secondary income) [Correct]**: The deficit narrowed from $-1.11$ to $-1.02$ trillion yen, representing an improvement of $+0.09$ trillion yen.\n- **D (balance of services)**: The deficit widened from $-1.76$ to $-2.33$ trillion yen, which is a deterioration.",
+      "status": "active"
+    }
+  ]
+}
