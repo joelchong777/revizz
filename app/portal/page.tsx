@@ -83,9 +83,17 @@ function PortalContent() {
   // Dev override to quickly preview UI in development
   const isDev = process.env.NODE_ENV === 'development';
   const [devOverride, setDevOverride] = useState(isDev);
+  const [guestMode, setGuestMode] = useState(false);
 
   // Sync with searchParams
   useEffect(() => {
+    const guestParam = searchParams?.get('guest');
+    const demoParam = searchParams?.get('demo');
+    const modeParam = searchParams?.get('mode');
+    if (guestParam === 'true' || demoParam === 'true' || modeParam === 'guest') {
+      setGuestMode(true);
+    }
+
     const tab = searchParams?.get('tab') || searchParams?.get('nav');
     if (!tab) return;
 
@@ -126,7 +134,7 @@ function PortalContent() {
   };
 
   // Auth gate
-  if (loading && !(isDev && devOverride)) {
+  if (loading && !(isDev && devOverride) && !guestMode) {
     return (
       <div className="min-h-screen bg-[#f5ead8] flex items-center justify-center p-6 font-body">
         <div className="max-w-md w-full bg-[#f9f4ed] rounded-[28px] p-8 border-2 border-[#201e1d] shadow-offset-4 text-center space-y-6 animate-pulse">
@@ -139,7 +147,7 @@ function PortalContent() {
     );
   }
 
-  const isEducator = (isDev && devOverride) || (userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
+  const isEducator = guestMode || (isDev && devOverride) || (userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
 
   if (!isEducator) {
     return (
@@ -156,6 +164,14 @@ function PortalContent() {
           </div>
 
           <div className="space-y-3 pt-4 border-t-2 border-[#dcd3c4]">
+            <button
+              type="button"
+              onClick={() => setGuestMode(true)}
+              className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer font-body"
+            >
+              <span>🎓</span> Enter as Guest Educator / Admin (Demo)
+            </button>
+
             {!userProfile ? (
               <button
                 type="button"
@@ -493,7 +509,7 @@ function PortalContent() {
           active={activeNav}
           onSelect={handleSelectNav}
           onToggleRole={handleToggleRole}
-          userDisplayName={userProfile?.display_name}
+          userDisplayName={userProfile?.display_name || 'Guest Educator'}
         />
       </div>
 
@@ -514,7 +530,7 @@ function PortalContent() {
               onSelect={handleSelectNav}
               onToggleRole={handleToggleRole}
               onClose={() => setMobileNavOpen(false)}
-              userDisplayName={userProfile?.display_name}
+              userDisplayName={userProfile?.display_name || 'Guest Educator'}
             />
           </div>
         </div>
@@ -560,6 +576,30 @@ function PortalContent() {
 
         {/* Scrollable Main Content Area */}
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
+          {guestMode && !userProfile && (
+            <div className="mb-6 p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🎓</span>
+                <span>Guest Educator Mode · Full interactive preview of teaching and curriculum tools</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => signInWithGoogle()}
+                  className="px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] hover:bg-[#ffc6a5] transition-colors cursor-pointer"
+                >
+                  Sign In with Google
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGuestMode(false)}
+                  className="px-3 py-1 rounded-full bg-[#eee7db] border border-[#201e1d] hover:bg-[#dcd3c4] transition-colors cursor-pointer"
+                >
+                  Exit Guest
+                </button>
+              </div>
+            </div>
+          )}
           {renderContent()}
         </main>
       </div>

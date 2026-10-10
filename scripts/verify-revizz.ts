@@ -430,41 +430,47 @@ console.log('\n[Suite 6] Portal Gate Security & Role Permissions');
 const evaluateEducatorAccess = (
   userProfile: { role?: 'student' | 'teacher' | 'admin'; display_name?: string } | null,
   isDev: boolean,
-  devOverride: boolean
+  devOverride: boolean,
+  guestMode: boolean = false
 ): boolean => {
-  return (isDev && devOverride) || !!(userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
+  return guestMode || (isDev && devOverride) || !!(userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
 };
 
 test('Production Security: devOverride flag is strictly ignored when isDev is false', () => {
   // Tampered/bypassed devOverride in production with null profile
-  const bypassAttemptLoggedOut = evaluateEducatorAccess(null, false, true);
+  const bypassAttemptLoggedOut = evaluateEducatorAccess(null, false, true, false);
   assertEqual(bypassAttemptLoggedOut, false, 'Logged-out user cannot bypass gate with devOverride in production');
 
   // Tampered/bypassed devOverride in production with student profile
-  const bypassAttemptStudent = evaluateEducatorAccess({ role: 'student', display_name: 'Student' }, false, true);
+  const bypassAttemptStudent = evaluateEducatorAccess({ role: 'student', display_name: 'Student' }, false, true, false);
   assertEqual(bypassAttemptStudent, false, 'Student user cannot bypass gate with devOverride in production');
 });
 
 test('Production Security: only verified teacher and admin roles are granted access', () => {
-  const teacherAccess = evaluateEducatorAccess({ role: 'teacher', display_name: 'Ms. Smith' }, false, false);
+  const teacherAccess = evaluateEducatorAccess({ role: 'teacher', display_name: 'Ms. Smith' }, false, false, false);
   assertEqual(teacherAccess, true, 'Verified teacher role receives access');
 
-  const adminAccess = evaluateEducatorAccess({ role: 'admin', display_name: 'Principal Skinner' }, false, false);
+  const adminAccess = evaluateEducatorAccess({ role: 'admin', display_name: 'Principal Skinner' }, false, false, false);
   assertEqual(adminAccess, true, 'Verified admin role receives access');
 
-  const anonymousAccess = evaluateEducatorAccess(null, false, false);
+  const anonymousAccess = evaluateEducatorAccess(null, false, false, false);
   assertEqual(anonymousAccess, false, 'Unauthenticated user denied educator access');
 
-  const studentAccess = evaluateEducatorAccess({ role: 'student', display_name: 'Bart S.' }, false, false);
+  const studentAccess = evaluateEducatorAccess({ role: 'student', display_name: 'Bart S.' }, false, false, false);
   assertEqual(studentAccess, false, 'Student user denied educator access');
 });
 
 test('Development Mode: devOverride is permitted only when isDev is true', () => {
-  const devPreviewActive = evaluateEducatorAccess(null, true, true);
+  const devPreviewActive = evaluateEducatorAccess(null, true, true, false);
   assertEqual(devPreviewActive, true, 'devOverride grants access when isDev is true');
 
-  const devPreviewInactive = evaluateEducatorAccess(null, true, false);
+  const devPreviewInactive = evaluateEducatorAccess(null, true, false, false);
   assertEqual(devPreviewInactive, false, 'devOverride false denies unauthenticated access even in dev mode');
+});
+
+test('Guest Educator Mode: guestMode flag permits interactive demo access', () => {
+  const guestAccess = evaluateEducatorAccess(null, false, false, true);
+  assertEqual(guestAccess, true, 'guestMode grants educator preview access in any environment');
 });
 
 test('Student Account Badge message format matches expected pattern', () => {
