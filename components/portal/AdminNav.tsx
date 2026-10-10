@@ -9,6 +9,7 @@ import {
   BarChart3, 
   Trophy, 
   BookOpen, 
+  Layers,
   Flag, 
   Building2, 
   Sparkles,
@@ -216,6 +217,23 @@ export default function AdminNav({
           >
             <BookOpen className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
             {!compact && <span>Question bank</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleNavClick('ingestion')}
+            className={navItemClass('ingestion')}
+            title="Ingestion studio"
+          >
+            <Layers className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
+            {!compact && (
+              <>
+                <span className="flex-1 text-left">Ingestion studio</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[11px] font-bold">
+                  1 staged
+                </span>
+              </>
+            )}
           </button>
 
           <button

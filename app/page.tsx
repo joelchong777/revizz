@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StartFlow } from '../components/StartFlow';
 import { QuestionCard } from '../components/QuestionCard';
 import { RoundSummary } from '../components/RoundSummary';
@@ -15,6 +15,12 @@ import { getReviewPileIds } from '../lib/mastery';
 
 export default function HomePage() {
   const game = useQuizGame();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [game.gameState]);
 
   // Keep track of the last configured round for "Play Again"
   const [lastRoundConfig, setLastRoundConfig] = useState<QuizRoundConfig | null>(null);

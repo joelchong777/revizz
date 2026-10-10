@@ -102,7 +102,7 @@ export function RoundSummary({
       initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-      className="w-full max-w-[480px] mx-auto py-5 px-4 pb-12 flex flex-col gap-4.5 select-none"
+      className="w-full max-w-[480px] mx-auto py-8 sm:py-10 px-4 sm:px-6 pb-16 flex flex-col gap-7 sm:gap-8 select-none"
     >
       {/* 1. Giant Circular Score Badge + Title */}
       <div className="flex items-center gap-4">
@@ -128,12 +128,12 @@ export function RoundSummary({
       </div>
 
       {/* 2. 4-Card Stats Grid */}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-4">
         {stats.map((s, idx) => (
           <div
             key={idx}
             className={cn(
-              'flex flex-col gap-0.5 p-3.5 rounded-[22px] border-2 border-text shadow-offset-3',
+              'flex flex-col gap-1.5 p-4 sm:p-5 rounded-[22px] border-2 border-text shadow-offset-3',
               s.bg
             )}
           >
@@ -148,8 +148,8 @@ export function RoundSummary({
       </div>
 
       {/* 3. Missed Questions Accordion */}
-      <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+      <div className="flex flex-col gap-3.5">
+        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0 mb-1">
           Missed questions · {missedQuestions.length}
         </h2>
 
@@ -158,7 +158,7 @@ export function RoundSummary({
             Clean sweep — nothing to review. 👑
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3.5">
             {missedQuestions.map((item, idx) => {
               const isOpen = openMissedIndex === idx;
               const correctIdx = item.question.options.findIndex(
@@ -215,7 +215,7 @@ export function RoundSummary({
 
                   {/* Expanded Content */}
                   {isOpen && (
-                    <div className="flex flex-col gap-2 px-3.5 pb-3.5 border-t border-neutral-300/80 pt-3">
+                    <div className="flex flex-col gap-2 p-4 pb-4 pt-3.5 border-t border-neutral-300/80">
                       <span className="self-start px-3 py-1 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-[13px] text-text">
                         Answer {correctLetter} · {correctOption?.text_markdown.replace(/[*#$]/g, '')}
                       </span>
@@ -239,7 +239,7 @@ export function RoundSummary({
       </div>
 
       {/* 4. Action Pills */}
-      <div className="flex flex-col gap-2.5 mt-2">
+      <div className="flex flex-col gap-3.5 pt-2 sm:pt-4">
         {missedQuestions.length > 0 && (
           <button
             type="button"
@@ -253,7 +253,7 @@ export function RoundSummary({
           </button>
         )}
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-3.5">
           <button
             type="button"
             onClick={() => {

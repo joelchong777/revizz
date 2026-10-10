@@ -9,6 +9,7 @@ import AdminNav from '@/components/portal/AdminNav';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import TeacherAnalytics from '@/components/portal/TeacherAnalytics';
+import IngestionHub from '@/components/portal/IngestionHub';
 
 const NAV_LABELS: Record<string, string> = {
   overview: 'Overview',
@@ -17,6 +18,7 @@ const NAV_LABELS: Record<string, string> = {
   mastery: 'Mastery analytics',
   xp: 'Leaderboard & XP',
   bank: 'Question bank',
+  ingestion: 'Ingestion studio',
   flagged: 'Flagged questions',
   editor: 'Question editor',
   school: 'School & licence',
@@ -54,6 +56,9 @@ function PortalContent() {
     } else if (['roster', 'mastery', 'overview', 'assign', 'xp', 'school'].includes(normalized)) {
       setActiveNav(normalized);
       setRole('teacher');
+    } else if (normalized === 'ingestion' || normalized === 'importer') {
+      setActiveNav('ingestion');
+      setRole('content');
     } else if (['bank', 'flagged', 'editor'].includes(normalized)) {
       setActiveNav(normalized);
     }
@@ -62,7 +67,7 @@ function PortalContent() {
   const handleToggleRole = () => {
     setRole((prev) => {
       const nextRole = prev === 'teacher' ? 'content' : 'teacher';
-      if (nextRole === 'content' && !['bank', 'flagged', 'editor'].includes(activeNav)) {
+      if (nextRole === 'content' && !['bank', 'flagged', 'editor', 'ingestion'].includes(activeNav)) {
         setActiveNav('bank');
       }
       return nextRole;
@@ -282,6 +287,9 @@ function PortalContent() {
             }}
           />
         );
+      case 'ingestion':
+      case 'importer':
+        return <IngestionHub key="ingestion" />;
       case 'flagged':
         return <AdminCMS key="flagged" initialView="flagged" />;
       case 'editor':

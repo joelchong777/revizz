@@ -17,6 +17,7 @@ import {
   FileText,
   Filter
 } from 'lucide-react';
+import IngestionHub from '@/components/portal/IngestionHub';
 
 export interface AdminToolsProps {
   initialView?: 'assign' | 'bank' | 'importer';
@@ -71,8 +72,6 @@ export default function AdminTools({
     { id: 'PHY-0377', stem: 'Which change increases the rate of evaporation of a liquid?', cite: '0625/12 O/N/21 Q14', topic: 'Thermal · Particles', diff: 'Medium', acc: '58%', st: 'Needs review', stCls: 'bg-[#eee7db] text-[#474238]', upd: '19 Sep' },
   ];
 
-  // Importer state
-  const [jsonPayload, setJsonPayload] = useState('[\n  {\n    "question_number": 1,\n    "stem": "What is the basic economic problem?",\n    "options": [\n      "Scarcity",\n      "Inflation",\n      "Unemployment",\n      "Taxation"\n    ],\n    "correct": 0\n  }\n]');
 
   const removeTopic = (topicName: string) => {
     setTopics(topics.filter((t) => t !== topicName));
@@ -122,7 +121,7 @@ export default function AdminTools({
               : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
           }`}
         >
-          📦 Past-Paper Importer
+          📦 Ingestion Studio
         </button>
       </div>
 
@@ -417,8 +416,11 @@ export default function AdminTools({
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <button
-                onClick={() => setActiveSubTab('importer')}
-                className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5"
+                onClick={() => {
+                  setActiveSubTab('importer');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5" /> Import paper (PDF)
               </button>
@@ -579,57 +581,11 @@ export default function AdminTools({
       )}
 
       {/* ========================================================
-          SUB-TAB 3: BULK PAST-PAPER IMPORTER
+          SUB-TAB 3: INGESTION STUDIO
           ======================================================== */}
       {activeSubTab === 'importer' && (
-        <div className="p-6 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] shadow-sm flex flex-col gap-5">
-          <h2 className="font-heading text-xl font-black text-[#201e1d] flex items-center gap-2">
-            <span>📦</span> Bulk Past-Paper Importer
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-[#645c50]">JSON/CSV Payload</label>
-                <button
-                  onClick={() =>
-                    setJsonPayload(
-                      '[\n  {\n    "question_number": 1,\n    "stem": "Two resistors of 4.0 Ω and 6.0 Ω in parallel...",\n    "options": ["0.42 Ω", "2.4 Ω", "5.0 Ω", "10 Ω"],\n    "correct": 1\n  }\n]'
-                    )
-                  }
-                  className="px-2.5 py-1 rounded-full bg-white border border-[#c0b6a5] text-[11px] font-bold hover:bg-[#eee7db]"
-                >
-                  Load Template
-                </button>
-              </div>
-              <textarea
-                rows={10}
-                value={jsonPayload}
-                onChange={(e) => setJsonPayload(e.target.value)}
-                className="w-full bg-[#201e1d] text-[#ccdbb2] border-2 border-slate-700 rounded-xl p-3 font-mono text-xs outline-none focus:border-[#c67139]"
-              />
-            </div>
-
-            <div className="flex flex-col justify-center gap-4">
-              <div className="p-4 rounded-2xl bg-[#f0fae1] border border-[#8fa073] text-xs text-[#3d472b] flex flex-col gap-2">
-                <span className="font-bold text-sm text-[#201e1d]">Schema Validation</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#ccdbb2] text-[#272e1b] font-black w-fit">
-                  ✓ Valid Format Detected
-                </span>
-                <ul className="list-disc list-inside space-y-1 font-medium">
-                  <li>Options array parsed (4 options)</li>
-                  <li>Correct answer index is valid</li>
-                  <li>KaTeX and markdown supported in stem</li>
-                </ul>
-              </div>
-
-              <button
-                onClick={() => alert('Imported questions successfully to Question Bank!')}
-                className="py-3 px-5 rounded-2xl bg-[#201e1d] text-[#f9f4ed] font-heading font-black text-sm border-2 border-black shadow-[2px_2px_0_#201e1d] hover:bg-[#333] active:translate-y-0.5 active:shadow-none"
-              >
-                Import All to Supabase / Bank
-              </button>
-            </div>
-          </div>
+        <div className="w-full">
+          <IngestionHub />
         </div>
       )}
     </div>

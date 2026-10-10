@@ -52,6 +52,13 @@ export function QuestionCard({
     setLiveAnnouncement(`Question ${questionNumber} of ${totalQuestions}.`);
   }, [question.id, questionNumber, totalQuestions]);
 
+  // Scroll to top on question load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [question.id, questionNumber]);
+
   useEffect(() => {
     if (
       isTimed &&
