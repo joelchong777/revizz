@@ -377,6 +377,48 @@ export function QuestionCard({
             {question.stem_markdown}
           </ReactMarkdown>
         </div>
+
+        {/* Diagram container */}
+        {diagramUrl && (
+          <div className="relative my-3 rounded-2xl border-2 border-text bg-white p-3 shadow-offset-2 flex flex-col items-center group">
+            {imageError ? (
+              <div className="flex flex-col items-center justify-center py-6 px-4 text-center gap-2">
+                <span className="text-2xl" role="img" aria-label="Warning">
+                  ⚠️
+                </span>
+                <span className="px-3 py-1 rounded-full bg-accent-200 border-2 border-text text-xs font-bold text-text">
+                  Diagram preview unavailable
+                </span>
+                <span className="text-xs text-text/70 italic max-w-xs">
+                  {altDescription}
+                </span>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsZoomOpen(true)}
+                  className="w-full flex justify-center focus:outline-none cursor-zoom-in bg-transparent border-0 p-0"
+                  aria-label="Enlarge diagram"
+                >
+                  <img
+                    src={diagramUrl}
+                    alt={altDescription}
+                    onError={() => setImageError(true)}
+                    className="max-h-[300px] sm:max-h-[360px] w-auto max-w-full object-contain cursor-zoom-in rounded-xl transition-transform duration-150 hover:scale-[1.01]"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsZoomOpen(true)}
+                  className="text-xs font-bold text-text/80 hover:text-text flex items-center gap-1.5 mt-2 cursor-pointer bg-transparent border-0 p-0"
+                >
+                  <span>🔍</span> Click diagram to enlarge
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Fourth Row: Retry Alert on First Wrong Attempt */}
@@ -612,6 +654,49 @@ export function QuestionCard({
           End endless round
         </button>
       )}
+
+      {/* Diagram Zoom Lightbox Modal */}
+      {isZoomOpen && diagramUrl && mounted
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => setIsZoomOpen(false)}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Diagram Inspector"
+            >
+              <div
+                className="max-w-4xl max-h-[90vh] w-full bg-white rounded-3xl border-4 border-text shadow-[0_16px_0_0_rgba(32,30,29,1)] flex flex-col overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-4 border-b-4 border-text bg-[#f9f4ed]">
+                  <span className="font-heading font-bold text-base sm:text-lg text-text truncate pr-2">
+                    {`Diagram Inspector · ${question.citation || 'Cambridge Question'}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsZoomOpen(false)}
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-text bg-accent text-neutral-100 flex items-center justify-center font-bold text-base hover:bg-accent-600 active:translate-y-0.5 flex-shrink-0 cursor-pointer shadow-offset-2"
+                    aria-label="Close modal"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Modal Full-Resolution Image View */}
+                <div className="flex-1 overflow-auto p-4 sm:p-6 bg-neutral-200 flex items-center justify-center min-h-[250px]">
+                  <img
+                    src={diagramUrl}
+                    alt={altDescription}
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
