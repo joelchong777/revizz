@@ -20,6 +20,11 @@ export type Question = {
   topic_id?: string;
   has_diagram?: boolean;
   image_url?: string;
+  diagram?: {
+    has_diagram?: boolean;
+    image_url?: string;
+    alt_description?: string;
+  };
 };
 
 export type QuizRoundConfig = {

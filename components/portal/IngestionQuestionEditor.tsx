@@ -54,6 +54,9 @@ export function IngestionQuestionEditor({
     correct_option_id: (question.options || []).find((o) => o.is_correct)?.label || 'A',
     citation: question.cambridge_source_ref,
     topic: question.topic_name,
+    has_diagram: question.diagram?.has_diagram,
+    image_url: question.diagram?.image_url,
+    diagram: question.diagram,
   };
 
   const handleSimAnswer = (optId: string) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -45,6 +46,26 @@ export function QuestionCard({
   const shouldReduceMotion = useReducedMotion();
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
   const lowTimeAnnouncedRef = useRef(false);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const rawDiagramUrl = question.image_url || question.diagram?.image_url;
+  const diagramUrl = question.has_diagram === false ? undefined : rawDiagramUrl;
+  const altDescription =
+    question.diagram?.alt_description ||
+    question.citation ||
+    'Cambridge economics question diagram';
+
+  // Reset zoom & image error when question or diagram changes
+  useEffect(() => {
+    setImageError(false);
+    setIsZoomOpen(false);
+  }, [question.id, diagramUrl]);
 
   // Screen reader announcements
   useEffect(() => {
@@ -87,9 +108,19 @@ export function QuestionCard({
     }
   }, [status, firstWrongOptionId]);
 
-  // Keyboard Hotkeys: 1-4, A-D, Enter / Space
+  // Keyboard Hotkeys: 1-4, A-D, Enter / Space, Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isZoomOpen) {
+        e.preventDefault();
+        setIsZoomOpen(false);
+        return;
+      }
+
+      if (isZoomOpen) {
+        return;
+      }
+
       const target = e.target as HTMLElement | null;
       const isInput =
         target?.tagName === 'INPUT' ||
@@ -139,7 +170,7 @@ export function QuestionCard({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, question.options, firstWrongOptionId, onAnswer, onNext]);
+  }, [status, question.options, firstWrongOptionId, onAnswer, onNext, isZoomOpen]);
 
   const letters = ['A', 'B', 'C', 'D'];
   const correctOptionIndex = question.options.findIndex(

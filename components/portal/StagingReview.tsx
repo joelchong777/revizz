@@ -13,6 +13,11 @@ interface StagedQuestion {
   topic: string;
   has_diagram: boolean;
   image_url?: string;
+  diagram?: {
+    has_diagram?: boolean;
+    image_url?: string;
+    alt_description?: string;
+  };
   status: 'complete' | 'review';
 }
 
@@ -61,6 +66,7 @@ const initialStagedQuestions: StagedQuestion[] = CAMBRIDGE_QUESTIONS.map((q, idx
   topic: q.topic || 'General',
   has_diagram: Boolean(q.has_diagram),
   image_url: q.image_url,
+  diagram: (q as any).diagram || (q.image_url ? { has_diagram: Boolean(q.has_diagram), image_url: q.image_url } : undefined),
   status: (q.has_diagram ? 'review' : 'complete') as 'complete' | 'review',
 }));
 
@@ -121,6 +127,7 @@ export default function StagingReview() {
               topic: q.topic_name || q.topic || 'General',
               has_diagram: Boolean(q.diagram?.has_diagram ?? q.has_diagram),
               image_url: q.diagram?.image_url || q.image_url,
+              diagram: q.diagram || (q.image_url ? { has_diagram: Boolean(q.diagram?.has_diagram ?? q.has_diagram), image_url: q.diagram?.image_url || q.image_url } : undefined),
               status: ((q.diagram?.has_diagram ?? q.has_diagram) ? 'review' : 'complete') as
                 | 'complete'
                 | 'review',
