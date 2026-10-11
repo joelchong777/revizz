@@ -16,14 +16,11 @@ import {
   Wrench,
   Check,
   Copy,
-  ExternalLink,
   ShieldCheck,
   ShieldAlert,
-  FileQuestion,
   HelpCircle,
-  Layers,
-  CheckCheck,
   ListOrdered,
+  CheckCheck,
   FileText,
   Tag,
   Image as ImageIcon,
@@ -107,25 +104,20 @@ export function lintKaTeXContent(text: string, fieldName: string): KaTeXIssue[] 
     });
   }
 
-  // 2. Line-by-line inspection for unescaped currency and lone dollar signs
+  // 2. Scan for unescaped currency signs $50 vs real inline math $x = 5$
   const lines = text.split('\n');
   for (let l = 0; l < lines.length; l++) {
     const line = lines[l];
     let i = 0;
     while (i < line.length) {
       if (line[i] === '$' && (i === 0 || line[i - 1] !== '\\')) {
-        // Skip display math $$
+        // Skip $$
         if (line[i + 1] === '$') {
-          const closingDisplay = line.indexOf('$$', i + 2);
-          if (closingDisplay !== -1) {
-            i = closingDisplay + 2;
-            continue;
-          } else {
-            i += 2;
-            continue;
-          }
+          i += 2;
+          continue;
         }
 
+        // Find matching closing $
         let nextDollar = -1;
         for (let j = i + 1; j < line.length; j++) {
           if (line[j] === '$' && line[j - 1] !== '\\') {
@@ -135,56 +127,86 @@ export function lintKaTeXContent(text: string, fieldName: string): KaTeXIssue[] 
         }
 
         if (nextDollar === -1) {
-          // Lone $ on line
-          const snippet = line.slice(i, Math.min(line.length, i + 15));
+          // Unclosed single dollar sign
+          const snippet = line.slice(i, Math.min(line.length, i + 20)).trim();
           if (/\$\s*\d/.test(snippet)) {
             issues.push({
               field: fieldName,
               type: 'unescaped_currency',
               severity: 'warning',
+              message: `Unescaped currency dollar symbol: "${snippet}". Use "\\$" to prevent parser errors.`,
+              snippet,
               line: l + 1,
-              snippet: snippet.trim(),
-              message: `Unescaped currency sign in "${snippet.trim()}". Escape as "\\$".`,
             });
           } else {
             issues.push({
               field: fieldName,
               type: 'unclosed_delimiter',
               severity: 'error',
+              message: `Dangling single dollar "$" delimiter on line ${l + 1}: "${snippet}".`,
+              snippet,
               line: l + 1,
-              snippet: snippet.trim(),
-              message: `Unclosed inline math delimiter "$" in "${snippet.trim()}".`,
             });
           }
           i++;
           continue;
         }
 
-        const candidate = line.slice(i + 1, nextDollar);
+        // Content between $ and $
+        const mathContent = line.slice(i + 1, nextDollar);
         const charAfter = line[nextDollar + 1];
         const isFollowedByDigit = charAfter !== undefined && /\d/.test(charAfter);
-        const startsWithDigit = /^\s*\d/.test(candidate);
-        const hasEnglishProse =
-          /\b(to|and|or|each|per|in|is|was|are|were|for|from|between|with|than|at|of)\b/i.test(
-            candidate
-          );
-        const hasMathSyntax =
-          /[\\^_{}=+\-<>*\/]|\\times|\\text|\\mathrm|\\pm|\\le|\\ge|\\ne|\\approx|\\alpha|\\beta|\\cdot|%/.test(
-            candidate
-          );
+        const startsWithDigit = /^\s*\d/.test(mathContent);
+        const hasEnglishProse = /\b(to|and|or|each|per|in|is|was|for|between|with|than|at|of)\b/i.test(
+          mathContent
+        );
+        const hasMathOperators = /[\\^_{}=+\-<>*\/]|\\times|\\text|\\mathrm|\\pm|%/.test(mathContent);
 
-        if (isFollowedByDigit || hasEnglishProse || (startsWithDigit && !hasMathSyntax)) {
-          const snippet = line.slice(i, Math.min(line.length, nextDollar + 8));
+        // Check if this looks like currency range (e.g. "$50 to $100")
+        if (isFollowedByDigit || hasEnglishProse || (startsWithDigit && !hasMathOperators)) {
+          const snippet = line.slice(i, Math.min(line.length, nextDollar + 8)).trim();
           issues.push({
             field: fieldName,
             type: 'unescaped_currency',
             severity: 'warning',
+            message: `Unescaped currency expression: "${snippet}". Escape currency symbols with "\\$".`,
+            snippet,
             line: l + 1,
-            snippet: snippet.trim(),
-            message: `Unescaped currency in "${snippet.trim()}". Escape as "\\$".`,
           });
           i++;
           continue;
+        }
+
+        // 3. Test genuine candidate formula using KaTeX renderToString
+        const trimmedMath = mathContent.trim();
+        if (trimmedMath) {
+          // Check braces {}
+          const openB = (trimmedMath.match(/(?<!\\)\{/g) || []).length;
+          const closeB = (trimmedMath.match(/(?<!\\)\}/g) || []).length;
+          if (openB !== closeB) {
+            issues.push({
+              field: fieldName,
+              type: 'unbalanced_braces',
+              severity: 'error',
+              message: `Unbalanced braces in math "$${trimmedMath.slice(0, 30)}$" (${openB} opened, ${closeB} closed).`,
+              snippet: `$${trimmedMath.slice(0, 30)}$`,
+              line: l + 1,
+            });
+          }
+
+          try {
+            renderToString(trimmedMath, { displayMode: false, throwOnError: true });
+          } catch (err: unknown) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            issues.push({
+              field: fieldName,
+              type: 'katex_syntax_error',
+              severity: 'error',
+              message: `KaTeX parsing failed in "$${trimmedMath.slice(0, 30)}$": ${errMsg}`,
+              snippet: `$${trimmedMath.slice(0, 30)}$`,
+              line: l + 1,
+            });
+          }
         }
 
         i = nextDollar + 1;
@@ -193,80 +215,6 @@ export function lintKaTeXContent(text: string, fieldName: string): KaTeXIssue[] 
       }
     }
   }
-
-  // 3. Inspect math blocks for unbalanced braces {} and KaTeX parsing
-  const checkMath = (mathStr: string, raw: string, isDisplay: boolean) => {
-    // Check brace balance
-    let openBraces = 0;
-    let balanced = true;
-    for (let c = 0; c < mathStr.length; c++) {
-      if (mathStr[c] === '{' && (c === 0 || mathStr[c - 1] !== '\\')) {
-        openBraces++;
-      } else if (mathStr[c] === '}' && (c === 0 || mathStr[c - 1] !== '\\')) {
-        openBraces--;
-        if (openBraces < 0) {
-          balanced = false;
-          issues.push({
-            field: fieldName,
-            type: 'unbalanced_braces',
-            severity: 'error',
-            snippet: raw,
-            message: `Unexpected closing brace "}" in expression "${raw}".`,
-          });
-          break;
-        }
-      }
-    }
-    if (balanced && openBraces > 0) {
-      issues.push({
-        field: fieldName,
-        type: 'unbalanced_braces',
-        severity: 'error',
-        snippet: raw,
-        message: `Missing closing brace "}" in expression "${raw}" (${openBraces} unclosed).`,
-      });
-    }
-
-    // KaTeX render test
-    try {
-      renderToString(mathStr, { throwOnError: true, displayMode: isDisplay });
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      if (!issues.some((iss) => iss.snippet === raw && iss.type === 'unbalanced_braces')) {
-        issues.push({
-          field: fieldName,
-          type: 'katex_syntax_error',
-          severity: 'error',
-          snippet: raw,
-          message: `KaTeX Parse Error: ${errMsg}`,
-        });
-      }
-    }
-  };
-
-  // Extract $$...$$
-  const textWithoutDisplay = text.replace(/(?<!\\)\$\$([\s\S]*?)\$\$/g, (m, math) => {
-    checkMath(math, m, true);
-    return '';
-  });
-
-  // Extract $...$
-  textWithoutDisplay.replace(/(?<!\$|\$)\$([^$\n]+?)\$(?!\$)/g, (m, math) => {
-    checkMath(math, m, false);
-    return '';
-  });
-
-  // Extract \(...\)
-  text.replace(/\\\(([\s\S]*?)\\\)/g, (m, math) => {
-    checkMath(math, m, false);
-    return '';
-  });
-
-  // Extract \[...\]
-  text.replace(/\\\[([\s\S]*?)\\\]/g, (m, math) => {
-    checkMath(math, m, true);
-    return '';
-  });
 
   return issues;
 }
@@ -278,20 +226,20 @@ export function IngestionDiagnostics({
   className,
 }: IngestionDiagnosticsProps) {
   const [expandedCheck, setExpandedCheck] = useState<string | null>(null);
-  const [copiedReport, setCopiedReport] = useState(false);
   const [filterMode, setFilterMode] = useState<'all' | 'issues'>('all');
+  const [copiedReport, setCopiedReport] = useState<boolean>(false);
 
-  // 1. Check 1: 4 Options Check
+  // 1. Check 1: Exactly 4 Options (A, B, C, D)
   const checkOptions = useMemo<DiagnosticCheckItem>(() => {
     const options = question.options || [];
-    const labels = options.map((o) => o.label);
-    const expectedLabels = ['A', 'B', 'C', 'D'];
-    const missingLabels = expectedLabels.filter((l) => !labels.includes(l as any));
     const hasExactCount = options.length === 4;
-    const hasExactLabels =
-      hasExactCount && labels.slice().sort().join('') === expectedLabels.join('');
+    const labels = options.map((o) => o.label).sort();
+    const hasValidLabels = labels.length === 4 && labels.join('') === 'ABCD';
+    const missingLabels = ['A', 'B', 'C', 'D'].filter(
+      (l) => !options.some((o) => o.label === l)
+    );
 
-    if (hasExactCount && hasExactLabels) {
+    if (hasExactCount && hasValidLabels) {
       return {
         id: 'options_check',
         checkNumber: 1,
@@ -731,14 +679,14 @@ export function IngestionDiagnostics({
   return (
     <div
       className={cn(
-        'w-full bg-[#fffdf7] rounded-3xl border-3 border-slate-800 shadow-[0_8px_0_0_#1e293b] p-5 sm:p-6 transition-all select-none',
+        'w-full bg-[#fffdf7] rounded-2xl border-2 border-b-4 border-slate-800 shadow-chunky p-5 sm:p-6 transition-all select-none',
         className
       )}
     >
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b-2 border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b-2 border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl border-2 border-slate-800 bg-brand-yellow flex items-center justify-center shadow-[0_3px_0_0_#1e293b]">
+          <div className="w-10 h-10 rounded-2xl border-2 border-b-4 border-slate-800 bg-brand-yellow flex items-center justify-center shadow-chunky">
             <Sparkles className="w-5 h-5 text-slate-900" />
           </div>
           <div>
@@ -746,11 +694,11 @@ export function IngestionDiagnostics({
               <h3 className="font-heading text-lg sm:text-xl font-black text-slate-900 tracking-tight">
                 QA Diagnostics
               </h3>
-              <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-slate-300 bg-slate-100 text-slate-600">
+              <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border-2 border-slate-800 bg-brand-yellow text-slate-900 shadow-xs">
                 Q{question.question_number}
               </span>
             </div>
-            <p className="text-xs font-medium text-slate-500">
+            <p className="text-xs font-bold text-slate-600 mt-0.5">
               Real-time validation &amp; KaTeX syntax linter
             </p>
           </div>
@@ -761,17 +709,17 @@ export function IngestionDiagnostics({
           {isReadyToPublish ? (
             <div
               data-testid="status-ready-to-publish"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-b-4 border-emerald-700 bg-emerald-400 text-emerald-950 font-black text-xs sm:text-sm tracking-wide shadow-[0_3px_0_0_#047857] animate-in fade-in duration-150"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 border-b-4 border-slate-800 bg-brand-green text-white font-heading font-black text-xs sm:text-sm tracking-wide shadow-chunky animate-in fade-in duration-150"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-950 stroke-[2.5]" />
+              <ShieldCheck className="w-4 h-4 text-white stroke-[2.5]" />
               <span>READY TO PUBLISH</span>
             </div>
           ) : (
             <div
               data-testid="status-requires-fixes"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-b-4 border-rose-700 bg-rose-400 text-rose-950 font-black text-xs sm:text-sm tracking-wide shadow-[0_3px_0_0_#be123c] animate-in fade-in duration-150"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border-2 border-b-4 border-slate-800 bg-brand-coral text-white font-heading font-black text-xs sm:text-sm tracking-wide shadow-chunky animate-in fade-in duration-150"
             >
-              <ShieldAlert className="w-4 h-4 text-rose-950 stroke-[2.5]" />
+              <ShieldAlert className="w-4 h-4 text-white stroke-[2.5]" />
               <span>REQUIRES FIXES</span>
             </div>
           )}
@@ -781,28 +729,28 @@ export function IngestionDiagnostics({
       {/* KPI Stats & Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 py-4">
         {/* KPI Counter Chips */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-800 shadow-[0_2px_0_0_#059669]">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl border-2 border-slate-800 bg-emerald-50 text-emerald-800 shadow-xs">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             <span>{passCount}/7 Passed</span>
           </div>
 
           {failCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-rose-500 bg-rose-50 text-rose-800 shadow-[0_2px_0_0_#e11d48]">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl border-2 border-slate-800 bg-rose-50 text-rose-800 shadow-xs">
               <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
               <span>{failCount} Fail{failCount > 1 ? 's' : ''}</span>
             </div>
           )}
 
           {warningCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-amber-500 bg-amber-50 text-amber-900 shadow-[0_2px_0_0_#d97706]">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl border-2 border-slate-800 bg-amber-50 text-amber-900 shadow-xs">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
               <span>{warningCount} Warning{warningCount > 1 ? 's' : ''}</span>
             </div>
           )}
 
           {infoCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-sky-400 bg-sky-50 text-sky-800 shadow-[0_2px_0_0_#0284c7]">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl border-2 border-slate-800 bg-sky-50 text-sky-800 shadow-xs">
               <Info className="w-3.5 h-3.5 text-sky-600" />
               <span>{infoCount} Info</span>
             </div>
@@ -812,13 +760,13 @@ export function IngestionDiagnostics({
         {/* Action Controls */}
         <div className="flex items-center gap-2">
           {/* Filter toggle */}
-          <div className="inline-flex rounded-xl border-2 border-slate-800 bg-white p-0.5 shadow-[0_2px_0_0_#1e293b]">
+          <div className="inline-flex rounded-xl border-2 border-b-3 border-slate-800 bg-white p-0.5 shadow-xs">
             <button
               onClick={() => setFilterMode('all')}
               className={cn(
-                'px-2.5 py-1 text-xs font-bold rounded-lg transition-all',
+                'px-2.5 py-1 text-xs font-black rounded-lg transition-all cursor-pointer',
                 filterMode === 'all'
-                  ? 'bg-slate-800 text-white'
+                  ? 'bg-slate-800 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               )}
             >
@@ -827,9 +775,9 @@ export function IngestionDiagnostics({
             <button
               onClick={() => setFilterMode('issues')}
               className={cn(
-                'px-2.5 py-1 text-xs font-bold rounded-lg transition-all',
+                'px-2.5 py-1 text-xs font-black rounded-lg transition-all cursor-pointer',
                 filterMode === 'issues'
-                  ? 'bg-slate-800 text-white'
+                  ? 'bg-slate-800 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               )}
             >
@@ -841,7 +789,7 @@ export function IngestionDiagnostics({
           {allKaTeXIssues.length > 0 && (onFixKaTeX || onUpdateQuestion) && (
             <button
               onClick={handleAutoSanitizeKaTeX}
-              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-xl border-2 border-b-3 border-amber-600 bg-brand-yellow hover:bg-amber-300 text-amber-950 shadow-[0_2px_0_0_#b45309] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-xl border-2 border-b-4 border-slate-800 bg-brand-yellow hover:bg-[#fde047] text-slate-900 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none cursor-pointer transition-all"
               title="Automatically escapes unescaped currency and normalizes math delimiters"
             >
               <Wrench className="w-3.5 h-3.5" />
@@ -852,12 +800,12 @@ export function IngestionDiagnostics({
           {/* Copy Report */}
           <button
             onClick={handleCopyReport}
-            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 text-slate-700 shadow-xs active:translate-y-0.5 cursor-pointer transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-xl border-2 border-b-4 border-slate-800 bg-white hover:bg-neutral-100 text-slate-800 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none cursor-pointer transition-all"
             title="Copy diagnostic summary to clipboard"
           >
             {copiedReport ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
                 <span className="text-emerald-700">Copied</span>
               </>
             ) : (
@@ -880,9 +828,9 @@ export function IngestionDiagnostics({
             <div
               key={check.id}
               className={cn(
-                'rounded-2xl border-2 border-slate-800 bg-white shadow-[0_3px_0_0_#1e293b] transition-all overflow-hidden',
-                check.status === 'fail' && 'bg-rose-50/40 border-rose-800 shadow-[0_3px_0_0_#9f1239]',
-                check.status === 'warning' && 'bg-amber-50/40 border-amber-800 shadow-[0_3px_0_0_#92400e]',
+                'rounded-2xl border-2 border-b-4 border-slate-800 bg-white shadow-chunky transition-all overflow-hidden',
+                check.status === 'fail' && 'bg-rose-50/40 border-slate-800',
+                check.status === 'warning' && 'bg-amber-50/40 border-slate-800',
                 check.status === 'pass' && 'hover:bg-slate-50/70'
               )}
             >
@@ -894,11 +842,11 @@ export function IngestionDiagnostics({
                 <div className="flex items-start sm:items-center gap-3">
                   <div
                     className={cn(
-                      'w-8 h-8 rounded-xl border-2 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0',
-                      check.status === 'pass' && 'border-emerald-600 bg-emerald-100 text-emerald-800',
-                      check.status === 'fail' && 'border-rose-600 bg-rose-100 text-rose-800',
-                      check.status === 'warning' && 'border-amber-600 bg-amber-100 text-amber-900',
-                      check.status === 'info' && 'border-sky-500 bg-sky-100 text-sky-800'
+                      'w-8 h-8 rounded-xl border-2 border-slate-800 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 shadow-xs',
+                      check.status === 'pass' && 'bg-emerald-100 text-emerald-800',
+                      check.status === 'fail' && 'bg-rose-100 text-rose-800',
+                      check.status === 'warning' && 'bg-amber-100 text-amber-900',
+                      check.status === 'info' && 'bg-sky-100 text-sky-800'
                     )}
                   >
                     <Icon className="w-4 h-4 stroke-[2.2]" />
@@ -906,11 +854,11 @@ export function IngestionDiagnostics({
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-heading font-bold text-sm text-slate-900">
+                      <span className="font-heading font-black text-sm text-slate-900">
                         {check.checkNumber}. {check.title}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 font-medium mt-0.5">
+                    <p className="text-xs text-slate-600 font-bold mt-0.5">
                       {check.summary}
                     </p>
                   </div>
@@ -920,39 +868,39 @@ export function IngestionDiagnostics({
                 <div className="flex items-center justify-between sm:justify-end gap-2.5 pl-11 sm:pl-0">
                   {/* Neobrutalist Badge Chip */}
                   {check.status === 'pass' && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-emerald-600 bg-emerald-100 text-emerald-900 text-xs font-black tracking-wide shadow-[0_2px_0_0_#059669]">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl border-2 border-slate-800 bg-emerald-100 text-emerald-900 text-xs font-black tracking-wide shadow-xs">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
                       PASS
                     </span>
                   )}
 
                   {check.status === 'fail' && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-rose-600 bg-rose-100 text-rose-900 text-xs font-black tracking-wide shadow-[0_2px_0_0_#e11d48]">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl border-2 border-slate-800 bg-rose-100 text-rose-900 text-xs font-black tracking-wide shadow-xs">
                       <AlertCircle className="w-3.5 h-3.5 text-rose-600 stroke-[2.5]" />
                       FAIL
                     </span>
                   )}
 
                   {check.status === 'warning' && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-amber-600 bg-amber-100 text-amber-950 text-xs font-black tracking-wide shadow-[0_2px_0_0_#d97706]">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl border-2 border-slate-800 bg-amber-100 text-amber-950 text-xs font-black tracking-wide shadow-xs">
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-700 stroke-[2.5]" />
                       WARNING
                     </span>
                   )}
 
                   {check.status === 'info' && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-sky-500 bg-sky-100 text-sky-950 text-xs font-black tracking-wide shadow-[0_2px_0_0_#0284c7]">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl border-2 border-slate-800 bg-sky-100 text-sky-950 text-xs font-black tracking-wide shadow-xs">
                       <Info className="w-3.5 h-3.5 text-sky-700 stroke-[2.5]" />
                       INFO
                     </span>
                   )}
 
                   {/* Toggle Arrow */}
-                  <div className="w-6 h-6 rounded-lg border border-slate-300 flex items-center justify-center text-slate-500 hover:text-slate-800 bg-slate-50">
+                  <div className="w-7 h-7 rounded-xl border-2 border-slate-800 flex items-center justify-center text-slate-800 bg-slate-50 shadow-xs active:translate-y-0.5">
                     {isExpanded ? (
-                      <ChevronUp className="w-3.5 h-3.5" />
+                      <ChevronUp className="w-3.5 h-3.5 stroke-[2.5]" />
                     ) : (
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
                     )}
                   </div>
                 </div>
@@ -960,10 +908,10 @@ export function IngestionDiagnostics({
 
               {/* Expandable Details Pane */}
               {isExpanded && (
-                <div className="p-3.5 sm:p-4 bg-slate-50/80 border-t-2 border-slate-200 text-xs text-slate-700 space-y-2 animate-in fade-in duration-100">
+                <div className="p-3.5 sm:p-4 bg-slate-50/90 border-t-2 border-slate-800 text-xs text-slate-700 space-y-2 animate-in fade-in duration-100">
                   {check.id === 'katex_linter' && allKaTeXIssues.length > 0 ? (
                     <div className="space-y-2">
-                      <div className="font-bold text-slate-800 uppercase tracking-wider text-[11px]">
+                      <div className="font-heading font-black text-slate-800 uppercase tracking-wider text-[11px]">
                         Detected KaTeX / LaTeX Issues:
                       </div>
                       <div className="space-y-1.5">
@@ -971,14 +919,14 @@ export function IngestionDiagnostics({
                           <div
                             key={idx}
                             className={cn(
-                              'p-2.5 rounded-xl border-2 flex flex-col gap-1',
+                              'p-2.5 rounded-xl border-2 border-slate-800 shadow-xs flex flex-col gap-1',
                               issue.severity === 'error'
-                                ? 'border-rose-400 bg-rose-50 text-rose-900'
-                                : 'border-amber-400 bg-amber-50 text-amber-900'
+                                ? 'bg-rose-50 text-rose-900'
+                                : 'bg-amber-50 text-amber-900'
                             )}
                           >
-                            <div className="flex items-center justify-between font-bold">
-                              <span className="px-1.5 py-0.5 rounded bg-white/80 border border-current text-[10px]">
+                            <div className="flex items-center justify-between font-black">
+                              <span className="px-1.5 py-0.5 rounded-md bg-white border border-slate-800 text-[10px]">
                                 {issue.field}
                               </span>
                               <span className="text-[10px] uppercase tracking-wider">
@@ -989,7 +937,7 @@ export function IngestionDiagnostics({
                               {issue.message}
                             </div>
                             {issue.snippet && (
-                              <div className="font-mono text-[10px] bg-white/70 p-1.5 rounded border border-current/20 text-slate-800 overflow-x-auto">
+                              <div className="font-mono text-[10px] bg-white/90 p-1.5 rounded-md border border-slate-800 text-slate-800 overflow-x-auto">
                                 Snippet: <code>{issue.snippet}</code>
                               </div>
                             )}
@@ -1005,7 +953,7 @@ export function IngestionDiagnostics({
                               e.stopPropagation();
                               handleAutoSanitizeKaTeX();
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-xl border-2 border-b-3 border-amber-600 bg-brand-yellow hover:bg-amber-300 text-amber-950 shadow-[0_2px_0_0_#b45309] active:translate-y-0.5 cursor-pointer transition-all"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-black rounded-xl border-2 border-b-4 border-slate-800 bg-brand-yellow hover:bg-[#fde047] text-slate-900 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none cursor-pointer transition-all"
                           >
                             <Wrench className="w-3.5 h-3.5" />
                             <span>Auto-Sanitize KaTeX Syntax</span>
@@ -1016,7 +964,7 @@ export function IngestionDiagnostics({
                   ) : check.details && check.details.length > 0 ? (
                     <ul className="list-disc list-inside space-y-1 font-mono text-[11px]">
                       {check.details.map((detail, idx) => (
-                        <li key={idx} className="text-slate-600">
+                        <li key={idx} className="text-slate-700">
                           {detail}
                         </li>
                       ))}
@@ -1032,16 +980,16 @@ export function IngestionDiagnostics({
       </div>
 
       {/* Footer Info Notice */}
-      <div className="mt-5 pt-4 border-t-2 border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2">
-        <div className="flex items-center gap-1.5 font-medium">
-          <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+      <div className="mt-5 pt-4 border-t-2 border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-600 gap-2">
+        <div className="flex items-center gap-1.5 font-bold">
+          <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
           <span>
             {isReadyToPublish
               ? 'All critical checks passed. Question is verified for Cambridge publishing.'
               : 'Resolve all FAIL badges to unlock publishing status.'}
           </span>
         </div>
-        <div className="font-mono text-[11px] text-slate-400">
+        <div className="font-mono text-[11px] font-bold text-slate-500">
           Source: {question.cambridge_source_ref || 'Local Staging'}
         </div>
       </div>

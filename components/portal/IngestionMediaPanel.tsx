@@ -15,9 +15,21 @@ import {
   Sparkles,
   Eye,
   Edit3,
+  Scissors,
+  RotateCcw,
+  Trash2,
+  ExternalLink,
+  Copy,
+  Check,
+  Cloud,
+  HardDrive,
+  AlertCircle,
+  CheckCircle2,
+  Crop,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sanitizeKaTeX } from "@/lib/ingestion/katexSanitizer";
+import type { BoundingBox } from "@/types/ingestion";
 
 export interface IngestionMediaPanelProps {
   diagram?: {
@@ -25,6 +37,7 @@ export interface IngestionMediaPanelProps {
     image_url?: string;
     alt_description?: string;
     storage_path?: string;
+    bounding_box?: BoundingBox;
   };
   topicName?: string;
   syllabusTopics?: { name: string; order_index: number }[];
@@ -33,10 +46,21 @@ export interface IngestionMediaPanelProps {
     has_diagram: boolean;
     image_url?: string;
     alt_description?: string;
+    storage_path?: string;
+    bounding_box?: BoundingBox;
   }) => void;
   onUpdateTopic: (topicName: string) => void;
   onUpdateExplanation: (explanation: string) => void;
   className?: string;
+
+  /** Cambridge Paper Code (e.g. '0455_s24_12') */
+  paperCode?: string;
+  /** Active Question Number */
+  questionNumber?: number;
+  /** Active PDF source URL */
+  pdfUrl?: string;
+  /** Action to focus or open the PDF cropper canvas */
+  onOpenPdfCropper?: () => void;
 }
 
 export function IngestionMediaPanel({
@@ -48,13 +72,39 @@ export function IngestionMediaPanel({
   onUpdateTopic,
   onUpdateExplanation,
   className,
+  paperCode = "0455_s24_12",
+  questionNumber = 1,
+  pdfUrl,
+  onOpenPdfCropper,
 }: IngestionMediaPanelProps) {
   const hasDiagram = Boolean(diagram?.has_diagram);
   const imageUrl = diagram?.image_url || "";
   const altDescription = diagram?.alt_description || "";
+  const storagePath = diagram?.storage_path || "";
+  const boundingBox = diagram?.bounding_box;
+
+  // Determine Diagram Status
+  type DiagramStatus = "Cropped & Uploaded" | "Needs re-crop" | "No diagram detected";
+  let diagramStatus: DiagramStatus = "No diagram detected";
+  if (hasDiagram) {
+    if (imageUrl && (storagePath || imageUrl.includes("supabase") || imageUrl.includes("/questions/"))) {
+      diagramStatus = "Cropped & Uploaded";
+    } else if (!imageUrl || (boundingBox && !imageUrl)) {
+      diagramStatus = "Needs re-crop";
+    } else {
+      diagramStatus = "Cropped & Uploaded";
+    }
+  }
 
   // Lightbox Modal State
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Re-crop execution states
+  const [isRecropping, setIsRecropping] = useState(false);
+  const [recropFeedback, setRecropFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Copy URL state
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   // Hidden File Input Ref for Direct Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -107,6 +157,8 @@ export function IngestionMediaPanel({
       has_diagram: enabled,
       image_url: enabled ? imageUrl : "",
       alt_description: altDescription,
+      storage_path: enabled ? storagePath : undefined,
+      bounding_box: enabled ? boundingBox : undefined,
     });
   };
 
@@ -115,6 +167,8 @@ export function IngestionMediaPanel({
       has_diagram: true,
       image_url: url,
       alt_description: altDescription,
+      storage_path: storagePath,
+      bounding_box: boundingBox,
     });
   };
 
@@ -123,6 +177,18 @@ export function IngestionMediaPanel({
       has_diagram: true,
       image_url: imageUrl,
       alt_description: alt,
+      storage_path: storagePath,
+      bounding_box: boundingBox,
+    });
+  };
+
+  const handleRemoveDiagram = () => {
+    onUpdateDiagram({
+      has_diagram: false,
+      image_url: "",
+      alt_description: "",
+      storage_path: undefined,
+      bounding_box: undefined,
     });
   };
 
@@ -138,11 +204,76 @@ export function IngestionMediaPanel({
           has_diagram: true,
           image_url: result,
           alt_description: altDescription || file.name,
+          storage_path: undefined,
+          bounding_box: boundingBox,
         });
       }
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+  };
+
+  // Re-crop Current BBox via /api/ingest/crop
+  const handleReCropCurrentBBox = async () => {
+    if (!boundingBox) {
+      setRecropFeedback({
+        type: "error",
+        message: "No bounding box found. Please adjust crop on PDF first.",
+      });
+      setTimeout(() => setRecropFeedback(null), 4000);
+      return;
+    }
+
+    setIsRecropping(true);
+    setRecropFeedback(null);
+
+    try {
+      const res = await fetch("/api/ingest/crop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paperCode,
+          questionNumber,
+          bbox: boundingBox,
+          imageUrl: imageUrl || pdfUrl || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Crop failed (HTTP ${res.status})`);
+      }
+
+      onUpdateDiagram({
+        has_diagram: true,
+        image_url: data.url,
+        storage_path: data.storage_path,
+        alt_description: altDescription,
+        bounding_box: data.bbox || boundingBox,
+      });
+
+      setRecropFeedback({
+        type: "success",
+        message: "Diagram re-cropped and uploaded successfully!",
+      });
+    } catch (err: any) {
+      console.error("[IngestionMediaPanel] Re-crop failed:", err);
+      setRecropFeedback({
+        type: "error",
+        message: err.message || "Failed to re-crop bounding box.",
+      });
+    } finally {
+      setIsRecropping(false);
+      setTimeout(() => setRecropFeedback(null), 4000);
+    }
+  };
+
+  // Copy storage / image URL
+  const handleCopyUrl = () => {
+    if (!imageUrl) return;
+    navigator.clipboard.writeText(imageUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 2000);
   };
 
   // Syllabus topic selection handler
@@ -173,7 +304,7 @@ export function IngestionMediaPanel({
       {/* ========================================================= */}
       {/* ACCORDION SECTION 1: [📷 Diagram & Figures]                 */}
       {/* ========================================================= */}
-      <div className="border-2 border-[#201e1d] rounded-xl shadow-offset-2 bg-white overflow-hidden transition-all">
+      <div className="border-2 border-[#201e1d] rounded-2xl shadow-chunky bg-white overflow-hidden transition-all">
         {/* Collapsible Header */}
         <button
           type="button"
@@ -181,27 +312,28 @@ export function IngestionMediaPanel({
           className="w-full flex items-center justify-between p-3.5 sm:p-4 bg-white hover:bg-neutral-50/80 transition-colors cursor-pointer select-none text-left"
           aria-expanded={isDiagramOpen}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="p-1.5 bg-[#ffe1d0] text-[#c67139] border border-[#c67139]/40 rounded-lg shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
+            <span className="p-1.5 bg-[#ffe1d0] text-[#c67139] border-2 border-[#201e1d] rounded-xl shadow-xs shrink-0">
               <ImageIcon className="w-4 h-4" />
             </span>
             <span className="font-heading text-sm sm:text-base font-bold text-[#201e1d]">
-              📷 Diagram &amp; Figures
+              📷 Diagram &amp; Visual Figures
             </span>
 
-            {/* Status Badge */}
-            {hasDiagram && imageUrl ? (
+            {/* Tri-state Diagram Status Badge */}
+            {diagramStatus === "Cropped & Uploaded" ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#f0fae1] text-[#22C55E] border border-[#22C55E]/40 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
-                Diagram Attached
+                Cropped &amp; Uploaded
               </span>
-            ) : hasDiagram ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#fff8eb] text-[#c67139] border border-[#c67139]/30 shrink-0">
-                Enabled (No Image)
+            ) : diagramStatus === "Needs re-crop" ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#fff8eb] text-[#d97706] border border-[#d97706]/40 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#d97706] animate-pulse" />
+                Needs re-crop
               </span>
             ) : (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-neutral-100 text-neutral-500 border border-neutral-300 shrink-0">
-                None
+                No diagram detected
               </span>
             )}
           </div>
@@ -217,70 +349,122 @@ export function IngestionMediaPanel({
         {/* Accordion Body */}
         {isDiagramOpen && (
           <div className="p-4 border-t-2 border-[#201e1d] bg-[#fdfbf7] flex flex-col gap-4">
-            {/* Toggle Row */}
-            <div className="flex items-center justify-between pb-2 border-b border-[#eee7db]">
+            {/* Toggle Row & Crop Coordinates */}
+            <div className="flex items-center justify-between pb-2 border-b border-[#eee7db] flex-wrap gap-2">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={hasDiagram}
                   onChange={(e) => handleToggleDiagram(e.target.checked)}
-                  className="w-4 h-4 rounded border-2 border-[#201e1d] text-[#c67139] focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 rounded border-2 border-[#201e1d] text-[#c67139] focus:ring-0 cursor-pointer accent-[#c67139]"
                 />
                 <span className="text-xs font-bold uppercase tracking-wider text-[#645c50]">
                   Question contains diagram/graph
                 </span>
               </label>
 
-              {imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => handleToggleDiagram(false)}
-                  className="text-xs font-bold text-neutral-500 hover:text-red-600 transition-colors"
-                >
-                  Clear diagram
-                </button>
+              {boundingBox && (
+                <span className="text-[11px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <Crop className="w-3 h-3 text-amber-700" />
+                  <span>
+                    BBox: [{boundingBox.ymin}, {boundingBox.xmin}, {boundingBox.ymax}, {boundingBox.xmax}] (Pg {boundingBox.page_number})
+                  </span>
+                </span>
               )}
             </div>
 
-            {/* Image URL & Direct Upload Button */}
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="diagram-image-url"
-                className="text-xs font-bold uppercase tracking-wider text-[#645c50] flex items-center justify-between"
+            {/* Interactive Action Controls Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {/* 1. Adjust Crop on PDF */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenPdfCropper) {
+                    onOpenPdfCropper();
+                  } else {
+                    document.getElementById("pdf-canvas-container")?.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+                className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-900 rounded-xl border-2 border-b-4 border-slate-800 font-bold text-xs shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Open interactive cropper on PDF canvas"
               >
-                <span>Image URL / Asset Path</span>
-                <span className="text-[10px] font-mono text-neutral-500">
-                  PNG, SVG, WebP, JPEG
-                </span>
-              </label>
-              <div className="flex flex-col sm:flex-row gap-2 items-stretch">
-                <input
-                  id="diagram-image-url"
-                  type="text"
-                  placeholder="e.g. /questions/0455_s24_12_q03.png or https://..."
-                  value={imageUrl}
-                  onChange={(e) => handleImageUrlChange(e.target.value)}
-                  className="flex-1 min-w-0 px-3 py-2 text-sm font-mono rounded-xl border-2 border-[#201e1d] bg-white outline-none focus:border-[#c67139] shadow-offset-2 transition-all text-[#201e1d]"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3.5 py-2 bg-[#201e1d] text-[#f9f4ed] hover:bg-[#c67139] text-xs font-bold rounded-xl border-2 border-[#201e1d] flex items-center justify-center gap-1.5 shadow-offset-2 shrink-0 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Direct Upload</span>
-                </button>
-              </div>
+                <Scissors className="w-3.5 h-3.5 text-amber-600" />
+                <span>Adjust on PDF</span>
+              </button>
+
+              {/* 2. Re-crop Current BBox */}
+              <button
+                type="button"
+                onClick={handleReCropCurrentBBox}
+                disabled={isRecropping || !boundingBox}
+                className={cn(
+                  "px-3 py-2 rounded-xl border-2 border-b-4 border-slate-800 font-bold text-xs shadow-chunky transition-all flex items-center justify-center gap-1.5",
+                  isRecropping
+                    ? "bg-amber-100 text-amber-800 cursor-wait opacity-80"
+                    : boundingBox
+                    ? "bg-[#facc15] hover:bg-[#fde047] text-slate-900 active:translate-y-0.5 active:border-b-2 active:shadow-none cursor-pointer"
+                    : "bg-slate-100 text-slate-400 border-slate-400 opacity-60 cursor-not-allowed"
+                )}
+                title="Re-execute crop using current bounding box coordinates"
+              >
+                <RotateCcw className={cn("w-3.5 h-3.5", isRecropping && "animate-spin")} />
+                <span>{isRecropping ? "Cropping..." : "Re-crop BBox"}</span>
+              </button>
+
+              {/* 3. Upload Custom Image */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-900 rounded-xl border-2 border-b-4 border-slate-800 font-bold text-xs shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5 text-teal-600" />
+                <span>Upload Image</span>
+              </button>
+
+              {/* 4. Remove Diagram */}
+              <button
+                type="button"
+                onClick={handleRemoveDiagram}
+                disabled={!hasDiagram && !imageUrl}
+                className={cn(
+                  "px-3 py-2 rounded-xl border-2 border-b-4 border-slate-800 font-bold text-xs shadow-chunky transition-all flex items-center justify-center gap-1.5",
+                  hasDiagram || imageUrl
+                    ? "bg-white hover:bg-rose-50 text-rose-700 active:translate-y-0.5 active:border-b-2 active:shadow-none cursor-pointer"
+                    : "bg-slate-100 text-slate-400 border-slate-400 opacity-60 cursor-not-allowed"
+                )}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Remove</span>
+              </button>
             </div>
 
-            {/* Thumbnail Preview Card with Click-to-Zoom Lightbox */}
+            {/* In-flight feedback alert */}
+            {recropFeedback && (
+              <div
+                className={cn(
+                  "p-2.5 rounded-xl border-2 font-bold text-xs flex items-center gap-2",
+                  recropFeedback.type === "success"
+                    ? "bg-[#f0fae1] border-[#22C55E] text-[#15803D]"
+                    : "bg-rose-50 border-rose-500 text-rose-800"
+                )}
+              >
+                {recropFeedback.type === "success" ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                )}
+                <span>{recropFeedback.message}</span>
+              </div>
+            )}
+
+            {/* Thumbnail Preview Card with Zoom Lightbox */}
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-[#645c50]">
-                Thumbnail Preview
+                Cropped Diagram Preview
               </span>
 
               {imageUrl ? (
-                <div className="flex items-center gap-4 p-3 bg-white rounded-xl border-2 border-[#201e1d] shadow-offset-2">
+                <div className="flex items-center gap-4 p-3 bg-white rounded-xl border-2 border-[#201e1d] shadow-chunky">
                   <div
                     className="relative group shrink-0 cursor-zoom-in"
                     onClick={() => setIsLightboxOpen(true)}
@@ -295,20 +479,59 @@ export function IngestionMediaPanel({
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0 flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono text-neutral-500 truncate max-w-xs" title={imageUrl}>
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-mono text-neutral-500 truncate max-w-[200px] sm:max-w-xs" title={imageUrl}>
                         {imageUrl}
                       </span>
                       <button
                         type="button"
                         onClick={() => setIsLightboxOpen(true)}
-                        className="text-xs font-bold text-[#c67139] hover:underline flex items-center gap-1 shrink-0"
+                        className="text-xs font-bold text-[#c67139] hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
                       >
                         <ZoomIn className="w-3.5 h-3.5" />
-                        <span>Zoom Lightbox</span>
+                        <span>Zoom Modal</span>
                       </button>
                     </div>
+
+                    {/* Supabase Storage / Local Bucket Status Badge */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {storagePath || imageUrl.includes("supabase.co") ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-teal-50 text-teal-800 border border-teal-300">
+                          <Cloud className="w-3 h-3 text-teal-600" />
+                          <span>Bucket: question-diagrams</span>
+                        </span>
+                      ) : imageUrl.startsWith("/questions/") ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                          <HardDrive className="w-3 h-3 text-amber-600" />
+                          <span>Local Public Asset</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                          <span>External / In-Memory Asset</span>
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleCopyUrl}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded border border-slate-300 transition-colors cursor-pointer"
+                        title="Copy image URL to clipboard"
+                      >
+                        {copiedUrl ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
                     <p className="text-xs text-neutral-600 line-clamp-2">
                       {altDescription || "No alt description provided yet."}
                     </p>
@@ -318,31 +541,57 @@ export function IngestionMediaPanel({
                 <div className="p-4 bg-white border-2 border-dashed border-[#dcd3c4] rounded-xl flex items-center justify-center text-center gap-2 text-[#82796a]">
                   <ImageIcon className="w-5 h-5 opacity-40 shrink-0" />
                   <span className="text-xs font-medium">
-                    No image specified yet. Enter an image URL or click &quot;Direct Upload&quot; above.
+                    No image cropped yet. Click &quot;Adjust on PDF&quot; or upload a custom image.
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Alt Description Input */}
+            {/* Direct Image URL input */}
             <div className="flex flex-col gap-1.5">
               <label
-                htmlFor="diagram-alt-description"
+                htmlFor="diagram-image-url"
                 className="text-xs font-bold uppercase tracking-wider text-[#645c50] flex items-center justify-between"
               >
-                <span>Alt Description</span>
-                <span className="text-[10px] font-medium text-neutral-500">
-                  Screen readers &amp; Mark Scheme
+                <span>Image URL / Asset Path</span>
+                <span className="text-[10px] font-mono text-neutral-500">
+                  PNG, SVG, WebP, JPEG
                 </span>
               </label>
               <input
+                id="diagram-image-url"
+                type="text"
+                placeholder="e.g. /questions/0455_s24_12_q03.png or https://..."
+                value={imageUrl}
+                onChange={(e) => handleImageUrlChange(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-mono rounded-xl border-2 border-[#201e1d] bg-white outline-none focus:border-[#c67139] shadow-offset-2 transition-all text-[#201e1d]"
+              />
+            </div>
+
+            {/* Alt Description Input for Screen Readers & Mark Schemes */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="diagram-alt-description"
+                  className="text-xs font-bold uppercase tracking-wider text-[#645c50]"
+                >
+                  Alt Description (Accessibility &amp; Mark Scheme)
+                </label>
+                <span className="text-[10px] font-mono text-neutral-500">
+                  {altDescription.length} chars
+                </span>
+              </div>
+              <input
                 id="diagram-alt-description"
                 type="text"
-                placeholder="e.g. Demand and supply diagram showing leftward shift of supply curve from S1 to S2"
+                placeholder="e.g. Supply and demand diagram showing leftward shift of supply curve from S1 to S2 with higher equilibrium price"
                 value={altDescription}
                 onChange={(e) => handleAltDescriptionChange(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-xl border-2 border-[#201e1d] bg-white outline-none focus:border-[#c67139] shadow-offset-2 transition-all font-medium text-[#201e1d]"
               />
+              <span className="text-[11px] text-[#82796a]">
+                Required for screen readers, Cambridge examiner cross-referencing, and multimodal QA.
+              </span>
             </div>
           </div>
         )}
@@ -351,7 +600,7 @@ export function IngestionMediaPanel({
       {/* ========================================================= */}
       {/* ACCORDION SECTION 2: [📚 Syllabus Topic & Derivation]        */}
       {/* ========================================================= */}
-      <div className="border-2 border-[#201e1d] rounded-xl shadow-offset-2 bg-white overflow-hidden transition-all">
+      <div className="border-2 border-[#201e1d] rounded-2xl shadow-chunky bg-white overflow-hidden transition-all">
         {/* Collapsible Header */}
         <button
           type="button"
@@ -360,7 +609,7 @@ export function IngestionMediaPanel({
           aria-expanded={isTopicOpen}
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="p-1.5 bg-[#f0fae1] text-[#7a8a5e] border border-[#7a8a5e]/40 rounded-lg shrink-0">
+            <span className="p-1.5 bg-[#f0fae1] text-[#7a8a5e] border-2 border-[#201e1d] rounded-xl shadow-xs shrink-0">
               <BookOpen className="w-4 h-4" />
             </span>
             <span className="font-heading text-sm sm:text-base font-bold text-[#201e1d]">

@@ -287,9 +287,6 @@ export function useQuizGame() {
         saveAttempt(currentQ, 'first-correct', xpAwarded, newStreak);
         playChime();
         triggerCelebration(newStreak);
-
-        autoAdvanceRef.current = setTimeout(() => nextQuestion(), 1500);
-
       } else {
         // Wrong on first try
         setStatus('first-wrong');
@@ -321,7 +318,6 @@ export function useQuizGame() {
         saveAttempt(currentQ, 'retry-correct', xpAwarded, 0, false);
 
         playChime();
-        autoAdvanceRef.current = setTimeout(() => nextQuestion(), 1500);
       } else {
         // Wrong on second try
         setStatus('answered');

@@ -151,6 +151,7 @@ export default function HomePage() {
           isEndless={game.config?.roundLength === 'endless'}
           onFinish={game.finishEarly}
           totalXP={game.totalXP}
+          subject={game.config?.subject}
         />
       </main>
     );

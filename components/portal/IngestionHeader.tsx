@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import type { StagingPaper, StagingQuestion } from "@/types/ingestion";
+import type { StagingPaper, StagingQuestion, PaperLifecycleState } from "@/types/ingestion";
 import {
   UploadCloud,
   Loader2,
@@ -14,6 +14,12 @@ import {
   ExternalLink,
   MoreHorizontal,
   FolderDown,
+  BookOpen,
+  Undo2,
+  Redo2,
+  CheckCircle2,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -28,6 +34,17 @@ export interface IngestionHeaderProps {
   publishMessage?: string;
   showLivePreview: boolean;
   onTogglePreview: () => void;
+
+  // Dual-Pane & Lifecycle controls
+  lifecycleState?: PaperLifecycleState;
+  showPdfViewer?: boolean;
+  onTogglePdfViewer?: () => void;
+
+  // Undo / Redo controls
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 export default function IngestionHeader({
@@ -42,6 +59,13 @@ export default function IngestionHeader({
   publishMessage: _publishMessage,
   showLivePreview,
   onTogglePreview,
+  lifecycleState = "draft",
+  showPdfViewer = true,
+  onTogglePdfViewer,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
 }: IngestionHeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -70,7 +94,7 @@ export default function IngestionHeader({
         }
       })
       .catch(() => {
-        // Fallback silently to presets
+        // Fallback silently to preset list
       });
   }, []);
 
@@ -97,38 +121,49 @@ export default function IngestionHeader({
     };
   }, [isMenuOpen]);
 
-  // Calculate health score of paper
-  const { percentage } = useMemo(() => {
+  // Calculate paper validation counters
+  const { totalCount, validCount, reviewCount, totalIssues } = useMemo(() => {
     if (!paper || !paper.questions || paper.questions.length === 0) {
-      return { percentage: 0 };
+      return { totalCount: 0, validCount: 0, reviewCount: 0, totalIssues: 0 };
     }
 
     const total = paper.questions.length;
-    const validated = paper.questions.filter((q: StagingQuestion) => {
-      if (q.status === "withdrawn") return false;
-      if (!q.stem_markdown || q.stem_markdown.trim().length === 0) return false;
-      if (!Array.isArray(q.options) || q.options.length !== 4) return false;
-      const correctCount = q.options.filter((opt) => opt.is_correct).length;
-      return correctCount === 1;
-    }).length;
+    let valid = 0;
+    let issues = 0;
 
-    const pct = total > 0 ? Math.round((validated / total) * 100) : 0;
-    return { percentage: pct };
-  }, [paper]);
+    for (const q of paper.questions) {
+      let isQValid = true;
+      if (q.status === "withdrawn") {
+        // Withdrawn questions do not block validity
+        continue;
+      }
+      if (!q.stem_markdown || q.stem_markdown.trim().length === 0) {
+        isQValid = false;
+        issues++;
+      }
+      if (!Array.isArray(q.options) || q.options.length !== 4) {
+        isQValid = false;
+        issues++;
+      } else {
+        const correctCount = q.options.filter((opt) => opt.is_correct).length;
+        if (correctCount !== 1) {
+          isQValid = false;
+          issues++;
+        }
+      }
 
-  // Calm Health Score dot color tokens:
-  // Green (>=90%), Yellow (50-89%), Coral (<50%)
-  const healthDotColor = useMemo(() => {
-    if (percentage >= 90) return "#22C55E";
-    if (percentage >= 50) return "#FACC15";
-    return "#FB7185";
-  }, [percentage]);
+      if (isQValid) {
+        valid++;
+      }
+    }
 
-  const paperBadgeLabel = useMemo(() => {
-    const series = paper?.paper?.series || "s";
-    const yearShort = paper?.paper?.year ? String(paper.paper.year).slice(-2) : "24";
-    const paperCode = paper?.paper?.paper_code || "12";
-    return `${series}${yearShort} · ${paperCode}`;
+    const review = total - valid;
+    return {
+      totalCount: total,
+      validCount: valid,
+      reviewCount: review,
+      totalIssues: issues,
+    };
   }, [paper]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,8 +176,44 @@ export default function IngestionHeader({
 
   const isPublishing = publishStatus === "publishing" || publishStatus === "validating";
 
+  // Lifecycle Badge Configuration
+  const effectiveLifecycle = paper?.lifecycle_state || paper?.state || lifecycleState;
+  const lifecycleBadge = useMemo(() => {
+    switch (effectiveLifecycle) {
+      case "extracting":
+        return {
+          label: "Extracting...",
+          className: "bg-[#e0e7ff] text-[#312e81] border-[#312e81] animate-pulse",
+          dotColor: "#4f46e5",
+          icon: <Loader2 className="w-3.5 h-3.5 animate-spin" />,
+        };
+      case "review":
+        return {
+          label: "Ready for Review",
+          className: "bg-[#ccfbf1] text-[#115e59] border-[#115e59]",
+          dotColor: "#0d9488",
+          icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+        };
+      case "published":
+        return {
+          label: "Published",
+          className: "bg-[#dcfce7] text-[#14532d] border-[#14532d]",
+          dotColor: "#16a34a",
+          icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" />,
+        };
+      case "draft":
+      default:
+        return {
+          label: "Draft",
+          className: "bg-[#fef3c7] text-[#78350f] border-[#78350f]",
+          dotColor: "#d97706",
+          icon: null,
+        };
+    }
+  }, [effectiveLifecycle]);
+
   return (
-    <header className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-offset-2 px-4 py-3 sm:px-6 sm:py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 font-body">
+    <header className="w-full bg-[#FFFDF7] border-2 border-b-4 border-[#2b2b2b] rounded-2xl shadow-[4px_4px_0px_#2b2b2b] px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col xl:flex-row xl:items-center justify-between gap-3 font-body">
       {/* Hidden File Input for JSON Upload */}
       <input
         ref={fileInputRef}
@@ -152,75 +223,192 @@ export default function IngestionHeader({
         onChange={handleFileChange}
       />
 
-      {/* Left: Title & Key Badges */}
-      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
-        <h1 className="font-heading text-xl sm:text-2xl text-[#201e1d] tracking-tight flex items-center gap-1.5 select-none">
-          <span>Revizz Studio</span>
-          <span className="text-amber-500">⚡</span>
-        </h1>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Subject Badge */}
-          <span className="px-2.5 py-1 bg-[#ffe1d0] border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 flex items-center gap-1.5 whitespace-nowrap">
-            <span>{paper?.subject?.icon || "📈"}</span>
-            <span>
-              {paper?.subject
-                ? `${paper.subject.code} ${paper.subject.name}`
-                : "0455 Economics"}
+      {/* Left Section: Studio Title, Lifecycle Badge & Quick-Edit Metadata Pills */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        {/* Brand Logo & Name */}
+        <div className="flex items-center gap-2">
+          <span className="font-heading text-lg sm:text-xl font-black text-[#2b2b2b] tracking-tight flex items-center gap-1.5 select-none">
+            <span className="bg-[#ffd166] border-2 border-[#2b2b2b] px-2 py-0.5 rounded-lg shadow-[2px_2px_0px_#2b2b2b]">
+              Revizz
             </span>
+            <span>Studio</span>
           </span>
+        </div>
 
-          {/* Paper Badge */}
-          <span className="px-2.5 py-1 bg-[#f0fae1] border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 whitespace-nowrap">
-            {paperBadgeLabel}
-          </span>
-
-          {/* Calm Health Score Badge */}
-          <span className="px-2.5 py-1 bg-white border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 flex items-center gap-1.5 whitespace-nowrap">
+        {/* Paper Lifecycle Pill Badge */}
+        <div
+          className={`px-2.5 py-1 border-2 rounded-full text-xs font-black shadow-[2px_2px_0px_#2b2b2b] flex items-center gap-1.5 whitespace-nowrap ${lifecycleBadge.className}`}
+        >
+          {lifecycleBadge.icon ? (
+            lifecycleBadge.icon
+          ) : (
             <span
               className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: healthDotColor }}
+              style={{ backgroundColor: lifecycleBadge.dotColor }}
             />
-            <span>Health: {percentage}%</span>
-          </span>
+          )}
+          <span>{lifecycleBadge.label}</span>
+        </div>
+
+        {/* Metadata Quick-Edit Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Subject Pill */}
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            title="Click to edit subject & paper settings"
+            className="px-2.5 py-1 bg-[#ffe5d9] hover:bg-[#ffd7c4] border-2 border-[#2b2b2b] rounded-full text-xs font-bold text-[#2b2b2b] shadow-[2px_2px_0px_#2b2b2b] active:translate-y-0.5 flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>{paper?.subject?.icon || "📈"}</span>
+            <span>{paper?.subject?.code || "0455"}</span>
+            <span className="text-[#2b2b2b]/70 font-semibold hidden sm:inline">
+              {paper?.subject?.name || "Economics"}
+            </span>
+          </button>
+
+          {/* Paper Series & Code Pill */}
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            title="Click to edit series & paper code"
+            className="px-2.5 py-1 bg-[#e0f2fe] hover:bg-[#bae6fd] border-2 border-[#2b2b2b] rounded-full text-xs font-bold text-[#0369a1] shadow-[2px_2px_0px_#2b2b2b] active:translate-y-0.5 flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>Paper</span>
+            <span className="font-black text-[#2b2b2b]">
+              {paper?.paper?.paper_code || "12"}
+            </span>
+            <span className="text-xs uppercase bg-white border border-[#2b2b2b] rounded px-1 text-[#2b2b2b]">
+              {paper?.paper?.series || "s"}
+              {paper?.paper?.year ? String(paper.paper.year).slice(-2) : "24"}
+            </span>
+          </button>
+
+          {/* Progress Counters */}
+          {totalCount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span
+                className="px-2.5 py-1 bg-[#d1fae5] border-2 border-[#065f46] text-[#065f46] rounded-full text-xs font-black shadow-[2px_2px_0px_#2b2b2b] flex items-center gap-1"
+                title={`${validCount} questions fully valid`}
+              >
+                <CheckCircle2 className="w-3 h-3 text-[#059669]" />
+                <span>
+                  {validCount}/{totalCount} Valid
+                </span>
+              </span>
+
+              {reviewCount > 0 && (
+                <span
+                  className="px-2.5 py-1 bg-[#ffe4e6] border-2 border-[#9f1239] text-[#9f1239] rounded-full text-xs font-black shadow-[2px_2px_0px_#2b2b2b] flex items-center gap-1"
+                  title={`${reviewCount} questions require curator review`}
+                >
+                  <AlertTriangle className="w-3 h-3 text-[#e11d48]" />
+                  <span>{reviewCount} Review</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Right: Only TWO Primary Actions + Clean Overflow Menu */}
-      <div className="flex items-center gap-2 sm:gap-2.5 self-end md:self-auto flex-wrap">
-        {/* Primary Action 1: [👁 Preview] */}
+      {/* Right Section: Tool Controls, Split Screen Toggle & Action CTAs */}
+      <div className="flex items-center gap-2 sm:gap-2.5 self-end xl:self-auto flex-wrap">
+        {/* Undo / Redo Quick Controls */}
+        {onUndo && onRedo && (
+          <div className="flex items-center border-2 border-[#2b2b2b] rounded-xl bg-white shadow-[2px_2px_0px_#2b2b2b] overflow-hidden">
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo}
+              aria-label="Undo question edit"
+              title="Undo question edit (Ctrl+Z)"
+              className="p-1.5 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed border-r border-[#2b2b2b] text-[#2b2b2b] transition-colors cursor-pointer"
+            >
+              <Undo2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo}
+              aria-label="Redo question edit"
+              title="Redo question edit (Ctrl+Y)"
+              className="p-1.5 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-[#2b2b2b] transition-colors cursor-pointer"
+            >
+              <Redo2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Dual-Pane Split Screen Toggle */}
+        {onTogglePdfViewer && (
+          <button
+            type="button"
+            onClick={onTogglePdfViewer}
+            className={`px-3 py-1.5 border-2 border-b-4 border-[#2b2b2b] rounded-xl shadow-[2px_2px_0px_#2b2b2b] active:translate-y-0.5 active:border-b-2 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+              showPdfViewer
+                ? "bg-[#ffd166] text-[#2b2b2b]"
+                : "bg-white text-[#2b2b2b] hover:bg-slate-50"
+            }`}
+            title={showPdfViewer ? "Hide PDF Source Pane" : "Show Dual-Pane PDF Source"}
+          >
+            <BookOpen className="w-4 h-4 text-[#2b2b2b]" />
+            <span className="hidden sm:inline">
+              {showPdfViewer ? "Hide PDF" : "Split View (PDF)"}
+            </span>
+            <span className="sm:hidden">PDF</span>
+          </button>
+        )}
+
+        {/* Audit Drawer Trigger Button */}
+        <button
+          type="button"
+          onClick={onOpenAudit}
+          className="px-3 py-1.5 bg-white hover:bg-slate-50 border-2 border-b-4 border-[#2b2b2b] rounded-xl shadow-[2px_2px_0px_#2b2b2b] active:translate-y-0.5 active:border-b-2 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer text-[#2b2b2b]"
+          title="Open Paper Batch Audit Drawer"
+        >
+          <ClipboardCheck className="w-4 h-4 text-[#4f46e5]" />
+          <span>Audit</span>
+          {totalIssues > 0 && (
+            <span className="px-1.5 py-0.2 bg-[#ff6b6b] text-white text-[10px] font-black rounded-full border border-[#2b2b2b]">
+              {totalIssues}
+            </span>
+          )}
+        </button>
+
+        {/* Live Simulator Preview Toggle */}
         <button
           type="button"
           onClick={onTogglePreview}
-          className={`px-3.5 py-1.5 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+          className={`px-3.5 py-1.5 border-2 border-b-4 border-[#2b2b2b] rounded-xl shadow-[2px_2px_0px_#2b2b2b] active:translate-y-0.5 active:border-b-2 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
             showLivePreview
-              ? "bg-[#14B8A6] text-white"
-              : "bg-white text-[#201e1d] hover:bg-slate-50"
+              ? "bg-[#06d6a0] text-[#2b2b2b]"
+              : "bg-white text-[#2b2b2b] hover:bg-slate-50"
           }`}
-          title={showLivePreview ? "Close Live Preview" : "Open Live Preview"}
+          title={showLivePreview ? "Close Live Simulator Preview" : "Open Student Simulator"}
         >
-          <Eye className={`w-4 h-4 ${showLivePreview ? "text-white" : "text-[#201e1d]"}`} />
+          <Eye className="w-4 h-4 text-[#2b2b2b]" />
           <span>Preview</span>
         </button>
 
-        {/* Primary Action 2: [Push Live] */}
+        {/* Tactile 1-Click Publish to Supabase */}
         <button
           type="button"
           onClick={onPublish}
           disabled={isPublishing || !paper}
-          className="px-4 py-1.5 bg-[#22C55E] hover:bg-[#16a34a] text-[#201e1d] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-black text-xs sm:text-sm flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
+          className="px-4 py-1.5 bg-[#06d6a0] hover:bg-[#05b385] text-[#2b2b2b] border-2 border-b-4 border-[#2b2b2b] rounded-xl shadow-[3px_3px_0px_#2b2b2b] active:translate-y-0.5 active:border-b-2 font-black text-xs sm:text-sm flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
         >
           {isPublishing ? (
-            <Loader2 className="w-4 h-4 animate-spin text-[#201e1d]" />
+            <Loader2 className="w-4 h-4 animate-spin text-[#2b2b2b]" />
           ) : (
-            <UploadCloud className="w-4 h-4 text-[#201e1d]" />
+            <UploadCloud className="w-4 h-4 text-[#2b2b2b]" />
           )}
           <span>
             {publishStatus === "publishing"
               ? "Publishing..."
               : publishStatus === "validating"
               ? "Validating..."
-              : "Push Live"}
+              : publishStatus === "success"
+              ? "Published! ✓"
+              : "Publish to Supabase"}
           </span>
         </button>
 
@@ -231,18 +419,18 @@ export default function IngestionHeader({
             onClick={() => setIsMenuOpen((prev) => !prev)}
             aria-label="More options"
             aria-expanded={isMenuOpen}
-            className={`p-1.5 sm:p-2 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d] transition-all flex items-center justify-center cursor-pointer ${
-              isMenuOpen ? "bg-[#ffe1d0]" : "bg-white hover:bg-slate-50"
+            className={`p-1.5 sm:p-2 border-2 border-b-4 border-[#2b2b2b] rounded-xl shadow-[2px_2px_0px_#2b2b2b] active:translate-y-0.5 active:border-b-2 font-bold text-[#2b2b2b] transition-all flex items-center justify-center cursor-pointer ${
+              isMenuOpen ? "bg-[#ffd166]" : "bg-white hover:bg-slate-50"
             }`}
           >
-            <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5 text-[#201e1d]" />
+            <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5 text-[#2b2b2b]" />
           </button>
 
-          {/* Clean Overflow Dropdown */}
+          {/* Clean Neobrutalist Overflow Dropdown */}
           {isMenuOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-offset-4 p-1.5 z-50 flex flex-col font-body">
-              {/* Preset Item */}
-              <div className="flex items-center justify-between px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl transition-colors">
+            <div className="absolute right-0 mt-2 w-64 bg-[#FFFDF7] border-2 border-b-4 border-[#2b2b2b] rounded-2xl shadow-[4px_4px_0px_#2b2b2b] p-1.5 z-50 flex flex-col font-body">
+              {/* Preset Selector */}
+              <div className="flex items-center justify-between px-3 py-2 hover:bg-[#ffe5d9] rounded-xl transition-colors">
                 <button
                   type="button"
                   onClick={() => {
@@ -251,10 +439,10 @@ export default function IngestionHeader({
                       (onLoadPreset as (preset?: string) => void)(selectedPreset);
                     }
                   }}
-                  className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#201e1d] flex-1 text-left cursor-pointer"
-                  title="Load preset"
+                  className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2b2b2b] flex-1 text-left cursor-pointer"
+                  title="Load selected preset"
                 >
-                  <FolderDown className="w-4 h-4 text-[#201e1d]" />
+                  <FolderDown className="w-4 h-4 text-[#2b2b2b]" />
                   <span>Preset: {selectedPreset.replace(/_/g, " ")}</span>
                 </button>
                 {availablePresets.length > 1 && (
@@ -268,8 +456,8 @@ export default function IngestionHeader({
                       }
                       setIsMenuOpen(false);
                     }}
-                    aria-label="Change preset"
-                    className="text-xs font-bold bg-white border border-[#201e1d] rounded px-1.5 py-0.5 text-[#201e1d] ml-1.5 cursor-pointer focus:outline-none"
+                    aria-label="Select paper preset"
+                    className="text-xs font-bold bg-white border border-[#2b2b2b] rounded px-1.5 py-0.5 text-[#2b2b2b] ml-1.5 cursor-pointer focus:outline-none"
                   >
                     {availablePresets.map((preset) => (
                       <option key={preset} value={preset}>
@@ -287,10 +475,23 @@ export default function IngestionHeader({
                   setIsMenuOpen(false);
                   fileInputRef.current?.click();
                 }}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
+                className="w-full px-3 py-2 hover:bg-[#ffe5d9] rounded-xl text-left text-xs sm:text-sm font-bold text-[#2b2b2b] flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <Upload className="w-4 h-4 text-[#201e1d]" />
-                <span>Upload JSON File</span>
+                <Upload className="w-4 h-4 text-[#2b2b2b]" />
+                <span>Upload JSON Staged File</span>
+              </button>
+
+              {/* Raw JSON & SQL Payloads */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenPayloads();
+                }}
+                className="w-full px-3 py-2 hover:bg-[#ffe5d9] rounded-xl text-left text-xs sm:text-sm font-bold text-[#2b2b2b] flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <FileCode className="w-4 h-4 text-[#f59e0b]" />
+                <span>Raw JSON & SQL Export</span>
               </button>
 
               {/* Paper Settings */}
@@ -300,51 +501,25 @@ export default function IngestionHeader({
                   setIsMenuOpen(false);
                   onOpenSettings();
                 }}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
+                className="w-full px-3 py-2 hover:bg-[#ffe5d9] rounded-xl text-left text-xs sm:text-sm font-bold text-[#2b2b2b] flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <Settings className="w-4 h-4 text-[#201e1d]" />
-                <span>Paper Settings</span>
+                <Settings className="w-4 h-4 text-[#2b2b2b]" />
+                <span>Paper Metadata Settings</span>
               </button>
 
-              {/* View SQL & JSON */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  onOpenPayloads();
-                }}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <FileCode className="w-4 h-4 text-[#F59E0B]" />
-                <span>View SQL & JSON</span>
-              </button>
+              <div className="my-1 border-t-2 border-[#2b2b2b]/10" />
 
-              {/* Full Audit Report */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  onOpenAudit();
-                }}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <ClipboardCheck className="w-4 h-4 text-[#6366F1]" />
-                <span>Full Audit Report</span>
-              </button>
-
-              <div className="my-1 border-t-2 border-[#201e1d]/10" />
-
-              {/* Test in Game */}
+              {/* Test in Live Game */}
               <a
                 href="/"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setIsMenuOpen(false)}
-                className="w-full px-3 py-2 hover:bg-[#ffc6a5] rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center justify-between transition-colors cursor-pointer"
+                className="w-full px-3 py-2 hover:bg-[#ffd166] rounded-xl text-left text-xs sm:text-sm font-bold text-[#2b2b2b] flex items-center justify-between transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2">
-                  <Gamepad2 className="w-4 h-4 text-[#201e1d]" />
-                  <span>Test in Game</span>
+                  <Gamepad2 className="w-4 h-4 text-[#2b2b2b]" />
+                  <span>Test in Live Game</span>
                 </div>
                 <ExternalLink className="w-3.5 h-3.5 opacity-60 ml-0.5" />
               </a>

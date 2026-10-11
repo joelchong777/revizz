@@ -25,6 +25,7 @@ interface QuestionCardProps {
   isEndless: boolean;
   onFinish: () => void;
   totalXP: number;
+  subject?: string;
 }
 
 export function QuestionCard({
@@ -42,6 +43,7 @@ export function QuestionCard({
   isEndless,
   onFinish,
   totalXP,
+  subject,
 }: QuestionCardProps) {
   const shouldReduceMotion = useReducedMotion();
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
@@ -58,7 +60,7 @@ export function QuestionCard({
   const diagramUrl = question.has_diagram === false ? undefined : rawDiagramUrl;
   const altDescription =
     question.diagram?.alt_description ||
-    question.citation ||
+    (status === 'unanswered' ? 'Question diagram' : question.citation) ||
     'Cambridge economics question diagram';
 
   // Reset zoom & image error when question or diagram changes
@@ -360,14 +362,21 @@ export function QuestionCard({
 
       {/* Third Row: Question Card */}
       <div className="flex flex-col gap-3 p-[18px] rounded-[28px] bg-neutral-100 border-2 border-text shadow-offset-4">
-        <div className="flex flex-wrap gap-1.5">
-          <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
-            {question.citation || 'Cambridge IGCSE'}
-          </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-[1.5px] border-text text-[11px] font-bold">
-            {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
-          </span>
-        </div>
+        {status !== 'unanswered' && (
+          <div className="flex flex-wrap gap-1.5">
+            {subject && (
+              <span className="px-2.5 py-0.5 rounded-full bg-accent-300 text-text border-[1.5px] border-text text-[11px] font-bold">
+                {subject}
+              </span>
+            )}
+            <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
+              {question.citation || 'Cambridge IGCSE'}
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-[1.5px] border-text text-[11px] font-bold">
+              {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
+            </span>
+          </div>
+        )}
 
         <div className="text-[17px] leading-relaxed font-semibold text-text break-words overflow-x-auto min-h-[48px]">
           <ReactMarkdown
@@ -597,6 +606,15 @@ export function QuestionCard({
             </span>
           </div>
 
+          {/* Primary Next Question CTA Button (on top of explanations) */}
+          <button
+            type="button"
+            onClick={onNext}
+            className="w-full py-3.5 px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
+          >
+            {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
+          </button>
+
           {/* Step by Step Explanation */}
           <div className="flex flex-col gap-2 p-3.5 rounded-[20px] bg-neutral-100 border-2 border-text">
             <h6 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
@@ -672,7 +690,9 @@ export function QuestionCard({
                 {/* Modal Header */}
                 <div className="flex items-center justify-between p-4 border-b-4 border-text bg-[#f9f4ed]">
                   <span className="font-heading font-bold text-base sm:text-lg text-text truncate pr-2">
-                    {`Diagram Inspector · ${question.citation || 'Cambridge Question'}`}
+                    {status === 'unanswered'
+                      ? 'Diagram Inspector'
+                      : `Diagram Inspector · ${question.citation || 'Cambridge Question'}`}
                   </span>
                   <button
                     type="button"

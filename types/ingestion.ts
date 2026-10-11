@@ -41,6 +41,18 @@ export const StagingOptionSchema = z.object({
 export type StagingOption = z.infer<typeof StagingOptionSchema>;
 
 /**
+ * Paper lifecycle state enum.
+ */
+export const PaperLifecycleStateSchema = z.enum(['draft', 'extracting', 'review', 'published']);
+export type PaperLifecycleState = z.infer<typeof PaperLifecycleStateSchema>;
+
+/**
+ * Question validation status enum.
+ */
+export const QuestionValidationStatusSchema = z.enum(['valid', 'warning', 'error']);
+export type QuestionValidationStatus = z.infer<typeof QuestionValidationStatusSchema>;
+
+/**
  * Question status enum.
  */
 export const QuestionStatusSchema = z.enum(['active', 'withdrawn']);
@@ -51,13 +63,17 @@ export type QuestionStatus = z.infer<typeof QuestionStatusSchema>;
  */
 export const StagingQuestionSchema = z.object({
   question_number: z.number().int().positive(),
-  cambridge_source_ref: z.string(),
-  topic_name: z.string(),
+  cambridge_source_ref: z.string().optional().default(''),
+  topic_name: z.string().optional().default('General'),
   stem_markdown: z.string(),
   diagram: DiagramMetadataSchema.optional(),
+  diagrams: z.array(BoundingBoxSchema).optional(),
   options: z.array(StagingOptionSchema),
   explanation_markdown: z.string(),
-  status: QuestionStatusSchema,
+  status: QuestionStatusSchema.optional().default('active'),
+  page_number: z.number().int().positive().optional(),
+  distractor_analysis: z.record(z.string(), z.string()).optional(),
+  validation_status: QuestionValidationStatusSchema.optional(),
 });
 export type StagingQuestion = z.infer<typeof StagingQuestionSchema>;
 
@@ -94,6 +110,15 @@ export type StagingSyllabusTopic = z.infer<typeof StagingSyllabusTopicSchema>;
  * Complete Cambridge MCQ staging paper document.
  */
 export const StagingPaperSchema = z.object({
+  id: z.string().optional(),
+  lifecycle_state: PaperLifecycleStateSchema.optional(),
+  state: PaperLifecycleStateSchema.optional(),
+  source_qp_filename: z.string().optional(),
+  source_ms_filename: z.string().optional(),
+  total_pages: z.number().int().positive().optional(),
+  detected_year: z.number().int().optional(),
+  detected_series: z.string().optional(),
+  detected_paper_code: z.string().optional(),
   subject: StagingSubjectSchema,
   paper: StagingPaperMetaSchema,
   syllabus_topics: z.array(StagingSyllabusTopicSchema),

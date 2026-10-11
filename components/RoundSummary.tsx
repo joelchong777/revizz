@@ -158,8 +158,20 @@ export function RoundSummary({
             Clean sweep — nothing to review. 👑
           </div>
         ) : (
-          <div className="flex flex-col gap-3.5">
-            {missedQuestions.map((item, idx) => {
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                playPop();
+                onReviewMissed();
+              }}
+              className="w-full py-[15px] px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
+            >
+              Review missed questions 🧠
+            </button>
+
+            <div className="flex flex-col gap-3.5">
+              {missedQuestions.map((item, idx) => {
               const isOpen = openMissedIndex === idx;
               const correctIdx = item.question.options.findIndex(
                 (opt) => opt.id === item.question.correct_option_id
@@ -235,24 +247,12 @@ export function RoundSummary({
               );
             })}
           </div>
+        </>
         )}
       </div>
 
       {/* 4. Action Pills */}
       <div className="flex flex-col gap-3.5 pt-2 sm:pt-4">
-        {missedQuestions.length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              playPop();
-              onReviewMissed();
-            }}
-            className="w-full py-[15px] px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
-          >
-            Review missed questions 🧠
-          </button>
-        )}
-
         <div className="grid grid-cols-2 gap-3.5">
           <button
             type="button"

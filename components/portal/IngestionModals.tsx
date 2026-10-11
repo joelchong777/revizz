@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   X,
   Copy,
@@ -98,120 +98,113 @@ FROM public.subjects s, (VALUES
 ${topicRows.join(",\n")}
 ) AS t(name, order_index)
 WHERE s.code = '${esc(subjectCode)}'
-ON CONFLICT (subject_id, name) DO UPDATE SET
-  order_index = EXCLUDED.order_index;`
-      : `-- No syllabus topics defined`;
+ON CONFLICT (subject_id, name)
+DO UPDATE SET order_index = EXCLUDED.order_index;`
+      : `-- No topics defined.`;
 
-  // 2. Questions and Options in a single idempotent DO $$ block
-  const questionBlocks = questions.map((q) => {
-    const qNum = q.question_number;
-    const ref = q.cambridge_source_ref || `${subjectCode}/${paperCode}/${series.toUpperCase()}/${String(year).slice(-2)} Q${qNum}`;
-    const active = q.status !== "withdrawn";
-    const imageUrl = q.diagram?.has_diagram && q.diagram.image_url ? `'${esc(q.diagram.image_url)}'` : "NULL";
+  // 2. Questions SQL loop
+  const questionsSqlList = questions.map((q, idx) => {
+    const qNum = q.question_number || idx + 1;
+    const stem = q.stem_markdown || "";
+    const explanation = q.explanation_markdown || "";
+    const topicName = q.topic_name?.trim() || "General";
+    const citation = q.cambridge_source_ref || `${subjectCode}/${series}${year} Q${qNum}`;
 
-    const optInserts = (q.options || []).map((opt) => {
-      return `  INSERT INTO public.question_options (question_id, label, content_markdown, is_correct)
-  VALUES (v_q_id, '${esc(opt.label)}', $q${qNum}_opt_${opt.label}$${opt.content_markdown || ""}$q${qNum}_opt_${opt.label}$, ${opt.is_correct})
-  ON CONFLICT (question_id, label) DO UPDATE SET
-    content_markdown = EXCLUDED.content_markdown,
-    is_correct = EXCLUDED.is_correct;`;
-    });
+    const diagObj = {
+      has_diagram: Boolean(q.diagram?.has_diagram),
+      image_url: q.diagram?.image_url || null,
+      storage_path: q.diagram?.storage_path || null,
+      alt_description: q.diagram?.alt_description || null,
+    };
+    const diagJson = JSON.stringify(diagObj).replace(/'/g, "''");
 
-    return `  -- -------------------------------------------------------------------------
-  -- Question ${qNum}: ${esc(ref)}
-  -- -------------------------------------------------------------------------
-  SELECT id INTO v_topic_id FROM public.topics
-  WHERE subject_id = v_subject_id AND name = '${esc(q.topic_name)}';
+    const optArray = (q.options || []).map((o) => ({
+      label: o.label,
+      content_markdown: o.content_markdown || "",
+      is_correct: Boolean(o.is_correct),
+    }));
+    const optJson = JSON.stringify(optArray).replace(/'/g, "''");
 
+    return `  -- Question ${qNum}
   INSERT INTO public.questions (
-    subject_id, paper_id, topic_id, question_number, stem_markdown,
-    image_url, explanation_markdown, cambridge_source_ref, active
-  ) VALUES (
-    v_subject_id,
-    v_paper_id,
-    v_topic_id,
-    ${qNum},
-    $q${qNum}_stem$${q.stem_markdown || ""}$q${qNum}_stem$,
-    ${imageUrl},
-    $q${qNum}_exp$${q.explanation_markdown || ""}$q${qNum}_exp$,
-    '${esc(ref)}',
-    ${active}
+    paper_id,
+    topic_id,
+    question_number,
+    cambridge_source_ref,
+    stem_markdown,
+    options,
+    explanation_markdown,
+    diagram,
+    status
   )
-  ON CONFLICT (paper_id, question_number) DO UPDATE SET
-    subject_id = EXCLUDED.subject_id,
+  SELECT
+    p.id,
+    t.id,
+    ${qNum},
+    '${esc(citation)}',
+    $stem_${qNum}$${stem}$stem_${qNum}$,
+    '${optJson}'::jsonb,
+    $exp_${qNum}$${explanation}$exp_${qNum}$,
+    '${diagJson}'::jsonb,
+    'active'
+  FROM public.papers p
+  JOIN public.subjects s ON s.id = p.subject_id
+  LEFT JOIN public.topics t ON t.subject_id = s.id AND t.name = '${esc(topicName)}'
+  WHERE s.code = '${esc(subjectCode)}'
+    AND p.year = ${year}
+    AND p.series = '${esc(series)}'
+    AND p.paper_code = '${esc(paperCode)}'
+  ON CONFLICT (paper_id, question_number)
+  DO UPDATE SET
     topic_id = EXCLUDED.topic_id,
-    stem_markdown = EXCLUDED.stem_markdown,
-    image_url = EXCLUDED.image_url,
-    explanation_markdown = EXCLUDED.explanation_markdown,
     cambridge_source_ref = EXCLUDED.cambridge_source_ref,
-    active = EXCLUDED.active
-  RETURNING id INTO v_q_id;
-
-${optInserts.join("\n")}`;
+    stem_markdown = EXCLUDED.stem_markdown,
+    options = EXCLUDED.options,
+    explanation_markdown = EXCLUDED.explanation_markdown,
+    diagram = EXCLUDED.diagram,
+    status = EXCLUDED.status,
+    updated_at = NOW();`;
   });
 
-  return `-- =============================================================================
--- Revizz Ingestion Pipeline Idempotent Upsert Script
+  return `-- ============================================================================
+-- Revizz Ingestion Studio - Automated Database Upsert Batch
+-- Target: Supabase Postgres
 -- Subject: ${subjectCode} (${subjectName})
 -- Paper: ${series.toUpperCase()}${year} Paper ${paperCode}
--- Total Questions: ${questions.length}
--- Generated at: ${new Date().toISOString()}
--- =============================================================================
+-- Total Staged Questions: ${questions.length}
+-- ============================================================================
 
 BEGIN;
 
 -- 1. Ensure Subject exists
 INSERT INTO public.subjects (code, name, icon)
 VALUES ('${esc(subjectCode)}', '${esc(subjectName)}', '${esc(subjectIcon)}')
-ON CONFLICT (code) DO UPDATE SET
+ON CONFLICT (code)
+DO UPDATE SET
   name = EXCLUDED.name,
   icon = EXCLUDED.icon;
 
 -- 2. Ensure Paper exists
-INSERT INTO public.papers (subject_id, series, paper_code, year)
-SELECT s.id, '${esc(series)}', '${esc(paperCode)}', ${year}
-FROM public.subjects s
-WHERE s.code = '${esc(subjectCode)}'
-ON CONFLICT (subject_id, series, paper_code, year) DO UPDATE SET
-  year = EXCLUDED.year;
+INSERT INTO public.papers (subject_id, year, series, paper_code)
+SELECT id, ${year}, '${esc(series)}', '${esc(paperCode)}'
+FROM public.subjects
+WHERE code = '${esc(subjectCode)}'
+ON CONFLICT (subject_id, year, series, paper_code)
+DO NOTHING;
 
--- 3. Ensure Topics exist
+-- 3. Upsert Syllabus Topics
 ${topicsSql}
 
--- 4. Upsert Questions & Options
-DO $$
-DECLARE
-  v_subject_id uuid;
-  v_paper_id uuid;
-  v_topic_id uuid;
-  v_q_id uuid;
-BEGIN
-  -- Resolve Parent Identifiers
-  SELECT id INTO v_subject_id FROM public.subjects WHERE code = '${esc(subjectCode)}';
-
-  SELECT id INTO v_paper_id FROM public.papers
-  WHERE subject_id = v_subject_id
-    AND series = '${esc(series)}'
-    AND paper_code = '${esc(paperCode)}'
-    AND year = ${year};
-
-  IF v_paper_id IS NULL THEN
-    RAISE EXCEPTION 'Target paper record not found for subject %, series %, code %, year %',
-      '${esc(subjectCode)}', '${esc(series)}', '${esc(paperCode)}', ${year};
-  END IF;
-
-${questionBlocks.join("\n\n")}
-
-END $$;
+-- 4. Upsert Questions Batch (${questions.length} questions)
+${questionsSqlList.join("\n\n")}
 
 COMMIT;
 `;
 }
 
-// ============================================================================
-// Clipboard & File Download Helpers
-// ============================================================================
-
+/**
+ * Downloads a string as a browser file.
+ */
 function downloadTextFile(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -225,85 +218,57 @@ function downloadTextFile(content: string, filename: string, mimeType: string) {
 }
 
 // ============================================================================
-// Monospace Code Viewer Component with Syntax Coloring
+// Internal Code Viewer Subcomponent
 // ============================================================================
 
-interface CodeViewerProps {
-  code: string;
-  language: "sql" | "json";
-}
-
-function CodeViewer({ code, language }: CodeViewerProps) {
+function CodeViewer({ code, language }: { code: string; language: "sql" | "json" }) {
   const lines = useMemo(() => code.split("\n"), [code]);
 
-  const renderHighlightedLine = (line: string, index: number) => {
+  const renderHighlightedLine = (line: string, lineIndex: number) => {
     if (language === "sql") {
-      // Check for comments
       if (line.trim().startsWith("--")) {
-        return (
-          <span key={index} className="text-[#82796a] italic">
-            {line}
-          </span>
-        );
+        return <span className="text-[#aebf92] italic">{line}</span>;
       }
-
-      // Check for SQL Keywords
-      const sqlKeywordRegex =
-        /\b(BEGIN|COMMIT|INSERT INTO|INSERT|INTO|VALUES|SELECT|FROM|WHERE|AND|OR|ON CONFLICT|DO UPDATE SET|DO|RETURNING|DECLARE|END|RAISE EXCEPTION|IF|THEN|uuid|boolean|integer|text|NULL|true|false)\b/g;
-
-      const parts = line.split(sqlKeywordRegex);
+      const keywords =
+        /\b(SELECT|FROM|WHERE|INSERT|INTO|VALUES|ON|CONFLICT|DO|UPDATE|SET|LEFT|JOIN|BEGIN|COMMIT|AND|OR|EXCLUDED|NOW|jsonb)\b/g;
+      const parts = line.split(keywords);
       return (
-        <span key={index}>
-          {parts.map((part, i) => {
-            if (sqlKeywordRegex.test(part)) {
-              return (
-                <span key={i} className="text-[#f6a06b] font-bold">
-                  {part}
-                </span>
-              );
-            }
-            if (part.includes("$q")) {
-              return (
-                <span key={i} className="text-[#fb7185] font-semibold">
-                  {part}
-                </span>
-              );
-            }
-            return <span key={i}>{part}</span>;
-          })}
+        <span>
+          {parts.map((part, i) =>
+            keywords.test(part) ? (
+              <span key={i} className="text-[#facc15] font-bold">
+                {part}
+              </span>
+            ) : (
+              <span key={i} className="text-[#f9f4ed]">
+                {part}
+              </span>
+            )
+          )}
         </span>
       );
     }
 
-    // JSON syntax highlighting
-    const jsonKeyRegex = /^(\s*)(".*?")(\s*:)/;
-    const keyMatch = line.match(jsonKeyRegex);
-
-    if (keyMatch) {
-      const rest = line.slice(keyMatch[0].length);
+    if (line.trim().startsWith('"') && line.includes(":")) {
+      const colonIdx = line.indexOf(":");
+      const key = line.slice(0, colonIdx);
+      const val = line.slice(colonIdx);
       return (
-        <span key={index}>
-          <span>{keyMatch[1]}</span>
-          <span className="text-[#f6a06b] font-semibold">{keyMatch[2]}</span>
-          <span className="text-[#ffe1d0]">{keyMatch[3]}</span>
-          <span className="text-[#ccdbb2]">{rest}</span>
+        <span>
+          <span className="text-[#facc15]">{key}</span>
+          <span className="text-[#f9f4ed]">{val}</span>
         </span>
       );
     }
-
-    return (
-      <span key={index} className="text-[#ffe1d0]">
-        {line}
-      </span>
-    );
+    return <span className="text-[#f9f4ed]">{line}</span>;
   };
 
   return (
-    <div className="flex-1 w-full overflow-auto bg-[#201e1d] rounded-2xl border-2 border-[#201e1d] font-mono text-xs sm:text-sm p-4 text-[#ffe1d0] shadow-inner select-text">
+    <div className="flex-1 w-full overflow-auto bg-slate-900 rounded-2xl border-2 border-b-4 border-slate-800 font-mono text-xs sm:text-sm p-4 text-[#ffe1d0] shadow-chunky select-text">
       <div className="min-w-max flex flex-col">
         {lines.map((line, idx) => (
-          <div key={idx} className="flex hover:bg-[#2c2927] px-1 py-0.5 rounded transition-colors">
-            <span className="w-10 select-none text-[#82796a] text-right pr-4 font-mono text-xs opacity-60 flex-shrink-0">
+          <div key={idx} className="flex hover:bg-slate-800 px-1 py-0.5 rounded transition-colors">
+            <span className="w-10 select-none text-slate-500 text-right pr-4 font-mono text-xs opacity-60 flex-shrink-0">
               {idx + 1}
             </span>
             <span className="whitespace-pre font-mono flex-1">{renderHighlightedLine(line, idx)}</span>
@@ -477,18 +442,18 @@ export function IngestionSettingsModal({
       aria-modal="true"
       aria-labelledby="settings-dialog-title"
     >
-      <div className="bg-[#f9f4ed] border-4 border-[#201e1d] rounded-3xl shadow-offset-6 p-6 w-full max-w-2xl max-h-[92vh] flex flex-col gap-6 my-auto">
+      <div className="bg-[#f9f4ed] border-2 border-b-4 border-slate-800 rounded-2xl shadow-chunky p-6 w-full max-w-2xl max-h-[92vh] flex flex-col gap-6 my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b-2 border-[#201e1d]">
+        <div className="flex items-center justify-between pb-3 border-b-2 border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#ffe1d0] border-2 border-[#201e1d] rounded-2xl shadow-offset-2">
-              <Settings2 className="w-6 h-6 text-[#c67139]" />
+            <div className="p-2.5 bg-brand-yellow border-2 border-b-4 border-slate-800 rounded-2xl shadow-chunky">
+              <Settings2 className="w-6 h-6 text-slate-900" />
             </div>
             <div>
-              <h2 id="settings-dialog-title" className="font-heading text-2xl text-[#201e1d]">
-                Paper & Syllabus Settings
+              <h2 id="settings-dialog-title" className="font-heading text-2xl text-slate-800">
+                Paper &amp; Syllabus Settings
               </h2>
-              <p className="text-sm text-[#82796a] font-medium">
+              <p className="text-xs sm:text-sm text-slate-600 font-bold">
                 Configure Cambridge metadata, subject identifiers, and syllabus structure
               </p>
             </div>
@@ -496,15 +461,15 @@ export function IngestionSettingsModal({
           <button
             onClick={onClose}
             aria-label="Close settings dialog"
-            className="p-2 rounded-xl bg-white border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-[#201e1d]"
+            className="p-2 rounded-xl bg-white border-2 border-b-4 border-slate-800 shadow-chunky hover:bg-neutral-100 active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer text-slate-800"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
         {/* Error Alert */}
         {formError && (
-          <div className="p-3 bg-[#fecdd3] border-2 border-[#201e1d] rounded-xl flex items-center gap-2 text-sm text-[#e11d48] font-bold">
+          <div className="p-3 bg-[#fee2e2] border-2 border-slate-800 rounded-xl flex items-center gap-2 text-xs sm:text-sm text-rose-800 font-black">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{formError}</span>
           </div>
@@ -514,13 +479,13 @@ export function IngestionSettingsModal({
         <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-6">
           {/* Section: Subject Metadata */}
           <div className="flex flex-col gap-3">
-            <h3 className="font-heading text-lg text-[#201e1d] flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#c67139]" />
+            <h3 className="font-heading text-lg text-slate-800 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-yellow border border-slate-800" />
               Subject Identity
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
+                <label className="block text-xs font-black text-slate-600 uppercase mb-1">
                   Subject Code
                 </label>
                 <input
@@ -528,12 +493,12 @@ export function IngestionSettingsModal({
                   value={subjectCode}
                   onChange={(e) => setSubjectCode(e.target.value)}
                   placeholder="0455"
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                  className="w-full bg-white border-2 border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
+                <label className="block text-xs font-black text-slate-600 uppercase mb-1">
                   Subject Name
                 </label>
                 <input
@@ -541,12 +506,12 @@ export function IngestionSettingsModal({
                   value={subjectName}
                   onChange={(e) => setSubjectName(e.target.value)}
                   placeholder="Economics"
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                  className="w-full bg-white border-2 border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
+                <label className="block text-xs font-black text-slate-600 uppercase mb-1">
                   Subject Icon
                 </label>
                 <div className="flex gap-2 items-center">
@@ -555,7 +520,7 @@ export function IngestionSettingsModal({
                     value={subjectIcon}
                     onChange={(e) => setSubjectIcon(e.target.value)}
                     placeholder="📈"
-                    className="w-16 text-center text-lg bg-white border-2 border-[#201e1d] rounded-xl px-2 py-1.5 font-bold shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                    className="w-16 text-center text-lg bg-white border-2 border-slate-800 rounded-xl px-2 py-1.5 font-bold shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow"
                   />
                   <div className="flex gap-1 flex-wrap flex-1">
                     {emojiPresets.slice(0, 5).map((emoji) => (
@@ -563,7 +528,7 @@ export function IngestionSettingsModal({
                         key={emoji}
                         type="button"
                         onClick={() => setSubjectIcon(emoji)}
-                        className="px-2 py-1 text-sm bg-white border-2 border-[#201e1d] rounded-lg shadow-offset-2 hover:bg-[#ffe1d0] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                        className="px-2 py-1 text-sm bg-white border-2 border-b-3 border-slate-800 rounded-lg shadow-xs hover:bg-neutral-100 active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer"
                       >
                         {emoji}
                       </button>
@@ -576,19 +541,19 @@ export function IngestionSettingsModal({
 
           {/* Section: Paper Parameters */}
           <div className="flex flex-col gap-3">
-            <h3 className="font-heading text-lg text-[#201e1d] flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#8fa073]" />
+            <h3 className="font-heading text-lg text-slate-800 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-green border border-slate-800" />
               Paper Parameters
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
+                <label className="block text-xs font-black text-slate-600 uppercase mb-1">
                   Series
                 </label>
                 <select
                   value={series}
                   onChange={(e) => setSeries(e.target.value)}
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                  className="w-full bg-white border-2 border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow"
                 >
                   <option value="s">s (May / June)</option>
                   <option value="w">w (Oct / Nov)</option>
@@ -597,7 +562,7 @@ export function IngestionSettingsModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
+                <label className="block text-xs font-black text-slate-600 uppercase mb-1">
                   Year
                 </label>
                 <input
@@ -607,12 +572,12 @@ export function IngestionSettingsModal({
                   placeholder="2024"
                   min="2000"
                   max="2035"
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                  className="w-full bg-white border-2 border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#645c50] uppercase mb-1">
+                <label className="block text-xs font-black text-slate-600 uppercase mb-1">
                   Paper Code
                 </label>
                 <input
@@ -620,7 +585,7 @@ export function IngestionSettingsModal({
                   value={paperCode}
                   onChange={(e) => setPaperCode(e.target.value)}
                   placeholder="12"
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                  className="w-full bg-white border-2 border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow"
                 />
               </div>
             </div>
@@ -629,11 +594,11 @@ export function IngestionSettingsModal({
           {/* Section: Syllabus Topics Manager */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg text-[#201e1d] flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1]" />
+              <h3 className="font-heading text-lg text-slate-800 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-brand-indigo border border-slate-800" />
                 Syllabus Topics Manager ({topics.length})
               </h3>
-              <span className="text-xs text-[#82796a] font-bold">
+              <span className="text-xs text-slate-600 font-bold">
                 Order determines taxonomy in game
               </span>
             </div>
@@ -651,14 +616,14 @@ export function IngestionSettingsModal({
                   }
                 }}
                 placeholder="Enter new syllabus topic name..."
-                className="flex-1 bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-medium text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                className="flex-1 bg-white border-2 border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow"
               />
               <button
                 type="button"
                 onClick={handleAddTopic}
-                className="px-4 py-2 bg-[#ccdbb2] hover:bg-[#aebf92] border-2 border-b-4 border-[#201e1d] rounded-xl font-bold text-sm text-[#201e1d] shadow-offset-2 active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-brand-yellow hover:bg-[#fde047] border-2 border-b-4 border-slate-800 rounded-xl font-heading font-black text-xs sm:text-sm text-slate-900 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 stroke-[3]" />
                 Add Topic
               </button>
             </div>
@@ -666,23 +631,23 @@ export function IngestionSettingsModal({
             {/* Topics List */}
             <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
               {topics.length === 0 ? (
-                <div className="p-6 text-center border-2 border-dashed border-[#82796a] rounded-2xl bg-[#f5ead8]/60 text-sm text-[#82796a] font-bold">
+                <div className="p-6 text-center border-2 border-dashed border-slate-800 rounded-2xl bg-white/60 text-sm text-slate-600 font-bold">
                   No syllabus topics registered yet. Add your first syllabus unit above.
                 </div>
               ) : (
                 topics.map((topic, idx) => (
                   <div
                     key={`${topic.name}-${idx}`}
-                    className="flex items-center gap-2 p-2 bg-white border-2 border-[#201e1d] rounded-xl shadow-offset-2"
+                    className="flex items-center gap-2 p-2.5 bg-white border-2 border-b-3 border-slate-800 rounded-xl shadow-xs"
                   >
-                    <span className="w-7 h-7 flex items-center justify-center bg-[#ffe1d0] border-2 border-[#201e1d] rounded-lg text-xs font-bold text-[#c67139] flex-shrink-0">
+                    <span className="w-7 h-7 flex items-center justify-center bg-brand-yellow border-2 border-slate-800 rounded-lg text-xs font-black text-slate-900 flex-shrink-0">
                       {idx + 1}
                     </span>
                     <input
                       type="text"
                       value={topic.name}
                       onChange={(e) => handleTopicNameChange(idx, e.target.value)}
-                      className="flex-1 bg-transparent border-0 text-sm font-semibold text-[#201e1d] focus:outline-none focus:bg-[#f9f4ed] px-2 py-1 rounded"
+                      className="flex-1 bg-transparent border-0 text-sm font-bold text-slate-800 focus:outline-none focus:bg-[#f9f4ed] px-2 py-1 rounded"
                     />
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
@@ -690,7 +655,7 @@ export function IngestionSettingsModal({
                         onClick={() => handleMoveTopic(idx, "up")}
                         disabled={idx === 0}
                         aria-label="Move topic up"
-                        className="p-1 rounded bg-[#f5ead8] hover:bg-[#e1eecc] disabled:opacity-30 border border-[#201e1d] transition-all cursor-pointer disabled:cursor-not-allowed"
+                        className="p-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-30 border border-slate-800 transition-all cursor-pointer disabled:cursor-not-allowed"
                       >
                         <ChevronUp className="w-3.5 h-3.5" />
                       </button>
@@ -699,7 +664,7 @@ export function IngestionSettingsModal({
                         onClick={() => handleMoveTopic(idx, "down")}
                         disabled={idx === topics.length - 1}
                         aria-label="Move topic down"
-                        className="p-1 rounded bg-[#f5ead8] hover:bg-[#e1eecc] disabled:opacity-30 border border-[#201e1d] transition-all cursor-pointer disabled:cursor-not-allowed"
+                        className="p-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-30 border border-slate-800 transition-all cursor-pointer disabled:cursor-not-allowed"
                       >
                         <ChevronDown className="w-3.5 h-3.5" />
                       </button>
@@ -707,7 +672,7 @@ export function IngestionSettingsModal({
                         type="button"
                         onClick={() => handleRemoveTopic(idx)}
                         aria-label="Remove topic"
-                        className="p-1 rounded bg-[#fecdd3] hover:bg-[#fb7185] text-[#e11d48] hover:text-white border border-[#201e1d] transition-all cursor-pointer ml-1"
+                        className="p-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 border border-slate-800 transition-all cursor-pointer ml-1"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -720,20 +685,20 @@ export function IngestionSettingsModal({
         </div>
 
         {/* Footer Buttons */}
-        <div className="flex justify-end items-center gap-3 pt-3 border-t-2 border-[#201e1d]">
+        <div className="flex justify-end items-center gap-3 pt-3 border-t-2 border-slate-800">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 bg-white hover:bg-neutral-200 border-2 border-b-4 border-[#201e1d] rounded-xl font-bold text-sm text-[#201e1d] shadow-offset-2 active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer"
+            className="px-5 py-2.5 bg-white hover:bg-neutral-100 border-2 border-b-4 border-slate-800 rounded-xl font-heading font-black text-xs sm:text-sm text-slate-800 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="px-6 py-2.5 bg-[#8fa073] hover:bg-[#728157] text-white border-2 border-b-4 border-[#201e1d] rounded-xl font-bold text-sm shadow-offset-2 active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-2 cursor-pointer"
+            className="px-6 py-2.5 bg-brand-green hover:bg-emerald-600 text-white border-2 border-b-4 border-slate-800 rounded-xl font-heading font-black text-xs sm:text-sm shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-2 cursor-pointer"
           >
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
             Save Settings
           </button>
         </div>
@@ -842,8 +807,9 @@ export function IngestionPayloadModal({
       setPastedJson("");
       setPasteError(null);
       onClose();
-    } catch (err: any) {
-      setPasteError(`Invalid JSON syntax: ${err.message}`);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setPasteError(`Invalid JSON syntax: ${errMsg}`);
     }
   };
 
@@ -852,8 +818,9 @@ export function IngestionPayloadModal({
       const parsed = JSON.parse(pastedJson);
       setPastedJson(JSON.stringify(parsed, null, 2));
       setPasteError(null);
-    } catch (err: any) {
-      setPasteError(`Cannot format: ${err.message}`);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setPasteError(`Cannot format: ${errMsg}`);
     }
   };
 
@@ -867,25 +834,25 @@ export function IngestionPayloadModal({
       aria-modal="true"
       aria-labelledby="payload-dialog-title"
     >
-      <div className="bg-[#f9f4ed] border-4 border-[#201e1d] rounded-3xl shadow-offset-6 p-6 w-full max-w-4xl h-[92vh] flex flex-col gap-4 my-auto">
+      <div className="bg-[#f9f4ed] border-2 border-b-4 border-slate-800 rounded-2xl shadow-chunky p-6 w-full max-w-4xl h-[92vh] flex flex-col gap-4 my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b-2 border-[#201e1d]">
+        <div className="flex items-center justify-between pb-3 border-b-2 border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#f0fae1] border-2 border-[#201e1d] rounded-2xl shadow-offset-2">
-              <Database className="w-6 h-6 text-[#728157]" />
+            <div className="p-2.5 bg-brand-yellow border-2 border-b-4 border-slate-800 rounded-2xl shadow-chunky">
+              <Database className="w-6 h-6 text-slate-900" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 id="payload-dialog-title" className="font-heading text-2xl text-[#201e1d]">
-                  Raw Payloads & SQL Inspector
+                <h2 id="payload-dialog-title" className="font-heading text-2xl text-slate-800">
+                  Raw Payloads &amp; SQL Inspector
                 </h2>
                 {paper && (
-                  <span className="px-2.5 py-0.5 bg-[#ffe1d0] border border-[#201e1d] rounded-full text-xs font-bold text-[#c67139]">
+                  <span className="px-2.5 py-0.5 bg-brand-yellow border border-slate-800 rounded-full text-xs font-black text-slate-900 shadow-xs">
                     {paper.subject?.code} {paper.paper?.series}{paper.paper?.year}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-[#82796a] font-medium">
+              <p className="text-xs sm:text-sm text-slate-600 font-bold">
                 Inspect generated idempotent transacted PostgreSQL queries or view and paste raw JSON
               </p>
             </div>
@@ -894,14 +861,14 @@ export function IngestionPayloadModal({
           <button
             onClick={onClose}
             aria-label="Close payload dialog"
-            className="p-2 rounded-xl bg-white border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-[#201e1d]"
+            className="p-2 rounded-xl bg-white border-2 border-b-4 border-slate-800 shadow-chunky hover:bg-neutral-100 active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer text-slate-800"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
         {/* Tab & Controls Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2.5 border-2 border-[#201e1d] rounded-2xl shadow-offset-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2.5 border-2 border-b-4 border-slate-800 rounded-2xl shadow-chunky">
           {/* Main Tabs */}
           <div className="flex gap-2">
             <button
@@ -909,10 +876,10 @@ export function IngestionPayloadModal({
                 setActiveTab("sql");
                 setIsPasteMode(false);
               }}
-              className={`px-4 py-2 border-2 border-[#201e1d] rounded-xl font-bold text-sm transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2 border-2 border-b-4 border-slate-800 rounded-xl font-heading font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === "sql"
-                  ? "bg-[#c67139] text-white shadow-offset-2"
-                  : "bg-white text-[#201e1d] hover:bg-[#ffe1d0]"
+                  ? "bg-brand-yellow text-slate-900 shadow-chunky"
+                  : "bg-white text-slate-800 hover:bg-neutral-100"
               }`}
             >
               <Database className="w-4 h-4" />
@@ -920,10 +887,10 @@ export function IngestionPayloadModal({
             </button>
             <button
               onClick={() => setActiveTab("json")}
-              className={`px-4 py-2 border-2 border-[#201e1d] rounded-xl font-bold text-sm transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2 border-2 border-b-4 border-slate-800 rounded-xl font-heading font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === "json"
-                  ? "bg-[#c67139] text-white shadow-offset-2"
-                  : "bg-white text-[#201e1d] hover:bg-[#ffe1d0]"
+                  ? "bg-brand-yellow text-slate-900 shadow-chunky"
+                  : "bg-white text-slate-800 hover:bg-neutral-100"
               }`}
             >
               <FileCode className="w-4 h-4" />
@@ -937,10 +904,10 @@ export function IngestionPayloadModal({
               <>
                 <button
                   onClick={() => setIsPasteMode(!isPasteMode)}
-                  className={`px-3 py-1.5 border-2 border-[#201e1d] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-1.5 border-2 border-b-4 border-slate-800 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer active:translate-y-0.5 active:border-b-2 active:shadow-none ${
                     isPasteMode
-                      ? "bg-[#8fa073] text-white shadow-offset-2"
-                      : "bg-[#f5ead8] text-[#201e1d] hover:bg-[#e1eecc]"
+                      ? "bg-brand-green text-white shadow-chunky"
+                      : "bg-[#f5ead8] text-slate-800 hover:bg-neutral-200"
                   }`}
                 >
                   <ClipboardPaste className="w-3.5 h-3.5" />
@@ -949,7 +916,7 @@ export function IngestionPayloadModal({
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 bg-[#f0fae1] hover:bg-[#e1eecc] border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 bg-white hover:bg-neutral-100 border-2 border-b-4 border-slate-800 rounded-xl text-xs font-black text-slate-800 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Upload className="w-3.5 h-3.5" />
                   Upload JSON
@@ -968,12 +935,12 @@ export function IngestionPayloadModal({
               <>
                 <button
                   onClick={handleCopy}
-                  className="px-3 py-1.5 bg-[#ffe1d0] hover:bg-[#ffc6a5] border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 bg-brand-yellow hover:bg-[#fde047] border-2 border-b-4 border-slate-800 rounded-xl text-xs font-black text-slate-900 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   {copyFeedback ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-[#22c55e]" />
-                      <span className="text-[#15803d]">Copied!</span>
+                      <Check className="w-3.5 h-3.5 text-green-700 stroke-[3]" />
+                      <span className="text-green-800">Copied!</span>
                     </>
                   ) : (
                     <>
@@ -985,7 +952,7 @@ export function IngestionPayloadModal({
 
                 <button
                   onClick={handleDownload}
-                  className="px-3 py-1.5 bg-[#ccdbb2] hover:bg-[#aebf92] border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 bg-brand-green hover:bg-emerald-600 text-white border-2 border-b-4 border-slate-800 rounded-xl text-xs font-black shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download {activeTab === "sql" ? "paper.sql" : "paper.json"}</span>
@@ -998,24 +965,24 @@ export function IngestionPayloadModal({
         {/* Content Viewer / Paste Sub-View */}
         <div className="flex-1 flex flex-col min-h-0">
           {activeTab === "json" && isPasteMode ? (
-            <div className="flex-1 flex flex-col gap-3 bg-[#f5ead8] p-4 rounded-2xl border-2 border-[#201e1d]">
+            <div className="flex-1 flex flex-col gap-3 bg-[#f5ead8] p-4 rounded-2xl border-2 border-b-4 border-slate-800 shadow-chunky">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Code2 className="w-5 h-5 text-[#c67139]" />
-                  <span className="font-heading text-base text-[#201e1d]">
+                  <Code2 className="w-5 h-5 text-slate-800" />
+                  <span className="font-heading text-base text-slate-800">
                     Paste Staging Paper JSON Directly
                   </span>
                 </div>
                 <button
                   onClick={handleFormatPastedJson}
-                  className="text-xs font-bold px-2.5 py-1 bg-white border border-[#201e1d] rounded-lg hover:bg-[#ffe1d0] transition-colors cursor-pointer"
+                  className="text-xs font-black px-2.5 py-1 bg-white border-2 border-b-3 border-slate-800 rounded-lg hover:bg-neutral-100 transition-all cursor-pointer shadow-xs active:translate-y-0.5"
                 >
                   Prettify
                 </button>
               </div>
 
               {pasteError && (
-                <div className="p-2.5 bg-[#fecdd3] border-2 border-[#201e1d] rounded-xl flex items-center gap-2 text-xs text-[#e11d48] font-bold">
+                <div className="p-2.5 bg-rose-100 border-2 border-slate-800 rounded-xl flex items-center gap-2 text-xs text-rose-800 font-bold">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{pasteError}</span>
                 </div>
@@ -1028,22 +995,22 @@ export function IngestionPayloadModal({
                   setPasteError(null);
                 }}
                 placeholder={`{\n  "subject": { "code": "0455", "name": "Economics", "icon": "📈" },\n  "paper": { "series": "s", "year": 2024, "paper_code": "12" },\n  "syllabus_topics": [],\n  "questions": []\n}`}
-                className="flex-1 w-full p-4 bg-[#201e1d] text-[#ffe1d0] font-mono text-xs sm:text-sm rounded-xl border-2 border-[#201e1d] resize-none focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                className="flex-1 w-full p-4 bg-slate-900 text-[#ffe1d0] font-mono text-xs sm:text-sm rounded-xl border-2 border-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-brand-yellow"
               />
 
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   onClick={() => setIsPasteMode(false)}
-                  className="px-4 py-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold hover:bg-neutral-100 cursor-pointer"
+                  className="px-4 py-2 bg-white border-2 border-b-4 border-slate-800 rounded-xl text-xs font-black hover:bg-neutral-100 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleApplyPastedJson}
-                  className="px-5 py-2 bg-[#8fa073] hover:bg-[#728157] text-white border-2 border-b-4 border-[#201e1d] rounded-xl text-xs font-bold shadow-offset-2 active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2 bg-brand-green hover:bg-emerald-600 text-white border-2 border-b-4 border-slate-800 rounded-xl text-xs font-black shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Validate & Load JSON
+                  Validate &amp; Load JSON
                 </button>
               </div>
             </div>
@@ -1053,7 +1020,7 @@ export function IngestionPayloadModal({
         </div>
 
         {/* Footer Meta */}
-        <div className="flex items-center justify-between text-xs font-bold text-[#82796a] pt-2 border-t-2 border-[#201e1d]">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-600 pt-2 border-t-2 border-slate-800">
           <div className="flex items-center gap-3">
             <span>
               {activeTab === "sql" ? "PostgreSQL Idempotent Batch" : "Cambridge MCQ Staging JSON"}
@@ -1065,7 +1032,7 @@ export function IngestionPayloadModal({
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-white hover:bg-neutral-200 border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+            className="px-4 py-1.5 bg-white hover:bg-neutral-100 border-2 border-b-4 border-slate-800 rounded-xl text-xs font-black text-slate-800 shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer"
           >
             Close
           </button>

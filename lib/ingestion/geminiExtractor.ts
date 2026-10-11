@@ -1,31 +1,26 @@
-export interface StagingOption {
-  label: 'A' | 'B' | 'C' | 'D';
-  content_markdown: string;
-  is_correct: boolean;
+import type {
+  StagingQuestion,
+  StagingOption,
+  BoundingBox as StagingDiagram,
+  QuestionValidationStatus,
+} from '@/types/ingestion';
+
+export type { StagingQuestion, StagingOption, StagingDiagram };
+
+export interface ExtractionProgress {
+  currentBatch: string;
+  percent: number;
+  batchCount: number;
+  questions: StagingQuestion[];
 }
 
-export interface StagingDiagram {
-  ymin: number;
-  xmin: number;
-  ymax: number;
-  xmax: number;
-  page_number: number;
-}
-
-export interface StagingQuestion {
-  question_number: number;
-  stem_markdown: string;
-  options: StagingOption[];
-  explanation_markdown: string;
-  diagrams?: StagingDiagram[];
-}
-
-interface ExtractionOptions {
+export interface ExtractionOptions {
   batchSize?: number;
   startQuestion?: number;
   endQuestion?: number;
   model?: string;
   maxRetries?: number;
+  onProgress?: (progress: ExtractionProgress) => void | Promise<void>;
 }
 
 export async function extractQuestionsChunked(
@@ -41,34 +36,52 @@ export async function extractQuestionsChunked(
   const maxRetries = options.maxRetries || 3;
 
   const allQuestions: StagingQuestion[] = [];
+  const totalQuestions = Math.max(1, endQuestion - startQuestion + 1);
+  let batchIndex = 0;
 
   for (let currentStart = startQuestion; currentStart <= endQuestion; currentStart += batchSize) {
     const currentEnd = Math.min(currentStart + batchSize - 1, endQuestion);
-    
+    batchIndex++;
+
     let attempt = 0;
     let success = false;
-    
+    let batchQuestions: StagingQuestion[] = [];
+
     while (attempt < maxRetries && !success) {
       try {
-        const questions = await extractBatch(
-          qpBuffer, 
-          msBuffer, 
-          currentStart, 
-          currentEnd, 
+        batchQuestions = await extractBatch(
+          qpBuffer,
+          msBuffer,
+          currentStart,
+          currentEnd,
           apiKey,
           model
         );
-        allQuestions.push(...questions);
+        allQuestions.push(...batchQuestions);
         success = true;
       } catch (error) {
         attempt++;
         if (attempt >= maxRetries) {
-          console.error(`Failed to extract questions ${currentStart}-${currentEnd} after ${maxRetries} attempts.`, error);
+          console.error(
+            `Failed to extract questions ${currentStart}-${currentEnd} after ${maxRetries} attempts.`,
+            error
+          );
           throw error;
         }
         // Exponential backoff
-        await new Promise(res => setTimeout(res, Math.pow(2, attempt) * 1000));
+        await new Promise((res) => setTimeout(res, Math.pow(2, attempt) * 1000));
       }
+    }
+
+    if (options.onProgress) {
+      const currentBatchStr = `Q${currentStart}-Q${currentEnd}`;
+      const percent = Math.min(100, Math.round((allQuestions.length / totalQuestions) * 100));
+      await options.onProgress({
+        currentBatch: currentBatchStr,
+        percent,
+        batchCount: batchIndex,
+        questions: batchQuestions,
+      });
     }
   }
 
@@ -86,19 +99,40 @@ async function extractBatch(
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const systemPrompt = `You are an expert Cambridge Assessment International Education (CAIE) Examination Ingestion Specialist.
-Your task is to extract questions ${startQ} to ${endQ} from the provided Question Paper (QP) PDF and match them with the official Mark Scheme (MS) PDF.
+Your task is to extract questions ${startQ} to ${endQ} from the provided Question Paper (QP) PDF and match them strictly with the official CAIE Mark Scheme (MS) PDF.
 
-CRITICAL INSTRUCTIONS:
-1. Match each question number exactly with its official Mark Scheme key (where is_correct is true for that option).
-2. Detect any diagrams, graphs, circuits, or other visual elements in the question. If a diagram exists, provide normalized bounding boxes: [ymin, xmin, ymax, xmax] (on a 0 to 1000 scale) and the page_number (1-indexed).
-3. Generate a high-yield 'explanation_markdown' structured into:
-   - Concept & Formula
-   - Step-by-Step Derivation
-   - Distractor Analysis (diagnosing specific misconceptions for incorrect options)
-4. Output strict JSON conforming exactly to an array of StagingQuestion objects:
+CRITICAL INSTRUCTIONS & SCHEMA REQUIREMENTS:
+1. OFFICIAL CAIE MARK SCHEME ALIGNMENT:
+   - Carefully inspect the official Mark Scheme PDF table corresponding to questions ${startQ} through ${endQ}.
+   - Locate the exact official answer key (A, B, C, or D) for each question.
+   - In the "options" array, the option matching the official Mark Scheme key MUST have "is_correct": true.
+   - All other 3 options MUST have "is_correct": false.
+   - EXACTLY ONE option must have "is_correct": true. Do NOT guess or alter the official key.
+
+2. DISTRACTOR ANALYSIS (Pedagogical Misconceptions):
+   - For every question, populate "distractor_analysis" with a mapping of each option letter ("A", "B", "C", "D") to a detailed explanation:
+     - For the correct option: explain why this answer is unequivocally correct based on scientific principles and Cambridge examiner criteria.
+     - For incorrect distractors (misconceptions): diagnose the precise error, trap, formula inversion, sign slip, or confusion that leads students to choose that distractor.
+
+3. VISUAL ALIGNMENT & PAGE REFERENCES:
+   - Provide "page_number" (integer, 1-indexed) indicating the exact page of the Question Paper PDF where the question stem appears.
+   - If diagrams, circuit schematics, apparatus illustrations, graphs, or visual tables are present, provide "diagrams":
+     Array of objects with normalized bounding boxes: { "ymin": number, "xmin": number, "ymax": number, "xmax": number, "page_number": number }
+     (Coordinates on a 0 to 1000 integer scale: 0 is top/left, 1000 is bottom/right).
+
+4. STEM & EXPLANATION FORMATTING:
+   - Use standard Markdown. Format mathematical formulas and physical quantities with KaTeX ($...$ inline, $$...$$ display).
+   - "explanation_markdown" must be rich and comprehensive, structured into:
+     - **Concept & Key Principles**
+     - **Step-by-Step Derivation**
+     - **Examiner Commentary & Summary**
+
+5. OUTPUT STRICT JSON:
+Output an array of JSON objects conforming exactly to this structure:
 [
   {
     "question_number": number,
+    "page_number": number,
     "stem_markdown": string,
     "options": [
       { "label": "A", "content_markdown": string, "is_correct": boolean },
@@ -106,52 +140,58 @@ CRITICAL INSTRUCTIONS:
       { "label": "C", "content_markdown": string, "is_correct": boolean },
       { "label": "D", "content_markdown": string, "is_correct": boolean }
     ],
+    "distractor_analysis": {
+      "A": string,
+      "B": string,
+      "C": string,
+      "D": string
+    },
     "explanation_markdown": string,
     "diagrams": [
       { "ymin": number, "xmin": number, "ymax": number, "xmax": number, "page_number": number }
-    ] // omit if no diagrams
+    ]
   }
 ]
 Do not include any markdown wrappers like \`\`\`json around the output. Output pure JSON array.`;
 
   const payload = {
     system_instruction: {
-      parts: [{ text: systemPrompt }]
+      parts: [{ text: systemPrompt }],
     },
     contents: [
       {
-        role: "user",
+        role: 'user',
         parts: [
           {
             inline_data: {
-              mime_type: "application/pdf",
-              data: qpBuffer.toString("base64")
-            }
+              mime_type: 'application/pdf',
+              data: qpBuffer.toString('base64'),
+            },
           },
           {
             inline_data: {
-              mime_type: "application/pdf",
-              data: msBuffer.toString("base64")
-            }
+              mime_type: 'application/pdf',
+              data: msBuffer.toString('base64'),
+            },
           },
           {
-            text: `Extract questions ${startQ} to ${endQ} as a JSON array.`
-          }
-        ]
-      }
+            text: `Extract questions ${startQ} to ${endQ} and verify against the official Mark Scheme keys as a JSON array.`,
+          },
+        ],
+      },
     ],
     generationConfig: {
       temperature: 0.1,
-      response_mime_type: "application/json"
-    }
+      response_mime_type: 'application/json',
+    },
   };
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
@@ -166,10 +206,109 @@ Do not include any markdown wrappers like \`\`\`json around the output. Output p
     throw new Error('No text returned from Gemini API.');
   }
 
-  return extractJsonFromMarkdown(text);
+  const rawQuestions = extractJsonFromMarkdown(text);
+  return postProcessQuestions(rawQuestions);
 }
 
-function extractJsonFromMarkdown(text: string): StagingQuestion[] {
+/**
+ * Post-processes and validates extracted questions:
+ * - Enforces CAIE Mark Scheme key alignment (exactly 1 correct option)
+ * - Normalizes options, distractor analysis, and source page numbers
+ * - Assigns validation_status ('valid' | 'warning' | 'error')
+ */
+function postProcessQuestions(rawQuestions: any[]): StagingQuestion[] {
+  return rawQuestions.map((rawQ) => {
+    const qNum = Number(rawQ.question_number);
+    const stem = String(rawQ.stem_markdown || '').trim();
+    const explanation = String(rawQ.explanation_markdown || '').trim();
+
+    // Normalize options
+    const rawOptions = Array.isArray(rawQ.options) ? rawQ.options : [];
+    const expectedLabels: Array<'A' | 'B' | 'C' | 'D'> = ['A', 'B', 'C', 'D'];
+    const options: StagingOption[] = expectedLabels.map((lbl) => {
+      const match = rawOptions.find((o: any) => String(o?.label).toUpperCase() === lbl);
+      return {
+        label: lbl,
+        content_markdown: String(match?.content_markdown || '').trim(),
+        is_correct: Boolean(match?.is_correct),
+      };
+    });
+
+    // Check Mark Scheme alignment
+    const correctCount = options.filter((o) => o.is_correct).length;
+    let validationStatus: QuestionValidationStatus = 'valid';
+
+    if (correctCount !== 1) {
+      validationStatus = 'warning';
+      // If none marked correct, attempt to infer from distractor_analysis
+      if (correctCount === 0 && rawQ.distractor_analysis && typeof rawQ.distractor_analysis === 'object') {
+        for (const lbl of expectedLabels) {
+          const rationale = String(rawQ.distractor_analysis[lbl] || '').toLowerCase();
+          if (rationale.includes('correct') && !rationale.includes('incorrect')) {
+            const opt = options.find((o) => o.label === lbl);
+            if (opt) {
+              opt.is_correct = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!stem || options.some((o) => !o.content_markdown)) {
+      validationStatus = 'error';
+    }
+
+    // Normalize distractor analysis
+    let distractorAnalysis: Record<string, string> | undefined;
+    if (rawQ.distractor_analysis && typeof rawQ.distractor_analysis === 'object') {
+      distractorAnalysis = {};
+      for (const lbl of expectedLabels) {
+        if (rawQ.distractor_analysis[lbl]) {
+          distractorAnalysis[lbl] = String(rawQ.distractor_analysis[lbl]).trim();
+        }
+      }
+    }
+
+    // Determine page number (visual alignment)
+    let pageNumber: number | undefined = rawQ.page_number ? Number(rawQ.page_number) : undefined;
+    if (!pageNumber && Array.isArray(rawQ.diagrams) && rawQ.diagrams.length > 0) {
+      const diagPage = Number(rawQ.diagrams[0]?.page_number);
+      if (!isNaN(diagPage) && diagPage > 0) {
+        pageNumber = diagPage;
+      }
+    }
+
+    // Process diagrams
+    const diagrams: StagingDiagram[] = Array.isArray(rawQ.diagrams)
+      ? rawQ.diagrams.map((d: any) => ({
+          ymin: Number(d.ymin) || 0,
+          xmin: Number(d.xmin) || 0,
+          ymax: Number(d.ymax) || 0,
+          xmax: Number(d.xmax) || 0,
+          page_number: Number(d.page_number) || pageNumber || 1,
+        }))
+      : [];
+
+    const result: StagingQuestion = {
+      question_number: qNum,
+      cambridge_source_ref: rawQ.cambridge_source_ref || '',
+      topic_name: rawQ.topic_name || 'General',
+      stem_markdown: stem,
+      options,
+      explanation_markdown: explanation,
+      status: 'active',
+      page_number: pageNumber,
+      distractor_analysis: distractorAnalysis,
+      validation_status: validationStatus,
+      diagrams: diagrams.length > 0 ? diagrams : undefined,
+    };
+
+    return result;
+  });
+}
+
+function extractJsonFromMarkdown(text: string): any[] {
   let jsonStr = text.trim();
   // Fallback to extract JSON substring from markdown fences
   if (jsonStr.startsWith('```')) {
@@ -179,13 +318,13 @@ function extractJsonFromMarkdown(text: string): StagingQuestion[] {
       jsonStr = jsonStr.substring(firstNewline + 1, lastBacktick).trim();
     }
   }
-  
+
   // Find first [ and last ]
   const firstBracket = jsonStr.indexOf('[');
   const lastBracket = jsonStr.lastIndexOf(']');
-  
+
   if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-      jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
+    jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
   }
 
   try {
@@ -193,9 +332,9 @@ function extractJsonFromMarkdown(text: string): StagingQuestion[] {
     if (!Array.isArray(parsed)) {
       throw new Error('Parsed JSON is not an array.');
     }
-    return parsed as StagingQuestion[];
+    return parsed;
   } catch (err) {
-    console.error("Failed to parse JSON. Raw string:", jsonStr);
+    console.error('Failed to parse JSON. Raw string:', jsonStr);
     throw err;
   }
 }
