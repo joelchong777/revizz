@@ -24,3 +24,12 @@
    - Only trigger full `next build`, git push, and remote deployments (Vercel/Railway) at milestone boundaries or upon explicit user request.
 9. **Targeted File Slices**:
    - Enforce tight `StartLine` and `EndLine` ranges (<= 100 lines) on `view_file` calls. Avoid reading full files or dumping large logs into context.
+10. **Explicit Deployment & Push Permission**:
+   - NEVER push to GitHub (`git push`) or trigger remote deployments (Vercel, Railway, Supabase migrations, etc.) without explicit permission from the user. All local commits remain local until the user explicitly commands a push or redeploy.
+11. **"End Chat" Teardown & Archival Protocol**:
+   - When the user enters the phrase "end chat" (case-insensitive):
+     a) Document all recent session learnings, reflections, bug patterns, and architectural insights into `.agent/memory/learnings_and_reflections.md` so they are fully up to date.
+     b) Verify that all completed work is safely recorded in git / repository history with clean working state.
+     c) Terminate any active subagents (`manage_subagents(kill_all)`) and background daemon processes (`manage_task(kill)`).
+     d) Provide a final, structured archive and handoff summary of all work done, files changed, and current deployment status.
+     e) Shut down gracefully, ready to be deleted, ensuring everything is safely preserved on record for later review.
