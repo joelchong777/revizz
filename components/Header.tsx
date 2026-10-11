@@ -185,7 +185,8 @@ export function Header({
         .replace('.', '')
         .slice(0, 2)
         .toUpperCase()
-    : 'AM';
+  const isDev = process.env.NODE_ENV === 'development';
+  const isAdmin = userProfile?.role === 'admin' || isDev;
 
   return (
     <>
@@ -249,6 +250,18 @@ export function Header({
               <span>Portal</span>
               <span>🎓</span>
             </Link>
+
+            {/* App Admin Pill Link for Admins */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                title="App Administration"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#ccdbb2] border-2 border-text shadow-offset-3 font-bold text-xs text-text cursor-pointer transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none hover:bg-[#bccca1]"
+              >
+                <span>Admin</span>
+                <span>🛠️</span>
+              </Link>
+            )}
 
             {/* Sound Toggle Button */}
             <button

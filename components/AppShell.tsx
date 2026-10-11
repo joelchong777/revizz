@@ -10,10 +10,10 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
-  const isPortal = pathname?.startsWith('/portal');
+  const isPortalOrAdmin = pathname?.startsWith('/portal') || pathname?.startsWith('/admin');
 
-  // Educator Portal renders its own unconstrained full-width layout
-  if (isPortal) {
+  // Educator Portal and App Admin render their own unconstrained full-width layout
+  if (isPortalOrAdmin) {
     return <>{children}</>;
   }
 

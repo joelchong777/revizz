@@ -165,3 +165,27 @@
   1. **Visual Consistency & Cognitive Load**: Transitioned from saturated neobrutalist styling (harsh borders, high-contrast neons) to the Question Bank's calm, organic palette (`#f5ead8`, `#f9f4ed`, `#dcd3c4`, `#c67139`, `#ffe1d0`, `#728157`). This significantly reduced visual clutter and improved legibility for content curators.
   2. **Modal Popups vs Layout-Shifting Drawers**: The previous 540px slide-over drawer squeezed the workspace (`2xl:mr-[550px]`) and caused horizontal layout pressure. Refactoring it into a clean modal popup (`IngestionPreviewModal.tsx`) with Card View and Interactive Test modes provided dedicated focus without distorting the primary editor canvas.
   3. **Clean Multi-Subagent Execution**: Successfully partitioned tasks into disjoint file sets (Hub/Header/Modal, QuestionNav, Authoring Suite) with bundled verification (`npx tsc --noEmit`) and zero polling.
+
+## Reflection Log Entry - 2026-10-12 (Ingestion Studio Layout Unification & Seamless PDF Upsert Architecture)
+
+- **Date**: 2026-10-12
+- **Feature**: Live Ingestion Studio Layout Redesign & Unification into Master Studio Frame
+- **Problem & Motivation**:
+  1. **Dual-Island Anti-Pattern**: A disconnected floating top header and a separate wizard card stacked vertically created confusion, displaying premature workspace controls (phantom `0 Questions`, disabled `Upsert to Supabase`, `Hide PDF`) when no paper was loaded.
+  2. **Forced Default Preset**: Blank states auto-loaded sample preset `0455_s24_12`, blocking curators from seeing the initial PDF upload dropzones and metadata selection.
+  3. **Nested Box Fatigue**: Multiple layers of outer borders, shadows, and margins reduced usable editing real estate on laptop viewports.
+- **Solution & Architectural Pattern**:
+  1. **Master Studio Frame (`IngestionStudioFrame.tsx`)**: Single master bounding container (`border-2 border-[#201e1d] shadow-[4px_4px_0_#201e1d] rounded-3xl bg-[#f9f4ed]`) providing a cohesive home for the entire ingestion journey.
+  2. **State-Aware Contextual Header (`IngestionHeader.tsx`)**: Dynamically switches between:
+     - *Setup Mode*: Displays pipeline tag, title, preset quick-load, and return-to-session button; completely eliminates phantom counters and disabled buttons.
+     - *Workspace Mode*: Displays paper identity pill (`0455 / 12 · Economics Summer 2024`), live validation counters (`X/Y Valid ✓`, `Z Review ⚠`), split PDF toggle, save draft, and prominent Supabase upsert button.
+  3. **Internal Notification Shelf**: Embedding live extraction progress bars and validation feedback toasts directly inside the master frame eliminated Cumulative Layout Shift (CLS).
+  4. **Modular Sub-Components**:
+     - `IngestionSetupWizard.tsx`: Streamlined 2-step setup with on-screen metadata selectors (Subject, Year, Series, Paper Code) and QP/MS PDF dropzones.
+     - `IngestionWorkspace.tsx`: Docked dual-pane studio pairing the collapsible Cambridge PDF viewer with a horizontal question navigation strip (1..40) and active question authoring canvas.
+  5. **Client-Side Validation Guard for Upserts**: Pre-validates stems, option count (4), and single correct answer parity before hitting `/api/ingest/publish`. If invalid, automatically jumps to the first broken question with an actionable alert.
+- **Verification & Deployment**:
+  - `npx tsc --noEmit`: 0 errors.
+  - Automated test suites: `npm test` (37/37 passed), `verify-ingestion-v2.ts` (125/125 passed).
+  - Production build: `next build` passed with all 10 routes cleanly generated.
+  - Deployed cleanly to `origin/main` (commit `5f7fc95`).
