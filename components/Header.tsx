@@ -185,6 +185,7 @@ export function Header({
         .replace('.', '')
         .slice(0, 2)
         .toUpperCase()
+    : 'AM';
   const isDev = process.env.NODE_ENV === 'development';
   const isAdmin = userProfile?.role === 'admin' || isDev;
 
