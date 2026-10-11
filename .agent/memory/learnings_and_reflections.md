@@ -132,3 +132,28 @@
   1. **Progressive Metadata Disclosure**: Hiding paper citations, subject codes, and topic badges until the first answer attempt (`status !== 'unanswered'`) prevents cognitive bias and syllabus giveaways. Lightbox modal titles and image alt tags must also sanitize citations when unanswered.
   2. **Pacing Control vs. Auto-Skip**: Disabling automatic progression timeouts (`1500ms`) on correct answers. Instead, place the primary Next Question CTA directly on top of the explanation panel. This allows fast students to advance instantly while providing curious students unhurried access to step-by-step explanations and distractor analysis. A secondary CTA at the bottom prevents awkward reverse-scrolling.
   3. **Round Summary Hierarchy**: Placing the "Review missed questions" CTA directly above the missed questions list prioritizes action over scrolling.
+
+## Reflection Log Entry - 2026-10-12 (Cambridge Ingestion System v2 Rework & Orchestrator Governance)
+
+- **Date**: 2026-10-12
+- **Feature**: Cambridge Past Paper Ingestion System v2 Architecture & Orchestrator Governance
+- **Context & Scope**: Complete overhaul of the Cambridge Examination Ingestion Pipeline, transforming manual CLI execution and JSON paste modals into a modern, web-first Ingestion Studio with dual-pane PDF split-screen, interactive visual cropper, and live 6-point quality gate.
+
+### 1. Multi-Subagent Orchestration & Race Condition Mitigation
+- **Strict Exclusive File Partitioning**: By partitioning the codebase across 3 milestones and assigning 100% disjoint sets of files to subagents (A1, A2, A3 in Milestone 1; B1, B2, B3, B4 in Milestone 2; C1, C2 in Milestone 3), concurrent execution proceeded with zero merge collisions or race conditions.
+- **Bundled Verification Contract (DoD)**: Forcing subagents to compile (`npx tsc --noEmit`) and run targeted unit tests within the same invocation before signaling completion eliminated downstream integration surprises.
+- **Passive Turn-Ending & Zero-Polling**: Strict avoidance of polling commands (`manage_subagents` list polling or background task loops) conserved context tokens and streamlined execution.
+
+### 2. Technical & Architectural Breakthroughs
+- **Next.js App Router Server-Sent Events (SSE)**:
+  - Building `/api/ingest/extract` using standard `ReadableStream` with `text/event-stream` encoding allows long-running batch Gemini OCR to stream incremental question extractions directly to the browser with real-time percentage indicators.
+  - Implemented an `AbortController` signal consumer on the client (`useIngestionStore`) to allow curators to halt extraction without thread hanging.
+- **Dual-Pane Synchronized Inspection & Visual Cropper**:
+  - Synchronizing `selectedIdx` in the question nav directly with `page_number` in the PDF canvas (`IngestionPdfViewer`) eliminates manual flipping between question items and source pages.
+  - The 8-handle interactive bounding box overlay normalizes coordinates into canonical `[0..1000]` space, feeding directly into the serverless-safe `/api/ingest/crop` route powered by in-memory `sharp` and Supabase Storage.
+- **KaTeX Typography Defense & Currency Protection**:
+  - Currency dollar signs (`$50`, `$100 to $150`) frequently break LaTeX parsers by being mistaken for unclosed inline math blocks.
+  - Protecting currency with regex lookaheads while normalizing exponents (`10^-5` -> `10^{-5}`), fractions, and Greek symbols guarantees zero KaTeX renderer crashes.
+- **6-Point Quality Gate & Interactive Field Jump**:
+  - Real-time evaluation of question count, 4-option population, single correct answer parity, KaTeX syntax integrity, diagram uploads, and syllabus mapping produces an actionable 0–100% paper health score with one-click DOM focus.
+
