@@ -157,3 +157,11 @@
 - **6-Point Quality Gate & Interactive Field Jump**:
   - Real-time evaluation of question count, 4-option population, single correct answer parity, KaTeX syntax integrity, diagram uploads, and syllabus mapping produces an actionable 0–100% paper health score with one-click DOM focus.
 
+## Reflection Log Entry - 2026-10-12 (Ingestion Studio UI De-cluttering & Question Bank Visual Harmonization)
+
+- **Date**: 2026-10-12
+- **Feature**: Ingestion Studio UI De-cluttering & Question Bank Visual Harmonization
+- **Key Insights**:
+  1. **Visual Consistency & Cognitive Load**: Transitioned from saturated neobrutalist styling (harsh borders, high-contrast neons) to the Question Bank's calm, organic palette (`#f5ead8`, `#f9f4ed`, `#dcd3c4`, `#c67139`, `#ffe1d0`, `#728157`). This significantly reduced visual clutter and improved legibility for content curators.
+  2. **Modal Popups vs Layout-Shifting Drawers**: The previous 540px slide-over drawer squeezed the workspace (`2xl:mr-[550px]`) and caused horizontal layout pressure. Refactoring it into a clean modal popup (`IngestionPreviewModal.tsx`) with Card View and Interactive Test modes provided dedicated focus without distorting the primary editor canvas.
+  3. **Clean Multi-Subagent Execution**: Successfully partitioned tasks into disjoint file sets (Hub/Header/Modal, QuestionNav, Authoring Suite) with bundled verification (`npx tsc --noEmit`) and zero polling.

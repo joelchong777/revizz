@@ -59,6 +59,8 @@ export interface IngestionMediaPanelProps {
   questionNumber?: number;
   /** Active PDF source URL */
   pdfUrl?: string;
+  /** Active PDF page number */
+  activePdfPage?: number;
   /** Action to focus or open the PDF cropper canvas */
   onOpenPdfCropper?: () => void;
 }

@@ -1,4 +1,4 @@
-import type { Question } from '@/hooks/useQuizGame';
+import type { Question } from '../hooks/useQuizGame';
 export type { Question };
 
 export interface SyllabusTopic {

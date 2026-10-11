@@ -1,40 +1,37 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import type { StagingPaper, PaperLifecycleState } from "@/types/ingestion";
 import {
   UploadCloud,
   Loader2,
-  Eye,
-  ClipboardCheck,
-  FileCode,
-  Settings,
-  Upload,
-  Gamepad2,
-  ExternalLink,
-  MoreHorizontal,
-  FolderDown,
   BookOpen,
   Undo2,
   Redo2,
   CheckCircle2,
   AlertTriangle,
   Sparkles,
+  FileUp,
+  BookmarkCheck,
+  Edit2,
+  Settings,
+  ArrowLeft,
+  FolderDown,
   ChevronDown,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
+  /** Mode: 'setup' (wizard / empty state) or 'workspace' (active curation studio) */
+  mode?: "setup" | "workspace";
   paper: StagingPaper | null;
-  onLoadPreset: ((preset?: string) => void) | (() => void);
-  onUploadJson: (file: File) => void;
-  onOpenSettings: () => void;
-  onOpenPayloads: () => void;
-  onOpenAudit: () => void;
+  onOpenSettings?: () => void;
   onPublish: () => void;
   publishStatus: "idle" | "validating" | "publishing" | "success" | "error";
   publishMessage?: string;
-  showLivePreview: boolean;
-  onTogglePreview: () => void;
+
+  // Setup mode controls
+  onReturnToStudio?: () => void;
+  hasActivePaper?: boolean;
 
   // Dual-Pane & Lifecycle controls
   lifecycleState?: PaperLifecycleState;
@@ -46,115 +43,80 @@ export interface IngestionHeaderProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+
+  // Workflow actions
+  onSwitchPaper?: () => void;
+  onSaveDraft?: () => void;
+  isDraftSaved?: boolean;
+
+  // Backwards compatibility props (optional)
+  onLoadPreset?: ((preset?: string) => void) | (() => void);
+  onUploadJson?: (file: File) => void;
+  onOpenPayloads?: () => void;
+  onOpenAudit?: () => void;
+  showLivePreview?: boolean;
+  onTogglePreview?: () => void;
 }
 
+const SAMPLE_PRESETS = [
+  { id: "0455_s24_12", label: "0455 / 12 · Economics Summer 2024" },
+];
+
 export default function IngestionHeader({
+  mode,
   paper,
-  onLoadPreset,
-  onUploadJson,
   onOpenSettings,
-  onOpenPayloads,
-  onOpenAudit,
   onPublish,
   publishStatus,
   publishMessage: _publishMessage,
-  showLivePreview: _showLivePreview,
-  onTogglePreview,
-  lifecycleState = "draft",
+  onReturnToStudio,
+  hasActivePaper,
+  lifecycleState: _lifecycleState = "draft",
   showPdfViewer = true,
   onTogglePdfViewer,
   onUndo,
   onRedo,
   canUndo = false,
   canRedo = false,
+  onSwitchPaper,
+  onSaveDraft,
+  isDraftSaved = false,
+  onLoadPreset,
 }: IngestionHeaderProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>("0455_s24_12");
-  const [availablePresets, setAvailablePresets] = useState<string[]>([
-    "0455_s24_12",
-    "0455_w23_11",
-    "0455_m24_12",
-    "0455_s23_12",
-  ]);
 
-  // Fetch available staging files on mount if available
-  useEffect(() => {
-    fetch("/api/ingest/staged-paper")
-      .then((res) => {
-        if (!res.ok) return null;
-        return res.json();
-      })
-      .then((data) => {
-        if (data?.success && Array.isArray(data.papers) && data.papers.length > 0) {
-          setAvailablePresets((prev) => {
-            const set = new Set([...data.papers, ...prev]);
-            return Array.from(set);
-          });
-        }
-      })
-      .catch(() => {
-        // Fallback silently to preset list
-      });
-  }, []);
-
-  // Close overflow menu on outside click or escape key
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isMenuOpen]);
+  // Determine effective mode: explicit mode takes priority, otherwise check paper existence
+  const currentMode =
+    mode ?? (paper && paper.questions && paper.questions.length > 0 ? "workspace" : "setup");
 
   // Calculate paper validation counters
-  const { totalCount, validCount, reviewCount, totalIssues } = useMemo(() => {
+  const { totalCount, validCount, reviewCount } = useMemo(() => {
     if (!paper || !paper.questions || paper.questions.length === 0) {
-      return { totalCount: 0, validCount: 0, reviewCount: 0, totalIssues: 0 };
+      return { totalCount: 0, validCount: 0, reviewCount: 0 };
     }
 
     const total = paper.questions.length;
     let valid = 0;
-    let issues = 0;
 
     for (const q of paper.questions) {
+      if (q.status === "withdrawn") continue;
       let isQValid = true;
-      if (q.status === "withdrawn") {
-        continue;
-      }
       if (!q.stem_markdown || q.stem_markdown.trim().length === 0) {
         isQValid = false;
-        issues++;
-      }
-      if (!Array.isArray(q.options) || q.options.length !== 4) {
+      } else if (!Array.isArray(q.options) || q.options.length !== 4) {
         isQValid = false;
-        issues++;
       } else {
         const correctCount = q.options.filter((opt) => opt.is_correct).length;
         if (correctCount !== 1) {
           isQValid = false;
-          issues++;
+        } else {
+          const blankOpt = q.options.some((opt) => !(opt.content_markdown || "").trim());
+          if (blankOpt) isQValid = false;
         }
       }
 
-      if (isQValid) {
-        valid++;
-      }
+      if (isQValid) valid++;
     }
 
     const review = total - valid;
@@ -162,135 +124,176 @@ export default function IngestionHeader({
       totalCount: total,
       validCount: valid,
       reviewCount: review,
-      totalIssues: issues,
     };
   }, [paper]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onUploadJson(file);
-    }
-    e.target.value = "";
-  };
-
   const isPublishing = publishStatus === "publishing" || publishStatus === "validating";
 
-  // Clean Lifecycle Badge Configuration matching Question Bank palette
-  const effectiveLifecycle = paper?.lifecycle_state || paper?.state || lifecycleState;
-  const lifecycleBadge = useMemo(() => {
-    switch (effectiveLifecycle) {
-      case "extracting":
-        return {
-          label: "Extracting...",
-          className: "bg-[#e0e7ff] text-[#312e81]",
-          icon: <Loader2 className="w-3 h-3 animate-spin" />,
-        };
-      case "review":
-        return {
-          label: "Review",
-          className: "bg-[#ffe1d0] text-[#c67139]",
-          icon: <CheckCircle2 className="w-3 h-3 text-[#c67139]" />,
-        };
-      case "published":
-        return {
-          label: "Published",
-          className: "bg-[#f0fae1] text-[#3d472b]",
-          icon: <Sparkles className="w-3 h-3 text-[#728157]" />,
-        };
-      case "draft":
-      default:
-        return {
-          label: "Draft",
-          className: "bg-[#eee7db] text-[#474238]",
-          icon: null,
-        };
+  // Subject label formatting
+  const subjectCode = paper?.subject?.code || "0455";
+  const subjectName = paper?.subject?.name || "Economics";
+  const subjectIcon = paper?.subject?.icon || "📈";
+  const paperCode = paper?.paper?.paper_code || "12";
+
+  // Formatted series and year: e.g. "Summer 2024"
+  const seriesMap: Record<string, string> = {
+    s: "Summer",
+    m: "Spring",
+    w: "Winter",
+  };
+  const seriesKey = (paper?.paper?.series || "").toLowerCase();
+  const seriesName = seriesMap[seriesKey] || (seriesKey ? seriesKey.toUpperCase() : "Summer");
+  const fullYear = paper?.paper?.year ? String(paper.paper.year) : "2024";
+
+  // Handle local save draft trigger with feedback
+  const handleSaveDraft = () => {
+    if (onSaveDraft) {
+      onSaveDraft();
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 2200);
     }
-  }, [effectiveLifecycle]);
+  };
 
-  return (
-    <header className="w-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl p-4 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4 font-body">
-      {/* Hidden File Input for JSON Upload */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".json,application/json"
-        className="hidden"
-        onChange={handleFileChange}
-      />
+  // -------------------------------------------------------------
+  // MODE: SETUP (Wizard / Setup Mode)
+  // Clean pipeline branding, sample loaders, active return, ZERO phantom controls
+  // -------------------------------------------------------------
+  if (currentMode === "setup") {
+    const hasPaperInMemory = Boolean(
+      hasActivePaper || (paper && paper.questions && paper.questions.length > 0)
+    );
 
-      {/* Left Section: Brand, Lifecycle, and Metadata Pills */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
-        <div>
-          <span className="text-xs font-bold text-[#645c50]">Ingestion studio</span>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            <h2 className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
-              {paper?.paper?.paper_code
-                ? `${paper?.subject?.code || "0455"}/${paper.paper.paper_code}`
-                : "Cambridge Ingestion"}
-            </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-[#474238] text-xs font-bold">
-              {totalCount} questions
+    return (
+      <header className="w-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[2px_2px_0_#201e1d] flex flex-col md:flex-row md:items-center justify-between gap-4 font-body">
+        {/* Left Section: Pipeline Tag & Title */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-[#c67139] text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-[1.5px_1.5px_0_#201e1d]">
+              <Sparkles className="w-3.5 h-3.5 text-[#c67139]" />
+              Cambridge Multimodal Pipeline
             </span>
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${lifecycleBadge.className}`}
-            >
-              {lifecycleBadge.icon}
-              <span>{lifecycleBadge.label}</span>
+            <span className="text-xs text-[#645c50] font-semibold">
+              Gemini Vision 2.5 Ingestion
             </span>
           </div>
+          <h1 className="font-heading font-black text-lg sm:text-xl text-[#201e1d] tracking-tight">
+            Digitize &amp; Upsert Past Exam Papers
+          </h1>
         </div>
 
-        {/* Paper Info Pills matching Question Bank dropdowns */}
+        {/* Right Section: Preset Loader & Return to Studio (No phantom controls) */}
+        <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
+          {/* Preset Selector Dropdown & Action */}
+          {onLoadPreset && (
+            <div className="flex items-center gap-2">
+              <div className="relative flex items-center">
+                <select
+                  aria-label="Sample Preset Selector"
+                  value={selectedPreset}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    setSelectedPreset(nextId);
+                    onLoadPreset(nextId);
+                  }}
+                  className="pl-3 pr-8 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-white text-xs font-bold text-[#201e1d] appearance-none cursor-pointer shadow-[2px_2px_0_#201e1d] hover:bg-[#eee7db] transition-colors focus:outline-none"
+                >
+                  {SAMPLE_PRESETS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-[#645c50] absolute right-2.5 pointer-events-none" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onLoadPreset(selectedPreset)}
+                className="px-3.5 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-[#f9f4ed] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] transition-all cursor-pointer"
+                title="Load sample Cambridge paper"
+              >
+                <FolderDown className="w-3.5 h-3.5 text-[#c67139]" />
+                <span className="hidden sm:inline">Load Sample</span>
+              </button>
+            </div>
+          )}
+
+          {/* Return to Studio Button (Visible when paper exists in memory) */}
+          {hasPaperInMemory && onReturnToStudio && (
+            <button
+              type="button"
+              onClick={onReturnToStudio}
+              className="px-4 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs sm:text-sm font-black text-[#201e1d] flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] transition-all cursor-pointer"
+              title="Return to the active paper curation workspace"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#201e1d]" />
+              <span>← Return to Studio</span>
+            </button>
+          )}
+        </div>
+      </header>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // MODE: WORKSPACE (Active Curation Studio)
+  // Paper identity badge, live counters, workspace tools, Neobrutalist Upsert CTA
+  // -------------------------------------------------------------
+  return (
+    <header className="w-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0_#201e1d] flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 font-body">
+      {/* Left Section: Subject & Paper Code Badge + Validation Indicators */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3.5 flex-wrap">
+        {/* Paper Identity Badge */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Subject Pill */}
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            title="Edit subject settings"
-            className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#dcd3c4] bg-[#f9f4ed] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-colors"
-          >
-            <span>{paper?.subject?.icon || "📈"}</span>
-            <span>{paper?.subject?.code || "0455"}</span>
-            <span className="text-[#645c50] hidden md:inline">
-              {paper?.subject?.name || "Economics"}
-            </span>
-          </button>
+          <div className="flex items-center gap-2 bg-white border-[1.5px] border-[#201e1d] rounded-full px-3.5 py-1.5 shadow-[2px_2px_0_#201e1d]">
+            <span className="text-base select-none">{subjectIcon}</span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#201e1d]">
+              <span className="font-heading font-black text-sm">
+                {subjectCode} / {paperCode}
+              </span>
+              <span className="text-[#82796a]">·</span>
+              <span className="text-[#201e1d] font-bold">{subjectName}</span>
+              <span className="text-[#645c50] font-semibold">
+                {seriesName} {fullYear}
+              </span>
+            </div>
 
-          {/* Paper Series & Code Pill */}
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            title="Edit paper code & series"
-            className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#dcd3c4] bg-[#f9f4ed] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-colors"
-          >
-            <span>Paper {paper?.paper?.paper_code || "12"}</span>
-            <span className="text-[#645c50]">
-              ({paper?.paper?.series || "s"}
-              {paper?.paper?.year ? String(paper.paper.year).slice(-2) : "24"})
-            </span>
-          </button>
+            {onOpenSettings && (
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                title="Edit paper subject, year, series, and code metadata"
+                className="ml-1 p-1 rounded-full text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer"
+                aria-label="Edit metadata"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
 
-          {/* Progress Validation Badges */}
+          {/* Total Questions Badge */}
+          <span className="px-3 py-1 rounded-full bg-white border-[1.5px] border-[#201e1d] text-[#201e1d] text-xs font-black shadow-[1.5px_1.5px_0_#201e1d]">
+            {totalCount} Questions
+          </span>
+
+          {/* Validation Counters */}
           {totalCount > 0 && (
             <div className="flex items-center gap-1.5">
               <span
-                className="px-2.5 py-1 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-[#3d472b] text-xs font-bold flex items-center gap-1"
-                title={`${validCount} questions fully valid`}
+                className="px-2.5 py-1 rounded-full bg-[#f0fae1] border-[1.5px] border-[#201e1d] text-[#3d472b] text-xs font-black flex items-center gap-1 shadow-[1.5px_1.5px_0_#201e1d]"
+                title={`${validCount} questions pass all validation checks`}
               >
-                <CheckCircle2 className="w-3 h-3 text-[#56633f]" />
-                <span>
-                  {validCount}/{totalCount} Valid
-                </span>
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#56633f]" />
+                <span>{validCount}/{totalCount} Valid ✓</span>
               </span>
 
               {reviewCount > 0 && (
                 <span
-                  className="px-2.5 py-1 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#c67139] text-[#c67139] text-xs font-bold flex items-center gap-1"
+                  className="px-2.5 py-1 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-[#c67139] text-xs font-black flex items-center gap-1 shadow-[1.5px_1.5px_0_#201e1d]"
                   title={`${reviewCount} questions require curator review`}
                 >
-                  <AlertTriangle className="w-3 h-3 text-[#c67139]" />
-                  <span>{reviewCount} Review</span>
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#c67139]" />
+                  <span>{reviewCount} Review ⚠</span>
                 </span>
               )}
             </div>
@@ -298,18 +301,32 @@ export default function IngestionHeader({
         </div>
       </div>
 
-      {/* Right Section: Action Controls */}
+      {/* Right Section: Workspace Controls & Primary Upsert CTA */}
       <div className="flex items-center gap-2 sm:gap-2.5 self-end xl:self-auto flex-wrap">
+        {/* Switch Paper / Upload New */}
+        {onSwitchPaper && (
+          <button
+            type="button"
+            onClick={onSwitchPaper}
+            className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
+            title="Switch paper or upload a new PDF"
+          >
+            <FileUp className="w-3.5 h-3.5 text-[#201e1d]" />
+            <span className="hidden sm:inline">Switch Paper / Upload New</span>
+            <span className="sm:hidden">New Paper</span>
+          </button>
+        )}
+
         {/* Undo / Redo Controls */}
         {onUndo && onRedo && (
-          <div className="flex items-center border-[1.5px] border-[#dcd3c4] rounded-full bg-[#f9f4ed] overflow-hidden">
+          <div className="flex items-center border-[1.5px] border-[#201e1d] rounded-full bg-white overflow-hidden shadow-[2px_2px_0_#201e1d]">
             <button
               type="button"
               onClick={onUndo}
               disabled={!canUndo}
-              aria-label="Undo question edit"
+              aria-label="Undo edit"
               title="Undo question edit (Ctrl+Z)"
-              className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed border-r border-[#dcd3c4] text-[#201e1d] transition-colors cursor-pointer"
+              className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed border-r border-[#201e1d] text-[#201e1d] transition-colors cursor-pointer"
             >
               <Undo2 className="w-3.5 h-3.5" />
             </button>
@@ -317,7 +334,7 @@ export default function IngestionHeader({
               type="button"
               onClick={onRedo}
               disabled={!canRedo}
-              aria-label="Redo question edit"
+              aria-label="Redo edit"
               title="Redo question edit (Ctrl+Y)"
               className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] transition-colors cursor-pointer"
             >
@@ -331,187 +348,81 @@ export default function IngestionHeader({
           <button
             type="button"
             onClick={onTogglePdfViewer}
-            className={`px-3.5 py-1.5 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
               showPdfViewer
-                ? "bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold"
-                : "bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]"
+                ? "bg-[#ffe1d0] text-[#c67139]"
+                : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
             }`}
             title={showPdfViewer ? "Hide PDF Source Pane" : "Show Dual-Pane PDF Source"}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {showPdfViewer ? "Hide PDF" : "Split View (PDF)"}
-            </span>
-            <span className="sm:hidden">PDF</span>
+            <span>{showPdfViewer ? "Hide PDF" : "Split View (PDF)"}</span>
           </button>
         )}
 
-        {/* Audit Drawer Button */}
-        <button
-          type="button"
-          onClick={onOpenAudit}
-          className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#dcd3c4] bg-[#f9f4ed] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-colors"
-          title="Open Paper Batch Audit Drawer"
-        >
-          <ClipboardCheck className="w-3.5 h-3.5 text-[#645c50]" />
-          <span>Audit</span>
-          {totalIssues > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px] font-bold">
-              {totalIssues}
-            </span>
-          )}
-        </button>
+        {/* Save Draft Action */}
+        {onSaveDraft && (
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            className={`px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+              justSaved || isDraftSaved
+                ? "bg-[#f0fae1] text-[#3d472b]"
+                : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
+            }`}
+            title="Save draft to local browser storage"
+          >
+            <BookmarkCheck className="w-3.5 h-3.5 text-[#56633f]" />
+            <span>{justSaved ? "Draft Saved ✓" : "Save Draft"}</span>
+          </button>
+        )}
 
-        {/* Preview Questions Button (Opens Modal) */}
-        <button
-          type="button"
-          onClick={onTogglePreview}
-          className="px-4 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] text-[#201e1d] font-bold text-xs hover:bg-[#eee7db] shadow-offset-2 active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer transition-all"
-          title="Preview questions modal"
-        >
-          <Eye className="w-3.5 h-3.5 text-[#201e1d]" />
-          <span>Preview questions</span>
-        </button>
+        {/* Paper Settings Button */}
+        {onOpenSettings && (
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="p-2 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] text-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
+            title="Paper metadata and syllabus topics"
+            aria-label="Paper settings"
+          >
+            <Settings className="w-3.5 h-3.5" />
+          </button>
+        )}
 
-        {/* Primary CTA: Publish to Supabase */}
+        {/* Primary CTA: Neobrutalist Upsert to Supabase Button */}
         <button
           type="button"
           onClick={onPublish}
-          disabled={isPublishing || !paper}
-          className="px-4 py-2 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading font-black text-xs hover:bg-[#b2622d] active:translate-y-0.5 flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          disabled={isPublishing || !paper || totalCount === 0}
+          title={
+            reviewCount > 0
+              ? `${reviewCount} questions require curator review before upsert`
+              : "Upsert all verified questions to Supabase"
+          }
+          className={`px-5 py-2.5 rounded-full border-[1.5px] border-[#201e1d] font-heading font-black text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+            publishStatus === "success"
+              ? "bg-[#728157] text-[#f9f4ed]"
+              : "bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d]"
+          }`}
         >
           {isPublishing ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#f9f4ed]" />
+            <Loader2 className="w-4 h-4 animate-spin text-[#f9f4ed]" />
+          ) : publishStatus === "success" ? (
+            <CheckCircle2 className="w-4 h-4 text-[#f9f4ed]" />
           ) : (
-            <UploadCloud className="w-3.5 h-3.5 text-[#f9f4ed]" />
+            <UploadCloud className="w-4 h-4 text-[#f9f4ed]" />
           )}
           <span>
             {publishStatus === "publishing"
-              ? "Publishing..."
+              ? "Upserting..."
               : publishStatus === "validating"
               ? "Validating..."
               : publishStatus === "success"
-              ? "Published! ✓"
-              : "Publish to Supabase"}
+              ? "Upserted to Supabase! ✓"
+              : "Upsert to Supabase"}
           </span>
         </button>
-
-        {/* Overflow Menu Button [···] */}
-        <div className="relative" ref={menuRef}>
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label="More options"
-            aria-expanded={isMenuOpen}
-            className={`p-2 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center justify-center ${
-              isMenuOpen
-                ? "bg-[#ffe1d0] border-[#c67139] text-[#c67139]"
-                : "bg-[#f9f4ed] border-[#dcd3c4] text-[#201e1d] hover:bg-[#eee7db]"
-            }`}
-          >
-            <MoreHorizontal className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Clean Question Bank Style Overflow Dropdown */}
-          {isMenuOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_#201e1d] rounded-2xl p-1.5 z-50 flex flex-col font-body">
-              {/* Preset Selector */}
-              <div className="flex items-center justify-between px-3 py-2 hover:bg-[#ffe1d0] rounded-xl transition-colors">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    if (typeof onLoadPreset === "function") {
-                      (onLoadPreset as (preset?: string) => void)(selectedPreset);
-                    }
-                  }}
-                  className="flex items-center gap-2 text-xs font-bold text-[#201e1d] flex-1 text-left cursor-pointer"
-                  title="Load selected preset"
-                >
-                  <FolderDown className="w-3.5 h-3.5 text-[#201e1d]" />
-                  <span>Preset: {selectedPreset.replace(/_/g, " ")}</span>
-                </button>
-                {availablePresets.length > 1 && (
-                  <select
-                    value={selectedPreset}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSelectedPreset(val);
-                      if (typeof onLoadPreset === "function") {
-                        (onLoadPreset as (preset?: string) => void)(val);
-                      }
-                      setIsMenuOpen(false);
-                    }}
-                    aria-label="Select paper preset"
-                    className="text-xs font-bold bg-[#f9f4ed] border border-[#dcd3c4] rounded-lg px-2 py-0.5 text-[#201e1d] ml-1.5 cursor-pointer focus:outline-none"
-                  >
-                    {availablePresets.map((preset) => (
-                      <option key={preset} value={preset}>
-                        {preset.replace(/_/g, " ")}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {/* Upload JSON File */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  fileInputRef.current?.click();
-                }}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0] rounded-xl text-left text-xs font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5 text-[#201e1d]" />
-                <span>Upload JSON Staged File</span>
-              </button>
-
-              {/* Raw JSON & SQL Payloads */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  onOpenPayloads();
-                }}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0] rounded-xl text-left text-xs font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <FileCode className="w-3.5 h-3.5 text-[#c67139]" />
-                <span>Raw JSON & SQL Export</span>
-              </button>
-
-              {/* Paper Settings */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  onOpenSettings();
-                }}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0] rounded-xl text-left text-xs font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <Settings className="w-3.5 h-3.5 text-[#201e1d]" />
-                <span>Paper Metadata Settings</span>
-              </button>
-
-              <div className="my-1 border-t border-[#dcd3c4]" />
-
-              {/* Test in Live Game */}
-              <a
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsMenuOpen(false)}
-                className="w-full px-3 py-2 hover:bg-[#ffe1d0] rounded-xl text-left text-xs font-bold text-[#201e1d] flex items-center justify-between transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Gamepad2 className="w-3.5 h-3.5 text-[#201e1d]" />
-                  <span>Test in Live Game</span>
-                </div>
-                <ExternalLink className="w-3 h-3 text-[#645c50] ml-0.5" />
-              </a>
-            </div>
-          )}
-        </div>
       </div>
     </header>
   );

@@ -41,6 +41,16 @@ import {
   checkIsSchoolAccount,
 } from '../lib/auth';
 
+import { CAMBRIDGE_QUESTIONS } from '../lib/questions';
+import {
+  extractSeriesOrYear,
+  hasDataTable,
+  isMathOrCalculation,
+  getAvailableSeries,
+  filterAndSortQuestions,
+  countActiveFilters,
+} from '../lib/compilerFilters';
+
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
   private store: Record<string, string> = {};
@@ -481,6 +491,201 @@ test('Student Account Badge message format matches expected pattern', () => {
     'Signed in as Alex M. (Student account) · Contact your school administrator for educator access.',
     'Informative student account badge string matches exact specification'
   );
+});
+
+// -----------------------------------------------------------------------------
+// [Suite 7] Question Compiler Search & Filtering Capabilities
+// -----------------------------------------------------------------------------
+console.log('\n\x1b[1m\x1b[34m[Suite 7] Question Compiler Search & Filtering Capabilities\x1b[0m');
+
+test('Selection Status: isolates all, selected in test, and unselected questions', () => {
+  const sampleSelectedIds = ['0455-s24-12-q01', '0455-s24-12-q02', '0455-s24-12-q03'];
+
+  const allResult = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    selection: 'all',
+    selectedQuestionIds: sampleSelectedIds,
+  });
+  assertEqual(allResult.length, CAMBRIDGE_QUESTIONS.length, 'All questions returns complete set');
+
+  const selectedResult = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    selection: 'selected',
+    selectedQuestionIds: sampleSelectedIds,
+  });
+  assertEqual(
+    selectedResult.map((q) => q.id).join(','),
+    sampleSelectedIds.join(','),
+    'Selected questions match drawer IDs'
+  );
+
+  const unselectedResult = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    selection: 'unselected',
+    selectedQuestionIds: sampleSelectedIds,
+  });
+  assertEqual(
+    unselectedResult.length,
+    CAMBRIDGE_QUESTIONS.length - sampleSelectedIds.length,
+    'Unselected returns only remaining available questions'
+  );
+  assertEqual(
+    unselectedResult.some((q) => sampleSelectedIds.includes(q.id)),
+    false,
+    'No selected questions present in unselected filter'
+  );
+});
+
+test('Exam Series & Year: extracts and filters dynamic Cambridge paper series', () => {
+  // Test dynamic extraction
+  const seriesList = getAvailableSeries(CAMBRIDGE_QUESTIONS);
+  assertEqual(seriesList.includes('May/June 2024'), true, 'Extracts May/June 2024 from Cambridge citations');
+
+  // Test parser robustness on various Cambridge citation styles
+  assertEqual(
+    extractSeriesOrYear('Cambridge IGCSE Economics 0455/12 May/June 2024 Q1'),
+    'May/June 2024',
+    'Parses standard Cambridge full citation'
+  );
+  assertEqual(
+    extractSeriesOrYear('Cambridge IGCSE Economics 0455/22 Oct/Nov 2023 Q5'),
+    'Oct/Nov 2023',
+    'Parses winter session citation'
+  );
+  assertEqual(
+    extractSeriesOrYear('0455/12/M/J/24 Q3'),
+    'May/June 2024',
+    'Parses shorthand session code'
+  );
+  assertEqual(
+    extractSeriesOrYear(undefined, '0455-w23-11-q10'),
+    'Oct/Nov 2023',
+    'Parses paper ID fallback'
+  );
+
+  // Test filtering by series
+  const filteredSeries = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    series: 'May/June 2024',
+  });
+  assertEqual(filteredSeries.length, 30, 'Filters questions belonging to May/June 2024');
+
+  const otherSeries = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    series: 'Nonexistent 2099',
+  });
+  assertEqual(otherSeries.length, 0, 'Returns empty when series does not match');
+});
+
+test('Content Toggles: Diagrams, Data Tables, and Calculations/Math', () => {
+  // 1. Diagrams toggle
+  const withDiagrams = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    withDiagramsOnly: true,
+  });
+  assertEqual(
+    withDiagrams.every((q) => !!q.image_url),
+    true,
+    'Diagrams toggle only includes questions with image_url'
+  );
+  assertEqual(withDiagrams.length > 0, true, 'Found diagram questions in dataset');
+
+  // 2. Data tables toggle
+  const withTables = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    withTablesOnly: true,
+  });
+  assertEqual(
+    withTables.every((q) => hasDataTable(q.stem_markdown)),
+    true,
+    'Data tables toggle only includes questions containing markdown table syntax |'
+  );
+  assertEqual(withTables.some((q) => q.id === '0455-s24-12-q06'), true, 'q06 contains markdown table');
+  assertEqual(withTables.some((q) => q.id === '0455-s24-12-q14'), true, 'q14 contains markdown table');
+  assertEqual(withTables.some((q) => q.id === '0455-s24-12-q30'), true, 'q30 contains markdown table');
+
+  // 3. Math / Calculations toggle
+  const withMath = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    withMathOnly: true,
+  });
+  assertEqual(
+    withMath.every((q) => isMathOrCalculation(q.stem_markdown)),
+    true,
+    'Math toggle only includes questions with KaTeX, formulas, or numerical calculation data'
+  );
+  assertEqual(withMath.some((q) => q.id === '0455-s24-12-q02'), true, 'q02 ($10,000 calculation) tagged as math');
+  assertEqual(withMath.some((q) => q.id === '0455-s24-12-q08'), true, 'q08 ($5/kg elasticity) tagged as math');
+  assertEqual(withMath.some((q) => q.id === '0455-s24-12-q10'), true, 'q10 ($OW_c$ KaTeX) tagged as math');
+  assertEqual(withMath.some((q) => q.id === '0455-s24-12-q28'), true, 'q28 (yuan ¥ and $ formulas) tagged as math');
+  assertEqual(withMath.some((q) => q.id === '0455-s24-12-q30'), true, 'q30 (Japan ¥ trillion data) tagged as math');
+});
+
+test('Text Search: searches across stems, question IDs, citations, and option texts', () => {
+  // Search in stem
+  const stemSearch = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    search: 'scarcity always exist',
+  });
+  assertEqual(stemSearch.length, 1, 'Search finds question by stem text');
+  assertEqual(stemSearch[0].id, '0455-s24-12-q01', 'Found q01 for scarcity');
+
+  // Search by Question ID
+  const idSearch = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    search: '0455-s24-12-q05',
+  });
+  assertEqual(idSearch.length, 1, 'Search finds question by ID');
+  assertEqual(idSearch[0].id, '0455-s24-12-q05', 'Found q05 by ID');
+
+  // Search by Citation
+  const citationSearch = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    search: '0455/12 May/June 2024 Q8',
+  });
+  assertEqual(citationSearch.length, 1, 'Search finds question by citation');
+  assertEqual(citationSearch[0].id, '0455-s24-12-q08', 'Found q08 by citation');
+
+  // Search inside Option Texts (unique option keyword not in stem)
+  const optionSearch = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    search: 'Chinese Gross Domestic Product',
+  });
+  assertEqual(optionSearch.length, 1, 'Search searches inside option texts');
+  assertEqual(optionSearch[0].id, '0455-s24-12-q04', 'Found q04 via option A text');
+});
+
+test('Sort By: paper order, shortest stem, and longest/scenario stem', () => {
+  const defaultSort = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, { sortBy: 'paper' });
+  assertEqual(defaultSort[0].id, '0455-s24-12-q01', 'Default maintains paper order');
+
+  const shortestSort = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, { sortBy: 'shortest' });
+  const shortestLen = shortestSort[0].stem_markdown?.length || 0;
+  const nextShortestLen = shortestSort[1].stem_markdown?.length || 0;
+  assertEqual(shortestLen <= nextShortestLen, true, 'Shortest stem sort places shortest first');
+  assertEqual(shortestSort[0].id, '0455-s24-12-q01', 'q01 is shortest stem');
+
+  const longestSort = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, { sortBy: 'longest' });
+  const longestLen = longestSort[0].stem_markdown?.length || 0;
+  const nextLongestLen = longestSort[1].stem_markdown?.length || 0;
+  assertEqual(longestLen >= nextLongestLen, true, 'Longest stem sort places scenario/table first');
+  assertEqual(longestSort[0].id, '0455-s24-12-q06', 'q06 is longest stem');
+});
+
+test('Active Filter Counter & Reset State Verification', () => {
+  // Default options have 0 active filters
+  const zeroCount = countActiveFilters({
+    search: '',
+    topicId: 'all',
+    series: 'all',
+    selection: 'all',
+    withDiagramsOnly: false,
+    withTablesOnly: false,
+    withMathOnly: false,
+    sortBy: 'paper',
+  });
+  assertEqual(zeroCount, 0, 'Default filter configuration has 0 active filters');
+
+  // Applying non-default filters increments count
+  const activeCount = countActiveFilters({
+    search: 'elasticity',
+    topicId: '6b7bf963-f082-467c-a7ca-812891a838ab',
+    series: 'May/June 2024',
+    selection: 'unselected',
+    withDiagramsOnly: true,
+    withTablesOnly: true,
+    withMathOnly: true,
+    sortBy: 'shortest',
+  });
+  assertEqual(activeCount, 8, 'Accurately counts all 8 active filters');
 });
 
 // -----------------------------------------------------------------------------

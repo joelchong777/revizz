@@ -10,12 +10,9 @@ import {
   ChevronRight,
   X,
   FileQuestion,
-  Layers,
   CheckCircle2,
   AlertTriangle,
   AlertCircle,
-  LayoutGrid,
-  List,
 } from "lucide-react";
 import katex from "katex";
 
@@ -50,7 +47,7 @@ export interface QuestionStatusItem {
 /**
  * Checks for KaTeX syntax error in string
  */
-function hasKaTeXSyntaxError(text: string): boolean {
+export function hasKaTeXSyntaxError(text: string): boolean {
   if (!text) return false;
   // Check display delimiters
   const displayMatches = text.match(/(?<!\\)\$\$/g) || [];
@@ -153,7 +150,7 @@ export function evaluateQuestionStatus(q?: StagingQuestion): QuestionStatusItem 
       hasDiagram: false,
       hasExplanation: false,
       correctKey: null,
-      errorMessages: ["Question data missing"],
+      errorMessages: ["No question data available"],
       warningMessages: [],
     };
   }
@@ -161,74 +158,26 @@ export function evaluateQuestionStatus(q?: StagingQuestion): QuestionStatusItem 
   const errorMessages: string[] = [];
   const warningMessages: string[] = [];
 
-  // Stem validation
-  const stem = (q.stem_markdown || "").trim();
-  if (!stem) {
-    errorMessages.push("Question stem is empty");
-  } else if (stem.length < 5) {
-    errorMessages.push("Question stem is too short (< 5 chars)");
-  } else if (hasKaTeXSyntaxError(stem)) {
-    errorMessages.push("KaTeX syntax error in stem");
+  const validation = getQuestionValidation(q);
+  if (!validation.isValid) {
+    errorMessages.push(...validation.issues);
   }
 
-  // Options validation
-  const options = q.options || [];
-  if (options.length !== 4) {
-    errorMessages.push(`Requires 4 options A, B, C, D (found ${options.length})`);
-  } else {
-    const correctCount = options.filter((o) => o.is_correct).length;
-    if (correctCount === 0) {
-      errorMessages.push("Missing correct option: No option marked correct");
-    } else if (correctCount > 1) {
-      errorMessages.push(`Multiple correct options marked (${correctCount})`);
-    }
-
-    const emptyOptions = options.filter((o) => !(o.content_markdown || "").trim());
-    if (emptyOptions.length > 0) {
-      errorMessages.push(`${emptyOptions.length} option(s) blank`);
-    }
-
-    // KaTeX check in options
-    options.forEach((opt) => {
-      if (hasKaTeXSyntaxError(opt.content_markdown || "")) {
-        errorMessages.push(`KaTeX syntax error in Option ${opt.label}`);
-      }
-    });
+  if (hasKaTeXSyntaxError(q.stem_markdown || "")) {
+    errorMessages.push("Stem contains KaTeX math syntax error");
   }
 
-  if (q.status === "withdrawn") {
-    errorMessages.push("Question is withdrawn");
+  const correctOption = q.options?.find((o) => o.is_correct);
+  const correctKey = correctOption?.label || null;
+
+  const expl = (q.explanation_markdown || "").trim();
+  const hasExplanation = expl.length > 0;
+  if (!hasExplanation && validation.isValid) {
+    warningMessages.push("Missing derivation / explanation");
   }
 
-  // Topic validation
-  const topic = (q.topic_name || "").trim();
-  if (!topic || topic.toLowerCase() === "unassigned" || topic.toLowerCase() === "none") {
-    warningMessages.push("No syllabus topic assigned");
-  }
+  const diag = hasDiagram(q);
 
-  // Diagram validation
-  const isDiagram = Boolean(
-    q.diagram?.has_diagram === true ||
-      (q.diagram?.image_url && q.diagram.image_url.trim().length > 0) ||
-      (q.diagram?.storage_path && q.diagram.storage_path.trim().length > 0) ||
-      (q.stem_markdown && q.stem_markdown.includes("!["))
-  );
-
-  if (q.diagram?.has_diagram && (!q.diagram?.image_url || !q.diagram.image_url.trim())) {
-    warningMessages.push("Diagram flagged without image URL");
-  }
-
-  // Explanation validation
-  const hasExplanation = Boolean(
-    q.explanation_markdown && q.explanation_markdown.trim().length > 0
-  );
-  if (!hasExplanation) {
-    warningMessages.push("Missing distractor explanation or derivation");
-  } else if (hasKaTeXSyntaxError(q.explanation_markdown || "")) {
-    errorMessages.push("KaTeX syntax error in explanation");
-  }
-
-  const correctOpt = options.find((o) => o.is_correct);
   const isError = errorMessages.length > 0;
   const isWarning = !isError && warningMessages.length > 0;
   const isValid = !isError && !isWarning;
@@ -237,9 +186,9 @@ export function evaluateQuestionStatus(q?: StagingQuestion): QuestionStatusItem 
     isValid,
     isError,
     isWarning,
-    hasDiagram: isDiagram,
+    hasDiagram: diag,
     hasExplanation,
-    correctKey: correctOpt?.label || null,
+    correctKey,
     errorMessages,
     warningMessages,
   };
@@ -254,7 +203,7 @@ export function IngestionQuestionNav({
   onDeleteQuestion: _onDeleteQuestion,
   onMoveQuestion: _onMoveQuestion,
   syllabusTopics: _propSyllabusTopics,
-  expectedCount = 40,
+  expectedCount: _expectedCount = 40,
   paper,
   onSelect,
   className = "",
@@ -262,7 +211,6 @@ export function IngestionQuestionNav({
   // Resolve questions & selection dispatcher
   const questions = propQuestions ?? paper?.questions ?? [];
   const totalQuestions = questions.length;
-  const effectiveExpected = expectedCount || 40;
 
   const handleSelect = useCallback(
     (idx: number) => {
@@ -277,13 +225,12 @@ export function IngestionQuestionNav({
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<FilterTabMode>("all");
-  const [viewLayout, setViewLayout] = useState<"grid" | "list">("grid");
 
-  // References for keyboard navigation and auto-scrolling
+  // References for auto-scrolling
   const buttonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
-  const navContainerRef = useRef<HTMLElement>(null);
+  const navScrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll active item into view
+  // Auto-scroll active item into view horizontally
   useEffect(() => {
     const el = buttonRefs.current.get(selectedIdx);
     if (el) {
@@ -294,7 +241,6 @@ export function IngestionQuestionNav({
   // Global Keyboard Navigation: Left/Right arrow keys to cycle questions
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is currently typing inside an input, textarea, or contentEditable
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -314,12 +260,6 @@ export function IngestionQuestionNav({
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         handleSelect(selectedIdx + 1);
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        handleSelect(0);
-      } else if (e.key === "End") {
-        e.preventDefault();
-        handleSelect(totalQuestions - 1);
       }
     };
 
@@ -356,16 +296,15 @@ export function IngestionQuestionNav({
       const status = questionStatuses[idx];
 
       // Filter tabs: 'All', 'Valid', 'Needs Review', 'Has Diagram', 'Errors'
-      if (filterTab === "valid" && !status.isValid) return false;
-      if (filterTab === "review" && !status.isWarning) return false;
-      if (filterTab === "diagrams" && !status.hasDiagram) return false;
-      if (filterTab === "errors" && !status.isError) return false;
+      if (filterTab === "valid" && !status?.isValid) return false;
+      if (filterTab === "review" && !status?.isWarning) return false;
+      if (filterTab === "diagrams" && !status?.hasDiagram) return false;
+      if (filterTab === "errors" && !status?.isError) return false;
 
       // Search query
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const qNumStr = `${q.question_number || idx + 1}`;
-        const qPrefixed = `q${qNumStr}`.toLowerCase();
         const stem = (q.stem_markdown || "").toLowerCase();
         const ref = (q.cambridge_source_ref || "").toLowerCase();
         const topic = (q.topic_name || "").toLowerCase();
@@ -378,7 +317,6 @@ export function IngestionQuestionNav({
           ref.includes(query) ||
           topic.includes(query) ||
           qNumStr === query ||
-          qPrefixed === query ||
           Boolean(optionsMatch);
 
         if (!matched) return false;
@@ -386,10 +324,9 @@ export function IngestionQuestionNav({
 
       return true;
     },
-    [filterTab, searchQuery, questionStatuses]
+    [questionStatuses, filterTab, searchQuery]
   );
 
-  // Filtered indices
   const matchingIndices = useMemo(() => {
     const list: number[] = [];
     questions.forEach((q, idx) => {
@@ -402,490 +339,276 @@ export function IngestionQuestionNav({
 
   const hasActiveFilters = searchQuery.trim().length > 0 || filterTab !== "all";
 
-  const progressPct =
-    effectiveExpected > 0
-      ? Math.min(100, Math.round((totalQuestions / effectiveExpected) * 100))
-      : 100;
-
   return (
     <nav
-      ref={navContainerRef}
-      aria-label="Question Navigation"
-      className={`bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col gap-3 font-body text-[#201e1d] select-none ${className}`}
+      aria-label="Question Navigation Strip"
+      className={`w-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl p-3 sm:p-3.5 shadow-sm flex flex-col gap-2.5 font-body text-[#201e1d] select-none ${className}`}
     >
-      {/* =========================================================================
-          1. HEADER & OVERVIEW
-         ========================================================================= */}
-      <div className="flex flex-col gap-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="p-1.5 bg-[#ffe1d0] text-[#c67139] rounded-xl shrink-0">
-              <Layers className="w-4 h-4" />
+      {/* Top Row: Filter Tabs + Stepper Controls + Add Question */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 flex-wrap">
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+          {/* All Tab */}
+          <button
+            type="button"
+            onClick={() => setFilterTab("all")}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+              filterTab === "all"
+                ? "bg-[#201e1d] text-[#f9f4ed]"
+                : "bg-white/80 border border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]"
+            }`}
+          >
+            <span>All</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                filterTab === "all" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#eee7db] text-[#474238]"
+              }`}
+            >
+              {totalQuestions}
             </span>
-            <div className="min-w-0">
-              <h2 className="font-heading text-sm font-black tracking-tight leading-none text-[#201e1d] truncate">
-                Questions
-              </h2>
-              <p className="text-[11px] font-medium text-[#645c50] mt-0.5 truncate">
-                {totalQuestions} of {effectiveExpected} staged · {validCount} valid
-              </p>
-            </div>
-          </div>
+          </button>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {onAddQuestion && (
+          {/* Valid Tab */}
+          <button
+            type="button"
+            onClick={() => setFilterTab("valid")}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+              filterTab === "valid"
+                ? "bg-[#728157] text-[#f9f4ed]"
+                : "bg-white/80 border border-[#dcd3c4] text-[#3d472b] hover:bg-[#f0fae1]"
+            }`}
+          >
+            <CheckCircle2 className="w-3 h-3 text-[#56633f]" />
+            <span>Valid</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                filterTab === "valid" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#f0fae1] text-[#3d472b]"
+              }`}
+            >
+              {validCount}
+            </span>
+          </button>
+
+          {/* Needs Review Tab */}
+          <button
+            type="button"
+            onClick={() => setFilterTab("review")}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+              filterTab === "review"
+                ? "bg-[#c67139] text-[#f9f4ed]"
+                : "bg-white/80 border border-[#dcd3c4] text-[#c67139] hover:bg-[#ffe1d0]"
+            }`}
+          >
+            <AlertTriangle className="w-3 h-3 text-[#c67139]" />
+            <span>Needs Review</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                filterTab === "review" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#ffe1d0] text-[#c67139]"
+              }`}
+            >
+              {reviewCount}
+            </span>
+          </button>
+
+          {/* Diagrams Tab */}
+          <button
+            type="button"
+            onClick={() => setFilterTab("diagrams")}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+              filterTab === "diagrams"
+                ? "bg-[#645c50] text-[#f9f4ed]"
+                : "bg-white/80 border border-[#dcd3c4] text-[#645c50] hover:bg-[#eee7db]"
+            }`}
+          >
+            <Camera className="w-3 h-3 text-[#645c50]" />
+            <span>Diagrams</span>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                filterTab === "diagrams" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#eee7db] text-[#474238]"
+              }`}
+            >
+              {diagramCount}
+            </span>
+          </button>
+
+          {/* Errors Tab (if any) */}
+          {errorCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setFilterTab("errors")}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+                filterTab === "errors"
+                  ? "bg-[#b91c1c] text-[#f9f4ed]"
+                  : "bg-white/80 border border-[#b91c1c]/40 text-[#b91c1c] hover:bg-[#fee2e2]"
+              }`}
+            >
+              <AlertCircle className="w-3 h-3 text-[#b91c1c]" />
+              <span>Errors</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  filterTab === "errors" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#fee2e2] text-[#b91c1c]"
+                }`}
+              >
+                {errorCount}
+              </span>
+            </button>
+          )}
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setFilterTab("all");
+              }}
+              className="text-xs font-bold text-[#c67139] hover:underline cursor-pointer ml-1"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+
+        {/* Stepper Controls + Quick Search + Add Question */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Quick Search Input */}
+          <div className="relative">
+            <Search className="w-3 h-3 text-[#82796a] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Find Q..."
+              className="pl-7 pr-6 py-1 rounded-full bg-white/80 border border-[#dcd3c4] text-xs text-[#201e1d] placeholder-[#82796a] outline-none focus:border-[#c67139] w-24 sm:w-28 transition-all"
+            />
+            {searchQuery && (
               <button
                 type="button"
-                onClick={onAddQuestion}
-                className="px-3 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-bold hover:bg-[#b2622d] transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
-                title="Add new question"
-                aria-label="Add question"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d]"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New</span>
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
-        </div>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-[#eee7db] h-1.5 rounded-full overflow-hidden">
-          <div
-            className="bg-[#c67139] h-full rounded-full transition-all duration-300"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </div>
-
-      {/* =========================================================================
-          2. SEARCH INPUT
-         ========================================================================= */}
-      <div className="relative w-full">
-        <Search className="w-3.5 h-3.5 text-[#82796a] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search stems, IDs, citations..."
-          className="w-full pl-9 pr-7 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] placeholder-[#82796a] outline-none focus:border-[#c67139] transition-all"
-          aria-label="Search questions"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded cursor-pointer transition-colors"
-            aria-label="Clear search"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* =========================================================================
-          3. FILTER PILLS ('All', 'Valid', 'Needs Review', 'Has Diagram', 'Errors')
-         ========================================================================= */}
-      <div className="flex flex-wrap items-center gap-1.5 text-xs">
-        {/* All Tab */}
-        <button
-          type="button"
-          onClick={() => setFilterTab("all")}
-          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-            filterTab === "all"
-              ? "bg-[#ffe1d0] text-[#201e1d] font-bold"
-              : "text-[#645c50] hover:bg-[#eee7db]"
-          }`}
-        >
-          <span>All</span>
-          <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-              filterTab === "all"
-                ? "bg-[#c67139] text-[#f9f4ed]"
-                : "bg-[#c0b6a5]/50 text-[#201e1d]"
-            }`}
-          >
-            {totalQuestions}
-          </span>
-        </button>
-
-        {/* Valid Tab */}
-        <button
-          type="button"
-          onClick={() => setFilterTab("valid")}
-          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-            filterTab === "valid"
-              ? "bg-[#f0fae1] text-[#3d472b] border border-[#728157]/40 font-bold"
-              : "text-[#645c50] hover:bg-[#eee7db]"
-          }`}
-        >
-          <CheckCircle2 className="w-3 h-3 text-[#728157]" />
-          <span>Valid</span>
-          <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-              filterTab === "valid"
-                ? "bg-[#728157] text-[#f9f4ed]"
-                : "bg-[#f0fae1] text-[#3d472b]"
-            }`}
-          >
-            {validCount}
-          </span>
-        </button>
-
-        {/* Needs Review Tab */}
-        <button
-          type="button"
-          onClick={() => setFilterTab("review")}
-          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-            filterTab === "review"
-              ? "bg-[#fef3c7] text-[#92400e] border border-[#f59e0b]/40 font-bold"
-              : "text-[#645c50] hover:bg-[#eee7db]"
-          }`}
-        >
-          <AlertTriangle className="w-3 h-3 text-[#c67139]" />
-          <span>Review</span>
-          <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-              filterTab === "review"
-                ? "bg-[#c67139] text-[#f9f4ed]"
-                : "bg-[#fef3c7] text-[#92400e]"
-            }`}
-          >
-            {reviewCount}
-          </span>
-        </button>
-
-        {/* Has Diagram Tab */}
-        <button
-          type="button"
-          onClick={() => setFilterTab("diagrams")}
-          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-            filterTab === "diagrams"
-              ? "bg-[#eee7db] text-[#201e1d] border border-[#c0b6a5] font-bold"
-              : "text-[#645c50] hover:bg-[#eee7db]"
-          }`}
-        >
-          <Camera className="w-3 h-3 text-[#645c50]" />
-          <span>Diagrams</span>
-          <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-              filterTab === "diagrams"
-                ? "bg-[#645c50] text-[#f9f4ed]"
-                : "bg-[#eee7db] text-[#474238]"
-            }`}
-          >
-            {diagramCount}
-          </span>
-        </button>
-
-        {/* Errors Tab */}
-        <button
-          type="button"
-          onClick={() => setFilterTab("errors")}
-          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-            filterTab === "errors"
-              ? "bg-[#fee2e2] text-[#991b1b] border border-[#ef4444]/40 font-bold"
-              : "text-[#645c50] hover:bg-[#eee7db]"
-          }`}
-        >
-          <AlertCircle className="w-3 h-3 text-[#b91c1c]" />
-          <span>Errors</span>
-          <span
-            className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-              filterTab === "errors"
-                ? "bg-[#b91c1c] text-[#f9f4ed]"
-                : "bg-[#fee2e2] text-[#991b1b]"
-            }`}
-          >
-            {errorCount}
-          </span>
-        </button>
-
-        {/* Reset Action */}
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery("");
-              setFilterTab("all");
-            }}
-            className="ml-auto text-[11px] font-bold text-[#c67139] hover:underline cursor-pointer"
-          >
-            Reset
-          </button>
-        )}
-      </div>
-
-      {/* =========================================================================
-          4. QUESTION NAVIGATION STEPPER & LAYOUT CONTROLS
-         ========================================================================= */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#dcd3c4]">
-          {/* Stepper Buttons & Counter */}
-          <div className="flex items-center gap-1.5">
+          {/* Stepper Controls */}
+          <div className="flex items-center border-[1.5px] border-[#dcd3c4] rounded-full bg-white/80 px-1 py-0.5 shadow-xs">
             <button
               type="button"
               onClick={() => handleSelect(selectedIdx - 1)}
               disabled={selectedIdx <= 0}
-              className="p-1 rounded-full border border-[#dcd3c4] bg-[#f9f4ed] hover:bg-[#eee7db] text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              title="Previous question (Arrow Left/Up)"
+              className="p-1 rounded-full hover:bg-[#eee7db] text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              title="Previous question (←)"
               aria-label="Previous question"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs font-bold text-[#201e1d] min-w-[32px] text-center">
-              {totalQuestions > 0 ? `Q${selectedIdx + 1}` : "—"}
+            <span className="text-xs font-black font-heading text-[#201e1d] px-2 min-w-[70px] text-center">
+              {totalQuestions > 0 ? `Q${selectedIdx + 1} / ${totalQuestions}` : "—"}
             </span>
             <button
               type="button"
               onClick={() => handleSelect(selectedIdx + 1)}
               disabled={selectedIdx >= totalQuestions - 1}
-              className="p-1 rounded-full border border-[#dcd3c4] bg-[#f9f4ed] hover:bg-[#eee7db] text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              title="Next question (Arrow Right/Down)"
+              className="p-1 rounded-full hover:bg-[#eee7db] text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              title="Next question (→)"
               aria-label="Next question"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[10px] text-[#82796a] hidden sm:inline-flex items-center gap-1 ml-1">
-              <kbd className="font-mono bg-[#eee7db] text-[#474238] px-1 py-0.5 rounded text-[10px] border border-[#dcd3c4]">←</kbd>
-              <kbd className="font-mono bg-[#eee7db] text-[#474238] px-1 py-0.5 rounded text-[10px] border border-[#dcd3c4]">→</kbd>
-            </span>
           </div>
 
-          {/* Layout Toggle (Grid / List) */}
-          <div className="flex items-center border border-[#dcd3c4] rounded-full bg-[#f9f4ed] p-0.5 overflow-hidden">
+          {/* Add Question Button */}
+          {onAddQuestion && (
             <button
               type="button"
-              onClick={() => setViewLayout("grid")}
-              title="Grid View"
-              className={`p-1 rounded-full transition-colors cursor-pointer ${
-                viewLayout === "grid"
-                  ? "bg-[#201e1d] text-[#f9f4ed]"
-                  : "text-[#645c50] hover:bg-[#eee7db]"
-              }`}
+              onClick={onAddQuestion}
+              className="px-3 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-heading font-black hover:bg-[#b2622d] transition-all flex items-center gap-1 shadow-[1.5px_1.5px_0_#201e1d] border border-[#201e1d] active:translate-y-0.5 cursor-pointer"
+              title="Add a new blank question"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
+              <Plus className="w-3 h-3" />
+              <span>New</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setViewLayout("list")}
-              title="List View"
-              className={`p-1 rounded-full transition-colors cursor-pointer ${
-                viewLayout === "list"
-                  ? "bg-[#201e1d] text-[#f9f4ed]"
-                  : "text-[#645c50] hover:bg-[#eee7db]"
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          )}
         </div>
-
-        {totalQuestions === 0 ? (
-          <div className="p-6 text-center border-[1.5px] border-dashed border-[#dcd3c4] rounded-2xl bg-white/60 flex flex-col items-center gap-2">
-            <FileQuestion className="w-7 h-7 text-[#82796a]" />
-            <p className="text-xs font-bold text-[#645c50]">
-              No questions found. Add your first question below.
-            </p>
-          </div>
-        ) : viewLayout === "grid" ? (
-          /* =========================================================================
-              GRID VIEW: Clean Organic Tiles
-             ========================================================================= */
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-[420px] overflow-y-auto pr-1 py-1">
-            {questions.map((q, idx) => {
-              const status = questionStatuses[idx];
-              const isSelected = selectedIdx === idx;
-              const isMatch = matchingIndices.includes(idx);
-              const qNum = q.question_number || idx + 1;
-
-              return (
-                <button
-                  key={`q-card-${idx}-${qNum}`}
-                  ref={(el) => {
-                    if (el) buttonRefs.current.set(idx, el);
-                    else buttonRefs.current.delete(idx);
-                  }}
-                  type="button"
-                  onClick={() => handleSelect(idx)}
-                  aria-pressed={isSelected}
-                  title={`Question ${qNum}${
-                    status.isValid
-                      ? " (Valid & Complete)"
-                      : status.isError
-                      ? ` (Error: ${status.errorMessages.join(", ")})`
-                      : ` (Warning: ${status.warningMessages.join(", ")})`
-                  }${status.hasDiagram ? " · Has Diagram" : ""}${
-                    status.correctKey ? ` · Key: ${status.correctKey}` : ""
-                  }`}
-                  className={`relative h-13 rounded-xl transition-all flex flex-col items-center justify-between p-1.5 select-none cursor-pointer ${
-                    isSelected
-                      ? "bg-[#ffe1d0] border-[1.5px] border-[#c67139] text-[#201e1d] font-bold shadow-xs scale-[1.02] z-10"
-                      : "bg-white/80 border border-[#dcd3c4] hover:bg-[#eee7db] text-[#474238]"
-                  } ${
-                    !isMatch && hasActiveFilters
-                      ? "opacity-30 grayscale"
-                      : "opacity-100"
-                  }`}
-                >
-                  {/* Top Indicators Row */}
-                  <div className="w-full flex items-center justify-between px-0.5">
-                    {status.hasDiagram ? (
-                      <span
-                        className="p-0.5 rounded text-[#645c50]"
-                        title="Has diagram attached"
-                      >
-                        <Camera className="w-2.5 h-2.5" />
-                      </span>
-                    ) : (
-                      <span className="w-2.5 h-2.5" />
-                    )}
-
-                    {/* Subtle status indicator dot */}
-                    {status.isError ? (
-                      <span
-                        className="w-2 h-2 rounded-full bg-[#b91c1c]"
-                        title={`Error: ${status.errorMessages.join("; ")}`}
-                      />
-                    ) : status.isWarning ? (
-                      <span
-                        className="w-2 h-2 rounded-full bg-[#c67139]"
-                        title={`Review: ${status.warningMessages.join("; ")}`}
-                      />
-                    ) : (
-                      <span
-                        className="w-2 h-2 rounded-full bg-[#728157]"
-                        title="Valid & Complete"
-                      />
-                    )}
-                  </div>
-
-                  {/* Question Number */}
-                  <span className="text-xs sm:text-sm font-bold text-[#201e1d] leading-none">
-                    {qNum}
-                  </span>
-
-                  {/* Option Key Pill at Bottom */}
-                  <span className="text-[9px] font-semibold uppercase text-[#645c50] leading-tight">
-                    {status.correctKey || "—"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          /* =========================================================================
-              LIST VIEW: Clean Diagnostic Rows
-             ========================================================================= */
-          <div className="flex flex-col gap-1.5 max-h-[420px] overflow-y-auto pr-1 py-1">
-            {questions.map((q, idx) => {
-              const status = questionStatuses[idx];
-              const isSelected = selectedIdx === idx;
-              const isMatch = matchingIndices.includes(idx);
-              const qNum = q.question_number || idx + 1;
-              const stemExcerpt = (q.stem_markdown || "")
-                .replace(/!\[.*?\]\(.*?\)/g, "")
-                .replace(/[#*`_$\\]/g, "")
-                .trim();
-              const displayStem = stemExcerpt || q.topic_name || "Untitled Question";
-              const citation = q.cambridge_source_ref || q.topic_name || `Question ${qNum}`;
-
-              return (
-                <button
-                  key={`q-list-${idx}-${qNum}`}
-                  ref={(el) => {
-                    if (el) buttonRefs.current.set(idx, el);
-                    else buttonRefs.current.delete(idx);
-                  }}
-                  type="button"
-                  onClick={() => handleSelect(idx)}
-                  className={`w-full text-left p-2.5 transition-all flex items-center justify-between gap-2.5 cursor-pointer rounded-xl ${
-                    isSelected
-                      ? "bg-[#ffe1d0] border-[1.5px] border-[#c67139] text-[#201e1d] font-bold shadow-xs"
-                      : "bg-white/80 border border-[#dcd3c4] hover:bg-[#eee7db] text-[#474238]"
-                  } ${
-                    !isMatch && hasActiveFilters
-                      ? "opacity-30 grayscale"
-                      : "opacity-100"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className={`w-7 h-7 rounded-lg text-xs font-mono font-bold flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected
-                          ? "bg-[#c67139] text-[#f9f4ed]"
-                          : "bg-[#eee7db] text-[#201e1d]"
-                      }`}
-                    >
-                      Q{qNum}
-                    </span>
-
-                    <div className="min-w-0 flex flex-col">
-                      <span
-                        className={`text-xs truncate ${
-                          isSelected ? "text-[#201e1d] font-bold" : "text-[#201e1d] font-semibold"
-                        }`}
-                      >
-                        {displayStem}
-                      </span>
-                      <div className="text-[11px] text-[#645c50] truncate flex items-center gap-1.5 mt-0.5">
-                        <span className="truncate">{citation}</span>
-                        <span>·</span>
-                        <span className="font-mono text-[10px] shrink-0 font-bold">
-                          {status.correctKey ? `Key ${status.correctKey}` : "No key"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Indicators */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {status.hasDiagram && (
-                      <span
-                        className="p-1 rounded-md bg-[#eee7db] text-[#645c50]"
-                        title="Has diagram attached"
-                      >
-                        <Camera className="w-3 h-3" />
-                      </span>
-                    )}
-
-                    {status.isError ? (
-                      <span
-                        className="w-2.5 h-2.5 rounded-full bg-[#b91c1c]"
-                        title={`Error: ${status.errorMessages.join("; ")}`}
-                      />
-                    ) : status.isWarning ? (
-                      <span
-                        className="w-2.5 h-2.5 rounded-full bg-[#c67139]"
-                        title={`Review: ${status.warningMessages.join("; ")}`}
-                      />
-                    ) : (
-                      <span
-                        className="w-2.5 h-2.5 rounded-full bg-[#728157]"
-                        title="Valid & Complete"
-                      />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
-      {/* =========================================================================
-          5. ADD QUESTION ACTION
-         ========================================================================= */}
-      {onAddQuestion && (
-        <div className="pt-2 border-t border-[#dcd3c4] mt-auto">
-          <button
-            type="button"
-            onClick={onAddQuestion}
-            className="w-full py-2 px-3 bg-[#f9f4ed] hover:bg-[#eee7db] border-[1.5px] border-[#c0b6a5] text-[#201e1d] rounded-full text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Add question to paper"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Question</span>
-          </button>
+      {/* Bottom Row: Horizontally Scrollable Numbered Chips Strip */}
+      {totalQuestions === 0 ? (
+        <div className="p-4 text-center border-[1.5px] border-dashed border-[#dcd3c4] rounded-xl bg-white/60 flex items-center justify-center gap-2">
+          <FileQuestion className="w-5 h-5 text-[#82796a]" />
+          <p className="text-xs font-bold text-[#645c50]">No questions staged in this paper.</p>
+        </div>
+      ) : (
+        <div
+          ref={navScrollRef}
+          className="flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 scrollbar-thin scrollbar-thumb-[#dcd3c4] scrollbar-track-transparent"
+        >
+          {questions.map((q, idx) => {
+            const status = questionStatuses[idx];
+            const isSelected = selectedIdx === idx;
+            const isMatch = matchingIndices.includes(idx);
+            const qNum = q.question_number || idx + 1;
+
+            return (
+              <button
+                key={`q-chip-${idx}-${qNum}`}
+                ref={(el) => {
+                  if (el) buttonRefs.current.set(idx, el);
+                  else buttonRefs.current.delete(idx);
+                }}
+                type="button"
+                onClick={() => handleSelect(idx)}
+                aria-pressed={isSelected}
+                title={`Question ${qNum}${
+                  status.isValid
+                    ? " (Valid)"
+                    : status.isError
+                    ? ` (Error: ${status.errorMessages.join(", ")})`
+                    : ` (Needs Review: ${status.warningMessages.join(", ")})`
+                }${status.hasDiagram ? " · Has Diagram" : ""}${
+                  status.correctKey ? ` · Key ${status.correctKey}` : ""
+                }`}
+                className={`relative shrink-0 min-w-[52px] h-12 rounded-xl transition-all flex flex-col items-center justify-center px-2 py-1 select-none cursor-pointer ${
+                  isSelected
+                    ? "bg-[#ffe1d0] border-[2px] border-[#c67139] text-[#201e1d] font-black shadow-[2px_2px_0_#c67139] scale-[1.03] z-10"
+                    : "bg-white/90 border border-[#dcd3c4] hover:bg-[#eee7db] text-[#474238] hover:border-[#c0b6a5]"
+                } ${
+                  !isMatch && hasActiveFilters
+                    ? "opacity-30 grayscale"
+                    : "opacity-100"
+                }`}
+              >
+                {/* Top: Status indicator & Diagram icon */}
+                <div className="w-full flex items-center justify-between gap-1 leading-none">
+                  {status.hasDiagram ? (
+                    <Camera className="w-2.5 h-2.5 text-[#645c50]" />
+                  ) : (
+                    <span className="w-2.5 h-2.5" />
+                  )}
+
+                  {/* Dot */}
+                  {status.isError ? (
+                    <span className="w-2 h-2 rounded-full bg-[#b91c1c]" />
+                  ) : status.isWarning ? (
+                    <span className="w-2 h-2 rounded-full bg-[#c67139]" />
+                  ) : (
+                    <span className="w-2 h-2 rounded-full bg-[#728157]" />
+                  )}
+                </div>
+
+                {/* Question Number */}
+                <span className="text-xs font-black font-heading leading-tight text-[#201e1d]">
+                  {qNum}
+                </span>
+
+                {/* Key Badge */}
+                <span className="text-[9px] font-bold uppercase text-[#645c50] leading-none">
+                  {status.correctKey ? status.correctKey : "—"}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
     </nav>
