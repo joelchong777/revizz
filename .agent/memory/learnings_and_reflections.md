@@ -123,3 +123,12 @@
   - `npx tsc --noEmit` and static test suites passed completely because Motion prop types technically accept `number[]` for scale keyframes. TypeScript cannot validate Framer Motion's internal runtime animation constraints.
 - **Subagent Verification Protocol**:
   - Subagents implementing UI motion or dynamic rendering must write runtime render assertion tests (using React Testing Library, triggering answer clicks or state changes) to assert that component state transitions do not throw runtime exceptions.
+
+## Reflection Log Entry - 2026-10-12 (Question Flow UX, Cognitive Bias Mitigation & Self-Paced Learning Architecture)
+
+- **Date**: 2026-10-12
+- **Topic**: Question Flow UX, Cognitive Bias Mitigation & Self-Paced Learning Architecture
+- **Context & Decisions**:
+  1. **Progressive Metadata Disclosure**: Hiding paper citations, subject codes, and topic badges until the first answer attempt (`status !== 'unanswered'`) prevents cognitive bias and syllabus giveaways. Lightbox modal titles and image alt tags must also sanitize citations when unanswered.
+  2. **Pacing Control vs. Auto-Skip**: Disabling automatic progression timeouts (`1500ms`) on correct answers. Instead, place the primary Next Question CTA directly on top of the explanation panel. This allows fast students to advance instantly while providing curious students unhurried access to step-by-step explanations and distractor analysis. A secondary CTA at the bottom prevents awkward reverse-scrolling.
+  3. **Round Summary Hierarchy**: Placing the "Review missed questions" CTA directly above the missed questions list prioritizes action over scrolling.
