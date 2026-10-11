@@ -9,7 +9,6 @@ import AdminNav from '@/components/portal/AdminNav';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import TeacherAnalytics from '@/components/portal/TeacherAnalytics';
-import IngestionHub from '@/components/portal/IngestionHub';
 import TestCompilerHub from '@/components/portal/compiler/TestCompilerHub';
 import { fetchWeeklyLeaderboard, LeaderboardEntry } from '@/lib/leaderboard';
 
@@ -21,7 +20,7 @@ const NAV_LABELS: Record<string, string> = {
   mastery: 'Mastery analytics',
   xp: 'Leaderboard & XP',
   bank: 'Question bank',
-  ingestion: 'Ingestion studio',
+  ingestion: 'Ingestion studio (App Admin)',
   flagged: 'Flagged questions',
   editor: 'Question editor',
   school: 'School & licence',
@@ -113,7 +112,7 @@ function PortalContent() {
       setRole('teacher');
     } else if (normalized === 'content') {
       setActiveNav('bank');
-      setRole('content');
+      setRole('teacher');
     } else if (normalized === 'analytics') {
       setActiveNav('roster');
       setRole('teacher');
@@ -122,20 +121,16 @@ function PortalContent() {
       setRole('teacher');
     } else if (normalized === 'ingestion' || normalized === 'importer') {
       setActiveNav('ingestion');
-      setRole('content');
+      setRole('teacher');
     } else if (['bank', 'flagged', 'editor'].includes(normalized)) {
       setActiveNav(normalized);
+      setRole('teacher');
     }
   }, [searchParams, isDev]);
 
   const handleToggleRole = () => {
-    setRole((prev) => {
-      const nextRole = prev === 'teacher' ? 'content' : 'teacher';
-      if (nextRole === 'content' && !['bank', 'flagged', 'editor', 'ingestion'].includes(activeNav)) {
-        setActiveNav('bank');
-      }
-      return nextRole;
-    });
+    // Teacher portal is dedicated to teacher workflows
+    setRole('teacher');
   };
 
   const handleSelectNav = (tab: string) => {
@@ -176,6 +171,7 @@ function PortalContent() {
   }
 
   const isEducator = guestMode || (isDev && devOverride) || (userProfile && (userProfile.role === 'teacher' || userProfile.role === 'admin'));
+  const isAdmin = guestMode || (isDev && devOverride) || (userProfile?.role === 'admin');
 
   if (!isEducator) {
     return (
@@ -537,7 +533,38 @@ function PortalContent() {
         );
       case 'ingestion':
       case 'importer':
-        return <IngestionHub key="ingestion" />;
+        return (
+          <div className="rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] p-8 sm:p-12 shadow-offset-4 text-center space-y-6 max-w-2xl mx-auto my-8">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
+              📦
+            </div>
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#728157]">Relocated Tool</span>
+              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight">
+                Ingestion Tools Have Moved to App Admin
+              </h1>
+              <p className="text-sm font-medium text-[#645c50] leading-relaxed max-w-lg mx-auto">
+                Exam paper ingestion, question extraction, and staging workflows have moved to the dedicated <b>App Admin Dashboard</b>.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/admin?tab=ingestion"
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#ccdbb2] text-[#272e1b] font-black text-sm border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2"
+              >
+                <span>Open Ingestion in App Admin</span>
+                <span>🛠️</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setActiveNav('overview')}
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#f9f4ed] text-[#201e1d] font-bold text-sm border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#eee7db] transition-all active:translate-y-0.5"
+              >
+                Back to Teacher Overview
+              </button>
+            </div>
+          </div>
+        );
       case 'flagged':
         return <AdminCMS key="flagged" initialView="flagged" />;
       case 'editor':
@@ -650,6 +677,7 @@ function PortalContent() {
           onSelect={handleSelectNav}
           onToggleRole={handleToggleRole}
           userDisplayName={userProfile?.display_name || 'Guest Educator'}
+          isAdmin={isAdmin}
         />
       </div>
 
@@ -671,6 +699,7 @@ function PortalContent() {
               onToggleRole={handleToggleRole}
               onClose={() => setMobileNavOpen(false)}
               userDisplayName={userProfile?.display_name || 'Guest Educator'}
+              isAdmin={isAdmin}
             />
           </div>
         </div>
@@ -702,20 +731,65 @@ function PortalContent() {
               {NAV_LABELS[activeNav] || 'Classes & students'}
             </span>
 
-            <button
-              type="button"
-              onClick={handleToggleRole}
-              className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-[#201e1d] hover:bg-[#ffc6a5] transition-colors flex items-center gap-1 shadow-offset-2 active:translate-y-0.5"
-              title="Switch role"
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#ccdbb2] border-[1.5px] border-[#201e1d] text-[#201e1d] hover:bg-[#b8c99d] transition-colors flex items-center gap-1 shadow-offset-2 active:translate-y-0.5"
+                title="Open App Admin"
+              >
+                <span>Admin 🛠️</span>
+              </Link>
+            )}
+          </div>
+        </header>
+
+        {/* Desktop Sticky Top Header */}
+        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-[1.5px] border-[#dcd3c4] px-8 py-3 items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="font-heading font-black text-lg text-[#201e1d]">
+              {NAV_LABELS[activeNav] || 'Teacher Portal'}
+            </span>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] font-bold border border-[#201e1d]/15">
+              Teacher Portal 🎓
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ccdbb2] text-[#201e1d] font-black text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                title="Open App Administration Dashboard"
+              >
+                <span>Open App Admin 🛠️</span>
+              </Link>
+            )}
+            <Link
+              href="/"
+              className="text-xs font-bold text-[#645c50] hover:text-[#201e1d] px-2 py-1 transition-colors"
             >
-              <span>{role === 'teacher' ? 'School admin' : 'Content studio'}</span>
-              <ArrowRightLeft className="w-3 h-3 text-[#645c50]" />
-            </button>
+              Student Home ↗
+            </Link>
           </div>
         </header>
 
         {/* Scrollable Main Content Area */}
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
+          {/* Notification banner if navigating to ingestion on portal */}
+          {(searchParams?.get('tab') === 'ingestion' || searchParams?.get('nav') === 'ingestion' || searchParams?.get('tab') === 'importer') && activeNav !== 'ingestion' && (
+            <div className="mb-6 p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
+              <div className="flex items-center gap-2">
+                <span className="text-base">📦</span>
+                <span>Ingestion tools have moved to the App Admin Dashboard.</span>
+              </div>
+              <Link
+                href="/admin?tab=ingestion"
+                className="px-3 py-1 rounded-full bg-[#ccdbb2] border border-[#201e1d] hover:bg-[#b8c99d] transition-colors flex items-center gap-1 shrink-0 text-[#201e1d] font-bold"
+              >
+                <span>Open in App Admin 🛠️</span>
+              </Link>
+            </div>
+          )}
           {guestMode && !userProfile && (
             <div className="space-y-4 mb-6">
               <div className="p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">

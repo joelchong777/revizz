@@ -9,11 +9,9 @@ import {
   BarChart3, 
   Trophy, 
   BookOpen, 
-  Layers,
   Flag, 
   Building2, 
   Sparkles,
-  ArrowRightLeft,
   X,
   FileText
 } from 'lucide-react';
@@ -29,6 +27,7 @@ export interface AdminNavProps {
   isOpen?: boolean;
   onClose?: () => void;
   userDisplayName?: string;
+  isAdmin?: boolean;
 }
 
 export default function AdminNav({
@@ -42,14 +41,21 @@ export default function AdminNav({
   isOpen = false,
   onClose,
   userDisplayName,
+  isAdmin = false,
 }: AdminNavProps) {
-  const isTeacher = role === 'teacher';
-  const roleLabel = isTeacher ? 'School admin' : 'Content studio';
-  const agentLine = isTeacher ? '3 tasks need approval' : '12 drafts in review';
-  const initials = isTeacher ? 'AO' : 'SR';
-  const avatarBg = isTeacher ? 'var(--color-accent-300)' : 'var(--color-accent-2-300)';
-  const userName = userDisplayName || (isTeacher ? 'Ms. A. Okafor' : 'Sam Reyes');
-  const userRole = isTeacher ? 'Teacher · School admin' : 'Content editor · Revizz';
+  const isTeacher = true;
+  const agentLine = '3 tasks need approval';
+  const initials = userDisplayName
+    ? userDisplayName
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'AO';
+  const avatarBg = 'var(--color-accent-300)';
+  const userName = userDisplayName || 'Ms. A. Okafor';
+  const userRole = isAdmin ? 'Teacher · School admin' : 'Teacher · Educator';
 
   const handleNavClick = (tabKey: string) => {
     if (onSelect) {
@@ -106,24 +112,17 @@ export default function AdminNav({
 
           {!compact && (
             <div className="flex flex-col leading-tight">
-              <span className="font-heading text-[21px] tracking-[0.03em] font-black text-[#201e1d]">
-                REVIZZ
+              <div className="flex items-center gap-1.5">
+                <span className="font-heading text-[21px] tracking-[0.03em] font-black text-[#201e1d]">
+                  REVIZZ
+                </span>
+                <span className="px-1.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] text-[9px] font-black uppercase tracking-wider border border-[#201e1d]/20">
+                  Educator
+                </span>
+              </div>
+              <span className="text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
+                Teacher Portal
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onToggleRole) {
-                    onToggleRole();
-                  } else if (onSwitchRole) {
-                    onSwitchRole(isTeacher ? 'content' : 'teacher');
-                  }
-                }}
-                className="text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50] text-left hover:text-[#c67139] flex items-center gap-1 group transition-colors"
-                title="Click to toggle role"
-              >
-                <span>{roleLabel}</span>
-                <ArrowRightLeft className="w-2.5 h-2.5 opacity-60 group-hover:opacity-100 transition-opacity" />
-              </button>
             </div>
           )}
         </div>
@@ -138,6 +137,20 @@ export default function AdminNav({
           </button>
         )}
       </div>
+
+      {/* Admin Switcher: Tactile button for Admins */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className={`flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#ccdbb2] border-[1.5px] border-[#201e1d] shadow-offset-2 text-[#201e1d] font-bold text-xs hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+            compact ? 'justify-center px-1' : ''
+          }`}
+          title="Switch to App Administration Dashboard"
+        >
+          <span className="text-sm">🛠️</span>
+          {!compact && <span className="truncate flex-1">Switch to App Admin</span>}
+        </Link>
+      )}
 
       {/* Navigation Sections */}
       <div className="flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar">
@@ -197,33 +210,43 @@ export default function AdminNav({
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={() => handleNavClick('mastery')}
-              className={navItemClass('mastery')}
-              title="Mastery analytics"
-            >
-              <BarChart3 className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
-              {!compact && <span>Mastery analytics</span>}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleNavClick('xp')}
-              className={navItemClass('xp')}
-              title="Leaderboard & XP"
-            >
-              <Trophy className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
-              {!compact && <span>Leaderboard & XP</span>}
-            </button>
           </div>
         )}
 
-        {/* Content Section */}
+        {/* Analytics Section (Student stats) */}
         <div className="flex flex-col gap-0.5">
           {!compact && (
             <span className="px-2.5 pb-1 text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
-              Content
+              Analytics
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={() => handleNavClick('mastery')}
+            className={navItemClass('mastery')}
+            title="Mastery analytics"
+          >
+            <BarChart3 className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
+            {!compact && <span>Mastery analytics</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleNavClick('xp')}
+            className={navItemClass('xp')}
+            title="Leaderboard & XP"
+          >
+            <Trophy className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
+            {!compact && <span>Leaderboard & XP</span>}
+          </button>
+        </div>
+
+        {/* Question Verification Section */}
+        <div className="flex flex-col gap-0.5">
+          {!compact && (
+            <span className="px-2.5 pb-1 text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
+              Question Verification
             </span>
           )}
 
@@ -239,26 +262,9 @@ export default function AdminNav({
 
           <button
             type="button"
-            onClick={() => handleNavClick('ingestion')}
-            className={navItemClass('ingestion')}
-            title="Ingestion studio"
-          >
-            <Layers className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
-            {!compact && (
-              <>
-                <span className="flex-1 text-left">Ingestion studio</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[11px] font-bold">
-                  1 staged
-                </span>
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
             onClick={() => handleNavClick('flagged')}
             className={navItemClass('flagged')}
-            title="Flagged"
+            title="Flagged questions"
           >
             <Flag className="w-[18px] h-[18px] shrink-0" strokeWidth={2.75} />
             {!compact && (

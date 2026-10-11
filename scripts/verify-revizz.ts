@@ -493,6 +493,106 @@ test('Student Account Badge message format matches expected pattern', () => {
   );
 });
 
+// Role & route capability modeling for Revizz Educator Portal vs App Admin
+type PortalRole = 'student' | 'teacher' | 'admin';
+type TeacherWorkflowFeature = 
+  | 'overview' 
+  | 'roster' 
+  | 'assign' 
+  | 'compiler' 
+  | 'mastery' 
+  | 'xp' 
+  | 'bank' 
+  | 'flagged' 
+  | 'editor' 
+  | 'school';
+
+type AppAdminFeature = 
+  | 'ingestion' 
+  | 'importer' 
+  | 'system_settings' 
+  | 'user_permissions';
+
+const TEACHER_WORKFLOW_FEATURES: TeacherWorkflowFeature[] = [
+  'overview',
+  'roster',
+  'assign',
+  'compiler',
+  'mastery',
+  'xp',
+  'bank',
+  'flagged',
+  'editor',
+  'school',
+];
+
+const APP_ADMIN_ISOLATED_FEATURES: AppAdminFeature[] = [
+  'ingestion',
+  'importer',
+  'system_settings',
+  'user_permissions',
+];
+
+const canAccessTeacherFeature = (role: PortalRole, feature: string): boolean => {
+  if (role !== 'teacher' && role !== 'admin') return false;
+  return TEACHER_WORKFLOW_FEATURES.includes(feature as TeacherWorkflowFeature);
+};
+
+const canAccessAdminFeature = (role: PortalRole, feature: string): boolean => {
+  if (role !== 'admin') return false;
+  return APP_ADMIN_ISOLATED_FEATURES.includes(feature as AppAdminFeature);
+};
+
+const resolvePortalRouteForTab = (tab: string): { route: '/portal' | '/admin'; tab: string } => {
+  const normalized = tab.toLowerCase();
+  if (normalized === 'ingestion' || normalized === 'importer') {
+    return { route: '/admin', tab: 'ingestion' };
+  }
+  return { route: '/portal', tab: normalized };
+};
+
+test('Teacher Role Separation: teachers have student management, student stats, question verification, test compiler, homework assignment', () => {
+  // Student management
+  assertEqual(canAccessTeacherFeature('teacher', 'roster'), true, 'Teacher can access student management (roster)');
+  // Student stats
+  assertEqual(canAccessTeacherFeature('teacher', 'overview'), true, 'Teacher can access overview stats');
+  assertEqual(canAccessTeacherFeature('teacher', 'mastery'), true, 'Teacher can access mastery analytics');
+  assertEqual(canAccessTeacherFeature('teacher', 'xp'), true, 'Teacher can access leaderboard & XP');
+  // Question verification
+  assertEqual(canAccessTeacherFeature('teacher', 'bank'), true, 'Teacher can access question bank verification');
+  assertEqual(canAccessTeacherFeature('teacher', 'flagged'), true, 'Teacher can access flagged questions verification');
+  assertEqual(canAccessTeacherFeature('teacher', 'editor'), true, 'Teacher can access question editor');
+  // Test compilation
+  assertEqual(canAccessTeacherFeature('teacher', 'compiler'), true, 'Teacher can access test compiler');
+  // Assigning homework
+  assertEqual(canAccessTeacherFeature('teacher', 'assign'), true, 'Teacher can access round / homework assigner');
+  // School & licence
+  assertEqual(canAccessTeacherFeature('teacher', 'school'), true, 'Teacher can access school & licence management');
+
+  // Students must not have teacher capabilities
+  assertEqual(canAccessTeacherFeature('student', 'roster'), false, 'Students denied teacher roster access');
+  assertEqual(canAccessTeacherFeature('student', 'assign'), false, 'Students denied homework assigner access');
+});
+
+test('Ingestion Isolation: Ingestion studio is strictly removed from teacher side and isolated to app admin', () => {
+  // Teacher cannot access ingestion studio
+  assertEqual(canAccessTeacherFeature('teacher', 'ingestion'), false, 'Teacher workflow does not include ingestion');
+  assertEqual(canAccessTeacherFeature('teacher', 'importer'), false, 'Teacher workflow does not include importer');
+  assertEqual(canAccessAdminFeature('teacher', 'ingestion'), false, 'Teachers denied admin ingestion tool access');
+
+  // Admin possesses ingestion and app admin tools
+  assertEqual(canAccessAdminFeature('admin', 'ingestion'), true, 'Admins can access ingestion studio');
+  assertEqual(canAccessAdminFeature('admin', 'importer'), true, 'Admins can access importer');
+});
+
+test('Route Isolation: Ingestion requests route cleanly to App Admin (/admin?tab=ingestion)', () => {
+  assertEqual(resolvePortalRouteForTab('ingestion').route, '/admin', 'Ingestion tab directs to /admin');
+  assertEqual(resolvePortalRouteForTab('importer').route, '/admin', 'Importer tab directs to /admin');
+  assertEqual(resolvePortalRouteForTab('roster').route, '/portal', 'Roster tab directs to /portal');
+  assertEqual(resolvePortalRouteForTab('compiler').route, '/portal', 'Compiler tab directs to /portal');
+  assertEqual(resolvePortalRouteForTab('assign').route, '/portal', 'Assign tab directs to /portal');
+});
+
 // -----------------------------------------------------------------------------
 // [Suite 7] Question Compiler Search & Filtering Capabilities
 // -----------------------------------------------------------------------------

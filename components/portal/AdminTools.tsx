@@ -385,7 +385,7 @@ export default function AdminTools({
               : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
           }`}
         >
-          🚀 Assign Rounds / Homework (2c)
+          🚀 Assign Rounds / Homework
         </button>
         <button
           onClick={() => setActiveSubTab('bank')}
@@ -395,17 +395,7 @@ export default function AdminTools({
               : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
           }`}
         >
-          📚 Question Bank (2f)
-        </button>
-        <button
-          onClick={() => setActiveSubTab('importer')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-            activeSubTab === 'importer'
-              ? 'bg-[#201e1d] text-[#f9f4ed]'
-              : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-          }`}
-        >
-          📦 Ingestion Studio
+          📚 Question Bank & Verification
         </button>
       </div>
 
@@ -917,14 +907,6 @@ export default function AdminTools({
         </div>
       )}
 
-      {/* ========================================================
-          SUB-TAB 3: INGESTION STUDIO
-          ======================================================== */}
-      {activeSubTab === 'importer' && (
-        <div className="w-full">
-          <IngestionHub />
-        </div>
-      )}
     </div>
   );
 }
