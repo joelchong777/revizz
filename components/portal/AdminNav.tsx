@@ -71,17 +71,17 @@ export default function AdminNav({
 
   const navItemClass = (tabKey: string) => {
     const isActive = active === tabKey;
-    return `w-full flex items-center gap-2.5 px-2.5 py-2 rounded-full transition-all text-sm select-none cursor-pointer ${
+    return `w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all text-sm select-none cursor-pointer ${
       isActive
-        ? 'bg-[#ffe1d0] text-[#201e1d] font-bold shadow-sm'
-        : 'text-[#474238] font-medium hover:bg-[#eee7db]/80 active:translate-y-0.5'
+        ? 'bg-[#ffe1d0] text-[#201e1d] font-bold border border-[#201e1d]/15 shadow-sm'
+        : 'text-[#474238] font-medium border border-transparent hover:bg-[#eee7db]/80 active:translate-y-0.5'
     }`;
   };
 
   return (
     <aside
       className={`h-full flex flex-col gap-4 p-4 box-border bg-[#ebddc5] border-r-[1.5px] border-[#dcd3c4] font-body text-[#201e1d] z-30 transition-all ${
-        compact ? 'w-[76px]' : 'w-[232px]'
+        compact ? 'w-[76px]' : 'w-[236px]'
       }`}
       style={{
         background: 'var(--color-surface, #ebddc5)',
@@ -90,38 +90,28 @@ export default function AdminNav({
       }}
     >
       {/* Brand Header */}
-      <div className="flex items-center justify-between px-1.5">
+      <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2.5">
           <Link
             href="/"
-            className="w-8 h-8 shrink-0 rounded-full bg-[#ffc6a5] border-[1.5px] border-[#201e1d] flex items-center justify-center -rotate-12 hover:rotate-0 transition-transform shadow-offset-2"
+            className="w-8 h-8 shrink-0 rounded-xl bg-[#ffe1d0] border-[1.5px] border-[#201e1d] flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform shadow-offset-2"
             title="Return to Student Home"
           >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="#201e1d"
-              stroke="#201e1d"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            >
-              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-            </svg>
+            <span className="font-heading font-black text-xs text-[#201e1d]">R</span>
           </Link>
 
           {!compact && (
             <div className="flex flex-col leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="font-heading text-[21px] tracking-[0.03em] font-black text-[#201e1d]">
+                <span className="font-heading font-black tracking-tight text-xl text-[#201e1d]">
                   REVIZZ
                 </span>
                 <span className="px-1.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] text-[9px] font-black uppercase tracking-wider border border-[#201e1d]/20">
-                  Educator
+                  EDUCATOR DECK
                 </span>
               </div>
-              <span className="text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
-                Teacher Portal
+              <span className="font-mono text-[9px] uppercase tracking-widest text-[#645c50] font-bold">
+                Teacher Command Deck
               </span>
             </div>
           )}
@@ -138,27 +128,42 @@ export default function AdminNav({
         )}
       </div>
 
-      {/* Admin Switcher: Tactile button for Admins */}
-      {isAdmin && (
+      {/* Switcher & Links */}
+      <div className="flex flex-col gap-1.5">
+        {/* Admin Switcher: Sleek tactile pill button for Admins */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-[#ccdbb2] border-[1.5px] border-[#201e1d] shadow-offset-2 text-[#201e1d] font-bold text-xs hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+              compact ? 'justify-center px-1' : ''
+            }`}
+            title="Switch to App Administration Dashboard"
+          >
+            <span className="text-sm">🛠️</span>
+            {!compact && <span className="truncate flex-1 font-bold">Switch to App Admin</span>}
+          </Link>
+        )}
+
+        {/* Return to Student Home Link */}
         <Link
-          href="/admin"
-          className={`flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#ccdbb2] border-[1.5px] border-[#201e1d] shadow-offset-2 text-[#201e1d] font-bold text-xs hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+          href="/"
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db]/80 transition-colors ${
             compact ? 'justify-center px-1' : ''
           }`}
-          title="Switch to App Administration Dashboard"
+          title="Return to Student Home"
         >
-          <span className="text-sm">🛠️</span>
-          {!compact && <span className="truncate flex-1">Switch to App Admin</span>}
+          <span className="text-sm">🏠</span>
+          {!compact && <span className="truncate flex-1">Student Home</span>}
         </Link>
-      )}
+      </div>
 
       {/* Navigation Sections */}
       <div className="flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar">
         {/* Teaching Section */}
         {isTeacher && (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {!compact && (
-              <span className="px-2.5 pb-1 text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
+              <span className="px-2.5 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
                 Teaching
               </span>
             )}
@@ -214,9 +219,9 @@ export default function AdminNav({
         )}
 
         {/* Analytics Section (Student stats) */}
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-1">
           {!compact && (
-            <span className="px-2.5 pb-1 text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
+            <span className="px-2.5 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
               Analytics
             </span>
           )}
@@ -243,9 +248,9 @@ export default function AdminNav({
         </div>
 
         {/* Question Verification Section */}
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-1">
           {!compact && (
-            <span className="px-2.5 pb-1 text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
+            <span className="px-2.5 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
               Question Verification
             </span>
           )}
@@ -270,7 +275,7 @@ export default function AdminNav({
             {!compact && (
               <>
                 <span className="flex-1 text-left">Flagged</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#b2622d] text-[#f9f4ed] text-[11px] font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-[#b2622d] text-[#f9f4ed] text-[11px] font-bold font-mono">
                   8
                 </span>
               </>
@@ -280,9 +285,9 @@ export default function AdminNav({
 
         {/* School Section */}
         {isTeacher && (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {!compact && (
-              <span className="px-2.5 pb-1 text-[10px] font-bold tracking-[0.1em] uppercase text-[#645c50]">
+              <span className="px-2.5 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
                 School
               </span>
             )}

@@ -33,7 +33,6 @@ export default function IngestionHub() {
     lifecycleState,
     canUndo,
     canRedo,
-    loadPreset,
     loadJson,
     updatePaperMetadata,
     setSelectedIdx,
@@ -58,6 +57,7 @@ export default function IngestionHub() {
     undo,
     redo,
     setPaper,
+    resetStore,
   } = useIngestionStore();
 
   // Local switch to toggle setup wizard screen even when paper is active
@@ -169,25 +169,37 @@ export default function IngestionHub() {
     year: number;
     series: string;
     paperCode: string;
+    apiKey?: string;
   }) => {
     setIsSetupOpen(false);
     await startExtraction({
       qpFile: params.qpFile,
       msFile: params.msFile || undefined,
+      apiKey: params.apiKey,
     });
-    // Update metadata
-    updatePaperMetadata({
-      subject: {
-        code: params.subjectCode,
-        name: params.subjectName,
-        icon: params.subjectIcon,
-      },
-      paper: {
-        series: params.series,
-        paper_code: params.paperCode,
-        year: params.year,
-      },
-    });
+    // Update metadata if specified
+    if (params.subjectCode) {
+      updatePaperMetadata({
+        subject: {
+          code: params.subjectCode,
+          name: params.subjectName,
+          icon: params.subjectIcon,
+        },
+        paper: {
+          series: params.series,
+          paper_code: params.paperCode,
+          year: params.year,
+        },
+      });
+    }
+  };
+
+  // Reset all session drafts and return to clean setup slate
+  const handleResetAll = () => {
+    clearDraft();
+    resetStore();
+    setHasSavedDraftState(false);
+    setIsSetupOpen(true);
   };
 
   // Start blank paper with selected metadata
@@ -237,7 +249,11 @@ export default function IngestionHub() {
   };
 
   // Studio mode management: 'setup' | 'workspace'
-  const mode: "setup" | "workspace" = !paper || isSetupOpen ? "setup" : "workspace";
+  // Mode starts purely in 'setup' when paper is null or has no questions loaded
+  const mode: "setup" | "workspace" =
+    !paper || !paper.questions || paper.questions.length === 0 || isSetupOpen
+      ? "setup"
+      : "workspace";
 
   return (
     <div className="min-h-screen bg-[#f5ead8] font-body p-4 sm:p-6 lg:p-8 relative overflow-x-hidden">
@@ -261,10 +277,6 @@ export default function IngestionHub() {
             onSwitchPaper={() => setIsSetupOpen(true)}
             onSaveDraft={() => saveDraftToLocalStorage()}
             onReturnToStudio={() => setIsSetupOpen(false)}
-            onLoadPreset={(id) => {
-              loadPreset(id || "0455_s24_12");
-              setIsSetupOpen(false);
-            }}
           />
         }
         progressShelf={
@@ -345,20 +357,14 @@ export default function IngestionHub() {
           /* Step 1: Cambridge Paper Setup & PDF Ingestion Wizard */
           <IngestionSetupWizard
             onStartExtraction={handleStartExtraction}
-            onLoadPreset={(id) => {
-              loadPreset(id || "0455_s24_12");
-              setIsSetupOpen(false);
-            }}
             onUploadJson={handleFileUpload}
             onStartBlank={handleStartBlank}
             onResumeDraft={() => {
               loadDraftFromLocalStorage();
               setIsSetupOpen(false);
             }}
-            onDiscardDraft={() => {
-              clearDraft();
-              setHasSavedDraftState(false);
-            }}
+            onDiscardDraft={handleResetAll}
+            onResetAll={handleResetAll}
             hasSavedDraft={hasSavedDraftState}
             isExtracting={isExtracting}
             extractionError={extractionError}

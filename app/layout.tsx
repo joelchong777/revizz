@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Caprasimo, Figtree } from "next/font/google";
+import { Space_Grotesk, Figtree, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
-const caprasimo = Caprasimo({
-  weight: "400",
+const spaceGrotesk = Space_Grotesk({
+  weight: ["400", "600", "700"],
   subsets: ["latin"],
   variable: "--font-heading",
   display: "swap",
@@ -18,9 +18,16 @@ const figtree = Figtree({
   display: "swap",
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Revizz - Cambridge MCQ Revision",
-  description: "Tactile, playful Cambridge MCQ revision and practice platform",
+  title: "Revizz - Cambridge MCQ Examination Intelligence & Revision",
+  description: "High-precision Cambridge examination intelligence and revision platform with spaced repetition and tactile telemetry.",
 };
 
 export const viewport: Viewport = {
@@ -37,7 +44,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${caprasimo.variable} ${figtree.variable}`}>
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${figtree.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         {/* Preload critical KaTeX font subsets for instant formula rendering */}
         <link

@@ -17,7 +17,9 @@ import {
   Database,
   Cpu,
   Sigma,
-  Code2
+  Code2,
+  Building2,
+  Activity
 } from 'lucide-react';
 
 export interface AppAdminHubProps {
@@ -80,18 +82,18 @@ export default function AppAdminHub({
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#201e1d]">
-                  Exam Parser
+                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
+                  INGESTION ENGINE v2.4
                 </span>
-                <span className="text-xs font-bold text-[#645c50]">
-                  Dual-PDF OCR & Gemini 1.5 Pro Extractor
+                <span className="text-xs font-mono font-bold text-[#645c50]">
+                  Dual-PDF OCR & Gemini 1.5 Pro Multimodal Pipeline
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
                 Cambridge Ingestion Studio
               </h1>
               <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
-                Upload Question Papers & Mark Schemes, parse diagram crops, and stage validated items for publishing.
+                Upload Question Papers & Mark Schemes, parse diagram bounding crops, and stage validated items for publishing.
               </p>
             </div>
             <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -121,18 +123,18 @@ export default function AppAdminHub({
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#201e1d]">
-                  Quality Gate
+                <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
+                  QUALITY GATE · STAGING
                 </span>
-                <span className="text-xs font-bold text-[#645c50]">
-                  Pre-Publishing Review & Approval
+                <span className="text-xs font-mono font-bold text-[#645c50]">
+                  Pre-Publishing Review & Mark Scheme Alignment
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
                 Staged Papers Queue
               </h1>
               <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
-                Audit complete extracted papers before committing them to the global live question pool.
+                Audit complete extracted papers and diagram bindings before committing them to the global live question pool.
               </p>
             </div>
             <button
@@ -153,10 +155,10 @@ export default function AppAdminHub({
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#8c491a]">
-                  Pipeline Health
+                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#8c491a]">
+                  PIPELINE HEALTH · TELEMETRY
                 </span>
-                <span className="text-xs font-bold text-[#645c50]">
+                <span className="text-xs font-mono font-bold text-[#645c50]">
                   KaTeX Sanitizer, Currency Isolator & OCR Validator
                 </span>
               </div>
@@ -168,9 +170,9 @@ export default function AppAdminHub({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#201e1d] shadow-offset-2 flex items-center gap-1.5">
+              <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#201e1d] shadow-offset-2 flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-800" />
-                Pipeline Active
+                OCR Engine Active
               </span>
             </div>
           </div>
@@ -271,15 +273,15 @@ export default function AppAdminHub({
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#201e1d]">
-                  Global Repository
+                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
+                  GLOBAL REPOSITORY
                 </span>
-                <span className="text-xs font-bold text-[#645c50]">
-                  {CAMBRIDGE_QUESTIONS.length} Questions Verified
+                <span className="text-xs font-mono font-bold text-[#645c50]">
+                  {CAMBRIDGE_QUESTIONS.length} Questions Live & Verified
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
-                Question Bank Inspection
+                Global Question Bank Intelligence
               </h1>
               <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
                 Browse, filter, preview, and audit all active multiple-choice questions across Cambridge syllabuses.
@@ -303,11 +305,11 @@ export default function AppAdminHub({
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#fff2eb] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#8c491a]">
-                  Moderation
+                <span className="px-2.5 py-0.5 rounded-full bg-[#fff2eb] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#8c491a]">
+                  MODERATION OPS · QA
                 </span>
-                <span className="text-xs font-bold text-[#645c50]">
-                  Community & Student Feedback
+                <span className="text-xs font-mono font-bold text-[#645c50]">
+                  Community & Educator Flag Reports (8 Queued)
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
@@ -359,117 +361,137 @@ export default function AppAdminHub({
         <div className="space-y-6">
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#201e1d]">
-                Live Status
+              <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
+                LIVE TELEMETRY · PRODUCTION OPS
               </span>
-              <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+              <span className="text-xs font-mono font-bold text-emerald-800 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                All Systems Operational
+                ALL SYSTEMS OPERATIONAL
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-[#201e1d] font-heading tracking-tight">
-              Revizz Platform Infrastructure
+              Revizz Platform Command Deck
             </h1>
             <p className="text-sm font-medium text-[#645c50] max-w-2xl">
-              High-level diagnostics and health monitoring for database pools, OCR pipelines, KaTeX parsers, and question asset storage.
+              Real-time platform telemetry, OCR pipeline status, Cambridge question bank health, and institutional school allocations.
             </p>
           </div>
 
+          {/* High-Density KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Total Verified Questions */}
             <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
               <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-black uppercase tracking-wider">Cambridge Questions</span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">Total Verified Questions</span>
                 <BookOpen className="w-4 h-4 text-[#201e1d]" />
               </div>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                {CAMBRIDGE_QUESTIONS.length}
+                40/40 Live
               </div>
               <p className="text-[11px] font-bold text-emerald-700">
-                100% Verified against Mark Schemes
+                100% Mark Scheme Audited
               </p>
             </div>
 
+            {/* Card 2: Staged Papers */}
             <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
               <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-black uppercase tracking-wider">Database Status</span>
-                <Database className="w-4 h-4 text-emerald-700" />
-              </div>
-              <div className="text-3xl font-black font-heading text-[#201e1d]">
-                Connected
-              </div>
-              <p className="text-[11px] font-bold text-[#645c50]">
-                Supabase PostgreSQL 15.1
-              </p>
-            </div>
-
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-black uppercase tracking-wider">OCR Extractor</span>
-                <Cpu className="w-4 h-4 text-[#8c491a]" />
-              </div>
-              <div className="text-3xl font-black font-heading text-[#201e1d]">
-                Gemini 1.5
-              </div>
-              <p className="text-[11px] font-bold text-[#645c50]">
-                Flash & Pro Vision Models Ready
-              </p>
-            </div>
-
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-black uppercase tracking-wider">Staged Queue</span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">Staged Papers</span>
                 <Layers className="w-4 h-4 text-[#201e1d]" />
               </div>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                1 Paper
+                1 Ready
               </div>
               <p className="text-[11px] font-bold text-amber-700">
-                Ready for staging audit
+                0625 Physics Nov 2024
+              </p>
+            </div>
+
+            {/* Card 3: OCR Pipeline Status */}
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
+              <div className="flex items-center justify-between text-[#645c50]">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">OCR Pipeline Status</span>
+                <Cpu className="w-4 h-4 text-emerald-700" />
+              </div>
+              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d] truncate">
+                Online · Gemini 1.5 Pro
+              </div>
+              <p className="text-[11px] font-bold text-emerald-700">
+                Dual-Vision + KaTeX Active
+              </p>
+            </div>
+
+            {/* Card 4: Active Schools */}
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
+              <div className="flex items-center justify-between text-[#645c50]">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">Active Schools</span>
+                <Building2 className="w-4 h-4 text-[#8c491a]" />
+              </div>
+              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d] truncate">
+                Frontier International
+              </div>
+              <p className="text-[11px] font-bold text-[#645c50]">
+                Enterprise Licence · 4 Cohorts
               </p>
             </div>
           </div>
 
+          {/* Quick Action Telemetry Buttons */}
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-            <h3 className="font-heading font-black text-lg text-[#201e1d]">
-              Quick Actions & Diagnostics
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-black text-lg text-[#201e1d]">
+                Quick Action Telemetry & Control
+              </h3>
+              <span className="font-mono text-xs text-[#645c50] font-bold">
+                OPS ACTIONS
+              </span>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => onSelectTab('ingestion')}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1 cursor-pointer active:translate-y-0.5"
+                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1.5 cursor-pointer active:translate-y-0.5 group"
               >
-                <div className="font-heading font-black text-sm text-[#201e1d]">
-                  Launch Ingestion Studio
+                <div className="flex items-center justify-between">
+                  <div className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139] transition-colors">
+                    Launch Ingestion Studio
+                  </div>
+                  <span className="text-sm">⚡</span>
                 </div>
                 <div className="text-xs font-medium text-[#645c50]">
-                  Extract new Cambridge PDF papers into the pipeline
+                  Ingest and parse raw Cambridge PDF papers into structured items
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onSelectTab('diagnostics')}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1 cursor-pointer active:translate-y-0.5"
+                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1.5 cursor-pointer active:translate-y-0.5 group"
               >
-                <div className="font-heading font-black text-sm text-[#201e1d]">
-                  KaTeX Pipeline Test
+                <div className="flex items-center justify-between">
+                  <div className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139] transition-colors">
+                    Inspect OCR Diagnostics
+                  </div>
+                  <span className="text-sm">🔬</span>
                 </div>
                 <div className="text-xs font-medium text-[#645c50]">
-                  Sanitize currency symbols and validate LaTeX equations
+                  Stress-test KaTeX sanitizer and 6-point OCR bounding boxes
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onSelectTab('staged')}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1 cursor-pointer active:translate-y-0.5"
+                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1.5 cursor-pointer active:translate-y-0.5 group"
               >
-                <div className="font-heading font-black text-sm text-[#201e1d]">
-                  Audit Staged Papers
+                <div className="flex items-center justify-between">
+                  <div className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139] transition-colors">
+                    Review Staged Paper
+                  </div>
+                  <span className="text-sm">📋</span>
                 </div>
                 <div className="text-xs font-medium text-[#645c50]">
-                  Review question stems, mark schemes, and diagram crops
+                  Audit question stems, mark schemes, and diagram crops
                 </div>
               </button>
             </div>

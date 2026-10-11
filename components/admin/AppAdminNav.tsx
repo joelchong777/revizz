@@ -58,31 +58,30 @@ export default function AppAdminNav({
         compact ? 'w-[76px]' : 'w-[250px]'
       }`}
     >
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {/* Brand Header */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2.5">
             <Link
               href="/"
-              className="w-9 h-9 shrink-0 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform shadow-offset-2"
+              className="w-9 h-9 shrink-0 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform shadow-offset-2"
               title="Student Home"
             >
               <span className="font-heading font-black text-sm text-[#201e1d]">R</span>
             </Link>
             <div className="flex flex-col">
-              <span className="font-heading font-black text-base tracking-tight leading-none text-[#201e1d]">
-                REVIZZ
-              </span>
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#73634e] mt-0.5">
-                Admin Console
+              <div className="flex items-center gap-1.5">
+                <span className="font-heading font-black text-lg tracking-tight leading-none text-[#201e1d]">
+                  REVIZZ
+                </span>
+              </div>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#645c50] font-bold mt-0.5">
+                Command Deck
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2">
-              App Admin
-            </span>
             {isOpen && (
               <button
                 type="button"
@@ -96,30 +95,38 @@ export default function AppAdminNav({
           </div>
         </div>
 
+        {/* Platform Ops Badge */}
+        <div className="px-1">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d] font-mono text-[10px] font-bold tracking-wider shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+            APP ADMIN · PLATFORM OPS
+          </span>
+        </div>
+
         {/* Quick Cross-Portal Switcher Actions */}
-        <div className="space-y-1.5 pt-1">
+        <div className="space-y-1.5 pt-0.5">
           <Link
             href="/portal"
-            className="w-full flex items-center justify-between px-3 py-2 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-xs font-black text-[#201e1d] group cursor-pointer"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#ffe1d0] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all text-xs font-bold text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
             title="Open Teacher Classroom Portal"
           >
             <span className="flex items-center gap-2">
               <GraduationCap className="w-4 h-4 text-[#201e1d]" />
-              <span>Teacher Portal</span>
+              <span>Teacher Portal 🎓</span>
             </span>
             <ExternalLink className="w-3.5 h-3.5 text-[#645c50] group-hover:text-[#201e1d]" />
           </Link>
 
           <Link
             href="/"
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold text-[#645c50] hover:text-[#201e1d] hover:bg-[#f5ead8]/60 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold text-[#645c50] hover:text-[#201e1d] hover:bg-[#f5ead8] transition-colors cursor-pointer"
             title="Return to Student Practice"
           >
             <span className="flex items-center gap-2">
-              <Home className="w-3.5 h-3.5" />
+              <span className="text-sm">🏠</span>
               <span>Student Home</span>
             </span>
-            <span className="text-[10px] font-mono">/</span>
+            <span className="text-[10px] font-mono text-[#645c50]">/</span>
           </Link>
         </div>
 
@@ -127,9 +134,11 @@ export default function AppAdminNav({
         <div className="flex flex-col gap-4 overflow-y-auto pr-0.5">
           {/* Section 1: Content Pipeline */}
           <div>
-            <div className="text-[10px] font-black uppercase tracking-wider text-[#73634e] px-2 mb-1.5 flex items-center justify-between">
-              <span>Content Pipeline</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="px-2 mb-1.5 flex items-center justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
+                Content Pipeline
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
             <nav className="flex flex-col gap-1">
               <button
@@ -141,8 +150,8 @@ export default function AppAdminNav({
                   <FileText className="w-4 h-4 text-[#201e1d]" />
                   <span>Ingestion Studio</span>
                 </span>
-                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[#201e1d]">
-                  1 staged
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#ccdbb2] border border-[#201e1d]/30 text-[#201e1d]">
+                  [ 1 STAGED ]
                 </span>
               </button>
 
@@ -164,10 +173,10 @@ export default function AppAdminNav({
               >
                 <span className="flex items-center gap-2.5">
                   <Sparkles className="w-4 h-4 text-[#201e1d]" />
-                  <span>Diagnostics</span>
+                  <span>Ingestion Diagnostics</span>
                 </span>
-                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#8c491a] border border-[#201e1d]/40">
-                  OCR/KaTeX
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#8c491a] border border-[#201e1d]/30">
+                  [ OCR/KaTeX ]
                 </span>
               </button>
 
@@ -178,7 +187,7 @@ export default function AppAdminNav({
               >
                 <span className="flex items-center gap-2.5">
                   <BookOpen className="w-4 h-4 text-[#201e1d]" />
-                  <span>Question Bank</span>
+                  <span>Global Question Bank</span>
                 </span>
               </button>
 
@@ -189,7 +198,10 @@ export default function AppAdminNav({
               >
                 <span className="flex items-center gap-2.5">
                   <Flag className="w-4 h-4 text-[#201e1d]" />
-                  <span>Flagged Reports</span>
+                  <span>Flagged Questions</span>
+                </span>
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#f5d0bd] text-[#8c491a] border border-[#201e1d]/30">
+                  [ 8 ]
                 </span>
               </button>
             </nav>
@@ -197,8 +209,10 @@ export default function AppAdminNav({
 
           {/* Section 2: Platform & System */}
           <div>
-            <div className="text-[10px] font-black uppercase tracking-wider text-[#73634e] px-2 mb-1.5">
-              Platform & System
+            <div className="px-2 mb-1.5">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
+                Platform & System
+              </span>
             </div>
             <nav className="flex flex-col gap-1">
               <button

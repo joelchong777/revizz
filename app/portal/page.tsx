@@ -176,15 +176,24 @@ function PortalContent() {
   if (!isEducator) {
     return (
       <div className="min-h-screen bg-[#f5ead8] p-4 sm:p-6 flex flex-col items-center justify-center font-body text-[#201e1d]">
-        <div className={`w-full ${authError ? 'max-w-lg' : 'max-w-md'} bg-[#f9f4ed] rounded-[28px] p-6 sm:p-8 border-2 border-[#201e1d] shadow-offset-4 text-center space-y-6 transition-all duration-150`}>
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
-            🎓
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight">Educator Access Only</h1>
-            <p className="text-[#645c50] font-medium text-sm">
-              This area is restricted to teachers and administrators. Please sign in with your school account.
-            </p>
+        <div className={`w-full ${authError ? 'max-w-xl' : 'max-w-lg'} bg-[#f9f4ed] rounded-[28px] p-6 sm:p-8 border-2 border-[#201e1d] shadow-offset-4 space-y-6 transition-all duration-150`}>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+            <div className="w-14 h-14 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-2xl shrink-0">
+              🎓
+            </div>
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d] font-mono text-[10px] font-bold uppercase tracking-wider text-[#8c491a]">
+                  EDUCATOR CREDENTIAL REQUIRED
+                </span>
+              </div>
+              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
+                Cambridge Educator Command Portal
+              </h1>
+              <p className="text-[#645c50] font-medium text-xs sm:text-sm leading-relaxed">
+                Dedicated interface for classroom analytics, assignment orchestration, and test compilation. Sign in with your institutional credentials or enter immediately in demonstration mode.
+              </p>
+            </div>
           </div>
 
           {authError && (
@@ -289,12 +298,12 @@ function PortalContent() {
             </div>
           )}
 
-          <div className="space-y-3 pt-4 border-t-2 border-[#dcd3c4]">
+          <div className="space-y-3 pt-2 border-t-2 border-[#dcd3c4]">
             {!authError && (
               <button
                 type="button"
                 onClick={() => setGuestMode(true)}
-                className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer font-body"
+                className="w-full py-3.5 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm rounded-2xl border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>🎓</span> Enter as Guest Educator / Admin (Demo)
               </button>
@@ -305,7 +314,7 @@ function PortalContent() {
                 type="button"
                 disabled={isSigningIn}
                 onClick={handleGoogleSignIn}
-                className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[#eee7db] text-[#201e1d] font-bold text-sm rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
               >
                 {isSigningIn ? (
                   <>
@@ -313,7 +322,7 @@ function PortalContent() {
                     <span>Signing in...</span>
                   </>
                 ) : (
-                  <span>Sign In with Google</span>
+                  <span>Sign In with School Google Account</span>
                 )}
               </button>
             ) : (
@@ -326,7 +335,7 @@ function PortalContent() {
               <button
                 type="button"
                 onClick={() => setDevOverride(true)}
-                className="w-full py-3 bg-[#f0fae1] text-[#272e1b] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#e1eecc] transition-all active:translate-y-0.5"
+                className="w-full py-2.5 bg-[#f0fae1] text-[#272e1b] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#e1eecc] transition-all active:translate-y-0.5"
               >
                 Preview as Teacher / Admin (Dev)
               </button>
@@ -334,9 +343,9 @@ function PortalContent() {
 
             <Link
               href="/"
-              className="block w-full py-3 bg-[#eee7db] text-[#474238] font-bold rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
+              className="block w-full py-2.5 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
             >
-              Return to Home
+              Return to Student Home
             </Link>
           </div>
         </div>
@@ -708,8 +717,9 @@ function PortalContent() {
       {/* Main Content Area */}
       <div className="min-w-0 flex flex-col min-h-screen">
         {/* Mobile Sticky Top Bar */}
-        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-[1.5px] border-[#dcd3c4] px-4 py-2.5 flex items-center justify-between gap-2 shadow-sm">
-          <div className="flex items-center gap-2.5 min-w-0">
+        {/* Mobile Sticky Top Header */}
+        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-[1.5px] border-[#dcd3c4] px-4 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
@@ -718,26 +728,25 @@ function PortalContent() {
             >
               <Menu className="w-5 h-5 text-[#201e1d]" />
             </button>
-            <Link
-              href="/"
-              className="font-heading text-lg font-black tracking-wide text-[#201e1d] hover:opacity-80 transition-opacity shrink-0"
-            >
-              REVIZZ
-            </Link>
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="font-heading text-sm font-black text-[#201e1d]">
+                Teacher Portal
+              </span>
+              <span className="text-[#645c50] text-xs font-mono">/</span>
+              <span className="text-xs font-bold text-[#645c50] truncate">
+                {NAV_LABELS[activeNav] || 'Overview'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] text-[#201e1d] shadow-offset-2 truncate max-w-[120px] sm:max-w-none">
-              {NAV_LABELS[activeNav] || 'Classes & students'}
-            </span>
-
             {isAdmin && (
               <Link
                 href="/admin"
-                className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#ccdbb2] border-[1.5px] border-[#201e1d] text-[#201e1d] hover:bg-[#b8c99d] transition-colors flex items-center gap-1 shadow-offset-2 active:translate-y-0.5"
+                className="text-xs font-bold px-2.5 py-1 rounded-xl bg-[#ccdbb2] border-[1.5px] border-[#201e1d] text-[#201e1d] hover:bg-[#b8c99d] transition-colors flex items-center gap-1 shadow-offset-2 active:translate-y-0.5"
                 title="Open App Admin"
               >
-                <span>Admin 🛠️</span>
+                <span>App Admin 🛠️</span>
               </Link>
             )}
           </div>
@@ -745,20 +754,36 @@ function PortalContent() {
 
         {/* Desktop Sticky Top Header */}
         <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-[1.5px] border-[#dcd3c4] px-8 py-3 items-center justify-between shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <span className="font-heading font-black text-lg text-[#201e1d]">
-              {NAV_LABELS[activeNav] || 'Teacher Portal'}
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] font-bold border border-[#201e1d]/15">
-              Teacher Portal 🎓
-            </span>
+          <div className="flex items-center gap-4 min-w-0">
+            {/* Clean Breadcrumb Header */}
+            <div className="flex items-center gap-2">
+              <span className="font-heading font-black text-lg text-[#201e1d]">
+                Teacher Portal
+              </span>
+              <span className="text-[#645c50] font-mono text-base">/</span>
+              <span className="font-heading font-bold text-base text-[#201e1d]">
+                {NAV_LABELS[activeNav] || 'Overview'}
+              </span>
+            </div>
+
+            {/* Telemetry Status */}
+            <div className="flex items-center gap-2 pl-4 border-l border-[#201e1d]/15 text-xs font-mono text-[#645c50]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active Cohort: 10B Physics
+              </span>
+              <span>·</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
+                Syllabus: Cambridge IGCSE 2024
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {isAdmin && (
               <Link
                 href="/admin"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ccdbb2] text-[#201e1d] font-black text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ccdbb2] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                 title="Open App Administration Dashboard"
               >
                 <span>Open App Admin 🛠️</span>

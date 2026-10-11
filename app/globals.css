@@ -43,17 +43,20 @@
   --color-accent-2-800: #3d472b;
   --color-accent-2-900: #272e1b;
 
-  --font-heading: 'Caprasimo', serif;
+  --font-heading: 'Space Grotesk', sans-serif;
   --font-body: 'Figtree', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 28px;
   --radius-full: 999px;
 
+  --shadow-tactile: 0 1px 3px rgba(32, 30, 29, 0.08), 0 4px 12px rgba(32, 30, 29, 0.05);
+  --shadow-hud: 0 8px 32px -8px rgba(32, 30, 29, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   --shadow-offset-2: 2px 2px 0 #201e1d;
-  --shadow-offset-3: 3px 3px 0 #201e1d;
-  --shadow-offset-4: 4px 4px 0 #201e1d;
+  --shadow-offset-3: 2px 3px 0 #201e1d;
+  --shadow-offset-4: 3px 4px 0 #201e1d;
   --shadow-offset-6: 6px 6px 0 #201e1d;
   --shadow-chunky: 2px 2px 0 #201e1d;
   --shadow-chunky-lg: 4px 4px 0 #201e1d;
@@ -76,7 +79,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading), 'Caprasimo', serif;
+    font-family: var(--font-heading), 'Space Grotesk', sans-serif;
   }
 
   /* Smooth keyboard focus-visible outlines for accessibility */
@@ -128,14 +131,24 @@
 }
 
 @layer components {
-  /* Tactile button press from Organic design system */
+  /* Tactile button press with clean micro-border and subtle physics */
   .btn-pill {
-    @apply rounded-full border-2 border-[#201e1d] font-bold transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none inline-flex items-center justify-center cursor-pointer select-none;
+    @apply rounded-full border-[1.5px] border-[#201e1d]/25 font-bold transition-all duration-150 hover:border-[#201e1d]/40 active:translate-x-[1px] active:translate-y-[1px] inline-flex items-center justify-center cursor-pointer select-none;
   }
 
-  /* Tactile card from Organic design system */
+  /* Sleek frosted/precision card */
   .card-organic {
-    @apply rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] shadow-offset-4;
+    @apply rounded-2xl border-[1.5px] border-[#201e1d]/15 bg-[#fcf9f5]/90 backdrop-blur-md shadow-tactile;
+  }
+
+  /* Glassmorphic telemetry container with subtle specular highlight */
+  .card-hud {
+    @apply rounded-2xl border-[1.5px] border-[#201e1d]/15 bg-[#fcf9f5]/80 backdrop-blur-xl shadow-hud;
+  }
+
+  /* High-precision HUD monospace label */
+  .hud-mono {
+    @apply font-mono text-xs tracking-wider uppercase;
   }
 
   /* Washed image filter for photos to sit back into the warm ground */
@@ -143,9 +156,9 @@
     filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94);
   }
 
-  /* Tactile chunky 3D button utility classes */
+  /* Sleek modernized 3D push-button with crisp bottom edge */
   .btn-chunky {
-    @apply inline-flex items-center justify-center font-bold rounded-2xl border-b-4 transition-all duration-75 select-none cursor-pointer active:translate-y-1 active:border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center font-bold rounded-2xl border-b-[3px] transition-all duration-75 select-none cursor-pointer active:translate-y-[1.5px] active:border-b-[1.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
   }
 
   .btn-chunky-yellow {
@@ -183,7 +196,7 @@
 
   /* Responsive student framed canvas container */
   .student-canvas-container {
-    @apply w-full max-w-xl mx-auto md:my-8 md:p-6 md:rounded-3xl md:border-4 md:border-slate-800 md:shadow-[0_16px_0_0_rgba(15,23,42,0.15)] bg-amber-50/60 min-h-screen md:min-h-[85vh] flex flex-col;
+    @apply w-full max-w-xl mx-auto md:my-8 md:p-6 md:rounded-[32px] md:border-[1.5px] md:border-[#201e1d]/20 md:shadow-[0_24px_64px_-12px_rgba(32,30,29,0.14),0_0_0_1px_rgba(255,255,255,0.7)] bg-[#f7efe4]/95 backdrop-blur-xl min-h-screen md:min-h-[85vh] flex flex-col;
   }
 
   .contain-content {

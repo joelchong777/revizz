@@ -65,82 +65,121 @@ export function RoundSummary({
 
   const title =
     accuracy >= 80
-      ? 'Brilliant round!'
+      ? 'Exceptional Performance'
       : accuracy >= 50
-      ? 'Solid round!'
-      : 'Round complete';
+      ? 'Target Benchmark Achieved'
+      : 'Diagnostic Completed';
 
-  const subtitle = `Cambridge Economics 0455 · ${totalAnswered} Questions Answered`;
+  const subtitle = `Cambridge Economics 0455 · ${totalAnswered} Questions Evaluated`;
 
   const stats = [
     {
-      label: 'XP earned',
-      value: `+${totalXP}`,
-      bg: 'bg-accent-300',
+      label: 'XP Earned',
+      value: `+${totalXP} XP`,
+      color: 'text-emerald-700',
+      bg: 'bg-emerald-50/80 border-emerald-200',
     },
     {
-      label: 'Peak streak',
-      value: `🔥 ${peakStreak}×`,
-      bg: 'bg-accent-200',
+      label: 'Peak Streak',
+      value: `${peakStreak} 🔥`,
+      color: 'text-[#c67139]',
+      bg: 'bg-amber-50/80 border-amber-200',
     },
     {
-      label: '1st-try accuracy',
-      value: `${accuracy}%`,
-      bg: 'bg-accent-2-300',
-    },
-    {
-      label: 'Questions',
+      label: 'First-Try Rate',
       value: `${correctFirstTryCount}/${totalAnswered}`,
-      bg: 'bg-neutral-100',
+      color: 'text-[#201e1d]',
+      bg: 'bg-white border-[#201e1d]/15',
+    },
+    {
+      label: 'Retry Resolved',
+      value: `${correctRetryCount}`,
+      color: 'text-blue-700',
+      bg: 'bg-blue-50/80 border-blue-200',
     },
   ];
 
   const letters = ['A', 'B', 'C', 'D'];
 
+  // SVG circular gauge calculation
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (accuracy / 100) * circumference;
+
   return (
     <motion.div
-      initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0 }}
+      initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.98, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-      className="w-full max-w-[480px] mx-auto py-8 sm:py-10 px-4 sm:px-6 pb-16 flex flex-col gap-7 sm:gap-8 select-none"
+      className="w-full max-w-[500px] mx-auto py-6 sm:py-8 px-4 sm:px-6 pb-16 flex flex-col gap-6 select-none"
     >
-      {/* 1. Giant Circular Score Badge + Title */}
-      <div className="flex items-center gap-4">
-        {/* Giant Circular Score Badge */}
-        <div className="w-[104px] h-[104px] flex-none rounded-full bg-accent-300 border-[3px] border-text shadow-[5px_5px_0_#201e1d] flex flex-col items-center justify-center -rotate-6">
-          <span className="font-heading text-4xl leading-none text-text">
-            {correctFirstTryCount}/{totalAnswered}
-          </span>
-          <span className="text-[11px] font-bold tracking-[0.08em] uppercase text-text mt-0.5">
-            correct
-          </span>
+      {/* 1. Header & Prominent Accuracy Telemetry Gauge */}
+      <div className="p-5 rounded-3xl bg-white/95 border-[1.5px] border-[#201e1d]/20 shadow-sm flex flex-col sm:flex-row items-center gap-5">
+        {/* Circular Telemetry Meter */}
+        <div className="relative w-28 h-28 flex items-center justify-center flex-shrink-0">
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+            <circle
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="transparent"
+              stroke="#eee7db"
+              strokeWidth="8"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="transparent"
+              stroke={accuracy >= 80 ? '#7a8a5e' : accuracy >= 50 ? '#c67139' : '#e06d53'}
+              strokeWidth="8"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              className="transition-all duration-1000 ease-out"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="font-heading font-black text-2xl text-text leading-none">
+              {accuracy}%
+            </span>
+            <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-neutral-500 mt-1">
+              ACCURACY
+            </span>
+          </div>
         </div>
 
         {/* Title and Subtitle */}
-        <div className="flex-1 min-w-0">
-          <h1 className="font-heading text-[32px] sm:text-[34px] leading-tight text-text mb-1">
+        <div className="flex-1 text-center sm:text-left min-w-0">
+          <div className="flex items-center justify-center sm:justify-start gap-1.5 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+              SESSION TELEMETRY DEBRIEF
+            </span>
+          </div>
+          <h1 className="font-heading font-black text-2xl sm:text-3xl leading-tight text-text">
             {title}
           </h1>
-          <p className="text-sm font-semibold text-neutral-700 m-0 leading-snug">
+          <p className="text-xs font-mono font-medium text-neutral-600 m-0 mt-0.5">
             {subtitle}
           </p>
         </div>
       </div>
 
-      {/* 2. 4-Card Stats Grid */}
-      <div className="grid grid-cols-2 gap-3.5 sm:gap-4">
+      {/* 2. Key Metrics Grid */}
+      <div className="grid grid-cols-2 gap-3">
         {stats.map((s, idx) => (
           <div
             key={idx}
             className={cn(
-              'flex flex-col gap-1.5 p-4 sm:p-5 rounded-[22px] border-2 border-text shadow-offset-3',
+              'flex flex-col gap-1 p-3.5 rounded-2xl border shadow-xs',
               s.bg
             )}
           >
-            <span className="text-xs font-bold tracking-[0.04em] uppercase text-neutral-800">
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-neutral-600">
               {s.label}
             </span>
-            <span className="font-heading text-[28px] leading-tight text-text truncate">
+            <span className={cn('font-heading font-bold text-2xl sm:text-[26px] leading-tight truncate', s.color)}>
               {s.value}
             </span>
           </div>
@@ -148,14 +187,20 @@ export function RoundSummary({
       </div>
 
       {/* 3. Missed Questions Accordion */}
-      <div className="flex flex-col gap-3.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0 mb-1">
-          Missed questions · {missedQuestions.length}
-        </h2>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-mono text-xs font-bold tracking-wider uppercase text-neutral-700 m-0">
+            ERRORS &amp; DISTRACTORS ({missedQuestions.length})
+          </h2>
+          <span className="font-mono text-[10px] text-neutral-500 font-bold">
+            LEITNER QUEUE
+          </span>
+        </div>
 
         {missedQuestions.length === 0 ? (
-          <div className="p-3.5 sm:px-4 rounded-[22px] bg-accent-2-200 border-2 border-text font-bold text-sm text-text">
-            Clean sweep — nothing to review. 👑
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 font-mono text-xs font-bold text-emerald-900 flex items-center gap-2">
+            <span>👑</span>
+            <span>Clean execution! Zero errors recorded. Mastery logged to profile.</span>
           </div>
         ) : (
           <>
@@ -165,116 +210,109 @@ export function RoundSummary({
                 playPop();
                 onReviewMissed();
               }}
-              className="w-full py-[15px] px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
+              className="w-full py-3.5 px-5 rounded-2xl bg-[#c67139] hover:bg-[#b05f2b] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[0_4px_0_0_#201e1d] font-heading font-bold text-base tracking-wide cursor-pointer transition-all active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
             >
-              Review missed questions 🧠
+              <span>REVIEW MISSED ITEMS</span>
+              <span className="text-lg">🧠</span>
             </button>
 
-            <div className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-2.5">
               {missedQuestions.map((item, idx) => {
-              const isOpen = openMissedIndex === idx;
-              const correctIdx = item.question.options.findIndex(
-                (opt) => opt.id === item.question.correct_option_id
-              );
-              const correctLetter = correctIdx >= 0 ? letters[correctIdx] : 'A';
-              const correctOption = item.question.options[correctIdx];
+                const isOpen = openMissedIndex === idx;
+                const correctIdx = item.question.options.findIndex(
+                  (opt) => opt.id === item.question.correct_option_id
+                );
+                const correctLetter = correctIdx >= 0 ? letters[correctIdx] : 'A';
+                const correctOption = item.question.options[correctIdx];
 
-              const steps = [
-                `Review syllabus concept: ${item.question.stem_markdown.replace(/[*#$]/g, '').slice(0, 90)}...`,
-                `Correct answer is Option ${correctLetter}: "${correctOption?.text_markdown.replace(/[*#$]/g, '') || ''}".`,
-                `This question has been queued to your Review Pile for spaced repetition practice.`,
-              ];
+                const steps = [
+                  `Examine syllabus proposition: "${item.question.stem_markdown.replace(/\$(?!\d)/g, '').replace(/[*#]/g, '').slice(0, 90)}..."`,
+                  `Verify Option ${correctLetter}: "${correctOption?.text_markdown.replace(/\$(?!\d)/g, '').replace(/[*#]/g, '') || ''}".`,
+                  `Queued to your active Spaced Repetition pile for subsequent verification.`,
+                ];
 
-              return (
-                <div
-                  key={item.question.id}
-                  className="rounded-[22px] bg-neutral-100 border-2 border-text shadow-offset-3 overflow-hidden"
-                >
-                  {/* Accordion Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => toggleMissed(idx)}
-                    className="w-full flex items-center gap-2.5 p-3 px-3.5 bg-transparent border-0 cursor-pointer text-left transition-colors hover:bg-neutral-200/50"
+                return (
+                  <div
+                    key={item.question.id}
+                    className="rounded-2xl bg-white/95 border-[1.5px] border-[#201e1d]/20 shadow-xs overflow-hidden"
                   >
-                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                      <span className="text-[11px] font-bold text-neutral-700">
-                        {item.question.citation?.replace('Cambridge IGCSE ', '') || `Question ${item.questionNumber}`}
-                      </span>
-                      <span className="text-sm font-semibold text-text leading-snug line-clamp-2">
-                        {item.question.stem_markdown.replace(/[*#$]/g, '')}
-                      </span>
-                    </div>
-                    <span
-                      className={cn(
-                        'inline-flex transition-transform duration-200 text-text flex-shrink-0',
-                        isOpen && 'rotate-180'
-                      )}
+                    {/* Accordion Trigger */}
+                    <button
+                      type="button"
+                      onClick={() => toggleMissed(idx)}
+                      className="w-full flex items-center gap-3 p-3.5 bg-transparent border-0 cursor-pointer text-left transition-colors hover:bg-neutral-50"
                     >
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.75"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
-                    </span>
-                  </button>
-
-                  {/* Expanded Content */}
-                  {isOpen && (
-                    <div className="flex flex-col gap-2 p-4 pb-4 pt-3.5 border-t border-neutral-300/80">
-                      <span className="self-start px-3 py-1 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-[13px] text-text">
-                        Answer {correctLetter} · {correctOption?.text_markdown.replace(/[*#$]/g, '')}
-                      </span>
-                      <div className="flex flex-col gap-1.5 mt-1">
-                        {steps.map((st, stepIdx) => (
-                          <span
-                            key={stepIdx}
-                            className="text-[13px] leading-relaxed text-text font-medium"
-                          >
-                            {stepIdx + 1}. {st}
-                          </span>
-                        ))}
+                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                          {item.question.citation?.replace('Cambridge IGCSE ', '') || `ITEM ${item.questionNumber}`}
+                        </span>
+                        <span className="text-xs sm:text-[13px] font-medium text-text leading-snug line-clamp-2">
+                          {item.question.stem_markdown.replace(/\$(?!\d)/g, '').replace(/[*#]/g, '')}
+                        </span>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
+                      <span
+                        className={cn(
+                          'inline-flex transition-transform duration-200 text-text flex-shrink-0 font-mono text-xs font-bold px-1.5 py-0.5 rounded border border-[#201e1d]/20',
+                          isOpen && 'rotate-180 bg-neutral-100'
+                        )}
+                      >
+                        ▼
+                      </span>
+                    </button>
+
+                    {/* Expanded Content */}
+                    {isOpen && (
+                      <div className="flex flex-col gap-2.5 p-4 border-t border-[#201e1d]/10 bg-[#faf6f0]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono font-bold text-xs">
+                            CORRECT: [{correctLetter}]
+                          </span>
+                          <span className="text-xs font-medium text-[#201e1d] truncate">
+                            {correctOption?.text_markdown.replace(/\$(?!\d)/g, '').replace(/[*#]/g, '')}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1.5 mt-1 font-mono text-xs">
+                          {steps.map((st, stepIdx) => (
+                            <div key={stepIdx} className="flex gap-2 items-start text-neutral-700">
+                              <span className="text-[#c67139] font-bold">0{stepIdx + 1}.</span>
+                              <span className="font-sans text-xs leading-relaxed text-[#201e1d]">
+                                {st}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
-      {/* 4. Action Pills */}
-      <div className="flex flex-col gap-3.5 pt-2 sm:pt-4">
-        <div className="grid grid-cols-2 gap-3.5">
-          <button
-            type="button"
-            onClick={() => {
-              playPop();
-              onPlayAgain();
-            }}
-            className="py-[13px] px-4 rounded-full bg-accent-2-300 hover:bg-accent-2-400 text-text border-2 border-text shadow-offset-4 font-heading text-base cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
-          >
-            Play again 🔄
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              playPop();
-              onHome();
-            }}
-            className="py-[13px] px-4 rounded-full bg-neutral-100 hover:bg-neutral-200 text-text border-2 border-text shadow-offset-4 font-heading text-base cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
-          >
-            Home 🏠
-          </button>
-        </div>
+      {/* 4. Action CTAs */}
+      <div className="grid grid-cols-2 gap-3 pt-2">
+        <button
+          type="button"
+          onClick={() => {
+            playPop();
+            onPlayAgain();
+          }}
+          className="py-3.5 px-4 rounded-2xl bg-[#201e1d] hover:bg-[#34302d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[0_4px_0_0_#201e1d] font-heading font-bold text-sm sm:text-base tracking-wide cursor-pointer transition-all active:translate-y-1 active:shadow-none select-none text-center"
+        >
+          START NEXT SESSION 🔄
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            playPop();
+            onHome();
+          }}
+          className="py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-100 text-text border-2 border-[#201e1d] shadow-[0_4px_0_0_#201e1d] font-heading font-bold text-sm sm:text-base tracking-wide cursor-pointer transition-all active:translate-y-1 active:shadow-none select-none text-center"
+        >
+          RETURN TO HUB 🏠
+        </button>
       </div>
     </motion.div>
   );

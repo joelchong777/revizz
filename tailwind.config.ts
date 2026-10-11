@@ -9,8 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ["var(--font-heading)", "Caprasimo", "serif"],
+        heading: ["var(--font-heading)", "Space Grotesk", "sans-serif"],
         body: ["var(--font-body)", "Figtree", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "monospace"],
       },
       colors: {
         // Revizz brand tokens
@@ -84,9 +85,13 @@ const config: Config = {
         "4xl": "2rem",
       },
       boxShadow: {
+        tactile: "0 1px 3px rgba(32,30,29,0.08), 0 4px 12px rgba(32,30,29,0.05)",
+        hud: "0 8px 32px -8px rgba(32,30,29,0.12), inset 0 1px 0 rgba(255,255,255,0.7)",
+        "glow-terracotta": "0 0 20px -3px rgba(198,113,57,0.3)",
+        "glow-emerald": "0 0 20px -3px rgba(114,129,87,0.35)",
         "offset-2": "2px 2px 0 #201e1d",
-        "offset-3": "3px 3px 0 #201e1d",
-        "offset-4": "4px 4px 0 #201e1d",
+        "offset-3": "2px 3px 0 #201e1d",
+        "offset-4": "3px 4px 0 #201e1d",
         "offset-6": "6px 6px 0 #201e1d",
         chunky: "2px 2px 0 #201e1d",
         "chunky-lg": "4px 4px 0 #201e1d",

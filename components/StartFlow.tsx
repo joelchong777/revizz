@@ -128,22 +128,33 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
   };
 
   return (
-    <div className="w-full max-w-[480px] mx-auto py-5 px-4 pb-12 flex flex-col gap-5 select-none">
-      {/* Title Header */}
-      <div>
-        <h1 className="font-heading text-4xl text-text leading-tight mb-1">
+    <div className="w-full max-w-[500px] mx-auto py-5 px-4 pb-14 flex flex-col gap-5 select-none">
+      {/* Telemetry Header */}
+      <div className="flex flex-col gap-1 border-b border-[#201e1d]/15 pb-4">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-mono text-xs font-bold tracking-widest uppercase text-neutral-600">
+            SESSION INITIALIZER · CAMBRIDGE SUITE
+          </span>
+        </div>
+        <h1 className="font-heading font-black text-3xl sm:text-4xl text-text leading-tight tracking-tight">
           Ready, {firstName}?
         </h1>
-        <p className="text-[15px] text-neutral-700 font-semibold m-0">
-          Pick a subject, set the rules, go.
+        <p className="text-xs sm:text-sm text-neutral-600 font-mono m-0">
+          Select target syllabus specification and execution parameters.
         </p>
       </div>
 
-      {/* 1. Subject Selection */}
+      {/* 1. Subject Grid */}
       <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-          Subject
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-mono text-xs font-bold tracking-wider uppercase text-neutral-700 m-0">
+            TARGET SYLLABUS
+          </h2>
+          <span className="font-mono text-[10px] text-neutral-500 font-bold">
+            2024–2026 SPEC
+          </span>
+        </div>
         <div className="grid grid-cols-2 gap-2.5">
           {SUBJECTS.map((s) => {
             const isSelected = selectedSubjectKey === s.key;
@@ -153,231 +164,248 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
                 type="button"
                 onClick={() => handleSubjectSelect(s.key)}
                 className={cn(
-                  'flex items-center gap-2.5 p-3 sm:px-3.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
+                  'flex flex-col gap-2 p-3.5 rounded-2xl border-[1.5px] text-left cursor-pointer transition-all',
                   isSelected
-                    ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                    : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                    ? 'border-[#201e1d] bg-white ring-2 ring-[#c67139]/40 shadow-sm'
+                    : 'border-[#201e1d]/20 bg-white/70 hover:bg-white hover:border-[#201e1d]/40 shadow-xs'
                 )}
               >
-                <span className="text-[22px] leading-none">{s.emoji}</span>
-                <span className="flex flex-col leading-[1.15] min-w-0">
-                  <span className="font-heading text-base text-text truncate">{s.name}</span>
-                  <span className="text-xs font-bold opacity-75 text-text">{s.code}</span>
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl leading-none">{s.emoji}</span>
+                  <span
+                    className={cn(
+                      'px-2 py-0.5 rounded font-mono text-[10px] font-bold tracking-wider',
+                      s.key === 'econ'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : 'bg-neutral-100 text-neutral-600 border border-neutral-300'
+                    )}
+                  >
+                    {s.key === 'econ' ? 'LIVE BANK' : 'ACCELERATOR'}
+                  </span>
+                </div>
+                <div className="flex flex-col leading-tight">
+                  <span className="font-heading font-bold text-base text-text">
+                    {s.name}
+                  </span>
+                  <span className="font-mono text-xs font-bold text-neutral-500 mt-0.5">
+                    SYLLABUS {s.code}
+                  </span>
+                </div>
               </button>
             );
           })}
         </div>
         {selectedSubjectKey !== 'econ' && (
-          <p className="text-xs text-neutral-700 font-semibold m-0">
-            Preview bank: rounds use Cambridge Economics 0455 questions for every subject.
-          </p>
+          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 font-mono text-xs text-amber-900 leading-snug">
+            ⚡ Cross-Discipline Engine: Evaluation questions active via Cambridge Economics 0455 core telemetry.
+          </div>
         )}
       </div>
 
-      {/* 2. Mode Selection */}
+      {/* 2. Mode Selector */}
       <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-          Mode
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-mono text-xs font-bold tracking-wider uppercase text-neutral-700 m-0">
+            PRACTICE ENGINE MODE
+          </h2>
+          <span className="font-mono text-[10px] text-neutral-500 font-bold">
+            ADAPTIVE
+          </span>
+        </div>
         <div className="flex flex-col gap-2.5">
           {/* Mode 1: Standard Exam Round */}
           <button
             type="button"
             onClick={() => handleModeSelect('standard')}
             className={cn(
-              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3.5 p-3.5 rounded-2xl border-[1.5px] text-left cursor-pointer transition-all',
               selectedMode === 'standard'
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                ? 'border-[#201e1d] bg-white ring-2 ring-[#c67139]/40 shadow-sm'
+                : 'border-[#201e1d]/20 bg-white/70 hover:bg-white hover:border-[#201e1d]/40 shadow-xs'
             )}
           >
-            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
-              🎲
-            </span>
-            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
-              <span className="font-heading text-[17px] text-text leading-tight">
-                Standard exam round
+            <div className="w-10 h-10 flex-none rounded-xl bg-[#201e1d] text-[#f9f4ed] flex items-center justify-center font-mono font-bold text-base shadow-xs">
+              🎯
+            </div>
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="font-heading font-bold text-[16px] text-text">
+                Standard Round
               </span>
-              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
-                Randomised pool across the syllabus
+              <span className="font-mono text-xs text-neutral-600">
+                Randomized pool calibrated across the entire syllabus
               </span>
-            </span>
+            </div>
           </button>
 
-          {/* Mode 2: Topic Practice */}
+          {/* Mode 2: Topic Mastery Drill */}
           <button
             type="button"
             onClick={() => handleModeSelect('topic')}
             className={cn(
-              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3.5 p-3.5 rounded-2xl border-[1.5px] text-left cursor-pointer transition-all',
               selectedMode === 'topic'
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                ? 'border-[#201e1d] bg-white ring-2 ring-[#c67139]/40 shadow-sm'
+                : 'border-[#201e1d]/20 bg-white/70 hover:bg-white hover:border-[#201e1d]/40 shadow-xs'
             )}
           >
-            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
-              📚
-            </span>
-            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
-              <span className="font-heading text-[17px] text-text leading-tight">
-                Topic practice
+            <div className="w-10 h-10 flex-none rounded-xl bg-[#7a8a5e] text-[#f9f4ed] flex items-center justify-center font-mono font-bold text-base shadow-xs">
+              🧬
+            </div>
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="font-heading font-bold text-[16px] text-text">
+                Topic Mastery Drill
               </span>
-              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
-                Drill chapter by chapter, in syllabus order
+              <span className="font-mono text-xs text-neutral-600">
+                Chapter-by-chapter progression in syllabus chronological order
               </span>
-            </span>
+            </div>
           </button>
 
-          {/* Mode 3: Review Pile */}
+          {/* Mode 3: Spaced Repetition Review Pile */}
           <button
             type="button"
             onClick={() => handleModeSelect('review')}
             className={cn(
-              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3.5 p-3.5 rounded-2xl border-[1.5px] text-left cursor-pointer transition-all',
               selectedMode === 'review'
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                ? 'border-[#201e1d] bg-white ring-2 ring-[#c67139]/40 shadow-sm'
+                : 'border-[#201e1d]/20 bg-white/70 hover:bg-white hover:border-[#201e1d]/40 shadow-xs'
             )}
           >
-            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
+            <div className="w-10 h-10 flex-none rounded-xl bg-[#c67139] text-[#f9f4ed] flex items-center justify-center font-mono font-bold text-base shadow-xs">
               🧠
-            </span>
-            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
-              <span className="font-heading text-[17px] text-text leading-tight">
-                Review pile
+            </div>
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="font-heading font-bold text-[16px] text-text">
+                Spaced Repetition Review Pile
               </span>
-              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
-                Spaced repetition of questions you missed
+              <span className="font-mono text-xs text-neutral-600">
+                Leitner recall system targeting your historically missed items
               </span>
-            </span>
-            {reviewCount > 0 && (
-              <span className="min-w-[28px] h-7 px-2 rounded-full bg-accent-600 text-neutral-100 border-2 border-text flex items-center justify-center font-bold text-[13px]">
-                {reviewCount}
+            </div>
+            {reviewCount > 0 ? (
+              <span className="px-2.5 py-1 rounded-md bg-rose-600 text-white font-mono font-bold text-xs shadow-xs">
+                {reviewCount} DUE
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-300">
+                CLEARED
               </span>
             )}
           </button>
         </div>
       </div>
 
-      {/* 3. Round Length */}
-      <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-          Round length
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { val: 3 as const, label: '3 Qs' },
-            { val: 5 as const, label: '5 Qs' },
-            { val: 10 as const, label: '10 Qs' },
-            { val: 'endless' as const, label: 'Endless ∞' },
-          ].map((item) => {
-            const isSelected = roundLength === item.val;
-            return (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => handleLengthSelect(item.val)}
-                className={cn(
-                  'px-4 py-2 rounded-full border-2 border-text font-bold text-sm cursor-pointer transition-all select-none',
-                  isSelected
-                    ? 'bg-text text-neutral-100 shadow-none translate-x-[2px] translate-y-[2px]'
-                    : 'bg-neutral-100 text-text shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-                )}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+      {/* 3. Round Configuration & Length */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Question Count Pills */}
+        <div className="flex flex-col gap-2">
+          <h2 className="font-mono text-xs font-bold tracking-wider uppercase text-neutral-700 m-0">
+            ITEM COUNT
+          </h2>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { val: 3 as const, label: '3' },
+              { val: 5 as const, label: '5' },
+              { val: 10 as const, label: '10' },
+              { val: 'endless' as const, label: '∞' },
+            ].map((item) => {
+              const isSelected = roundLength === item.val;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => handleLengthSelect(item.val)}
+                  className={cn(
+                    'py-2 px-1 rounded-xl border font-mono font-bold text-xs cursor-pointer transition-all select-none text-center',
+                    isSelected
+                      ? 'border-[#201e1d] bg-[#201e1d] text-[#f9f4ed] shadow-xs'
+                      : 'border-[#201e1d]/20 bg-white/80 text-text hover:bg-white'
+                  )}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Timer Mode Switch */}
+        <div className="flex flex-col gap-2">
+          <h2 className="font-mono text-xs font-bold tracking-wider uppercase text-neutral-700 m-0">
+            TIMER PROTOCOL
+          </h2>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleTimerSelect(false)}
+              className={cn(
+                'py-2 px-2.5 rounded-xl border font-mono font-bold text-xs cursor-pointer transition-all text-left flex flex-col',
+                !isTimed
+                  ? 'border-[#201e1d] bg-[#201e1d] text-[#f9f4ed] shadow-xs'
+                  : 'border-[#201e1d]/20 bg-white/80 text-text hover:bg-white'
+              )}
+            >
+              <span>UNTIMED</span>
+              <span className="text-[10px] opacity-75 font-normal">DEEP FOCUS</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTimerSelect(true)}
+              className={cn(
+                'py-2 px-2.5 rounded-xl border font-mono font-bold text-xs cursor-pointer transition-all text-left flex flex-col',
+                isTimed
+                  ? 'border-[#201e1d] bg-[#201e1d] text-[#f9f4ed] shadow-xs'
+                  : 'border-[#201e1d]/20 bg-white/80 text-text hover:bg-white'
+              )}
+            >
+              <span>EXAM MODE</span>
+              <span className="text-[10px] opacity-75 font-normal">90s / ITEM</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 4. Timer Selection */}
-      <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-          Timer
-        </h2>
-        <div className="grid grid-cols-2 gap-2">
-          {/* Chill / Untimed */}
-          <button
-            type="button"
-            onClick={() => handleTimerSelect(false)}
-            className={cn(
-              'flex flex-col items-start gap-0.5 px-4 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
-              !isTimed
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-            )}
-          >
-            <span className="font-heading text-base text-text">Chill</span>
-            <span className="text-xs font-semibold opacity-85 text-text">Untimed</span>
-          </button>
-
-          {/* Exam / Timed */}
-          <button
-            type="button"
-            onClick={() => handleTimerSelect(true)}
-            className={cn(
-              'flex flex-col items-start gap-0.5 px-4 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
-              isTimed
-                ? 'bg-accent-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-            )}
-          >
-            <span className="font-heading text-base text-text">Exam</span>
-            <span className="text-xs font-semibold opacity-85 text-text">90 s per question</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 5. Topic Mastery Card Trigger */}
+      {/* 4. Topic Mastery Card Trigger */}
       <button
         type="button"
         onClick={() => {
           playPop();
           setIsMasteryOpen(true);
         }}
-        className="flex items-center gap-3 p-3.5 sm:p-4 rounded-[24px] bg-surface border-2 border-text shadow-offset-4 cursor-pointer text-left transition-all active:translate-x-1 active:translate-y-1 active:shadow-none hover:brightness-[0.98]"
+        className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/90 border-[1.5px] border-[#201e1d]/20 shadow-xs cursor-pointer text-left transition-all hover:bg-white hover:border-[#201e1d]/40"
       >
-        <span className="flex flex-col gap-1.5 flex-1 min-w-0">
-          <span className="font-heading text-[17px] text-text leading-tight truncate">
-            Topic mastery · {currentSubject.name}
-          </span>
-          <span className="flex gap-1.5 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-xs text-text">
+        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-heading font-bold text-[15px] text-text">
+              Topic Mastery Telemetry · {currentSubject.name}
+            </span>
+          </div>
+          <div className="flex gap-1.5 flex-wrap font-mono text-[11px] font-bold">
+            <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-300 text-amber-900">
               👑 {tierCounts.master} Master
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-accent-300 border-[1.5px] border-text font-bold text-xs text-text">
+            <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-300 text-blue-900">
               ⚡ {tierCounts.proficient} Proficient
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-neutral-200 border-[1.5px] border-text font-bold text-xs text-text">
+            <span className="px-2 py-0.5 rounded bg-neutral-100 border border-neutral-300 text-neutral-700">
               🌱 {tierCounts.novice} Novice
             </span>
-          </span>
+          </div>
+        </div>
+        <span className="font-mono text-xs font-bold text-neutral-500">
+          VIEW RADAR →
         </span>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-text flex-shrink-0"
-        >
-          <path d="M5 12h14" />
-          <path d="m12 5 7 7-7 7" />
-        </svg>
       </button>
 
-      {/* 6. Hero CTA: START ROUND 🚀 */}
+      {/* 5. Primary Launch CTA: INITIALIZE PRACTICE ROUND 🚀 */}
       <button
         type="button"
         onClick={handleStart}
-        className="w-full py-[18px] px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-6 font-heading text-2xl tracking-[0.03em] cursor-pointer transition-all active:translate-x-[6px] active:translate-y-[6px] active:shadow-none select-none flex items-center justify-center gap-2"
+        className="w-full py-4 px-6 rounded-2xl bg-[#201e1d] hover:bg-[#34302d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[0_5px_0_0_#201e1d] font-heading font-black text-lg sm:text-xl tracking-wider uppercase cursor-pointer transition-all active:translate-y-1.5 active:shadow-none select-none flex items-center justify-center gap-2.5"
       >
-        START ROUND 🚀
+        <span>INITIALIZE PRACTICE ROUND</span>
+        <span className="text-xl">🚀</span>
       </button>
 
       {/* Topic Mastery Drawer Modal */}

@@ -120,25 +120,26 @@ function AdminContent() {
   if (userProfile && !isAdmin) {
     return (
       <div className="min-h-screen bg-[#f5ead8] p-4 sm:p-6 flex flex-col items-center justify-center font-body text-[#201e1d]">
-        <div className="w-full max-w-lg bg-[#f9f4ed] rounded-[28px] p-6 sm:p-8 border-2 border-[#201e1d] shadow-offset-4 text-center space-y-6">
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
-            🔒
+        <div className="w-full max-w-lg bg-[#f9f4ed] rounded-[28px] p-6 sm:p-8 border-2 border-[#201e1d] shadow-offset-4 space-y-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+            <div className="w-14 h-14 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-2xl shrink-0">
+              🔒
+            </div>
+            <div className="space-y-1 flex-1">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] font-mono text-[10px] font-bold uppercase tracking-wider text-[#201e1d]">
+                RESTRICTED ACCESS · APP OPS
+              </span>
+              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
+                App Admin Operations Console
+              </h1>
+              <p className="text-xs sm:text-sm font-medium text-[#645c50] leading-relaxed">
+                This operations deck is restricted to platform administrators for managing exam ingestion pipelines and system telemetry. For classroom assignments and test compilation, visit the Teacher Portal.
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <span className="px-3 py-1 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#201e1d] shadow-offset-2">
-              App Admin Access Only
-            </span>
-            <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-2">
-              Reserved for App Administrators
-            </h1>
-            <p className="text-sm font-medium text-[#645c50] leading-relaxed max-w-md mx-auto">
-              App Admin Access Only — This dashboard is reserved for app administrators to manage exam paper ingestion and platform tools. For student management, assignments, and test compilation, visit the Teacher Portal.
-            </p>
-          </div>
-
-          <div className="p-3 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-2xl border-2 border-[#201e1d] leading-relaxed text-center">
-            Signed in as <span className="text-[#201e1d]">{userProfile.display_name}</span> ({userProfile.role || 'student'} account)
+          <div className="p-3 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-xl border border-[#201e1d] leading-relaxed text-center font-mono">
+            Signed in as <span className="text-[#201e1d] font-bold">{userProfile.display_name}</span> ({userProfile.role || 'student'} account)
           </div>
 
           <div className="space-y-3 pt-2 border-t-2 border-[#dcd3c4]">
@@ -147,7 +148,7 @@ function AdminContent() {
               className="w-full py-3.5 px-4 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm sm:text-base rounded-2xl border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
             >
               <GraduationCap className="w-5 h-5" />
-              <span>Visit Teacher Portal</span>
+              <span>Teacher Portal 🎓</span>
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
 
@@ -157,7 +158,7 @@ function AdminContent() {
                 setGuestMode(true);
                 setDevOverride(true);
               }}
-              className="w-full py-3 bg-[#f0fae1] text-[#272e1b] font-bold text-sm rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#e1eecc] transition-all active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-[#f0fae1] text-[#272e1b] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#e1eecc] transition-all active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
             >
               <span>🛠️</span>
               <span>Preview as Demo App Admin</span>
@@ -165,7 +166,7 @@ function AdminContent() {
 
             <Link
               href="/"
-              className="block w-full py-3 bg-[#eee7db] text-[#474238] font-bold text-sm rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
+              className="block w-full py-2.5 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
             >
               Return to Student Home
             </Link>
@@ -179,21 +180,23 @@ function AdminContent() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-[#f5ead8] p-4 sm:p-6 flex flex-col items-center justify-center font-body text-[#201e1d]">
-        <div className={`w-full ${authError ? 'max-w-lg' : 'max-w-md'} bg-[#f9f4ed] rounded-[28px] p-6 sm:p-8 border-2 border-[#201e1d] shadow-offset-4 text-center space-y-6 transition-all duration-150`}>
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
-            🛠️
-          </div>
+        <div className={`w-full ${authError ? 'max-w-xl' : 'max-w-lg'} bg-[#f9f4ed] rounded-[28px] p-6 sm:p-8 border-2 border-[#201e1d] shadow-offset-4 space-y-6 transition-all duration-150`}>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+            <div className="w-14 h-14 rounded-2xl bg-[#ccdbb2] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-2xl shrink-0">
+              🛠️
+            </div>
 
-          <div className="space-y-2">
-            <span className="px-3 py-1 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#201e1d] shadow-offset-2">
-              Super Admin Console
-            </span>
-            <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-2">
-              Revizz App Administration
-            </h1>
-            <p className="text-[#645c50] font-medium text-sm">
-              Please sign in with your administrative account to access exam paper ingestion and platform maintenance tools.
-            </p>
+            <div className="space-y-1 flex-1">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] font-mono text-[10px] font-bold uppercase tracking-wider text-[#201e1d]">
+                SUPER ADMIN OPS · PLATFORM ENGINE
+              </span>
+              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
+                Revizz App Administration Console
+              </h1>
+              <p className="text-[#645c50] font-medium text-xs sm:text-sm leading-relaxed">
+                Platform operations dashboard for exam paper OCR ingestion, staging quality gates, and database synchronization. Teachers managing classes should use the Teacher Portal.
+              </p>
+            </div>
           </div>
 
           {authError && (
@@ -288,7 +291,7 @@ function AdminContent() {
             </div>
           )}
 
-          <div className="space-y-3 pt-4 border-t-2 border-[#dcd3c4]">
+          <div className="space-y-3 pt-2 border-t-2 border-[#dcd3c4]">
             {!authError && (
               <button
                 type="button"
@@ -296,17 +299,25 @@ function AdminContent() {
                   setGuestMode(true);
                   setDevOverride(true);
                 }}
-                className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm rounded-full border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 bg-[#ccdbb2] text-[#201e1d] font-heading font-black text-sm rounded-2xl border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>🛠️</span> Enter as Demo App Admin
               </button>
             )}
 
+            <Link
+              href="/portal"
+              className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Go to Teacher Portal 🎓</span>
+            </Link>
+
             <button
               type="button"
               disabled={isSigningIn}
               onClick={handleGoogleSignIn}
-              className="w-full py-3 bg-[#eee7db] text-[#201e1d] font-bold text-sm rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-[#eee7db] text-[#201e1d] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
               {isSigningIn ? (
                 <>
@@ -314,13 +325,13 @@ function AdminContent() {
                   <span>Signing in...</span>
                 </>
               ) : (
-                <span>Sign In with Google</span>
+                <span>Sign In with Admin Account</span>
               )}
             </button>
 
             <Link
               href="/"
-              className="block w-full py-3 bg-[#eee7db] text-[#474238] font-bold text-sm rounded-full border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
+              className="block w-full py-2.5 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
             >
               Return to Student Home
             </Link>
@@ -366,7 +377,7 @@ function AdminContent() {
       <div className="min-w-0 flex flex-col min-h-screen">
         {/* Mobile Sticky Top Header */}
         <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-2 border-[#201e1d] px-4 py-2.5 flex items-center justify-between gap-2 shadow-sm">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
@@ -375,24 +386,70 @@ function AdminContent() {
             >
               <Menu className="w-5 h-5 text-[#201e1d]" />
             </button>
-            <Link
-              href="/"
-              className="font-heading text-lg font-black tracking-tight text-[#201e1d] hover:opacity-80 transition-opacity shrink-0"
-            >
-              REVIZZ ADMIN
-            </Link>
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="font-heading text-sm font-black text-[#201e1d]">
+                App Admin
+              </span>
+              <span className="text-[#645c50] text-xs font-mono">/</span>
+              <span className="text-xs font-bold text-[#645c50] truncate">
+                {TAB_TITLES[activeTab] || 'Ingestion Studio'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-black px-2.5 py-1 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-[#201e1d] shadow-offset-2 truncate max-w-[130px]">
-              {TAB_TITLES[activeTab] || 'Ingestion Studio'}
-            </span>
             <Link
               href="/portal"
-              className="p-1.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8cb9a] transition-colors text-xs font-black"
+              className="px-2.5 py-1 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-colors text-xs font-black flex items-center gap-1"
               title="Teacher Portal"
             >
-              🎓
+              <span>Teacher Portal 🎓</span>
+            </Link>
+          </div>
+        </header>
+
+        {/* Desktop Sticky Top Command Bar */}
+        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-2 border-[#201e1d] px-8 py-3 items-center justify-between shadow-xs">
+          <div className="flex items-center gap-4 min-w-0">
+            {/* Breadcrumb Title */}
+            <div className="flex items-center gap-2">
+              <span className="font-heading font-black text-lg text-[#201e1d]">
+                App Admin Console
+              </span>
+              <span className="text-[#645c50] font-mono text-base">/</span>
+              <span className="font-heading font-bold text-base text-[#201e1d]">
+                {TAB_TITLES[activeTab] || 'Ingestion Studio'}
+              </span>
+            </div>
+
+            {/* Telemetry Status */}
+            <div className="flex items-center gap-2 pl-4 border-l border-[#201e1d]/20 text-xs font-mono text-[#645c50]">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Ingestion Engine: v2.4
+              </span>
+              <span>·</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
+                Supabase DB: Synchronized
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/portal"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              title="Open Teacher Classroom Portal"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Teacher Portal 🎓</span>
+            </Link>
+
+            <Link
+              href="/"
+              className="text-xs font-bold text-[#645c50] hover:text-[#201e1d] px-2 py-1 transition-colors"
+            >
+              Student Home ↗
             </Link>
           </div>
         </header>

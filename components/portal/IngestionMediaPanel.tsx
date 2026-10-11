@@ -74,7 +74,7 @@ export function IngestionMediaPanel({
   onUpdateTopic,
   onUpdateExplanation,
   className,
-  paperCode = "0455_s24_12",
+  paperCode = "",
   questionNumber = 1,
   pdfUrl,
   onOpenPdfCropper,
@@ -563,7 +563,11 @@ export function IngestionMediaPanel({
               <input
                 id="diagram-image-url"
                 type="text"
-                placeholder="e.g. /questions/0455_s24_12_q03.png or https://..."
+                placeholder={
+                  paperCode
+                    ? `e.g. /questions/${paperCode}_q${questionNumber}.png or https://...`
+                    : "e.g. /questions/paper_q01.png or https://..."
+                }
                 value={imageUrl}
                 onChange={(e) => handleImageUrlChange(e.target.value)}
                 className="w-full px-3 py-2 text-xs sm:text-sm font-mono rounded-xl border-[1.5px] border-[#dcd3c4] bg-white outline-none focus:border-[#c67139] transition-all text-[#201e1d] placeholder:text-[#82796a]"

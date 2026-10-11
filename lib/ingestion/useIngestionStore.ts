@@ -101,6 +101,7 @@ export interface IngestionActions {
     startQuestion?: number;
     endQuestion?: number;
     model?: string;
+    apiKey?: string;
   }) => Promise<void>;
   cancelExtraction: () => void;
 
@@ -808,6 +809,7 @@ const actions: IngestionActions = {
     startQuestion?: number;
     endQuestion?: number;
     model?: string;
+    apiKey?: string;
   }): Promise<void> {
     if (options?.qpFile) {
       actions.setQpPdfFile(options.qpFile);
@@ -854,8 +856,14 @@ const actions: IngestionActions = {
       if (options?.endQuestion) formData.append('end_question', String(options.endQuestion));
       if (options?.model) formData.append('model', options.model);
 
+      const headers: Record<string, string> = {};
+      if (options?.apiKey) {
+        headers['x-gemini-api-key'] = options.apiKey;
+      }
+
       const res = await fetch('/api/ingest/extract', {
         method: 'POST',
+        headers,
         body: formData,
         signal: activeAbortController.signal,
       });

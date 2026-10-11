@@ -80,7 +80,7 @@ export function IngestionPdfViewer({
   boundingBox,
   onBoundingBoxChange,
   questionNumber = 1,
-  paperCode = "0455_s24_12",
+  paperCode = "",
   onCropDiagram,
   isCropping = false,
   className,

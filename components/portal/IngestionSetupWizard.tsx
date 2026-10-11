@@ -11,9 +11,11 @@ import {
   Plus,
   ArrowRight,
   ArrowLeft,
-  FolderDown,
   Loader2,
   Trash2,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export interface SubjectPreset {
@@ -44,8 +46,8 @@ export interface IngestionSetupWizardProps {
     year: number;
     series: string;
     paperCode: string;
+    apiKey?: string;
   }) => void;
-  onLoadPreset?: (id: string) => void;
   onUploadJson: (file: File) => void;
   onStartBlank: (meta: {
     subjectCode: string;
@@ -57,6 +59,7 @@ export interface IngestionSetupWizardProps {
   }) => void;
   onResumeDraft?: () => void;
   onDiscardDraft?: () => void;
+  onResetAll?: () => void;
   hasSavedDraft?: boolean;
   isExtracting: boolean;
   extractionError?: string | null;
@@ -72,11 +75,11 @@ export interface IngestionSetupWizardProps {
  */
 export default function IngestionSetupWizard({
   onStartExtraction,
-  onLoadPreset,
   onUploadJson,
   onStartBlank,
   onResumeDraft,
   onDiscardDraft,
+  onResetAll,
   hasSavedDraft = false,
   isExtracting,
   extractionError = null,
@@ -95,19 +98,30 @@ export default function IngestionSetupWizard({
   const jsonInputRef = useRef<HTMLInputElement>(null);
 
   // Metadata form state
-  const [selectedSubjectCode, setSelectedSubjectCode] = useState("0455");
+  const [selectedSubjectCode, setSelectedSubjectCode] = useState("");
   const [customSubjectCode, setCustomSubjectCode] = useState("");
   const [customSubjectName, setCustomSubjectName] = useState("");
   const [year, setYear] = useState<number>(2024);
   const [series, setSeries] = useState("s");
   const [paperCode, setPaperCode] = useState("12");
 
+  // Gemini API Key state (optional client override)
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+
   const currentSubject = useMemo(() => {
+    if (selectedSubjectCode === "custom") {
+      return {
+        code: customSubjectCode.trim(),
+        name: customSubjectName.trim() || "Custom Subject",
+        icon: "📚",
+      };
+    }
     const found = CAMBRIDGE_SUBJECT_PRESETS.find((s) => s.code === selectedSubjectCode);
     if (found) return found;
     return {
-      code: customSubjectCode || "0455",
-      name: customSubjectName || "Custom Subject",
+      code: selectedSubjectCode || customSubjectCode.trim() || "",
+      name: customSubjectName.trim() || "",
       icon: "📚",
     };
   }, [selectedSubjectCode, customSubjectCode, customSubjectName]);
@@ -194,7 +208,7 @@ export default function IngestionSetupWizard({
           </p>
         </div>
 
-        {/* Quick helpers: Return to Active or Load Sample */}
+        {/* Quick helpers: Return to Active or Reset / Clear All */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           {activePaper && onReturnToWorkspace && (
             <button
@@ -207,14 +221,20 @@ export default function IngestionSetupWizard({
             </button>
           )}
 
-          {onLoadPreset && (
+          {(hasSavedDraft || activePaper) && (onResetAll || onDiscardDraft) && (
             <button
               type="button"
-              onClick={() => onLoadPreset("0455_s24_12")}
-              className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#dcd3c4] bg-[#f9f4ed] hover:bg-[#eee7db] text-xs font-semibold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer active:translate-y-0.5"
+              onClick={() => {
+                setQpFile(null);
+                setMsFile(null);
+                if (onResetAll) onResetAll();
+                else if (onDiscardDraft) onDiscardDraft();
+              }}
+              className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#b91c1c]/40 bg-[#fee2e2]/60 hover:bg-[#fee2e2] text-xs font-bold text-[#b91c1c] flex items-center gap-1.5 transition-colors cursor-pointer active:translate-y-0.5 shadow-xs"
+              title="Clear all leftover draft data and start fresh in 1 click"
             >
-              <FolderDown className="w-3.5 h-3.5 text-[#201e1d]" />
-              <span>Load Sample Preset</span>
+              <Trash2 className="w-3.5 h-3.5 text-[#b91c1c]" />
+              <span>Reset / Clear All</span>
             </button>
           )}
         </div>
@@ -246,13 +266,20 @@ export default function IngestionSetupWizard({
                 Resume Draft
               </button>
             )}
-            {onDiscardDraft && (
+            {(onResetAll || onDiscardDraft) && (
               <button
                 type="button"
-                onClick={onDiscardDraft}
-                className="px-3 py-1.5 rounded-full border border-[#8fa073] text-xs font-bold text-[#56633f] hover:bg-[#e2edd0] active:translate-y-0.5 transition-colors cursor-pointer"
+                onClick={() => {
+                  setQpFile(null);
+                  setMsFile(null);
+                  if (onResetAll) onResetAll();
+                  else if (onDiscardDraft) onDiscardDraft();
+                }}
+                className="px-3 py-1.5 rounded-full border border-[#b91c1c] text-xs font-bold text-[#b91c1c] bg-[#fee2e2]/40 hover:bg-[#fee2e2] active:translate-y-0.5 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                title="Discard leftover browser draft in 1 click"
               >
-                Discard Draft
+                <Trash2 className="w-3.5 h-3.5 text-[#b91c1c]" />
+                <span>Reset / Clear All</span>
               </button>
             )}
           </div>
@@ -287,6 +314,7 @@ export default function IngestionSetupWizard({
               onChange={(e) => setSelectedSubjectCode(e.target.value)}
               className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors"
             >
+              <option value="">Select subject (or auto-infer from PDF)...</option>
               {CAMBRIDGE_SUBJECT_PRESETS.map((s) => (
                 <option key={s.code} value={s.code}>
                   {s.icon} {s.code} - {s.name}
@@ -418,7 +446,7 @@ export default function IngestionSetupWizard({
                     {qpFile.name} ({(qpFile.size / 1024 / 1024).toFixed(1)} MB)
                   </span>
                 ) : (
-                  "Drag & drop or browse .pdf (e.g. 0455_s24_qp_12.pdf)"
+                  "Drag & drop or browse Question Paper PDF (.pdf)"
                 )}
               </p>
             </div>
@@ -478,7 +506,7 @@ export default function IngestionSetupWizard({
                     {msFile.name} ({(msFile.size / 1024 / 1024).toFixed(1)} MB)
                   </span>
                 ) : (
-                  "Drag & drop or browse .pdf (e.g. 0455_s24_ms_12.pdf)"
+                  "Drag & drop or browse Mark Scheme PDF (.pdf)"
                 )}
               </p>
             </div>
@@ -496,6 +524,61 @@ export default function IngestionSetupWizard({
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Step 3: Gemini Vision API Configuration (Optional) */}
+      <div className="bg-white/80 border-[1.5px] border-[#dcd3c4] rounded-2xl p-5 flex flex-col gap-3.5 shadow-xs">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-black flex items-center justify-center shadow-xs">
+              3
+            </span>
+            <h3 className="font-heading text-sm font-black text-[#201e1d]">
+              Gemini API Key Configuration
+            </h3>
+          </div>
+          <span className="text-[11px] font-semibold text-[#82796a]">
+            Optional client override
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="gemini-api-key-input"
+            className="text-xs font-bold text-[#645c50] flex items-center gap-1.5"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-[#c67139]" />
+            <span>Gemini API Key (Optional if set in .env.local)</span>
+          </label>
+          <div className="relative flex items-center">
+            <input
+              id="gemini-api-key-input"
+              type={showApiKey ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Paste AIzaSy... key (optional - leave blank to use server .env.local)"
+              className="w-full pl-3.5 pr-11 py-2.5 text-xs sm:text-sm font-mono rounded-xl border-[1.5px] border-[#dcd3c4] bg-[#f9f4ed] text-[#201e1d] placeholder:text-[#82796a] outline-none focus:border-[#c67139] transition-all"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <button
+              type="button"
+              onClick={() => setShowApiKey((prev) => !prev)}
+              className="absolute right-2.5 p-1 rounded-lg text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer"
+              title={showApiKey ? "Mask API key" : "Show API key"}
+              aria-label={showApiKey ? "Mask API key" : "Show API key"}
+            >
+              {showApiKey ? (
+                <EyeOff className="w-4 h-4 text-[#201e1d]" />
+              ) : (
+                <Eye className="w-4 h-4 text-[#645c50]" />
+              )}
+            </button>
+          </div>
+          <p className="text-[11px] text-[#82796a]">
+            If <code className="font-mono bg-[#eee7db] px-1 py-0.5 rounded text-[#201e1d]">GEMINI_API_KEY</code> is configured in <code className="font-mono bg-[#eee7db] px-1 py-0.5 rounded text-[#201e1d]">.env.local</code> on the server, this field can be left blank.
+          </p>
         </div>
       </div>
 
@@ -543,6 +626,7 @@ export default function IngestionSetupWizard({
                 year,
                 series,
                 paperCode,
+                apiKey: apiKey.trim() || undefined,
               });
             }
           }}

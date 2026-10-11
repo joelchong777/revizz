@@ -16,8 +16,6 @@ import {
   Edit2,
   Settings,
   ArrowLeft,
-  FolderDown,
-  ChevronDown,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -50,17 +48,12 @@ export interface IngestionHeaderProps {
   isDraftSaved?: boolean;
 
   // Backwards compatibility props (optional)
-  onLoadPreset?: ((preset?: string) => void) | (() => void);
   onUploadJson?: (file: File) => void;
   onOpenPayloads?: () => void;
   onOpenAudit?: () => void;
   showLivePreview?: boolean;
   onTogglePreview?: () => void;
 }
-
-const SAMPLE_PRESETS = [
-  { id: "0455_s24_12", label: "0455 / 12 · Economics Summer 2024" },
-];
 
 export default function IngestionHeader({
   mode,
@@ -81,10 +74,8 @@ export default function IngestionHeader({
   onSwitchPaper,
   onSaveDraft,
   isDraftSaved = false,
-  onLoadPreset,
 }: IngestionHeaderProps) {
   const [justSaved, setJustSaved] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>("0455_s24_12");
 
   // Determine effective mode: explicit mode takes priority, otherwise check paper existence
   const currentMode =
@@ -130,10 +121,10 @@ export default function IngestionHeader({
   const isPublishing = publishStatus === "publishing" || publishStatus === "validating";
 
   // Subject label formatting
-  const subjectCode = paper?.subject?.code || "0455";
-  const subjectName = paper?.subject?.name || "Economics";
-  const subjectIcon = paper?.subject?.icon || "📈";
-  const paperCode = paper?.paper?.paper_code || "12";
+  const subjectCode = paper?.subject?.code || "Cambridge";
+  const subjectName = paper?.subject?.name || "Exam Paper";
+  const subjectIcon = paper?.subject?.icon || "📝";
+  const paperCode = paper?.paper?.paper_code || "MCQ";
 
   // Formatted series and year: e.g. "Summer 2024"
   const seriesMap: Record<string, string> = {
@@ -142,8 +133,8 @@ export default function IngestionHeader({
     w: "Winter",
   };
   const seriesKey = (paper?.paper?.series || "").toLowerCase();
-  const seriesName = seriesMap[seriesKey] || (seriesKey ? seriesKey.toUpperCase() : "Summer");
-  const fullYear = paper?.paper?.year ? String(paper.paper.year) : "2024";
+  const seriesName = seriesMap[seriesKey] || (seriesKey ? seriesKey.toUpperCase() : "");
+  const fullYear = paper?.paper?.year ? String(paper.paper.year) : "";
 
   // Handle local save draft trigger with feedback
   const handleSaveDraft = () => {
@@ -181,45 +172,9 @@ export default function IngestionHeader({
           </h1>
         </div>
 
-        {/* Right Section: Preset Loader & Return to Studio (No phantom controls) */}
-        <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
-          {/* Preset Selector Dropdown & Action */}
-          {onLoadPreset && (
-            <div className="flex items-center gap-2">
-              <div className="relative flex items-center">
-                <select
-                  aria-label="Sample Preset Selector"
-                  value={selectedPreset}
-                  onChange={(e) => {
-                    const nextId = e.target.value;
-                    setSelectedPreset(nextId);
-                    onLoadPreset(nextId);
-                  }}
-                  className="pl-3 pr-8 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-white text-xs font-bold text-[#201e1d] appearance-none cursor-pointer shadow-[2px_2px_0_#201e1d] hover:bg-[#eee7db] transition-colors focus:outline-none"
-                >
-                  {SAMPLE_PRESETS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#645c50] absolute right-2.5 pointer-events-none" />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onLoadPreset(selectedPreset)}
-                className="px-3.5 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-[#f9f4ed] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] transition-all cursor-pointer"
-                title="Load sample Cambridge paper"
-              >
-                <FolderDown className="w-3.5 h-3.5 text-[#c67139]" />
-                <span className="hidden sm:inline">Load Sample</span>
-              </button>
-            </div>
-          )}
-
-          {/* Return to Studio Button (Visible when paper exists in memory) */}
-          {hasPaperInMemory && onReturnToStudio && (
+        {/* Right Section: Return to Studio if paper is in memory (No fake presets) */}
+        {hasPaperInMemory && onReturnToStudio && (
+          <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
             <button
               type="button"
               onClick={onReturnToStudio}
@@ -229,8 +184,8 @@ export default function IngestionHeader({
               <ArrowLeft className="w-4 h-4 text-[#201e1d]" />
               <span>← Return to Studio</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </header>
     );
   }
