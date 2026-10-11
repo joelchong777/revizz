@@ -19,7 +19,6 @@ import {
   Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import IngestionHub from '@/components/portal/IngestionHub';
 import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
 
 export interface AdminToolsProps {
