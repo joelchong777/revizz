@@ -9,10 +9,10 @@ import IngestionOptionsEditor from "./IngestionOptionsEditor";
 import IngestionMediaPanel from "./IngestionMediaPanel";
 import IngestionLivePreview from "./IngestionLivePreview";
 import IngestionDiagnostics from "./IngestionDiagnostics";
-import IngestionModals from "./IngestionModals";
+import { IngestionSettingsModal, IngestionPayloadModal } from "./IngestionModals";
 import IngestionAuditDrawer from "./IngestionAuditDrawer";
 import type { StagingQuestion } from "@/types/ingestion";
-import { Plus, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, CheckCircle2, AlertCircle, Gamepad2, X } from "lucide-react";
 
 export default function IngestionHub() {
   const {
@@ -41,18 +41,30 @@ export default function IngestionHub() {
     setIsPayloadModalOpen,
     setIsAuditDrawerOpen,
     setPublishStatus,
+    saveDraftToLocalStorage,
+    loadDraftFromLocalStorage,
   } = useIngestionStore();
 
   const questions = paper?.questions || [];
   const currentQuestion: StagingQuestion | null =
     selectedQuestion || questions[selectedIdx] || null;
 
-  // Initial fetch: Load default preset paper
+  // Initial fetch: Restore draft from localStorage if present; otherwise load default preset
   useEffect(() => {
     if (!paper) {
-      loadPreset("0455_s24_12");
+      const restored = loadDraftFromLocalStorage();
+      if (!restored) {
+        loadPreset("0455_s24_12");
+      }
     }
-  }, [paper, loadPreset]);
+  }, [paper, loadPreset, loadDraftFromLocalStorage]);
+
+  // Persist draft to localStorage whenever paper data changes
+  useEffect(() => {
+    if (paper) {
+      saveDraftToLocalStorage();
+    }
+  }, [paper, saveDraftToLocalStorage]);
 
   // Handler for uploading JSON file via Header / Modals
   const handleFileUpload = (file: File) => {
@@ -79,9 +91,13 @@ export default function IngestionHub() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5ead8] font-body p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto flex flex-col gap-6">
-        {/* Top Header */}
+    <div className="min-h-screen bg-[#f5ead8] font-body p-4 sm:p-6 lg:p-8 relative overflow-x-hidden">
+      <div
+        className={`max-w-[1680px] mx-auto flex flex-col gap-6 transition-all duration-300 ${
+          showLivePreview ? "2xl:mr-[550px]" : ""
+        }`}
+      >
+        {/* Top Header: Streamlined with overflow menu */}
         <IngestionHeader
           paper={paper}
           onLoadPreset={(presetId) => loadPreset(presetId || "0455_s24_12")}
@@ -128,10 +144,10 @@ export default function IngestionHub() {
           </div>
         )}
 
-        {/* Main 3-Column Studio Layout */}
-        <div className="flex flex-col lg:flex-row items-start gap-6">
-          {/* Column 1 (Left ~25%): Question Navigation Matrix */}
-          <div className="w-full lg:w-72 xl:w-80 shrink-0">
+        {/* 2-Column Focus Layout Body */}
+        <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
+          {/* Left Column (~22%): Streamlined Question Navigation Matrix */}
+          <div className="w-full lg:w-[22%] min-w-[240px] max-w-full lg:max-w-[320px] shrink-0">
             <IngestionQuestionNav
               questions={questions}
               selectedIdx={selectedIdx}
@@ -145,11 +161,11 @@ export default function IngestionHub() {
             />
           </div>
 
-          {/* Column 2 (Center ~45%): Core Question Editors */}
+          {/* Main Column (~78%): Spacious, calm authoring workspace */}
           <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
             {currentQuestion ? (
               <>
-                {/* Stem Markdown & KaTeX Formula Editor */}
+                {/* Stem Markdown & KaTeX Formula Editor with question actions wired up */}
                 <IngestionStemEditor
                   questionNumber={currentQuestion.question_number || selectedIdx + 1}
                   stemMarkdown={currentQuestion.stem_markdown || ""}
@@ -166,6 +182,15 @@ export default function IngestionHub() {
                       cambridge_source_ref: newCitation,
                     });
                   }}
+                  onMoveUp={() => {
+                    if (selectedIdx > 0) moveQuestion(selectedIdx, selectedIdx - 1);
+                  }}
+                  onMoveDown={() => {
+                    if (selectedIdx < questions.length - 1)
+                      moveQuestion(selectedIdx, selectedIdx + 1);
+                  }}
+                  onDuplicate={() => duplicateQuestion(selectedIdx)}
+                  onDelete={() => deleteQuestion(selectedIdx)}
                 />
 
                 {/* 4 Stacked MCQ Options Editor */}
@@ -237,49 +262,95 @@ export default function IngestionHub() {
               </div>
             )}
           </div>
-
-          {/* Column 3 (Right ~30%, Toggleable via Header Button): Live Simulator & Real-time Diagnostics */}
-          {showLivePreview && (
-            <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-6">
-              {currentQuestion ? (
-                <>
-                  {/* Interactive Student Gameboy Simulator */}
-                  <IngestionLivePreview
-                    question={currentQuestion}
-                    questionIndex={selectedIdx}
-                    totalQuestions={questions.length}
-                    onNext={() => {
-                      if (selectedIdx < questions.length - 1) {
-                        setSelectedIdx(selectedIdx + 1);
-                      }
-                    }}
-                  />
-
-                  {/* Real-time Diagnostics & KaTeX Linter Panel */}
-                  <IngestionDiagnostics
-                    question={currentQuestion}
-                    onUpdateQuestion={(updated) => updateQuestion(selectedIdx, updated)}
-                    onFixKaTeX={(fixed) => updateQuestion(selectedIdx, fixed)}
-                  />
-                </>
-              ) : (
-                <div className="p-6 bg-white border-2 border-[#201e1d] rounded-2xl text-center text-xs font-bold text-[#645c50]">
-                  Select a question to inspect live simulation and real-time QA diagnostics.
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Overlays: Paper Settings & Raw Payloads (SQL/JSON) */}
-      <IngestionModals
+      {/* Slide-Over Drawer: Backdrop for mobile/tablet screens */}
+      {showLivePreview && (
+        <div
+          className="fixed inset-0 bg-[#201e1d]/20 backdrop-blur-xs z-40 xl:hidden transition-opacity"
+          onClick={() => setShowLivePreview(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Slide-Over Drawer / Panel: Live Student Simulator & Real-time QA Diagnostics */}
+      <aside
+        className={`fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] lg:w-[500px] xl:w-[540px] bg-[#fbf8f2] border-l-4 border-[#201e1d] shadow-[-12px_0_32px_rgba(32,30,29,0.18)] flex flex-col transition-transform duration-300 ease-in-out font-body ${
+          showLivePreview ? "translate-x-0" : "translate-x-full pointer-events-none"
+        }`}
+        aria-label="Live Student Simulator and QA Diagnostics Drawer"
+      >
+        {/* Drawer Header */}
+        <div className="p-4 sm:px-6 py-4 bg-[#f9f4ed] border-b-2 border-[#201e1d] flex items-center justify-between gap-3 sticky top-0 z-10 shadow-sm shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#14b8a6] border-2 border-[#201e1d] flex items-center justify-center text-white shadow-offset-2 shrink-0">
+              <Gamepad2 className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-heading text-base sm:text-lg text-[#201e1d] leading-tight truncate">
+                Live Student Simulator & Diagnostics
+              </h3>
+              <p className="text-[11px] font-bold text-[#645c50] truncate">
+                2-try mastery loop & 7-point KaTeX QA check
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowLivePreview(false)}
+            title="Close Preview Drawer"
+            className="w-9 h-9 rounded-xl bg-white hover:bg-rose-100 border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] hover:text-rose-700 shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer font-bold shrink-0"
+            aria-label="Close Preview Drawer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Drawer Content */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
+          {currentQuestion ? (
+            <>
+              {/* Interactive Student Gameboy Simulator */}
+              <IngestionLivePreview
+                question={currentQuestion}
+                questionIndex={selectedIdx}
+                totalQuestions={questions.length}
+                onNext={() => {
+                  if (selectedIdx < questions.length - 1) {
+                    setSelectedIdx(selectedIdx + 1);
+                  }
+                }}
+              />
+
+              {/* Real-time Diagnostics & KaTeX Linter Panel */}
+              <IngestionDiagnostics
+                question={currentQuestion}
+                onUpdateQuestion={(updated) => updateQuestion(selectedIdx, updated)}
+                onFixKaTeX={(fixed) => updateQuestion(selectedIdx, fixed)}
+              />
+            </>
+          ) : (
+            <div className="p-8 bg-white border-2 border-[#201e1d] rounded-2xl text-center text-xs font-bold text-[#645c50] shadow-offset-2">
+              Select a question to inspect live simulation and real-time QA diagnostics.
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Overlays: Paper Settings Modal */}
+      <IngestionSettingsModal
         paper={paper}
-        isSettingsOpen={isSettingsModalOpen}
-        onCloseSettings={() => setIsSettingsModalOpen(false)}
-        onSaveSettings={(meta) => updatePaperMetadata(meta)}
-        isPayloadOpen={isPayloadModalOpen}
-        onClosePayload={() => setIsPayloadModalOpen(false)}
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        onSave={(meta) => updatePaperMetadata(meta)}
+      />
+
+      {/* Overlays: Raw Payloads Modal (SQL / JSON) */}
+      <IngestionPayloadModal
+        paper={paper}
+        isOpen={isPayloadModalOpen}
+        onClose={() => setIsPayloadModalOpen(false)}
         onUploadJson={handleFileUpload}
         onPasteJson={handlePasteJson}
       />

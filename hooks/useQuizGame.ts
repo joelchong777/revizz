@@ -25,6 +25,7 @@ export type Question = {
     image_url?: string;
     alt_description?: string;
   };
+  explanation_markdown?: string;
 };
 
 export type QuizRoundConfig = {

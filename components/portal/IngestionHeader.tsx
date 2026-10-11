@@ -5,17 +5,15 @@ import type { StagingPaper, StagingQuestion } from "@/types/ingestion";
 import {
   UploadCloud,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
   Eye,
-  EyeOff,
   ClipboardCheck,
   FileCode,
   Settings,
   Upload,
   Gamepad2,
   ExternalLink,
-  ChevronDown,
+  MoreHorizontal,
+  FolderDown,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -27,7 +25,7 @@ export interface IngestionHeaderProps {
   onOpenAudit: () => void;
   onPublish: () => void;
   publishStatus: "idle" | "validating" | "publishing" | "success" | "error";
-  publishMessage: string;
+  publishMessage?: string;
   showLivePreview: boolean;
   onTogglePreview: () => void;
 }
@@ -41,11 +39,13 @@ export default function IngestionHeader({
   onOpenAudit,
   onPublish,
   publishStatus,
-  publishMessage,
+  publishMessage: _publishMessage,
   showLivePreview,
   onTogglePreview,
 }: IngestionHeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>("0455_s24_12");
   const [availablePresets, setAvailablePresets] = useState<string[]>([
     "0455_s24_12",
@@ -74,42 +74,61 @@ export default function IngestionHeader({
       });
   }, []);
 
-  // Calculate health of paper
-  const { totalCount, validatedCount, percentage } = useMemo(() => {
+  // Close overflow menu on outside click or escape key
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
+  // Calculate health score of paper
+  const { percentage } = useMemo(() => {
     if (!paper || !paper.questions || paper.questions.length === 0) {
-      return { totalCount: 0, validatedCount: 0, percentage: 0 };
+      return { percentage: 0 };
     }
 
     const total = paper.questions.length;
     const validated = paper.questions.filter((q: StagingQuestion) => {
-      // Must not be withdrawn
       if (q.status === "withdrawn") return false;
-      // Must have non-empty stem
       if (!q.stem_markdown || q.stem_markdown.trim().length === 0) return false;
-      // Must have exactly 4 options
       if (!Array.isArray(q.options) || q.options.length !== 4) return false;
-      // Must have exactly 1 correct option
       const correctCount = q.options.filter((opt) => opt.is_correct).length;
       return correctCount === 1;
     }).length;
 
     const pct = total > 0 ? Math.round((validated / total) * 100) : 0;
-    return { totalCount: total, validatedCount: validated, percentage: pct };
+    return { percentage: pct };
   }, [paper]);
 
-  // Color tokens according to specifications:
-  // >90% brand.teal (#14B8A6), 50-90% brand.yellow (#FACC15), <50% brand.coral (#FB7185)
-  const healthColorHex = useMemo(() => {
-    if (percentage > 90) return "#14B8A6";
+  // Calm Health Score dot color tokens:
+  // Green (>=90%), Yellow (50-89%), Coral (<50%)
+  const healthDotColor = useMemo(() => {
+    if (percentage >= 90) return "#22C55E";
     if (percentage >= 50) return "#FACC15";
     return "#FB7185";
   }, [percentage]);
 
-  const seriesBadgeLabel = useMemo(() => {
-    if (!paper?.paper) return "s24";
-    const series = paper.paper.series || "s";
-    const yearShort = paper.paper.year ? String(paper.paper.year).slice(-2) : "24";
-    return `${series}${yearShort}`;
+  const paperBadgeLabel = useMemo(() => {
+    const series = paper?.paper?.series || "s";
+    const yearShort = paper?.paper?.year ? String(paper.paper.year).slice(-2) : "24";
+    const paperCode = paper?.paper?.paper_code || "12";
+    return `${series}${yearShort} · ${paperCode}`;
   }, [paper]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,275 +139,219 @@ export default function IngestionHeader({
     e.target.value = "";
   };
 
-  const handleLoadClick = () => {
-    if (typeof onLoadPreset === "function") {
-      (onLoadPreset as (preset?: string) => void)(selectedPreset);
-    }
-  };
-
   const isPublishing = publishStatus === "publishing" || publishStatus === "validating";
 
   return (
-    <header className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] shadow-offset-4 p-4 sm:p-6 flex flex-col gap-4 font-body">
-      {/* Top Row: Title, Badges, and Health Ring/Chunky Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Left: Branding & Subject Badges */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
-          <h1 className="font-heading text-2xl sm:text-3xl text-[#201e1d] tracking-tight flex items-center gap-2">
-            <span>Revizz Ingestion Studio</span>
-            <span className="text-amber-500 select-none">⚡</span>
-          </h1>
+    <header className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-offset-2 px-4 py-3 sm:px-6 sm:py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 font-body">
+      {/* Hidden File Input for JSON Upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
-          {/* Badges Container */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Subject Badge */}
-            <span className="px-3 py-1 bg-[#ffe1d0] border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 flex items-center gap-1.5 whitespace-nowrap">
-              <span>{paper?.subject?.icon || "📈"}</span>
-              <span>
-                {paper?.subject
-                  ? `${paper.subject.code} ${paper.subject.name}`
-                  : "0455 Economics"}
-              </span>
+      {/* Left: Title & Key Badges */}
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
+        <h1 className="font-heading text-xl sm:text-2xl text-[#201e1d] tracking-tight flex items-center gap-1.5 select-none">
+          <span>Revizz Studio</span>
+          <span className="text-amber-500">⚡</span>
+        </h1>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Subject Badge */}
+          <span className="px-2.5 py-1 bg-[#ffe1d0] border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 flex items-center gap-1.5 whitespace-nowrap">
+            <span>{paper?.subject?.icon || "📈"}</span>
+            <span>
+              {paper?.subject
+                ? `${paper.subject.code} ${paper.subject.name}`
+                : "0455 Economics"}
             </span>
+          </span>
 
-            {/* Series Badge */}
-            <span className="px-3 py-1 bg-[#f0fae1] border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 whitespace-nowrap">
-              {seriesBadgeLabel}
-            </span>
+          {/* Paper Badge */}
+          <span className="px-2.5 py-1 bg-[#f0fae1] border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 whitespace-nowrap">
+            {paperBadgeLabel}
+          </span>
 
-            {/* Paper Code Badge */}
-            <span className="px-3 py-1 bg-[#ffc6a5] border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 whitespace-nowrap">
-              Paper {paper?.paper?.paper_code || "12"}
-            </span>
-
-            {/* Question Count Badge */}
-            <span className="px-3 py-1 bg-white border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 whitespace-nowrap">
-              {paper?.questions?.length ?? 0} Questions
-            </span>
-          </div>
-        </div>
-
-        {/* Right: Health Progress Ring & Chunky Bar */}
-        <div className="flex items-center gap-3 bg-white border-2 border-[#201e1d] rounded-2xl px-3.5 py-2 shadow-offset-2 self-start lg:self-auto">
-          {/* Circular Progress Ring */}
-          <div className="relative flex items-center justify-center w-10 h-10 flex-shrink-0">
-            <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
-              <circle
-                cx="18"
-                cy="18"
-                r="14"
-                className="text-slate-100"
-                strokeWidth="3.5"
-                stroke="currentColor"
-                fill="none"
-              />
-              <circle
-                cx="18"
-                cy="18"
-                r="14"
-                stroke={healthColorHex}
-                strokeWidth="3.5"
-                strokeDasharray={2 * Math.PI * 14}
-                strokeDashoffset={2 * Math.PI * 14 * (1 - percentage / 100)}
-                strokeLinecap="round"
-                fill="none"
-                className="transition-all duration-500 ease-out"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[10px] font-black text-slate-800 tabular-nums">
-                {percentage}%
-              </span>
-            </div>
-          </div>
-
-          {/* Chunky Bar & Label */}
-          <div className="flex flex-col gap-1 min-w-[110px] sm:min-w-[130px]">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-              <span className="uppercase tracking-wider text-[10px] text-slate-500 font-black">
-                Health
-              </span>
-              <span className="tabular-nums font-black text-slate-800 text-[11px]">
-                {validatedCount} / {totalCount} Valid
-              </span>
-            </div>
-            {/* Chunky Bar with inset shadow */}
-            <div className="w-full h-3 bg-slate-100 border-2 border-[#201e1d] rounded-full overflow-hidden p-0.5">
-              <div
-                className="h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${percentage}%`,
-                  backgroundColor: healthColorHex,
-                }}
-              />
-            </div>
-          </div>
+          {/* Calm Health Score Badge */}
+          <span className="px-2.5 py-1 bg-white border-2 border-[#201e1d] rounded-full text-xs font-black text-[#201e1d] shadow-offset-2 flex items-center gap-1.5 whitespace-nowrap">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: healthDotColor }}
+            />
+            <span>Health: {percentage}%</span>
+          </span>
         </div>
       </div>
 
-      {/* Bottom Row: Controls, Presets & Command Buttons */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pt-2 border-t-2 border-[#201e1d]/10">
-        {/* Left Subsection: Preset Selector, Upload JSON, Settings */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Preset Selector Dropdown */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <select
-                value={selectedPreset}
-                onChange={(e) => setSelectedPreset(e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs sm:text-sm font-bold text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer"
-                title="Select preset paper"
-              >
-                {availablePresets.map((preset) => (
-                  <option key={preset} value={preset}>
-                    {preset}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#201e1d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+      {/* Right: Only TWO Primary Actions + Clean Overflow Menu */}
+      <div className="flex items-center gap-2 sm:gap-2.5 self-end md:self-auto flex-wrap">
+        {/* Primary Action 1: [👁 Preview] */}
+        <button
+          type="button"
+          onClick={onTogglePreview}
+          className={`px-3.5 py-1.5 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+            showLivePreview
+              ? "bg-[#14B8A6] text-white"
+              : "bg-white text-[#201e1d] hover:bg-slate-50"
+          }`}
+          title={showLivePreview ? "Close Live Preview" : "Open Live Preview"}
+        >
+          <Eye className={`w-4 h-4 ${showLivePreview ? "text-white" : "text-[#201e1d]"}`} />
+          <span>Preview</span>
+        </button>
 
-            <button
-              type="button"
-              onClick={handleLoadClick}
-              className="px-3.5 py-2 bg-[#ffe1d0] hover:bg-[#fed7aa] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm text-[#201e1d] transition-all whitespace-nowrap"
-            >
-              Load Preset
-            </button>
-          </div>
+        {/* Primary Action 2: [Push Live] */}
+        <button
+          type="button"
+          onClick={onPublish}
+          disabled={isPublishing || !paper}
+          className="px-4 py-1.5 bg-[#22C55E] hover:bg-[#16a34a] text-[#201e1d] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-black text-xs sm:text-sm flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
+        >
+          {isPublishing ? (
+            <Loader2 className="w-4 h-4 animate-spin text-[#201e1d]" />
+          ) : (
+            <UploadCloud className="w-4 h-4 text-[#201e1d]" />
+          )}
+          <span>
+            {publishStatus === "publishing"
+              ? "Publishing..."
+              : publishStatus === "validating"
+              ? "Validating..."
+              : "Push Live"}
+          </span>
+        </button>
 
-          {/* Hidden File Input & Upload JSON Button */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            className="hidden"
-            onChange={handleFileChange}
-          />
+        {/* Overflow Menu Button [···] */}
+        <div className="relative" ref={menuRef}>
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="px-3.5 py-2 bg-[#ccdbb2] hover:bg-[#b8cb99] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm text-[#201e1d] flex items-center gap-1.5 transition-all whitespace-nowrap"
-          >
-            <Upload className="w-4 h-4 text-[#201e1d]" />
-            <span>Upload JSON</span>
-          </button>
-
-          {/* Settings Button */}
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            title="Settings"
-            className="p-2 bg-white hover:bg-slate-100 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d] transition-all flex items-center justify-center"
-            aria-label="Settings"
-          >
-            <Settings className="w-4 h-4 text-[#201e1d]" />
-          </button>
-        </div>
-
-        {/* Right Subsection: Command Buttons */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Audit Paper */}
-          <button
-            type="button"
-            onClick={onOpenAudit}
-            className="px-3.5 py-2 bg-white hover:bg-slate-50 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm text-[#201e1d] flex items-center gap-2 transition-all whitespace-nowrap"
-          >
-            <ClipboardCheck className="w-4 h-4 text-[#6366F1]" />
-            <span>Audit Paper</span>
-          </button>
-
-          {/* View SQL / JSON */}
-          <button
-            type="button"
-            onClick={onOpenPayloads}
-            className="px-3.5 py-2 bg-white hover:bg-slate-50 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm text-[#201e1d] flex items-center gap-2 transition-all whitespace-nowrap"
-          >
-            <FileCode className="w-4 h-4 text-[#F59E0B]" />
-            <span>View SQL / JSON</span>
-          </button>
-
-          {/* Toggle Preview */}
-          <button
-            type="button"
-            onClick={onTogglePreview}
-            className={`px-3.5 py-2 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm flex items-center gap-2 transition-all whitespace-nowrap ${
-              showLivePreview
-                ? "bg-[#14B8A6] text-white"
-                : "bg-white text-[#201e1d] hover:bg-slate-50"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label="More options"
+            aria-expanded={isMenuOpen}
+            className={`p-1.5 sm:p-2 border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-[#201e1d] transition-all flex items-center justify-center cursor-pointer ${
+              isMenuOpen ? "bg-[#ffe1d0]" : "bg-white hover:bg-slate-50"
             }`}
           >
-            {showLivePreview ? (
-              <Eye className="w-4 h-4 text-white" />
-            ) : (
-              <EyeOff className="w-4 h-4 text-slate-500" />
-            )}
-            <span>{showLivePreview ? "Preview ON" : "Preview OFF"}</span>
+            <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5 text-[#201e1d]" />
           </button>
 
-          {/* Push Live to Supabase */}
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={isPublishing || !paper}
-            className="px-4 py-2 bg-[#22C55E] hover:bg-[#16A34A] text-[#201e1d] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-black text-xs sm:text-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {isPublishing ? (
-              <Loader2 className="w-4 h-4 animate-spin text-[#201e1d]" />
-            ) : (
-              <UploadCloud className="w-4 h-4 text-[#201e1d]" />
-            )}
-            <span>
-              {publishStatus === "publishing"
-                ? "Publishing..."
-                : publishStatus === "validating"
-                ? "Validating..."
-                : "Push Live to Supabase"}
-            </span>
-          </button>
+          {/* Clean Overflow Dropdown */}
+          {isMenuOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-offset-4 p-1.5 z-50 flex flex-col font-body">
+              {/* Preset Item */}
+              <div className="flex items-center justify-between px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl transition-colors">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    if (typeof onLoadPreset === "function") {
+                      (onLoadPreset as (preset?: string) => void)(selectedPreset);
+                    }
+                  }}
+                  className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#201e1d] flex-1 text-left cursor-pointer"
+                  title="Load preset"
+                >
+                  <FolderDown className="w-4 h-4 text-[#201e1d]" />
+                  <span>Preset: {selectedPreset.replace(/_/g, " ")}</span>
+                </button>
+                {availablePresets.length > 1 && (
+                  <select
+                    value={selectedPreset}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedPreset(val);
+                      if (typeof onLoadPreset === "function") {
+                        (onLoadPreset as (preset?: string) => void)(val);
+                      }
+                      setIsMenuOpen(false);
+                    }}
+                    aria-label="Change preset"
+                    className="text-xs font-bold bg-white border border-[#201e1d] rounded px-1.5 py-0.5 text-[#201e1d] ml-1.5 cursor-pointer focus:outline-none"
+                  >
+                    {availablePresets.map((preset) => (
+                      <option key={preset} value={preset}>
+                        {preset.replace(/_/g, " ")}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
 
-          {/* Test in Game */}
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3.5 py-2 bg-[#ffc6a5] hover:bg-[#f6a06b] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none font-bold text-xs sm:text-sm text-[#201e1d] flex items-center gap-1.5 transition-all whitespace-nowrap"
-          >
-            <Gamepad2 className="w-4 h-4 text-[#201e1d]" />
-            <span>Test in Game</span>
-            <ExternalLink className="w-3.5 h-3.5 opacity-60 ml-0.5" />
-          </a>
+              {/* Upload JSON File */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  fileInputRef.current?.click();
+                }}
+                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <Upload className="w-4 h-4 text-[#201e1d]" />
+                <span>Upload JSON File</span>
+              </button>
+
+              {/* Paper Settings */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenSettings();
+                }}
+                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <Settings className="w-4 h-4 text-[#201e1d]" />
+                <span>Paper Settings</span>
+              </button>
+
+              {/* View SQL & JSON */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenPayloads();
+                }}
+                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <FileCode className="w-4 h-4 text-[#F59E0B]" />
+                <span>View SQL & JSON</span>
+              </button>
+
+              {/* Full Audit Report */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenAudit();
+                }}
+                className="w-full px-3 py-2 hover:bg-[#ffe1d0]/70 rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <ClipboardCheck className="w-4 h-4 text-[#6366F1]" />
+                <span>Full Audit Report</span>
+              </button>
+
+              <div className="my-1 border-t-2 border-[#201e1d]/10" />
+
+              {/* Test in Game */}
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="w-full px-3 py-2 hover:bg-[#ffc6a5] rounded-xl text-left text-xs sm:text-sm font-bold text-[#201e1d] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Gamepad2 className="w-4 h-4 text-[#201e1d]" />
+                  <span>Test in Game</span>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 opacity-60 ml-0.5" />
+              </a>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Publish Status Feedback Banner */}
-      {publishStatus !== "idle" && (
-        <div
-          className={`w-full mt-1 px-4 py-2.5 border-2 border-[#201e1d] rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between gap-3 shadow-offset-2 transition-all ${
-            publishStatus === "validating" || publishStatus === "publishing"
-              ? "bg-[#ffe1d0] text-[#c67139]"
-              : publishStatus === "success"
-              ? "bg-[#f0fae1] text-[#15803D]"
-              : "bg-[#ffc6a5] text-[#E11D48]"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {publishStatus === "publishing" || publishStatus === "validating" ? (
-              <Loader2 className="w-4 h-4 animate-spin text-[#c67139]" />
-            ) : publishStatus === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-[#15803D]" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-[#E11D48]" />
-            )}
-            <span>
-              {publishMessage ||
-                (publishStatus === "success"
-                  ? "Successfully published to Supabase live!"
-                  : `Status: ${publishStatus}`)}
-            </span>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

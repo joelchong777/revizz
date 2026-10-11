@@ -5,19 +5,12 @@ import type { StagingQuestion, StagingPaper } from "@/types/ingestion";
 import {
   Search,
   Plus,
-  Copy,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
   Camera,
-  CheckCircle2,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   X,
   FileQuestion,
   Layers,
-  Sparkles,
 } from "lucide-react";
 
 export interface IngestionQuestionNavProps {
@@ -100,28 +93,15 @@ export function hasDiagram(q?: StagingQuestion): boolean {
   );
 }
 
-/**
- * Strips basic markdown markers for compact snippet display
- */
-function cleanMarkdownSnippet(text?: string): string {
-  if (!text) return "";
-  return text
-    .replace(/!\[.*?\]\(.*?\)/g, "[Image]")
-    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
-    .replace(/[#*_~`$]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export function IngestionQuestionNav({
   questions: propQuestions,
   selectedIdx,
   onSelectIdx,
   onAddQuestion,
-  onDuplicateQuestion,
-  onDeleteQuestion,
-  onMoveQuestion,
-  syllabusTopics: propSyllabusTopics,
+  onDuplicateQuestion: _onDuplicateQuestion,
+  onDeleteQuestion: _onDeleteQuestion,
+  onMoveQuestion: _onMoveQuestion,
+  syllabusTopics: _propSyllabusTopics,
   expectedCount = 30,
   paper,
   onSelect,
@@ -131,7 +111,6 @@ export function IngestionQuestionNav({
   const questions = propQuestions ?? paper?.questions ?? [];
   const totalQuestions = questions.length;
   const effectiveExpected = expectedCount || 30;
-  const syllabusTopics = propSyllabusTopics ?? paper?.syllabus_topics ?? [];
 
   const handleSelect = useCallback(
     (idx: number) => {
@@ -145,7 +124,6 @@ export function IngestionQuestionNav({
   // Search and filter chip states
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<FilterChipMode>("all");
-  const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
 
   // References for keyboard navigation and auto-scrolling
   const buttonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -157,8 +135,6 @@ export function IngestionQuestionNav({
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     }
-    // Reset any pending delete confirmation on selection change
-    setDeleteConfirmIdx(null);
   }, [selectedIdx]);
 
   // Global & container keyboard navigation (Arrow Up/Down/Left/Right)
@@ -273,44 +249,6 @@ export function IngestionQuestionNav({
 
   const hasActiveFilters = searchQuery.trim().length > 0 || filterMode !== "all";
 
-  // Active question details
-  const activeQuestion = questions[selectedIdx];
-  const activeStatus = questionStatusMap[selectedIdx] || {
-    isValid: false,
-    issues: ["Question not selected"],
-    hasDiagram: false,
-    correctKey: null,
-  };
-
-  // Safe action callbacks
-  const handleMoveUp = () => {
-    if (selectedIdx > 0 && onMoveQuestion) {
-      onMoveQuestion(selectedIdx, selectedIdx - 1);
-    }
-  };
-
-  const handleMoveDown = () => {
-    if (selectedIdx < totalQuestions - 1 && onMoveQuestion) {
-      onMoveQuestion(selectedIdx, selectedIdx + 1);
-    }
-  };
-
-  const handleDuplicate = () => {
-    if (onDuplicateQuestion) {
-      onDuplicateQuestion(selectedIdx);
-    }
-  };
-
-  const handleDelete = () => {
-    if (!onDeleteQuestion) return;
-    if (deleteConfirmIdx === selectedIdx) {
-      onDeleteQuestion(selectedIdx);
-      setDeleteConfirmIdx(null);
-    } else {
-      setDeleteConfirmIdx(selectedIdx);
-    }
-  };
-
   const progressPct =
     effectiveExpected > 0
       ? Math.min(100, Math.round((totalQuestions / effectiveExpected) * 100))
@@ -319,23 +257,23 @@ export function IngestionQuestionNav({
   return (
     <nav
       ref={navContainerRef}
-      aria-label="Question Navigation and Studio Matrix"
-      className={`flex flex-col gap-3.5 w-full text-[#201e1d] font-body select-none ${className}`}
+      aria-label="Question Navigation Matrix"
+      className={`bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 shadow-offset-3 flex flex-col gap-3 w-full text-[#201e1d] font-body select-none ${className}`}
     >
       {/* =========================================================================
-          1. HEADER & OVERVIEW BAR
+          1. HEADER & OVERVIEW
          ========================================================================= */}
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-2 flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 bg-[#FACC15] border border-[#201e1d] rounded-lg shadow-sm">
-              <Layers className="w-4 h-4 text-[#201e1d]" />
+            <span className="p-1.5 bg-brand-yellow bg-[#FACC15] border-2 border-[#201e1d] rounded-lg shadow-sm">
+              <Layers className="w-3.5 h-3.5 text-[#201e1d]" />
             </span>
             <div>
-              <h2 className="font-heading text-sm md:text-base font-black tracking-tight leading-tight">
+              <h2 className="font-heading text-sm font-black tracking-tight leading-none text-[#201e1d]">
                 Question Matrix
               </h2>
-              <p className="text-[11px] font-bold text-[#82796a]">
+              <p className="text-[11px] font-bold text-[#82796a] mt-0.5">
                 {totalQuestions} of {effectiveExpected} Questions Staged
               </p>
             </div>
@@ -356,157 +294,128 @@ export function IngestionQuestionNav({
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full bg-[#eee7db] h-2 rounded-full border border-[#201e1d] overflow-hidden">
+        <div className="w-full bg-[#eee7db] h-1.5 rounded-full border border-[#201e1d] overflow-hidden">
           <div
-            className="bg-[#FACC15] h-full rounded-full transition-all duration-300"
+            className="bg-brand-yellow bg-[#FACC15] h-full rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
       </div>
 
       {/* =========================================================================
-          2. SEARCH INPUT & FILTER CHIPS
+          2. SEARCH INPUT (Compact with Clear Button)
          ========================================================================= */}
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-2 flex flex-col gap-2.5">
-        {/* Instant Search Bar */}
-        <div className="relative w-full">
-          <Search className="w-4 h-4 text-[#82796a] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search stems, citations, Q#..."
-            className="w-full bg-white border-2 border-[#201e1d] rounded-xl pl-9 pr-8 py-1.5 text-xs font-bold text-[#201e1d] placeholder-[#a19786] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FACC15] transition-all"
-            aria-label="Search questions"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5"
-              aria-label="Clear search"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Filter Chips */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {/* All */}
+      <div className="relative w-full">
+        <Search className="w-3.5 h-3.5 text-[#82796a] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search questions..."
+          className="w-full bg-white border-2 border-[#201e1d] rounded-xl pl-8 pr-7 py-1.5 text-xs font-bold text-[#201e1d] placeholder-[#a19786] shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow transition-all"
+          aria-label="Search questions"
+        />
+        {searchQuery && (
           <button
             type="button"
-            onClick={() => setFilterMode("all")}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all border-2 active:translate-y-0.5 ${
-              filterMode === "all"
-                ? "bg-[#201e1d] text-[#f9f4ed] border-[#201e1d] shadow-offset-2"
-                : "bg-white text-[#201e1d] border-[#201e1d] hover:bg-[#fff9e6]"
-            }`}
+            onClick={() => setSearchQuery("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded transition-colors cursor-pointer"
+            aria-label="Clear search"
           >
-            All ({totalQuestions})
+            <X className="w-3.5 h-3.5" />
           </button>
-
-          {/* Valid */}
-          <button
-            type="button"
-            onClick={() => setFilterMode("valid")}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all border-2 flex items-center gap-1 active:translate-y-0.5 ${
-              filterMode === "valid"
-                ? "bg-[#22C55E] text-[#201e1d] border-[#201e1d] shadow-offset-2"
-                : "bg-white text-[#201e1d] border-[#201e1d] hover:bg-[#f0fae1]"
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-[#22C55E] border border-[#201e1d]" />
-            Valid ({validCount})
-          </button>
-
-          {/* Needs Review */}
-          <button
-            type="button"
-            onClick={() => setFilterMode("review")}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all border-2 flex items-center gap-1 active:translate-y-0.5 ${
-              filterMode === "review"
-                ? "bg-[#FB7185] text-[#201e1d] border-[#201e1d] shadow-offset-2"
-                : "bg-white text-[#201e1d] border-[#201e1d] hover:bg-[#ffe1d0]"
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-[#FB7185] border border-[#201e1d]" />
-            Needs Review ({needsReviewCount})
-          </button>
-
-          {/* Has Diagrams */}
-          <button
-            type="button"
-            onClick={() => setFilterMode("diagrams")}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all border-2 flex items-center gap-1 active:translate-y-0.5 ${
-              filterMode === "diagrams"
-                ? "bg-[#ffe1d0] text-[#201e1d] border-[#201e1d] shadow-offset-2"
-                : "bg-white text-[#201e1d] border-[#201e1d] hover:bg-[#eee7db]"
-            }`}
-          >
-            <Camera className="w-3.5 h-3.5 text-[#201e1d]" />
-            Diagrams ({diagramCount})
-          </button>
-
-          {/* Reset button if active */}
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery("");
-                setFilterMode("all");
-              }}
-              className="ml-auto text-[11px] font-black text-[#82796a] hover:text-[#201e1d] underline cursor-pointer"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-
-        {/* Filter feedback hint */}
-        {hasActiveFilters && (
-          <div className="text-[11px] font-bold text-[#82796a] flex justify-between items-center px-0.5">
-            <span>
-              Showing{" "}
-              <strong className="text-[#201e1d]">
-                {matchingIndices.length}
-              </strong>{" "}
-              matching questions
-            </span>
-            <span className="text-[10px] text-[#a19786]">
-              Non-matches dimmed below
-            </span>
-          </div>
         )}
       </div>
 
       {/* =========================================================================
-          3. FAST-ACCESS NUMERIC PILL MATRIX (30 / 40 Questions)
+          3. FILTER CHIPS (All, Needs Review, Has Diagrams)
          ========================================================================= */}
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-2 flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {/* All */}
+        <button
+          type="button"
+          onClick={() => setFilterMode("all")}
+          className={`px-2 py-0.5 rounded-lg text-[11px] font-black transition-all border-2 active:translate-y-0.5 cursor-pointer ${
+            filterMode === "all"
+              ? "bg-[#201e1d] text-[#f9f4ed] border-[#201e1d] shadow-sm"
+              : "bg-white text-[#201e1d] border-[#201e1d] hover:bg-[#fff9e6]"
+          }`}
+        >
+          All ({totalQuestions})
+        </button>
+
+        {/* Needs Review */}
+        <button
+          type="button"
+          onClick={() => setFilterMode("review")}
+          className={`px-2 py-0.5 rounded-lg text-[11px] font-black transition-all border-2 flex items-center gap-1 active:translate-y-0.5 cursor-pointer ${
+            filterMode === "review"
+              ? "bg-brand-coral bg-[#FB7185] text-[#201e1d] border-[#201e1d] shadow-sm"
+              : "bg-white text-[#201e1d] border-[#201e1d] hover:bg-[#ffe1d0]"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FB7185] border border-[#201e1d]" />
+          Needs Review ({needsReviewCount})
+        </button>
+
+        {/* Has Diagrams */}
+        <button
+          type="button"
+          onClick={() => setFilterMode("diagrams")}
+          className={`px-2 py-0.5 rounded-lg text-[11px] font-black transition-all border-2 flex items-center gap-1 active:translate-y-0.5 cursor-pointer ${
+            filterMode === "diagrams"
+              ? "bg-brand-amber bg-[#F59E0B] text-[#201e1d] border-[#201e1d] shadow-sm"
+              : "bg-white text-[#201e1d] border-[#201e1d] hover:bg-[#eee7db]"
+          }`}
+        >
+          <Camera className="w-3 h-3 text-[#201e1d]" />
+          Has Diagrams ({diagramCount})
+        </button>
+
+        {/* Reset button if active */}
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              setFilterMode("all");
+            }}
+            className="ml-auto text-[10px] font-black text-[#82796a] hover:text-[#201e1d] underline cursor-pointer"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+
+      {/* =========================================================================
+          4. FAST-ACCESS NUMERIC PILL MATRIX (1..N)
+         ========================================================================= */}
+      <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between pb-1 border-b border-[#dcd3c4]">
-          <span className="text-xs font-black uppercase tracking-wider text-[#645c50]">
-            Quick Select (1–{totalQuestions})
+          <span className="text-[11px] font-black uppercase tracking-wider text-[#645c50]">
+            Quick Select ({totalQuestions > 0 ? `1–${totalQuestions}` : 0})
           </span>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => handleSelect(selectedIdx - 1)}
               disabled={selectedIdx <= 0}
-              className="p-1 rounded-lg border border-[#201e1d] bg-white text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffe1d0] transition-colors"
+              className="p-1 rounded-lg border border-[#201e1d] bg-white text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffe1d0] transition-colors cursor-pointer"
               title="Previous question (Arrow Left/Up)"
+              aria-label="Previous question"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs font-black text-[#201e1d] px-1">
-              Q{selectedIdx + 1}
+            <span className="text-xs font-black text-[#201e1d] px-1 min-w-[32px] text-center">
+              {totalQuestions > 0 ? `Q${selectedIdx + 1}` : "—"}
             </span>
             <button
               type="button"
               onClick={() => handleSelect(selectedIdx + 1)}
               disabled={selectedIdx >= totalQuestions - 1}
-              className="p-1 rounded-lg border border-[#201e1d] bg-white text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffe1d0] transition-colors"
+              className="p-1 rounded-lg border border-[#201e1d] bg-white text-[#201e1d] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffe1d0] transition-colors cursor-pointer"
               title="Next question (Arrow Right/Down)"
+              aria-label="Next question"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -521,7 +430,7 @@ export function IngestionQuestionNav({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-[260px] overflow-y-auto pr-1 py-1">
+          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-[360px] overflow-y-auto pr-1 py-1">
             {questions.map((q, idx) => {
               const status = questionStatusMap[idx];
               const isSelected = selectedIdx === idx;
@@ -539,13 +448,13 @@ export function IngestionQuestionNav({
                   onClick={() => handleSelect(idx)}
                   aria-pressed={isSelected}
                   title={`Question ${qNum}${
-                    status.isValid ? " (Valid)" : ` (Needs attention: ${status.issues.join(", ")})`
+                    status.isValid ? " (Valid)" : ` (Needs review: ${status.issues.join(", ")})`
                   }${status.hasDiagram ? " · Has Diagram" : ""}${
                     status.correctKey ? ` · Key: ${status.correctKey}` : ""
                   }`}
                   className={`relative h-11 rounded-xl transition-all duration-75 flex flex-col items-center justify-center p-1 select-none cursor-pointer border-2 ${
                     isSelected
-                      ? "bg-[#FACC15] border-[#201e1d] shadow-offset-2 scale-[1.05] z-10 font-black ring-2 ring-[#201e1d]/20"
+                      ? "bg-brand-yellow bg-[#FACC15] border-[#201e1d] shadow-offset-2 scale-[1.05] z-10 font-black ring-2 ring-[#201e1d]/20"
                       : "bg-white border-[#201e1d] hover:bg-[#fff9e6] font-bold shadow-sm active:translate-y-0.5 active:shadow-none"
                   } ${
                     !isMatch && hasActiveFilters
@@ -553,10 +462,10 @@ export function IngestionQuestionNav({
                       : "opacity-100"
                   }`}
                 >
-                  {/* Status dot in top-right */}
+                  {/* Status dot in top-right: Green dot for valid, Coral dot for issues */}
                   <span
                     className={`absolute top-1 right-1 w-2 h-2 rounded-full border border-[#201e1d] ${
-                      status.isValid ? "bg-[#22C55E]" : "bg-[#FB7185]"
+                      status.isValid ? "bg-brand-green bg-[#22C55E]" : "bg-brand-coral bg-[#FB7185]"
                     }`}
                   />
 
@@ -584,165 +493,20 @@ export function IngestionQuestionNav({
       </div>
 
       {/* =========================================================================
-          4. SELECTED QUESTION CARD PREVIEW
+          5. ADD QUESTION BUTTON
          ========================================================================= */}
-      {activeQuestion && (
-        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 shadow-offset-2 flex flex-col gap-2.5 transition-all">
-          {/* Card Header */}
-          <div className="flex items-center justify-between gap-2 border-b border-[#dcd3c4] pb-2">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="px-2 py-0.5 bg-[#201e1d] text-[#f9f4ed] rounded-lg text-xs font-black">
-                Q{activeQuestion.question_number || selectedIdx + 1}
-              </span>
-              {activeQuestion.cambridge_source_ref && (
-                <span className="px-2 py-0.5 bg-[#eee7db] border border-[#201e1d] rounded-lg text-[10px] font-bold text-[#645c50] truncate max-w-[130px]">
-                  {activeQuestion.cambridge_source_ref}
-                </span>
-              )}
-            </div>
-
-            {/* Validation Badge */}
-            <div className="flex items-center">
-              {activeStatus.isValid ? (
-                <span className="px-2 py-0.5 bg-[#f0fae1] border border-[#201e1d] rounded-full text-[11px] font-black text-[#3d472b] flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-[#22C55E]" />
-                  Valid
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 bg-[#ffe1d0] border border-[#201e1d] rounded-full text-[11px] font-black text-[#c67139] flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3 text-[#FB7185]" />
-                  Review
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Stem Markdown Snippet */}
-          <div className="bg-white border-2 border-[#201e1d] rounded-xl p-2.5 shadow-sm text-xs font-medium text-[#201e1d]">
-            <p className="line-clamp-2 leading-relaxed font-body">
-              {cleanMarkdownSnippet(activeQuestion.stem_markdown) || (
-                <span className="italic text-[#a19786]">
-                  No stem text entered yet...
-                </span>
-              )}
-            </p>
-          </div>
-
-          {/* Badges Row (Topic & Diagram) */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* Topic Badge */}
-            <span className="px-2 py-0.5 bg-[#eee7db] border border-[#201e1d] rounded-lg text-[11px] font-bold text-[#474238] truncate max-w-[170px]">
-              🏷️ {activeQuestion.topic_name || "General Topic"}
-            </span>
-
-            {/* Diagram Badge */}
-            {activeStatus.hasDiagram ? (
-              <span className="px-2 py-0.5 bg-[#f0fae1] border border-[#201e1d] rounded-lg text-[11px] font-black text-[#201e1d] flex items-center gap-1">
-                <Camera className="w-3 h-3 text-[#201e1d]" />
-                Diagram
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 bg-white border border-[#dcd3c4] rounded-lg text-[10px] font-bold text-[#82796a]">
-                Text only
-              </span>
-            )}
-
-            {/* Key Badge */}
-            <span className="px-2 py-0.5 bg-[#fff9e6] border border-[#201e1d] rounded-lg text-[11px] font-black text-[#201e1d] ml-auto">
-              Key: {activeStatus.correctKey || "?"}
-            </span>
-          </div>
-
-          {/* Validation Issues Callout (if invalid) */}
-          {!activeStatus.isValid && activeStatus.issues.length > 0 && (
-            <div className="p-2 rounded-xl bg-[#ffe1d0] border border-[#201e1d] text-[11px] text-[#c67139] font-bold flex flex-col gap-0.5">
-              <span className="font-black text-[#201e1d]">Attention needed:</span>
-              <ul className="list-disc list-inside space-y-0.5 pl-0.5">
-                {activeStatus.issues.map((issue, i) => (
-                  <li key={i}>{issue}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Action Toolbar (Move Up, Move Down, Duplicate, Delete) */}
-          <div className="grid grid-cols-4 gap-1.5 pt-1 border-t border-[#dcd3c4]">
-            {/* Move Up */}
-            <button
-              type="button"
-              onClick={handleMoveUp}
-              disabled={selectedIdx <= 0 || !onMoveQuestion}
-              className="py-1.5 px-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-black text-[#201e1d] hover:bg-[#ffe1d0] active:translate-y-0.5 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1 transition-all"
-              title="Move question up"
-            >
-              <ArrowUp className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Up</span>
-            </button>
-
-            {/* Move Down */}
-            <button
-              type="button"
-              onClick={handleMoveDown}
-              disabled={selectedIdx >= totalQuestions - 1 || !onMoveQuestion}
-              className="py-1.5 px-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-black text-[#201e1d] hover:bg-[#ffe1d0] active:translate-y-0.5 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1 transition-all"
-              title="Move question down"
-            >
-              <ArrowDown className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Down</span>
-            </button>
-
-            {/* Duplicate */}
-            <button
-              type="button"
-              onClick={handleDuplicate}
-              disabled={!onDuplicateQuestion}
-              className="py-1.5 px-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-black text-[#201e1d] hover:bg-[#ffe1d0] active:translate-y-0.5 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1 transition-all"
-              title="Duplicate this question"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Clone</span>
-            </button>
-
-            {/* Delete */}
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={!onDeleteQuestion || totalQuestions <= 1}
-              className={`py-1.5 px-2 border-2 border-[#201e1d] rounded-xl text-xs font-black active:translate-y-0.5 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1 transition-all ${
-                deleteConfirmIdx === selectedIdx
-                  ? "bg-red-500 text-white animate-pulse"
-                  : "bg-white text-rose-600 hover:bg-rose-50"
-              }`}
-              title={
-                deleteConfirmIdx === selectedIdx
-                  ? "Click again to confirm deletion"
-                  : "Delete this question"
-              }
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">
-                {deleteConfirmIdx === selectedIdx ? "Confirm?" : "Del"}
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          5. STICKY BOTTOM BAR ("Add Question (+)")
-         ========================================================================= */}
-      <div className="sticky bottom-0 bg-[#f9f4ed]/95 backdrop-blur-sm pt-2 pb-1 border-t-2 border-[#201e1d] mt-auto z-20">
+      <div className="pt-2 border-t-2 border-[#201e1d]/10 mt-auto">
         <button
           type="button"
           onClick={() => {
             if (onAddQuestion) onAddQuestion();
           }}
           disabled={!onAddQuestion}
-          className="w-full py-2.5 px-4 bg-[#FACC15] hover:bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-xs sm:text-sm border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full py-2.5 px-4 bg-brand-yellow bg-[#FACC15] hover:bg-[#fde047] text-[#201e1d] font-heading font-black text-xs sm:text-sm border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer"
           aria-label="Add question to paper"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
-          <span>Add Question (+)</span>
+          <span>Add Question</span>
         </button>
       </div>
     </nav>

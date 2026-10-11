@@ -10,14 +10,18 @@ import {
   FileText,
   Bookmark,
   Sparkles,
-  Columns,
-  Layers,
   Eye,
   Edit3,
   AlertTriangle,
   CheckCircle2,
   Wand2,
   Info,
+  MoreHorizontal,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  Trash2,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
@@ -28,6 +32,10 @@ export interface IngestionStemEditorProps {
   citation: string;
   onChangeStem: (newStem: string) => void;
   onChangeCitation: (newCitation: string) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
   className?: string;
 }
 
@@ -92,7 +100,6 @@ export function detectKatexErrors(text: string): KatexSyntaxIssue[] {
       } catch (err: unknown) {
         const rawMsg = err instanceof Error ? err.message : String(err);
         const cleanMsg = rawMsg.replace(/^KaTeX parse error:\s*/, '');
-        // Avoid duplicate reporting if already flagged by brace balance
         if (!errors.some((e) => e.snippet?.includes(expr.slice(0, 20)))) {
           errors.push({
             type: 'syntax-error',
@@ -144,7 +151,6 @@ interface MathToolbarItem {
   id: string;
   label: string;
   tooltip: string;
-  badge?: string;
   insert: {
     before: string;
     after?: string;
@@ -153,7 +159,7 @@ interface MathToolbarItem {
   };
 }
 
-// Required buttons as specified in requirements
+// Sleek primary math tools (the 5 most common math tokens)
 const PRIMARY_MATH_TOOLS: MathToolbarItem[] = [
   {
     id: 'inline',
@@ -197,14 +203,6 @@ const PRIMARY_MATH_TOOLS: MathToolbarItem[] = [
     },
   },
   {
-    id: 'percent',
-    label: '\\%',
-    tooltip: 'Escaped percentage symbol (\\%)',
-    insert: {
-      before: '\\%',
-    },
-  },
-  {
     id: 'delta',
     label: '\\Delta',
     tooltip: 'Delta symbol (\\Delta)',
@@ -212,34 +210,21 @@ const PRIMARY_MATH_TOOLS: MathToolbarItem[] = [
       before: '\\Delta ',
     },
   },
+];
+
+// Extended math symbols available in [+ More Math] popover
+const EXTENDED_MATH_TOOLS: MathToolbarItem[] = [
   {
-    id: 'text',
-    label: '\\text{...}',
-    tooltip: 'Text within math expression (\\text{...})',
-    insert: {
-      before: '\\text{',
-      after: '}',
-      defaultContent: 'text',
-      selectPlaceholder: true,
-    },
+    id: 'percent',
+    label: '\\%',
+    tooltip: 'Escaped percentage (\\%)',
+    insert: { before: '\\%' },
   },
   {
     id: 'approx',
     label: '\\approx',
     tooltip: 'Approximately equal (\\approx)',
-    insert: {
-      before: '\\approx ',
-    },
-  },
-];
-
-// Supplementary math symbols for Cambridge STEM MCQs
-const EXTRA_MATH_TOOLS: MathToolbarItem[] = [
-  {
-    id: 'pm',
-    label: '\\pm',
-    tooltip: 'Plus-minus (\\pm)',
-    insert: { before: '\\pm ' },
+    insert: { before: '\\approx ' },
   },
   {
     id: 'le',
@@ -254,6 +239,12 @@ const EXTRA_MATH_TOOLS: MathToolbarItem[] = [
     insert: { before: '\\ge ' },
   },
   {
+    id: 'pm',
+    label: '\\pm',
+    tooltip: 'Plus-minus (\\pm)',
+    insert: { before: '\\pm ' },
+  },
+  {
     id: 'superscript',
     label: 'x^2',
     tooltip: 'Power / Superscript (x^2)',
@@ -266,20 +257,44 @@ const EXTRA_MATH_TOOLS: MathToolbarItem[] = [
     insert: { before: '_{', after: '}', defaultContent: '1', selectPlaceholder: true },
   },
   {
+    id: 'sqrt',
+    label: '\\sqrt{x}',
+    tooltip: 'Square root (\\sqrt{x})',
+    insert: { before: '\\sqrt{', after: '}', defaultContent: 'x', selectPlaceholder: true },
+  },
+  {
     id: 'rightarrow',
     label: '\\rightarrow',
     tooltip: 'Arrow (\\rightarrow)',
     insert: { before: '\\rightarrow ' },
   },
   {
-    id: 'sqrt',
-    label: '\\sqrt{x}',
-    tooltip: 'Square root (\\sqrt{x})',
-    insert: { before: '\\sqrt{', after: '}', defaultContent: 'x', selectPlaceholder: true },
+    id: 'text',
+    label: '\\text{...}',
+    tooltip: 'Text inside math (\\text{...})',
+    insert: { before: '\\text{', after: '}', defaultContent: 'text', selectPlaceholder: true },
+  },
+  {
+    id: 'neq',
+    label: '\\neq',
+    tooltip: 'Not equal (\\neq)',
+    insert: { before: '\\neq ' },
+  },
+  {
+    id: 'pi',
+    label: '\\pi',
+    tooltip: 'Pi constant (\\pi)',
+    insert: { before: '\\pi ' },
+  },
+  {
+    id: 'theta',
+    label: '\\theta',
+    tooltip: 'Theta angle (\\theta)',
+    insert: { before: '\\theta ' },
   },
 ];
 
-type ViewMode = 'split' | 'stacked' | 'editor' | 'preview';
+type TabMode = 'write' | 'preview';
 
 export function IngestionStemEditor({
   questionNumber,
@@ -287,33 +302,71 @@ export function IngestionStemEditor({
   citation,
   onChangeStem,
   onChangeCitation,
+  onMoveUp,
+  onMoveDown,
+  onDuplicate,
+  onDelete,
   className,
 }: IngestionStemEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('split');
-  const [showExtraSymbols, setShowExtraSymbols] = useState<boolean>(false);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
+  const moreMathRef = useRef<HTMLDivElement>(null);
 
-  // Auto-resizing textarea to accommodate growing stem text smoothly
+  const [activeTab, setActiveTab] = useState<TabMode>('write');
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isMoreMathOpen, setIsMoreMathOpen] = useState(false);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        actionMenuRef.current &&
+        !actionMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsActionMenuOpen(false);
+        setConfirmingDelete(false);
+      }
+      if (
+        moreMathRef.current &&
+        !moreMathRef.current.contains(event.target as Node)
+      ) {
+        setIsMoreMathOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Auto-resizing textarea to accommodate content smoothly
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    const nextHeight = Math.max(160, el.scrollHeight);
+    const nextHeight = Math.max(180, el.scrollHeight);
     el.style.height = `${nextHeight}px`;
   }, []);
 
   useEffect(() => {
-    adjustHeight();
-  }, [stemMarkdown, adjustHeight]);
+    if (activeTab === 'write') {
+      adjustHeight();
+    }
+  }, [stemMarkdown, activeTab, adjustHeight]);
 
   // Insert math snippet at cursor position in the textarea
   const handleInsert = useCallback(
     (tool: MathToolbarItem) => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
+      // If we are currently in preview tab, switch to write tab first
+      if (activeTab !== 'write') {
+        setActiveTab('write');
+      }
 
-      const start = textarea.selectionStart ?? stemMarkdown.length;
-      const end = textarea.selectionEnd ?? stemMarkdown.length;
+      const textarea = textareaRef.current;
+      const start = textarea?.selectionStart ?? stemMarkdown.length;
+      const end = textarea?.selectionEnd ?? stemMarkdown.length;
       const selected = stemMarkdown.slice(start, end);
 
       const { before, after = '', defaultContent = '', selectPlaceholder } = tool.insert;
@@ -340,7 +393,7 @@ export function IngestionStemEditor({
       const nextVal = stemMarkdown.slice(0, start) + insertion + stemMarkdown.slice(end);
       onChangeStem(nextVal);
 
-      // Restore focus and precise selection after React applies controlled state
+      // Restore focus and selection after React updates controlled state
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
@@ -349,7 +402,7 @@ export function IngestionStemEditor({
         }
       }, 0);
     },
-    [stemMarkdown, onChangeStem, adjustHeight]
+    [stemMarkdown, onChangeStem, adjustHeight, activeTab]
   );
 
   // Auto-sanitize math button
@@ -380,6 +433,8 @@ export function IngestionStemEditor({
     return trimmed ? trimmed.split(/\s+/).length : 0;
   }, [stemMarkdown]);
 
+  const hasActionProps = Boolean(onMoveUp || onMoveDown || onDuplicate || onDelete);
+
   return (
     <div
       className={cn(
@@ -387,35 +442,28 @@ export function IngestionStemEditor({
         className
       )}
     >
-      {/* 1. HEADER: Title + Question Number Badge + Citation Input + View Mode Switcher */}
-      <div className="p-4 sm:p-5 border-b-2 border-[#201e1d] bg-neutral-100/70 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Left: Title & Badge */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-brand-yellow border-2 border-[#201e1d] flex items-center justify-center shadow-offset-2">
-              <FileText className="w-4 h-4 text-[#201e1d]" />
-            </div>
-            <h2 className="font-heading text-lg sm:text-xl tracking-tight text-[#201e1d]">
-              Question Stem
-            </h2>
+      {/* 1. HEADER BAR */}
+      <div className="p-3.5 sm:p-4 border-b-2 border-[#201e1d] bg-neutral-100/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left: Question Badge */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-brand-yellow border-2 border-[#201e1d] flex items-center justify-center shadow-offset-2 shrink-0">
+            <FileText className="w-4 h-4 text-[#201e1d]" />
           </div>
-
-          {/* Question Number Badge */}
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-brand-yellow text-slate-900 border-2 border-[#201e1d] font-heading text-xs sm:text-sm shadow-offset-2 select-none">
-            Q{questionNumber}
+          <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-brand-yellow text-slate-900 border-2 border-[#201e1d] font-heading font-black text-xs sm:text-sm shadow-offset-2 select-none tracking-tight">
+            Question {questionNumber}
           </span>
         </div>
 
-        {/* Right: Cambridge Citation Input & View Modes */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Citation Input Field */}
-          <div className="flex items-center gap-2 flex-1 sm:flex-none">
+        {/* Center / Right: Citation Input, Tabs, and Action Overflow Menu */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          {/* Sleek Cambridge Citation Input */}
+          <div className="flex items-center gap-1.5 flex-1 sm:flex-none">
             <label
               htmlFor={`citation-q${questionNumber}`}
               className="text-xs font-bold uppercase tracking-wider text-[#645c50] flex items-center gap-1 select-none whitespace-nowrap"
             >
               <Bookmark className="w-3.5 h-3.5 text-accent" />
-              <span>Citation:</span>
+              <span className="hidden sm:inline">Citation:</span>
             </label>
             <input
               id={`citation-q${questionNumber}`}
@@ -423,161 +471,246 @@ export function IngestionStemEditor({
               value={citation}
               onChange={(e) => onChangeCitation(e.target.value)}
               placeholder="e.g. 0455/12/M/J/23 Q4"
-              className="w-full sm:w-56 px-3 py-1.5 text-xs sm:text-sm font-mono bg-white text-[#201e1d] border-2 border-[#201e1d] rounded-xl shadow-offset-2 outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-neutral-400"
+              className="w-full sm:w-48 lg:w-56 px-3 py-1.5 text-xs sm:text-sm font-mono bg-white text-[#201e1d] border-2 border-[#201e1d] rounded-xl shadow-offset-2 outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-neutral-400"
             />
           </div>
 
-          {/* View Mode Segmented Controls */}
-          <div className="inline-flex items-center bg-neutral-200 p-1 rounded-xl border-2 border-[#201e1d] select-none">
+          {/* Simple [Write] and [Preview] Tabs */}
+          <div className="inline-flex items-center bg-neutral-200/90 p-1 rounded-xl border-2 border-[#201e1d] select-none shadow-offset-2">
             <button
               type="button"
-              onClick={() => setViewMode('split')}
-              title="Split View (Side-by-side / Stacked)"
+              onClick={() => setActiveTab('write')}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
-                viewMode === 'split'
-                  ? 'bg-white text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2'
-                  : 'text-[#645c50] hover:text-[#201e1d]'
-              )}
-            >
-              <Columns className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Split</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('stacked')}
-              title="Stacked View (Editor over Live Preview)"
-              className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
-                viewMode === 'stacked'
-                  ? 'bg-white text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2'
-                  : 'text-[#645c50] hover:text-[#201e1d]'
-              )}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Stacked</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('editor')}
-              title="Editor Only"
-              className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
-                viewMode === 'editor'
-                  ? 'bg-white text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2'
+                'px-3 py-1 rounded-lg text-xs font-heading font-bold transition-all flex items-center gap-1.5 cursor-pointer',
+                activeTab === 'write'
+                  ? 'bg-brand-yellow text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2'
                   : 'text-[#645c50] hover:text-[#201e1d]'
               )}
             >
               <Edit3 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Edit</span>
+              <span>Write</span>
             </button>
-
             <button
               type="button"
-              onClick={() => setViewMode('preview')}
-              title="Preview Only"
+              onClick={() => setActiveTab('preview')}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
-                viewMode === 'preview'
-                  ? 'bg-white text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2'
+                'px-3 py-1 rounded-lg text-xs font-heading font-bold transition-all flex items-center gap-1.5 cursor-pointer',
+                activeTab === 'preview'
+                  ? 'bg-brand-yellow text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2'
                   : 'text-[#645c50] hover:text-[#201e1d]'
               )}
             >
               <Eye className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Preview</span>
+              <span>Preview</span>
             </button>
           </div>
+
+          {/* Action Overflow Menu [···] */}
+          {hasActionProps && (
+            <div className="relative" ref={actionMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsActionMenuOpen((prev) => !prev);
+                  setConfirmingDelete(false);
+                }}
+                aria-label="Question actions menu"
+                title="Question Actions"
+                className="p-1.5 sm:px-2.5 sm:py-1.5 bg-white hover:bg-neutral-100 text-[#201e1d] border-2 border-[#201e1d] rounded-xl shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center gap-1 select-none"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+
+              {isActionMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border-2 border-[#201e1d] rounded-xl shadow-offset-2 z-30 py-1.5 animate-in fade-in zoom-in-95 duration-100">
+                  {onMoveUp && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onMoveUp();
+                        setIsActionMenuOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-neutral-100 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5 text-neutral-600" />
+                      <span>Move Up</span>
+                    </button>
+                  )}
+                  {onMoveDown && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onMoveDown();
+                        setIsActionMenuOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-neutral-100 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5 text-neutral-600" />
+                      <span>Move Down</span>
+                    </button>
+                  )}
+                  {onDuplicate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDuplicate();
+                        setIsActionMenuOpen(false);
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-neutral-100 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-neutral-600" />
+                      <span>Duplicate Question</span>
+                    </button>
+                  )}
+
+                  {onDelete && (
+                    <>
+                      <div className="my-1 border-t border-neutral-200" />
+                      {confirmingDelete ? (
+                        <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg mx-1.5 my-1">
+                          <p className="text-[11px] font-bold text-rose-800 mb-1.5 leading-tight">
+                            Delete question {questionNumber}?
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onDelete();
+                                setIsActionMenuOpen(false);
+                                setConfirmingDelete(false);
+                              }}
+                              className="flex-1 py-1 px-2 text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-md transition-colors cursor-pointer text-center"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmingDelete(false)}
+                              className="flex-1 py-1 px-2 text-[11px] font-semibold text-neutral-700 bg-neutral-200 hover:bg-neutral-300 rounded-md transition-colors cursor-pointer text-center"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingDelete(true)}
+                          className="w-full px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Delete Question</span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 2. MATHEMATICAL FORMULA INSERTION TOOLBAR */}
-      <div className="p-3 sm:px-5 sm:py-3 border-b-2 border-[#201e1d] bg-neutral-50/90 flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* Section Title */}
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#645c50]">
-            <Sparkles className="w-3.5 h-3.5 text-accent" />
-            <span>Math & KaTeX Toolbar</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Clean / Sanitize Math button */}
-            <button
-              type="button"
-              onClick={handleAutoSanitize}
-              title="Auto-format LaTeX delimiters ($ / $$) and escape currency dollar signs"
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-neutral-100 text-[#201e1d] text-xs font-bold border-2 border-[#201e1d] rounded-lg shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer select-none"
-            >
-              <Wand2 className="w-3 h-3 text-accent" />
-              <span>Clean Math</span>
-            </button>
-
-            {/* Extra symbols toggle */}
-            <button
-              type="button"
-              onClick={() => setShowExtraSymbols((prev) => !prev)}
-              className="text-xs font-bold text-accent hover:underline cursor-pointer select-none"
-            >
-              {showExtraSymbols ? 'Fewer Symbols' : '+ More Symbols'}
-            </button>
-          </div>
-        </div>
-
-        {/* Primary Buttons */}
+      {/* 2. MATH TOOLBAR (Sleek, low visual noise) */}
+      <div className="p-2.5 sm:px-4 sm:py-2.5 border-b-2 border-[#201e1d] bg-neutral-50/90 flex flex-wrap items-center justify-between gap-2">
+        {/* Left: Common Math Tokens + [+ More Math] Popover */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <div className="hidden sm:flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#645c50] mr-1">
+            <Sparkles className="w-3.5 h-3.5 text-accent" />
+            <span>Math:</span>
+          </div>
+
+          {/* 5 Primary Math Tokens */}
           {PRIMARY_MATH_TOOLS.map((tool) => (
             <button
               key={tool.id}
               type="button"
               title={tool.tooltip}
               onMouseDown={(e) => {
-                // Prevent button click from causing textarea to lose selection
+                // Prevent button click from blurring the textarea
                 e.preventDefault();
               }}
               onClick={() => handleInsert(tool)}
-              className="inline-flex items-center justify-center px-2.5 py-1.5 bg-white hover:bg-neutral-100 active:bg-neutral-200 text-[#201e1d] text-xs font-mono font-bold border-2 border-[#201e1d] rounded-lg shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all select-none cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center justify-center px-2.5 py-1 bg-white hover:bg-neutral-100 active:bg-neutral-200 text-[#201e1d] text-xs font-mono font-bold border-2 border-[#201e1d] rounded-lg shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all select-none cursor-pointer whitespace-nowrap"
             >
               {tool.label}
             </button>
           ))}
+
+          {/* [+ More Math] Popover Button */}
+          <div className="relative" ref={moreMathRef}>
+            <button
+              type="button"
+              onClick={() => setIsMoreMathOpen((prev) => !prev)}
+              onMouseDown={(e) => e.preventDefault()}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-neutral-100 text-[#201e1d] text-xs font-bold border-2 border-[#201e1d] rounded-lg shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer select-none"
+            >
+              <span>+ More Math</span>
+              <ChevronDown
+                className={cn('w-3 h-3 text-[#645c50] transition-transform duration-150', isMoreMathOpen && 'rotate-180')}
+              />
+            </button>
+
+            {isMoreMathOpen && (
+              <div className="absolute left-0 top-full mt-2 w-72 p-2.5 bg-white border-2 border-[#201e1d] rounded-xl shadow-offset-2 z-30 animate-in fade-in zoom-in-95 duration-100">
+                <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider mb-2 px-1">
+                  Extended Mathematical Symbols
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {EXTENDED_MATH_TOOLS.map((tool) => (
+                    <button
+                      key={tool.id}
+                      type="button"
+                      title={tool.tooltip}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        handleInsert(tool);
+                        setIsMoreMathOpen(false);
+                      }}
+                      className="inline-flex items-center justify-center px-2 py-1.5 bg-neutral-50 hover:bg-brand-yellow/30 text-[#201e1d] text-xs font-mono font-bold border border-[#201e1d] rounded-md transition-colors cursor-pointer select-none"
+                    >
+                      {tool.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Supplementary Symbols (Collapsible) */}
-        {showExtraSymbols && (
-          <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-neutral-200 animate-in fade-in duration-150">
-            <span className="text-[11px] font-bold text-[#82796a] uppercase mr-1">Extra:</span>
-            {EXTRA_MATH_TOOLS.map((tool) => (
-              <button
-                key={tool.id}
-                type="button"
-                title={tool.tooltip}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleInsert(tool)}
-                className="inline-flex items-center justify-center px-2 py-1 bg-white hover:bg-neutral-100 text-[#201e1d] text-xs font-mono font-medium border-2 border-[#201e1d] rounded-md shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all select-none cursor-pointer"
-              >
-                {tool.label}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Right: Clean Math Sanitizer + Counters */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleAutoSanitize}
+            title="Auto-format LaTeX delimiters ($ / $$) and escape currency dollar signs"
+            className="inline-flex items-center gap-1 px-2 py-1 bg-white hover:bg-neutral-100 text-[#201e1d] text-xs font-bold border-2 border-[#201e1d] rounded-lg shadow-offset-2 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer select-none"
+          >
+            <Wand2 className="w-3 h-3 text-accent" />
+            <span className="hidden sm:inline">Clean Math</span>
+          </button>
+
+          <span className="font-mono text-[11px] text-[#645c50] hidden md:inline">
+            {stemMarkdown.length} chars | {wordCount} words
+          </span>
+        </div>
       </div>
 
-      {/* 3. MAIN WORKSPACE AREA: Controlled by View Mode */}
-      <div className="p-4 sm:p-5 flex flex-col gap-5">
-        {/* Helper Notification for KaTeX Syntax Issues */}
+      {/* 3. WORKSPACE AREA: Controlled by [Write] / [Preview] Tabs */}
+      <div className="p-4 sm:p-5 flex flex-col gap-4">
+        {/* Live KaTeX Syntax Alert Helper */}
         {katexErrors.length > 0 && (
-          <div className="p-3.5 bg-amber-50 border-2 border-[#201e1d] text-[#201e1d] rounded-xl shadow-offset-2 flex items-start gap-3 animate-in fade-in">
-            <div className="p-1 rounded-lg bg-brand-amber/20 border border-brand-amber">
+          <div className="p-3 bg-amber-50 border-2 border-[#201e1d] text-[#201e1d] rounded-xl shadow-offset-2 flex items-start gap-2.5 animate-in fade-in">
+            <div className="p-1 rounded-lg bg-brand-amber/20 border border-brand-amber shrink-0 mt-0.5">
               <AlertTriangle className="w-4 h-4 text-brand-amber" />
             </div>
             <div className="flex-1 space-y-1 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-amber-950 uppercase tracking-wide">
-                  KaTeX Syntax Helper ({katexErrors.length}{' '}
+                  KaTeX Syntax Check ({katexErrors.length}{' '}
                   {katexErrors.length === 1 ? 'Notice' : 'Notices'})
                 </span>
-                <span className="text-[11px] text-neutral-500 font-mono">Live Check</span>
+                <span className="text-[11px] text-neutral-500 font-mono">Live</span>
               </div>
               <ul className="list-disc list-inside space-y-1 text-neutral-800">
                 {katexErrors.map((err, idx) => (
@@ -592,151 +725,15 @@ export function IngestionStemEditor({
                 ))}
               </ul>
               <div className="text-[11px] text-neutral-600 pt-0.5">
-                💡 Tip: If writing a currency value (e.g. $50), escape it with a backslash: <code>\$50</code>, or click <strong>Clean Math</strong> above.
+                💡 Tip: For prices/currencies (e.g. $50), escape with a backslash: <code>\$50</code>, or click <strong>Clean Math</strong>.
               </div>
             </div>
           </div>
         )}
 
-        {/* View Layouts */}
-        {/* A. SPLIT VIEW: Side-by-side on lg screens, stacked on smaller screens */}
-        {viewMode === 'split' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-            {/* Textarea Column */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50]">
-                <span>Markdown Editor</span>
-                <span className="font-mono text-[11px] text-neutral-500 font-normal">
-                  {stemMarkdown.length} chars | {wordCount} words
-                </span>
-              </div>
-              <textarea
-                ref={textareaRef}
-                value={stemMarkdown}
-                onChange={(e) => {
-                  onChangeStem(e.target.value);
-                  adjustHeight();
-                }}
-                placeholder="Enter question stem in Markdown. Use $...$ for inline math and $$...$$ for display formulas..."
-                className="w-full min-h-[180px] p-4 rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] font-mono text-sm leading-relaxed shadow-offset-2 outline-none focus:ring-2 focus:ring-accent transition-all resize-y placeholder:text-neutral-400"
-              />
-            </div>
-
-            {/* Live Preview Column */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50]">
-                <span className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-accent" />
-                  Live KaTeX Preview
-                </span>
-                {katexErrors.length === 0 && mathFormulaCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-400 rounded-md font-sans text-[11px] font-bold">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    KaTeX Valid ({mathFormulaCount})
-                  </span>
-                )}
-              </div>
-              <div className="w-full min-h-[180px] p-4 rounded-xl border-2 border-[#201e1d] bg-[#fdfbf7] text-[#201e1d] shadow-offset-2 overflow-y-auto">
-                {stemMarkdown.trim() ? (
-                  <div className="prose prose-sm max-w-none text-sm leading-relaxed">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#dc2626' }]]}
-                      components={{
-                        p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-[#201e1d]" {...props} />,
-                        strong: ({ ...props }) => <strong className="font-bold text-[#201e1d]" {...props} />,
-                        em: ({ ...props }) => <em className="italic" {...props} />,
-                        code: ({ ...props }) => (
-                          <code className="font-mono text-xs bg-neutral-200 px-1.5 py-0.5 rounded border border-neutral-300" {...props} />
-                        ),
-                      }}
-                    >
-                      {stemMarkdown}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="text-neutral-400 italic text-sm py-4 text-center">
-                    Rendered stem with KaTeX equations will appear live here...
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* B. STACKED VIEW: Editor on top, Live Preview right beneath */}
-        {viewMode === 'stacked' && (
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50]">
-                <span>Markdown Editor</span>
-                <span className="font-mono text-[11px] text-neutral-500 font-normal">
-                  {stemMarkdown.length} chars | {wordCount} words
-                </span>
-              </div>
-              <textarea
-                ref={textareaRef}
-                value={stemMarkdown}
-                onChange={(e) => {
-                  onChangeStem(e.target.value);
-                  adjustHeight();
-                }}
-                placeholder="Enter question stem in Markdown..."
-                className="w-full min-h-[160px] p-4 rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] font-mono text-sm leading-relaxed shadow-offset-2 outline-none focus:ring-2 focus:ring-accent transition-all resize-y placeholder:text-neutral-400"
-              />
-            </div>
-
-            {/* Preview Box Right Beneath */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50]">
-                <span className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-accent" />
-                  Live KaTeX Preview (Below Editor)
-                </span>
-                {katexErrors.length === 0 && mathFormulaCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-400 rounded-md font-sans text-[11px] font-bold">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    KaTeX Valid ({mathFormulaCount})
-                  </span>
-                )}
-              </div>
-              <div className="w-full min-h-[140px] p-4 rounded-xl border-2 border-[#201e1d] bg-[#fdfbf7] text-[#201e1d] shadow-offset-2 overflow-y-auto">
-                {stemMarkdown.trim() ? (
-                  <div className="prose prose-sm max-w-none text-sm leading-relaxed">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#dc2626' }]]}
-                      components={{
-                        p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-[#201e1d]" {...props} />,
-                        strong: ({ ...props }) => <strong className="font-bold text-[#201e1d]" {...props} />,
-                        em: ({ ...props }) => <em className="italic" {...props} />,
-                        code: ({ ...props }) => (
-                          <code className="font-mono text-xs bg-neutral-200 px-1.5 py-0.5 rounded border border-neutral-300" {...props} />
-                        ),
-                      }}
-                    >
-                      {stemMarkdown}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="text-neutral-400 italic text-sm py-4 text-center">
-                    Rendered stem with KaTeX equations will appear live here...
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* C. EDITOR ONLY */}
-        {viewMode === 'editor' && (
+        {/* WRITE TAB: Expandable monospace textarea */}
+        {activeTab === 'write' && (
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50]">
-              <span>Markdown Editor (Full Focus)</span>
-              <span className="font-mono text-[11px] text-neutral-500 font-normal">
-                {stemMarkdown.length} chars | {wordCount} words
-              </span>
-            </div>
             <textarea
               ref={textareaRef}
               value={stemMarkdown}
@@ -744,39 +741,47 @@ export function IngestionStemEditor({
                 onChangeStem(e.target.value);
                 adjustHeight();
               }}
-              placeholder="Enter question stem in Markdown..."
-              className="w-full min-h-[260px] p-4 rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] font-mono text-sm leading-relaxed shadow-offset-2 outline-none focus:ring-2 focus:ring-accent transition-all resize-y placeholder:text-neutral-400"
+              placeholder="Enter question stem in Markdown. Use $...$ for inline math and $$...$$ for display equations..."
+              className="w-full min-h-[180px] p-4 rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] font-mono text-sm leading-relaxed shadow-offset-2 outline-none focus:ring-2 focus:ring-accent transition-all resize-y placeholder:text-neutral-400"
             />
           </div>
         )}
 
-        {/* D. PREVIEW ONLY */}
-        {viewMode === 'preview' && (
+        {/* PREVIEW TAB: Live KaTeX Preview */}
+        {activeTab === 'preview' && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50]">
               <span className="flex items-center gap-1.5">
                 <Eye className="w-3.5 h-3.5 text-accent" />
-                Live KaTeX Preview (Full)
+                Live KaTeX Preview
               </span>
               {katexErrors.length === 0 && mathFormulaCount > 0 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-800 border-2 border-emerald-500 rounded-lg font-sans text-xs font-bold shadow-offset-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  All Formulas Valid ({mathFormulaCount})
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-400 rounded-md font-sans text-[11px] font-bold">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  KaTeX Valid ({mathFormulaCount})
                 </span>
               )}
             </div>
-            <div className="w-full min-h-[260px] p-6 rounded-xl border-2 border-[#201e1d] bg-[#fdfbf7] text-[#201e1d] shadow-offset-2 overflow-y-auto">
+
+            <div className="w-full min-h-[200px] p-5 rounded-xl border-2 border-[#201e1d] bg-[#fdfbf7] text-[#201e1d] shadow-offset-2 overflow-y-auto">
               {stemMarkdown.trim() ? (
-                <div className="prose max-w-none text-base leading-relaxed">
+                <div className="prose prose-sm max-w-none text-sm leading-relaxed">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#dc2626' }]]}
                     components={{
-                      p: ({ ...props }) => <p className="mb-4 last:mb-0 leading-relaxed text-[#201e1d]" {...props} />,
-                      strong: ({ ...props }) => <strong className="font-bold text-[#201e1d]" {...props} />,
+                      p: ({ ...props }) => (
+                        <p className="mb-3 last:mb-0 leading-relaxed text-[#201e1d]" {...props} />
+                      ),
+                      strong: ({ ...props }) => (
+                        <strong className="font-bold text-[#201e1d]" {...props} />
+                      ),
                       em: ({ ...props }) => <em className="italic" {...props} />,
                       code: ({ ...props }) => (
-                        <code className="font-mono text-xs bg-neutral-200 px-1.5 py-0.5 rounded border border-neutral-300" {...props} />
+                        <code
+                          className="font-mono text-xs bg-neutral-200 px-1.5 py-0.5 rounded border border-neutral-300"
+                          {...props}
+                        />
                       ),
                     }}
                   >
@@ -784,8 +789,8 @@ export function IngestionStemEditor({
                   </ReactMarkdown>
                 </div>
               ) : (
-                <div className="text-neutral-400 italic text-base py-8 text-center">
-                  No question stem content entered yet.
+                <div className="text-neutral-400 italic text-sm py-8 text-center">
+                  No stem text entered yet. Switch to the <strong>Write</strong> tab to enter content.
                 </div>
               )}
             </div>
@@ -794,7 +799,7 @@ export function IngestionStemEditor({
       </div>
 
       {/* 4. FOOTER STATUS BAR */}
-      <div className="px-4 py-2.5 bg-neutral-100 border-t-2 border-[#201e1d] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#645c50]">
+      <div className="px-4 py-2 bg-neutral-100 border-t-2 border-[#201e1d] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#645c50]">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Info className="w-3 h-3 text-accent" />

@@ -7,7 +7,6 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
 
 export interface IngestionOptionsEditorProps {
@@ -18,13 +17,6 @@ export interface IngestionOptionsEditorProps {
 }
 
 const OPTION_LABELS: readonly ['A', 'B', 'C', 'D'] = ['A', 'B', 'C', 'D'] as const;
-
-const HOTKEY_HINTS: Record<'A' | 'B' | 'C' | 'D', string> = {
-  A: '[Key A or 1]',
-  B: '[Key B or 2]',
-  C: '[Key C or 3]',
-  D: '[Key D or 4]',
-};
 
 export function IngestionOptionsEditor({
   options,
@@ -78,7 +70,7 @@ export function IngestionOptionsEditor({
     <div
       role="radiogroup"
       aria-label="4-Option MCQ Matrix"
-      className={cn('flex flex-col gap-4', className)}
+      className={cn('flex flex-col gap-2.5', className)}
     >
       {OPTION_LABELS.map((label) => {
         const opt = optionMap.get(label) || {
@@ -92,85 +84,79 @@ export function IngestionOptionsEditor({
           <div
             key={label}
             className={cn(
-              'flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border-2 border-[#201e1d] shadow-offset-2 transition-all duration-150',
-              isCorrect ? 'bg-[#f0fae1] ring-2 ring-[#22C55E]/40' : 'bg-white'
+              'group flex items-start gap-3 p-2.5 sm:p-3 rounded-xl border-2 border-[#201e1d] shadow-offset-2 transition-all duration-150',
+              isCorrect
+                ? 'bg-[#f0fae1] ring-2 ring-[#22C55E]/40 border-[#201e1d]'
+                : 'bg-white hover:bg-neutral-50/80'
             )}
           >
-            {/* Top Bar: Badge, Hotkey Hint, and Correct Answer Toggle Pill */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                {/* Option Label Badge with Caprasimo heading font and thick border */}
-                <div
-                  className={cn(
-                    'flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl border-2 border-[#201e1d] font-heading text-xl sm:text-2xl shadow-chunky transition-transform select-none',
-                    isCorrect
-                      ? 'bg-[#22C55E] text-white'
-                      : 'bg-brand-yellow text-[#201e1d]'
-                  )}
-                >
-                  {label}
-                </div>
-
-                {/* Hotkey Hint Badge */}
-                <span className="font-mono text-xs font-bold text-neutral-600 bg-neutral-200 border border-[#201e1d] px-2 py-0.5 rounded-lg select-none shadow-none">
-                  {HOTKEY_HINTS[label]}
-                </span>
+            {/* Left: Option label badge + clickable radio circle */}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={isCorrect}
+              aria-label={`Option ${label}: Click to set as correct answer`}
+              onClick={() => onSetCorrect(label)}
+              title={`Set Option ${label} as correct answer (Press ${label} or ${
+                label === 'A' ? 1 : label === 'B' ? 2 : label === 'C' ? 3 : 4
+              })`}
+              className={cn(
+                'flex items-center gap-2 p-1 rounded-lg transition-all cursor-pointer select-none shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]',
+                isCorrect ? 'text-[#22C55E]' : 'text-neutral-500 hover:text-[#201e1d]'
+              )}
+            >
+              {/* Option label badge */}
+              <div
+                className={cn(
+                  'w-8 h-8 rounded-lg border-2 border-[#201e1d] font-heading font-black text-sm sm:text-base flex items-center justify-center transition-all select-none',
+                  isCorrect
+                    ? 'bg-[#22C55E] text-white shadow-sm'
+                    : 'bg-brand-yellow text-[#201e1d]'
+                )}
+              >
+                {label}
               </div>
 
-              {/* 1-Click Correct Answer Toggle Pill */}
-              <button
-                type="button"
-                role="radio"
-                aria-checked={isCorrect}
-                aria-label={`Option ${label}: Correct Answer`}
-                onClick={() => onSetCorrect(label)}
+              {/* Clickable radio circle */}
+              <div
                 className={cn(
-                  'transition-all duration-75 select-none font-bold text-xs sm:text-sm uppercase tracking-wider px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] flex items-center gap-2 cursor-pointer shadow-offset-2 active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]',
+                  'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
                   isCorrect
-                    ? 'bg-[#22C55E] text-white hover:bg-[#1eb354]'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-[#201e1d]'
+                    ? 'border-[#22C55E] bg-[#22C55E] text-white'
+                    : 'border-neutral-400 bg-white group-hover:border-[#201e1d]'
                 )}
               >
                 {isCorrect ? (
-                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span className="w-2 h-2 rounded-full bg-white block" />
                 ) : (
-                  <span className="w-3.5 h-3.5 rounded-full border-2 border-neutral-400 bg-white inline-block" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover:bg-neutral-300 block" />
                 )}
-                <span>CORRECT ANSWER</span>
-              </button>
-            </div>
+              </div>
+            </button>
 
-            {/* Option Content Textarea (Supports Markdown & KaTeX Math) */}
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor={`option-${label}-content`}
-                className="text-xs font-bold uppercase tracking-wider text-neutral-600"
-              >
-                Option {label} Content (Markdown &amp; KaTeX Math)
-              </label>
+            {/* Center / Content: Clean input & subtle inline KaTeX math preview */}
+            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
               <textarea
                 id={`option-${label}-content`}
                 value={opt.content_markdown}
                 onChange={(e) => onChangeOption(label, e.target.value)}
-                rows={2}
-                className="w-full p-3 rounded-xl border-2 border-[#201e1d] bg-white font-mono text-sm sm:text-base outline-none focus:ring-2 focus:ring-[#201e1d] focus:border-[#201e1d] resize-y placeholder:text-neutral-400 transition-colors"
-                placeholder={`Option ${label} markdown (e.g. $P \\times Q$ or Opportunity Cost)...`}
-              />
-            </div>
-
-            {/* Live Rendered Math Preview */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-neutral-500">
-                <span>Live Preview (Rendered Math &amp; Markdown)</span>
-                {opt.content_markdown?.includes('$') && (
-                  <span className="text-[11px] font-mono text-[#8c491a] bg-[#fff2eb] px-1.5 py-0.5 rounded border border-[#ffc6a5]">
-                    $Math Active
-                  </span>
+                rows={1}
+                placeholder={`Option ${label} content (e.g. $P \\times Q$ or Opportunity Cost)...`}
+                className={cn(
+                  'w-full px-3 py-1.5 text-sm font-mono rounded-lg border-2 border-[#201e1d] bg-white text-[#201e1d] outline-none transition-colors resize-y min-h-[38px] placeholder:text-neutral-400 leading-normal',
+                  isCorrect
+                    ? 'focus:border-[#22C55E] focus:ring-1 focus:ring-[#22C55E]'
+                    : 'focus:border-[#201e1d] focus:ring-1 focus:ring-[#201e1d]'
                 )}
-              </div>
-              <div className="p-3.5 rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] min-h-[44px] text-sm sm:text-base text-[#201e1d] break-words leading-relaxed overflow-x-auto">
-                {opt.content_markdown && opt.content_markdown.trim() ? (
-                  <div className="prose prose-sm max-w-none text-[#201e1d]">
+              />
+
+              {/* Subtle inline rendered math preview directly below when content is typed */}
+              {opt.content_markdown && opt.content_markdown.trim() ? (
+                <div className="px-2.5 py-1 rounded-md bg-[#f9f4ed] border border-[#201e1d]/30 text-xs text-[#201e1d] break-words flex items-center gap-2 overflow-x-auto">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 shrink-0 font-mono select-none">
+                    Preview:
+                  </span>
+                  <div className="prose prose-xs max-w-none text-[#201e1d] inline-block font-sans">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -178,16 +164,26 @@ export function IngestionOptionsEditor({
                       {sanitizeKaTeX(opt.content_markdown)}
                     </ReactMarkdown>
                   </div>
-                ) : (
-                  <span className="italic text-neutral-400 select-none">
-                    Preview will render here...
-                  </span>
-                )}
-              </div>
+                </div>
+              ) : null}
             </div>
           </div>
         );
       })}
+
+      {/* Subtle keyboard hint at the bottom */}
+      <div className="flex items-center justify-between text-xs text-neutral-500 pt-1 px-1 select-none">
+        <span className="flex items-center gap-1.5 font-medium">
+          <kbd className="px-1.5 py-0.5 rounded bg-neutral-200 border border-[#201e1d] font-mono text-[11px] font-bold text-neutral-700">
+            1-4
+          </kbd>
+          <span>or</span>
+          <kbd className="px-1.5 py-0.5 rounded bg-neutral-200 border border-[#201e1d] font-mono text-[11px] font-bold text-neutral-700">
+            A-D
+          </kbd>
+          <span className="text-neutral-600">Tip: Press keys 1-4 or A-D to set correct answer</span>
+        </span>
+      </div>
     </div>
   );
 }
