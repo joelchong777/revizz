@@ -201,29 +201,29 @@ export function IngestionOptionsEditor({
       {/* Matrix Header Banner */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1 select-none">
         <div className="flex items-center gap-2">
-          <span className="font-heading font-black text-xs uppercase tracking-wider text-slate-800">
+          <span className="font-heading font-black text-xs uppercase tracking-wider text-[#201e1d]">
             MCQ Options (A-D)
           </span>
-          <span className="px-2 py-0.5 rounded-full bg-slate-200 border border-slate-800 text-[10px] font-bold text-slate-700">
+          <span className="bg-[#eee7db] text-[#474238] rounded-full px-2.5 py-0.5 text-[11px] font-bold">
             Exactly 1 Correct
           </span>
         </div>
 
-        {/* Tactile Hotkeys Quick Reference */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-          <span className="text-[11px] text-slate-600 font-bold hidden sm:inline">Hotkeys:</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-800 font-mono text-[11px] font-bold text-slate-800 shadow-sm">
+        {/* Hotkeys Quick Reference */}
+        <div className="flex items-center gap-1.5 text-xs text-[#645c50] font-medium">
+          <span className="text-[11px] text-[#645c50] font-bold hidden sm:inline">Hotkeys:</span>
+          <kbd className="px-1.5 py-0.5 rounded-full bg-[#eee7db] border border-[#dcd3c4] font-mono text-[11px] font-bold text-[#474238]">
             1-4
           </kbd>
           <span>or</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-800 font-mono text-[11px] font-bold text-slate-800 shadow-sm">
+          <kbd className="px-1.5 py-0.5 rounded-full bg-[#eee7db] border border-[#dcd3c4] font-mono text-[11px] font-bold text-[#474238]">
             A-D
           </kbd>
-          <span className="text-slate-500 text-[11px] hidden md:inline">to mark answer key</span>
+          <span className="text-[#82796a] text-[11px] hidden md:inline">to mark answer key</span>
         </div>
       </div>
 
-      {/* 4 Tactile 3D Option Cards (A, B, C, D) */}
+      {/* 4 Option Cards (A, B, C, D) */}
       {OPTION_LABELS.map((label) => {
         const opt = optionMap.get(label) || {
           label,
@@ -242,15 +242,15 @@ export function IngestionOptionsEditor({
           <div
             key={label}
             className={cn(
-              'group flex flex-col rounded-2xl border-2 border-b-4 transition-all duration-75 select-none overflow-hidden',
+              'group flex flex-col transition-all duration-150 select-none overflow-hidden',
               isCorrect
-                ? 'border-emerald-500 border-b-emerald-700 bg-emerald-50 text-emerald-950 shadow-chunky ring-2 ring-emerald-500/20'
-                : 'border-slate-300 border-b-slate-400 bg-white text-slate-800 shadow-chunky hover:border-slate-400 hover:bg-slate-50/70'
+                ? 'bg-[#f0fae1] border-[1.5px] border-[#728157] rounded-xl p-3 text-[#201e1d] shadow-sm'
+                : 'bg-white border-[1.5px] border-[#dcd3c4] rounded-xl p-3 text-[#201e1d] hover:border-[#c0b6a5]'
             )}
           >
-            {/* Top row: Tactile Option Selector + Content Input */}
-            <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-start gap-3">
-              {/* Correct Answer Toggle Button with Tactile Depression */}
+            {/* Top row: Option Selector Badge + Content Input */}
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+              {/* Correct Answer Toggle Button */}
               <button
                 type="button"
                 role="radio"
@@ -264,33 +264,33 @@ export function IngestionOptionsEditor({
                   label === 'A' ? 1 : label === 'B' ? 2 : label === 'C' ? 3 : 4
                 })`}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-2 rounded-xl border-2 border-b-4 font-bold text-xs transition-all cursor-pointer select-none shrink-0',
-                  'active:translate-y-0.5 active:border-b-2 active:shadow-none',
+                  'flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-colors cursor-pointer select-none shrink-0',
                   isCorrect
-                    ? 'border-emerald-600 border-b-emerald-800 bg-emerald-500 text-white shadow-chunky'
-                    : 'border-slate-800 border-b-slate-900 bg-brand-yellow text-slate-900 hover:bg-yellow-400 shadow-chunky'
+                    ? 'bg-[#f0fae1] border-[1.5px] border-[#728157] text-[#201e1d]'
+                    : 'bg-[#f9f4ed] hover:bg-[#eee7db] border-[1.5px] border-[#dcd3c4] text-[#645c50] hover:text-[#201e1d]'
                 )}
               >
-                {/* 3D Option Letter Badge */}
+                {/* Option Letter Badge */}
                 <div
                   className={cn(
-                    'w-7 h-7 rounded-lg border-2 border-slate-900 font-heading font-black text-sm flex items-center justify-center shrink-0 shadow-sm',
-                    isCorrect ? 'bg-white text-emerald-800' : 'bg-white text-slate-900'
+                    isCorrect
+                      ? 'w-7 h-7 rounded-full bg-[#728157] text-[#f9f4ed] font-bold text-xs flex items-center justify-center shrink-0'
+                      : 'w-7 h-7 rounded-full bg-[#eee7db] text-[#474238] font-bold text-xs flex items-center justify-center shrink-0 hover:bg-[#c67139] hover:text-white transition-colors cursor-pointer'
                   )}
                 >
                   {label}
                 </div>
 
-                <div className="flex flex-col text-left">
-                  <span className="font-heading font-black text-[11px] uppercase tracking-wide">
-                    {isCorrect ? 'Correct Key' : `Mark as Key`}
+                <div className="flex flex-col text-left pr-1">
+                  <span className="font-heading font-bold text-[11px] uppercase tracking-wide">
+                    {isCorrect ? 'Correct Key' : 'Mark Key'}
                   </span>
-                  <span className="text-[10px] font-mono opacity-80">
-                    {isCorrect ? '✓ Verified' : `Press ${label}`}
+                  <span className="text-[10px] font-mono text-[#645c50]">
+                    {isCorrect ? '✓ Active' : `Press ${label}`}
                   </span>
                 </div>
 
-                {isCorrect && <Check className="w-4 h-4 ml-1 text-white shrink-0 stroke-[3]" />}
+                {isCorrect && <Check className="w-3.5 h-3.5 text-[#728157] shrink-0 stroke-[2.5]" />}
               </button>
 
               {/* Option Content Textarea & KaTeX Live Preview */}
@@ -301,38 +301,26 @@ export function IngestionOptionsEditor({
                   onChange={(e) => onChangeOption(label, e.target.value)}
                   rows={2}
                   placeholder={`Option ${label} content in Markdown/KaTeX (e.g. $P \\times Q$ or Consumer Surplus)...`}
-                  className={cn(
-                    'w-full px-3.5 py-2 text-sm font-mono rounded-xl border-2 bg-white text-slate-900 outline-none transition-all resize-y min-h-[52px] leading-relaxed placeholder:text-slate-400 shadow-sm',
-                    isCorrect
-                      ? 'border-emerald-600 focus:ring-2 focus:ring-emerald-500'
-                      : 'border-slate-800 focus:ring-2 focus:ring-brand-yellow'
-                  )}
+                  className="bg-transparent border-0 outline-none text-xs sm:text-sm font-body text-[#201e1d] w-full resize-none leading-relaxed placeholder:text-[#82796a] min-h-[48px]"
                 />
 
                 {/* KaTeX Live Preview for Option Content */}
                 {opt.content_markdown && opt.content_markdown.trim() && (
-                  <div
-                    className={cn(
-                      'px-3 py-1.5 rounded-xl border text-xs break-words flex items-start gap-2 overflow-x-auto shadow-sm',
-                      isCorrect
-                        ? 'bg-emerald-100/70 border-emerald-300 text-emerald-950'
-                        : 'bg-amber-50/70 border-slate-300 text-slate-900'
-                    )}
-                  >
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono select-none shrink-0 mt-0.5">
+                  <div className="px-3 py-1.5 rounded-lg border border-[#dcd3c4] bg-[#f9f4ed] text-xs text-[#201e1d] flex items-start gap-2 overflow-x-auto shadow-sm">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#645c50] font-mono select-none shrink-0 mt-0.5">
                       Preview:
                     </span>
-                    <div className="prose prose-xs max-w-none text-slate-900 flex-1 font-body">
+                    <div className="prose prose-xs max-w-none text-[#201e1d] flex-1 font-body">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath]}
-                        rehypePlugins={[[rehypeKatex, { throwOnError: false }]]}
+                        rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
                       >
                         {sanitizeKaTeX(opt.content_markdown)}
                       </ReactMarkdown>
                     </div>
 
                     {!katexStatus.isValid && (
-                      <span className="text-[10px] font-bold text-rose-600 shrink-0 select-none">
+                      <span className="text-[10px] font-bold text-[#c67139] shrink-0 select-none">
                         KaTeX Error
                       </span>
                     )}
@@ -342,22 +330,17 @@ export function IngestionOptionsEditor({
             </div>
 
             {/* Bottom Section: Distractor Misconception Drawer & AI Trigger */}
-            <div
-              className={cn(
-                'border-t-2 px-3.5 py-2 flex flex-col gap-2 transition-colors',
-                isCorrect ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/80'
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
+            <div className="border-t border-[#dcd3c4]/80 pt-2.5 mt-2 flex flex-col gap-2 transition-colors">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 {/* Expand / Collapse Button */}
                 <button
                   type="button"
                   onClick={() => toggleDistractorExpand(label)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer select-none"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#645c50] hover:text-[#201e1d] cursor-pointer select-none"
                 >
                   <ChevronDown
                     className={cn(
-                      'w-3.5 h-3.5 text-slate-500 transition-transform duration-150',
+                      'w-3.5 h-3.5 text-[#645c50] transition-transform duration-150',
                       isExpanded && 'rotate-180'
                     )}
                   />
@@ -367,11 +350,11 @@ export function IngestionOptionsEditor({
                       : 'Distractor Misconception & Diagnostic Analysis'}
                   </span>
                   {distractorText ? (
-                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
+                    <span className="px-2 py-0.5 rounded-full bg-[#f0fae1] text-[#3d472b] text-[10px] font-bold border border-[#8fa073]">
                       Rationale set
                     </span>
                   ) : !isCorrect ? (
-                    <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300">
+                    <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] text-[10px] font-bold border border-[#c67139]/30">
                       Needs rationale
                     </span>
                   ) : null}
@@ -384,16 +367,16 @@ export function IngestionOptionsEditor({
                     onClick={() => handleGenerateRationale(label)}
                     disabled={isGenerating}
                     title="Generate diagnostic misconception explanation via AI analysis"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-brand-yellow/30 text-slate-900 text-xs font-bold border-2 border-b-4 border-slate-800 rounded-xl shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer select-none disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-[#eee7db] text-[#201e1d] text-xs font-semibold border-[1.5px] border-[#dcd3c4] rounded-full transition-colors cursor-pointer select-none disabled:opacity-60"
                   >
                     {isGenerating ? (
                       <>
-                        <Loader2 className="w-3 h-3 text-brand-indigo animate-spin" />
+                        <Loader2 className="w-3 h-3 text-[#c67139] animate-spin" />
                         <span>Analyzing...</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-3 h-3 text-brand-indigo" />
+                        <Sparkles className="w-3 h-3 text-[#c67139]" />
                         <span>Generate Rationale</span>
                       </>
                     )}
@@ -404,9 +387,9 @@ export function IngestionOptionsEditor({
               {/* Expandable Explanation Textarea */}
               {isExpanded && (
                 <div className="flex flex-col gap-1.5 pt-1 animate-in fade-in duration-100">
-                  <div className="flex items-center justify-between text-[11px] font-medium text-slate-500">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-[#645c50]">
                     <span className="flex items-center gap-1">
-                      <Lightbulb className="w-3 h-3 text-brand-amber" />
+                      <Lightbulb className="w-3 h-3 text-[#c67139]" />
                       {isCorrect
                         ? 'Why this choice is officially correct according to CAIE syllabus:'
                         : 'Explain why candidates select this distractor (e.g. inverted formula, sign error, confused mechanism):'}
@@ -419,9 +402,9 @@ export function IngestionOptionsEditor({
                     placeholder={
                       isCorrect
                         ? 'e.g. Option B precisely applies the formula PED = (%ΔQD)/(%ΔP), yielding correct coefficient.'
-                        : "e.g. Student inverted the supply/demand relationship; confused a shift in supply with a movement along the demand curve."
+                        : 'e.g. Student inverted the supply/demand relationship; confused a shift in supply with a movement along the demand curve.'
                     }
-                    className="w-full p-2.5 text-xs font-mono rounded-xl border-2 border-slate-800 bg-white text-slate-900 outline-none focus:ring-2 focus:ring-brand-yellow placeholder:text-slate-400 shadow-sm"
+                    className="w-full p-2.5 text-xs font-mono rounded-lg border-[1.5px] border-[#dcd3c4] bg-white text-[#201e1d] outline-none focus:border-[#c67139] transition-all placeholder:text-[#82796a]"
                   />
                 </div>
               )}

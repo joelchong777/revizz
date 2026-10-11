@@ -366,19 +366,17 @@ export function IngestionStemEditor({
   return (
     <div
       className={cn(
-        'w-full bg-white border-2 border-slate-800 rounded-3xl shadow-chunky overflow-hidden flex flex-col text-slate-800 transition-all',
+        'w-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-sm overflow-hidden flex flex-col font-body text-[#201e1d] transition-all',
         className
       )}
     >
-      {/* 1. TOP NEOBRUTALIST HEADER BAR */}
-      <div className="p-3.5 sm:p-4 border-b-2 border-slate-800 bg-[#FFFDF7] flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* 1. TOP HEADER BAR */}
+      <div className="p-3.5 sm:p-4 border-b border-[#dcd3c4] bg-[#f9f4ed] flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Left: Question Badge & Citation */}
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-brand-yellow border-2 border-slate-800 flex items-center justify-center shadow-chunky shrink-0">
-              <FileText className="w-4 h-4 text-slate-900" />
-            </div>
-            <span className="inline-flex items-center px-3 py-1 rounded-xl bg-brand-yellow text-slate-900 border-2 border-slate-800 font-heading font-black text-xs sm:text-sm shadow-chunky select-none tracking-tight">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#c67139] text-[#c67139] font-heading font-black text-xs select-none">
+              <FileText className="w-3.5 h-3.5 text-[#c67139]" />
               Question {questionNumber}
             </span>
           </div>
@@ -387,9 +385,9 @@ export function IngestionStemEditor({
           <div className="flex items-center gap-1.5">
             <label
               htmlFor={`citation-q${questionNumber}`}
-              className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1 select-none whitespace-nowrap"
+              className="text-xs font-bold uppercase tracking-wider text-[#645c50] flex items-center gap-1 select-none whitespace-nowrap"
             >
-              <Bookmark className="w-3.5 h-3.5 text-brand-indigo" />
+              <Bookmark className="w-3.5 h-3.5 text-[#c67139]" />
               <span className="hidden sm:inline">Citation:</span>
             </label>
             <input
@@ -398,7 +396,7 @@ export function IngestionStemEditor({
               value={citation}
               onChange={(e) => onChangeCitation(e.target.value)}
               placeholder="e.g. 0455/12/M/J/24 Q1"
-              className="w-44 sm:w-52 px-3 py-1 text-xs font-mono bg-white text-slate-800 border-2 border-slate-800 rounded-xl shadow-chunky outline-none focus:ring-2 focus:ring-brand-yellow transition-all placeholder:text-slate-400"
+              className="w-44 sm:w-52 px-3 py-1 bg-white border-[1.5px] border-[#dcd3c4] rounded-full text-xs font-mono text-[#201e1d] outline-none focus:border-[#c67139] transition-all placeholder:text-[#82796a]"
             />
           </div>
         </div>
@@ -412,13 +410,13 @@ export function IngestionStemEditor({
               onClick={() => setIsTopicMenuOpen((prev) => !prev)}
               aria-label="Select syllabus topic"
               title="Assign Cambridge syllabus topic"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold border-2 border-b-4 border-slate-800 rounded-xl shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer select-none max-w-[220px] truncate"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-full text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 transition-all cursor-pointer select-none max-w-[220px] truncate"
             >
-              <BookOpen className="w-3.5 h-3.5 text-brand-teal shrink-0" />
+              <BookOpen className="w-3.5 h-3.5 text-[#728157] shrink-0" />
               <span className="truncate">{currentTopicDisplay}</span>
               <ChevronDown
                 className={cn(
-                  'w-3 h-3 text-slate-600 transition-transform duration-150 shrink-0',
+                  'w-3 h-3 text-[#645c50] transition-transform duration-150 shrink-0',
                   isTopicMenuOpen && 'rotate-180'
                 )}
               />
@@ -426,30 +424,30 @@ export function IngestionStemEditor({
 
             {/* Fuzzy Dropdown Combobox */}
             {isTopicMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 p-2.5 bg-white border-2 border-slate-800 rounded-2xl shadow-chunky-lg z-40 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-2">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1 flex items-center justify-between">
+              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 p-2.5 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-lg z-40 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-2">
+                <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider px-1 flex items-center justify-between">
                   <span>Syllabus Topic</span>
-                  <span className="text-[10px] lowercase text-slate-400 font-mono">
+                  <span className="text-[10px] lowercase text-[#82796a] font-mono">
                     {filteredTopics.length} available
                   </span>
                 </div>
 
                 {/* Fuzzy Search Input */}
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-[#82796a] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={topicSearchQuery}
                     onChange={(e) => setTopicSearchQuery(e.target.value)}
                     placeholder="Search topic (fuzzy match)..."
                     autoFocus
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border-2 border-slate-800 rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-brand-teal font-sans"
+                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border-[1.5px] border-[#dcd3c4] rounded-full outline-none focus:border-[#c67139] text-[#201e1d] font-sans"
                   />
                   {topicSearchQuery && (
                     <button
                       type="button"
                       onClick={() => setTopicSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d]"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -470,24 +468,24 @@ export function IngestionStemEditor({
                           setTopicSearchQuery('');
                         }}
                         className={cn(
-                          'w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-medium flex items-center justify-between gap-2 transition-all cursor-pointer border',
+                          'w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between gap-2 transition-all cursor-pointer border',
                           isSelected
-                            ? 'bg-brand-teal/15 text-teal-950 border-brand-teal font-bold'
-                            : 'hover:bg-slate-100 text-slate-700 border-transparent'
+                            ? 'bg-[#ffe1d0] text-[#201e1d] border-[#c67139] font-bold'
+                            : 'hover:bg-[#eee7db] text-[#474238] border-transparent'
                         )}
                       >
                         <span className="truncate">
-                          <span className="font-mono text-[10px] text-slate-500 mr-1.5">
+                          <span className="font-mono text-[10px] text-[#82796a] mr-1.5">
                             {topic.order_index ? `${topic.order_index}.` : '•'}
                           </span>
                           {topic.name}
                         </span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-brand-teal shrink-0" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#c67139] shrink-0" />}
                       </button>
                     );
                   })}
                   {filteredTopics.length === 0 && (
-                    <div className="p-3 text-center text-xs text-slate-500 italic">
+                    <div className="p-3 text-center text-xs text-[#82796a] italic">
                       No matching syllabus topics found.
                     </div>
                   )}
@@ -497,16 +495,16 @@ export function IngestionStemEditor({
           </div>
 
           {/* Dual Split View Controls: [Split View] / [Edit Only] / [Preview Only] */}
-          <div className="inline-flex items-center bg-slate-100 p-1 rounded-xl border-2 border-slate-800 shadow-chunky select-none">
+          <div className="inline-flex items-center bg-[#eee7db] p-1 rounded-full border border-[#dcd3c4] select-none">
             <button
               type="button"
               onClick={() => setViewMode('split')}
               title="Side-by-side Dual Split View"
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-heading font-bold transition-all flex items-center gap-1 cursor-pointer',
+                'px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
                 viewMode === 'split'
-                  ? 'bg-brand-yellow text-slate-900 border-2 border-slate-800 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#201e1d] text-[#f9f4ed]'
+                  : 'text-[#645c50] hover:text-[#201e1d]'
               )}
             >
               <Columns className="w-3.5 h-3.5" />
@@ -517,10 +515,10 @@ export function IngestionStemEditor({
               onClick={() => setViewMode('edit-only')}
               title="Markdown Editor Only"
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-heading font-bold transition-all flex items-center gap-1 cursor-pointer',
+                'px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
                 viewMode === 'edit-only'
-                  ? 'bg-brand-yellow text-slate-900 border-2 border-slate-800 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#201e1d] text-[#f9f4ed]'
+                  : 'text-[#645c50] hover:text-[#201e1d]'
               )}
             >
               <Edit3 className="w-3.5 h-3.5" />
@@ -531,10 +529,10 @@ export function IngestionStemEditor({
               onClick={() => setViewMode('preview-only')}
               title="Live KaTeX Preview Only"
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-heading font-bold transition-all flex items-center gap-1 cursor-pointer',
+                'px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
                 viewMode === 'preview-only'
-                  ? 'bg-brand-yellow text-slate-900 border-2 border-slate-800 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#201e1d] text-[#f9f4ed]'
+                  : 'text-[#645c50] hover:text-[#201e1d]'
               )}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -553,13 +551,13 @@ export function IngestionStemEditor({
                 }}
                 aria-label="Question actions menu"
                 title="Question Actions"
-                className="p-1.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-800 rounded-xl shadow-chunky active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center select-none"
+                className="p-1.5 bg-[#f9f4ed] hover:bg-[#eee7db] text-[#201e1d] border-[1.5px] border-[#dcd3c4] rounded-full transition-all cursor-pointer flex items-center select-none"
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
 
               {isActionMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border-2 border-slate-800 rounded-2xl shadow-chunky-lg z-30 py-1.5 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-lg z-30 py-1.5 animate-in fade-in zoom-in-95 duration-100">
                   {onMoveUp && (
                     <button
                       type="button"
@@ -567,9 +565,9 @@ export function IngestionStemEditor({
                         onMoveUp();
                         setIsActionMenuOpen(false);
                       }}
-                      className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
                     >
-                      <ArrowUp className="w-3.5 h-3.5 text-slate-600" />
+                      <ArrowUp className="w-3.5 h-3.5 text-[#645c50]" />
                       <span>Move Up</span>
                     </button>
                   )}
@@ -580,9 +578,9 @@ export function IngestionStemEditor({
                         onMoveDown();
                         setIsActionMenuOpen(false);
                       }}
-                      className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
                     >
-                      <ArrowDown className="w-3.5 h-3.5 text-slate-600" />
+                      <ArrowDown className="w-3.5 h-3.5 text-[#645c50]" />
                       <span>Move Down</span>
                     </button>
                   )}
@@ -593,18 +591,18 @@ export function IngestionStemEditor({
                         onDuplicate();
                         setIsActionMenuOpen(false);
                       }}
-                      className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
                     >
-                      <Copy className="w-3.5 h-3.5 text-slate-600" />
+                      <Copy className="w-3.5 h-3.5 text-[#645c50]" />
                       <span>Duplicate Question</span>
                     </button>
                   )}
                   {onDelete && (
                     <>
-                      <div className="my-1 border-t border-slate-200" />
+                      <div className="my-1 border-t border-[#dcd3c4]" />
                       {confirmingDelete ? (
-                        <div className="p-2 bg-rose-50 border border-rose-300 rounded-xl mx-1.5 my-1">
-                          <p className="text-[11px] font-bold text-rose-900 mb-1.5 leading-tight">
+                        <div className="p-2 bg-[#fff8eb] border border-[#f3d9c7] rounded-xl mx-1.5 my-1">
+                          <p className="text-[11px] font-bold text-[#c67139] mb-1.5 leading-tight">
                             Delete question {questionNumber}?
                           </p>
                           <div className="flex items-center gap-1.5">
@@ -615,14 +613,14 @@ export function IngestionStemEditor({
                                 setIsActionMenuOpen(false);
                                 setConfirmingDelete(false);
                               }}
-                              className="flex-1 py-1 px-2 text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors cursor-pointer text-center"
+                              className="flex-1 py-1 px-2 text-[11px] font-bold text-white bg-[#c67139] hover:bg-[#b2622d] rounded-lg transition-colors cursor-pointer text-center"
                             >
                               Confirm
                             </button>
                             <button
                               type="button"
                               onClick={() => setConfirmingDelete(false)}
-                              className="flex-1 py-1 px-2 text-[11px] font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-lg transition-colors cursor-pointer text-center"
+                              className="flex-1 py-1 px-2 text-[11px] font-semibold text-[#474238] bg-[#eee7db] hover:bg-[#e4dcce] rounded-lg transition-colors cursor-pointer text-center"
                             >
                               Cancel
                             </button>
@@ -632,9 +630,9 @@ export function IngestionStemEditor({
                         <button
                           type="button"
                           onClick={() => setConfirmingDelete(true)}
-                          className="w-full px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition-colors"
+                          className="w-full px-3 py-2 text-left text-xs font-semibold text-[#c67139] hover:bg-[#ffe1d0]/50 flex items-center gap-2 cursor-pointer transition-colors"
                         >
-                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                          <Trash2 className="w-3.5 h-3.5 text-[#c67139]" />
                           <span>Delete Question</span>
                         </button>
                       )}
@@ -648,11 +646,11 @@ export function IngestionStemEditor({
       </div>
 
       {/* 2. QUICK TYPOGRAPHY TOOLBAR & KATEX VALIDATION BADGE */}
-      <div className="p-2.5 sm:px-4 sm:py-2.5 border-b-2 border-slate-800 bg-slate-50 flex flex-wrap items-center justify-between gap-2.5">
+      <div className="p-2.5 sm:px-4 sm:py-2 border-b border-[#dcd3c4] bg-[#f9f4ed]/80 flex flex-wrap items-center justify-between gap-2.5">
         {/* Left: Quick Typography Toolbar Buttons */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <div className="hidden lg:flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-500 mr-1 select-none">
-            <Sparkles className="w-3.5 h-3.5 text-brand-indigo" />
+          <div className="hidden lg:flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#645c50] mr-1 select-none">
+            <Sparkles className="w-3.5 h-3.5 text-[#c67139]" />
             <span>Format:</span>
           </div>
 
@@ -664,7 +662,7 @@ export function IngestionStemEditor({
               title={tool.tooltip}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleInsert(tool)}
-              className="inline-flex items-center justify-center px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-900 text-xs font-mono font-bold border-2 border-b-4 border-slate-800 rounded-xl shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all select-none cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center justify-center px-2 py-1 hover:bg-[#eee7db] text-[#645c50] hover:text-[#201e1d] text-xs font-mono font-semibold rounded-lg transition-colors select-none cursor-pointer whitespace-nowrap"
             >
               {tool.label}
             </button>
@@ -675,9 +673,9 @@ export function IngestionStemEditor({
             type="button"
             onClick={handleCleanKaTeX}
             title="Auto-format delimiters and normalize LaTeX math notation (sanitizeKaTeX)"
-            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-brand-yellow/30 text-slate-900 text-xs font-bold border-2 border-b-4 border-slate-800 rounded-xl shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer select-none"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-[#eee7db] text-[#474238] text-xs font-semibold border border-[#dcd3c4] rounded-lg transition-colors cursor-pointer select-none"
           >
-            <Wand2 className="w-3.5 h-3.5 text-brand-teal" />
+            <Wand2 className="w-3.5 h-3.5 text-[#728157]" />
             <span>Clean KaTeX</span>
           </button>
 
@@ -687,20 +685,20 @@ export function IngestionStemEditor({
               type="button"
               onClick={() => setIsMoreMathOpen((prev) => !prev)}
               onMouseDown={(e) => e.preventDefault()}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold border-2 border-b-4 border-slate-800 rounded-xl shadow-chunky active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all cursor-pointer select-none"
+              className="inline-flex items-center gap-1 px-2 py-1 hover:bg-[#eee7db] text-[#645c50] hover:text-[#201e1d] text-xs font-semibold rounded-lg transition-colors cursor-pointer select-none"
             >
               <span>+ More</span>
               <ChevronDown
                 className={cn(
-                  'w-3 h-3 text-slate-600 transition-transform duration-150',
+                  'w-3 h-3 text-[#645c50] transition-transform duration-150',
                   isMoreMathOpen && 'rotate-180'
                 )}
               />
             </button>
 
             {isMoreMathOpen && (
-              <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-white border-2 border-slate-800 rounded-2xl shadow-chunky-lg z-30 animate-in fade-in zoom-in-95 duration-100">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">
+              <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-lg z-30 animate-in fade-in zoom-in-95 duration-100">
+                <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider mb-2 px-1">
                   Extended Mathematical Tokens
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -714,7 +712,7 @@ export function IngestionStemEditor({
                         handleInsert(tool);
                         setIsMoreMathOpen(false);
                       }}
-                      className="inline-flex items-center justify-center px-2 py-1.5 bg-slate-50 hover:bg-brand-yellow/30 text-slate-900 text-xs font-mono font-bold border border-slate-800 rounded-lg transition-colors cursor-pointer select-none"
+                      className="inline-flex items-center justify-center px-2 py-1.5 bg-white hover:bg-[#eee7db] text-[#201e1d] text-xs font-mono font-semibold border border-[#dcd3c4] rounded-lg transition-colors cursor-pointer select-none"
                     >
                       {tool.label}
                     </button>
@@ -729,25 +727,25 @@ export function IngestionStemEditor({
         <div className="flex items-center gap-2">
           {validationResult.isValid ? (
             <div
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-900 border-2 border-emerald-600 font-bold text-xs rounded-full shadow-chunky select-none"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#f0fae1] text-[#3d472b] border border-[#8fa073] font-bold text-xs rounded-full select-none"
               title="KaTeX syntax is valid and ready for student rendering"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#728157]" />
               <span>KaTeX Valid</span>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => setShowErrorDetails((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-rose-500 font-bold text-xs rounded-full shadow-chunky cursor-pointer transition-transform active:translate-y-0.5 select-none animate-pulse"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ffe1d0] hover:bg-[#fed6bf] text-[#c67139] border border-[#c67139] font-bold text-xs rounded-full cursor-pointer transition-colors select-none"
               title="Click to view KaTeX syntax errors"
             >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-700" />
+              <AlertTriangle className="w-3.5 h-3.5 text-[#c67139]" />
               <span>KaTeX Syntax Error ({validationResult.errors.length})</span>
             </button>
           )}
 
-          <span className="font-mono text-[11px] text-slate-500 hidden md:inline ml-1">
+          <span className="font-mono text-[11px] text-[#645c50] hidden md:inline ml-1">
             {stemMarkdown.length} chars · {wordCount} words
           </span>
         </div>
@@ -755,32 +753,32 @@ export function IngestionStemEditor({
 
       {/* 3. EXPANDABLE KATEX SYNTAX ERROR BANNER */}
       {(!validationResult.isValid || showErrorDetails) && validationResult.errors.length > 0 && (
-        <div className="p-3.5 bg-rose-50 border-b-2 border-slate-800 text-slate-900 flex items-start gap-3 animate-in fade-in">
-          <div className="p-1 rounded-lg bg-rose-200 border border-rose-400 shrink-0 mt-0.5">
-            <AlertTriangle className="w-4 h-4 text-rose-800" />
+        <div className="p-3.5 bg-[#fff8eb] border-b border-[#dcd3c4] text-[#201e1d] flex items-start gap-3 animate-in fade-in">
+          <div className="p-1 rounded-lg bg-[#ffe1d0] border border-[#c67139]/30 shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-[#c67139]" />
           </div>
           <div className="flex-1 space-y-1.5 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-heading font-black text-rose-950 uppercase tracking-wide">
+              <span className="font-heading font-black text-[#c67139] uppercase tracking-wide">
                 KaTeX Syntax Verification ({validationResult.errors.length} issue
                 {validationResult.errors.length === 1 ? '' : 's'})
               </span>
               <button
                 type="button"
                 onClick={handleCleanKaTeX}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-800 font-bold text-xs shadow-chunky hover:bg-brand-yellow/30 active:translate-y-0.5"
+                className="px-2.5 py-1 rounded-full bg-white border border-[#dcd3c4] font-bold text-xs text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5"
               >
                 Auto-Fix Delimiters
               </button>
             </div>
-            <ul className="list-disc list-inside space-y-1 text-slate-800 font-mono text-[11px]">
+            <ul className="list-disc list-inside space-y-1 text-[#474238] font-mono text-[11px]">
               {validationResult.errors.map((err, idx) => (
                 <li key={idx} className="leading-snug">
                   {err}
                 </li>
               ))}
             </ul>
-            <div className="text-[11px] text-slate-600 pt-0.5">
+            <div className="text-[11px] text-[#645c50] pt-0.5">
               Tip: For currency figures (e.g. $50), escape dollar signs as <code>\$50</code>, or click <strong>Clean KaTeX</strong>.
             </div>
           </div>
@@ -800,12 +798,12 @@ export function IngestionStemEditor({
           {/* LEFT: Markdown Input Surface */}
           {(viewMode === 'split' || viewMode === 'edit-only') && (
             <div className="flex flex-col gap-2 flex-1">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-600 px-1">
+              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50] px-1">
                 <span className="flex items-center gap-1.5">
-                  <Edit3 className="w-3.5 h-3.5 text-brand-indigo" />
+                  <Edit3 className="w-3.5 h-3.5 text-[#c67139]" />
                   Markdown Stem Input
                 </span>
-                <span className="text-[11px] font-mono text-slate-400">
+                <span className="text-[11px] font-mono text-[#82796a]">
                   $...$ inline · $$...$$ display
                 </span>
               </div>
@@ -817,7 +815,7 @@ export function IngestionStemEditor({
                   adjustHeight();
                 }}
                 placeholder="Enter Cambridge question stem in Markdown. Use $...$ for inline equations and $$...$$ for display blocks..."
-                className="w-full min-h-[220px] p-4 rounded-2xl border-2 border-slate-800 bg-white text-slate-900 font-mono text-sm leading-relaxed shadow-chunky outline-none focus:ring-2 focus:ring-brand-yellow transition-all resize-y placeholder:text-slate-400"
+                className="w-full min-h-[220px] p-3 text-xs sm:text-sm font-mono text-[#201e1d] bg-white border-[1.5px] border-[#dcd3c4] rounded-xl outline-none focus:border-[#c67139] leading-relaxed transition-all resize-y placeholder:text-[#82796a]"
               />
             </div>
           )}
@@ -825,35 +823,35 @@ export function IngestionStemEditor({
           {/* RIGHT: Live KaTeX Rendered Preview */}
           {(viewMode === 'split' || viewMode === 'preview-only') && (
             <div className="flex flex-col gap-2 flex-1">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-600 px-1">
+              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50] px-1">
                 <span className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-brand-teal" />
+                  <Eye className="w-3.5 h-3.5 text-[#728157]" />
                   KaTeX Live Preview
                 </span>
                 {validationResult.isValid && stemMarkdown.trim() && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#3d472b]">
+                    <CheckCircle2 className="w-3 h-3 text-[#728157]" />
                     Verified Output
                   </span>
                 )}
               </div>
-              <div className="w-full min-h-[220px] p-5 rounded-2xl border-2 border-slate-800 bg-amber-50/60 text-slate-900 shadow-chunky overflow-y-auto flex-1">
+              <div className="w-full min-h-[220px] p-4 rounded-xl border-[1.5px] border-[#dcd3c4] bg-white text-[#201e1d] leading-relaxed overflow-y-auto flex-1">
                 {stemMarkdown.trim() ? (
-                  <div className="prose prose-sm max-w-none text-sm leading-relaxed font-body">
+                  <div className="prose prose-sm max-w-none text-xs sm:text-sm leading-relaxed font-body text-[#201e1d]">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#e11d48' }]]}
+                      rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
                       components={{
                         p: ({ ...props }) => (
-                          <p className="mb-3 last:mb-0 leading-relaxed text-slate-900" {...props} />
+                          <p className="mb-3 last:mb-0 leading-relaxed text-[#201e1d]" {...props} />
                         ),
                         strong: ({ ...props }) => (
-                          <strong className="font-bold text-slate-900" {...props} />
+                          <strong className="font-bold text-[#201e1d]" {...props} />
                         ),
                         em: ({ ...props }) => <em className="italic" {...props} />,
                         code: ({ ...props }) => (
                           <code
-                            className="font-mono text-xs bg-slate-200 px-1.5 py-0.5 rounded border border-slate-300 text-slate-800"
+                            className="font-mono text-xs bg-[#eee7db] px-1.5 py-0.5 rounded border border-[#dcd3c4] text-[#201e1d]"
                             {...props}
                           />
                         ),
@@ -863,8 +861,8 @@ export function IngestionStemEditor({
                     </ReactMarkdown>
                   </div>
                 ) : (
-                  <div className="text-slate-400 italic text-sm py-12 text-center flex flex-col items-center justify-center gap-2">
-                    <Edit3 className="w-6 h-6 text-slate-300" />
+                  <div className="text-[#82796a] italic text-sm py-12 text-center flex flex-col items-center justify-center gap-2">
+                    <Edit3 className="w-6 h-6 text-[#dcd3c4]" />
                     <span>No question stem content entered yet. Start typing in the Markdown editor.</span>
                   </div>
                 )}
@@ -875,19 +873,19 @@ export function IngestionStemEditor({
       </div>
 
       {/* 5. FOOTER STATUS BAR */}
-      <div className="px-4 py-2.5 bg-slate-100 border-t-2 border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 select-none">
+      <div className="px-4 py-2.5 bg-[#f9f4ed] border-t border-[#dcd3c4] flex flex-wrap items-center justify-between gap-2 text-xs text-[#645c50] select-none">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 font-medium">
-            <Info className="w-3.5 h-3.5 text-brand-indigo" />
+            <Info className="w-3.5 h-3.5 text-[#c67139]" />
             Cambridge KaTeX Renderer Active
           </span>
-          <span className="hidden sm:inline text-slate-400">|</span>
-          <span className="font-mono text-[11px] text-slate-500">
-            Topic: <strong>{currentTopicDisplay}</strong>
+          <span className="hidden sm:inline text-[#dcd3c4]">|</span>
+          <span className="font-mono text-[11px] text-[#645c50]">
+            Topic: <strong className="text-[#201e1d]">{currentTopicDisplay}</strong>
           </span>
         </div>
-        <div className="font-mono text-[11px] text-slate-500">
-          Tip: Wrap inline math in <code>$formula$</code> & display math in <code>$$formula$$</code>
+        <div className="font-mono text-[11px] text-[#82796a]">
+          Tip: Wrap inline math in <code>$formula$</code> &amp; display math in <code>$$formula$$</code>
         </div>
       </div>
     </div>
