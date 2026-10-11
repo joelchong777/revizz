@@ -189,3 +189,48 @@
   - Automated test suites: `npm test` (37/37 passed), `verify-ingestion-v2.ts` (125/125 passed).
   - Production build: `next build` passed with all 10 routes cleanly generated.
   - Deployed cleanly to `origin/main` (commit `5f7fc95`).
+
+## Reflection Log Entry - 2026-10-12 (Question Compiler Layout Reorganization & Multi-Dimensional Filter Engine)
+
+- **Date**: 2026-10-12
+- **Feature**: Question Compiler & Exam Generator Layout Redesign & Advanced Search/Filter Suite
+- **Context & Motivation**:
+  - Reorganizing the Question Compiler / Exam Generator into a high-density, front-and-center question bank canvas with unified sticky right-hand controls.
+  - Equipping educators and curators with an instant multi-dimensional filter engine (`lib/compilerFilters.ts`) to slice, search, and assemble past-paper tests effortlessly.
+
+### 1. Layout & Workspace Architecture
+- **Front-and-Center Question Bank Viewport**:
+  - Allocated primary visual hierarchy to the question pool with an expansive dedicated scrollable container (`h-[calc(100vh-140px)] min-h-[650px] overflow-y-auto pr-2`).
+  - Added a clear semantic heading (`<h2>`) labeled "Test Compiler" alongside real-time persistent question selection metrics.
+  - Eliminated redundant outer title and subtitle banners, removing unnecessary vertical scroll padding and keeping critical question stems above the fold on 13"–15" laptop screens.
+- **Sticky Right-Column Controls**:
+  - Anchored test assembly controls in a sticky right rail (`lg:sticky lg:top-4 lg:max-h-[calc(100vh-32px)] overflow-y-auto`).
+  - Unified search input, quick presets, saved drafts, and the Test Assembly drawer into a consolidated side panel, keeping compilation controls accessible regardless of vertical scroll depth.
+
+### 2. Multi-Dimensional Filter Architecture (`lib/compilerFilters.ts`)
+- **Selection Status Segmentation**:
+  - Segmented question views into `All`, `Selected in Test`, and `Unselected` states with dynamic live count badges.
+- **Dynamic Cambridge Exam Series & Year Extraction**:
+  - Automatically parses Cambridge exam series (February/March, May/June, October/November) and exam years from question citations and IDs for dynamic dropdown filtering.
+- **Content & Format Toggles**:
+  - *With Diagrams*: Filters for visual items containing `image_url`.
+  - *With Data Tables*: Identifies tabular markdown data structures (`|` pipes).
+  - *Calculations & Math*: Detects KaTeX math delimiters (`$...$`, `$$...$$`), currency expressions (`$100`), and numerical calculation questions.
+- **Multi-Option Sorting**:
+  - Supports ordering by original paper sequence, shortest conceptual stems (rapid-fire recall), and longest scenario/case-study stems.
+- **Ergonomics & Reset Action**:
+  - Displays real-time active filter count badges with a one-click "Reset All" action to restore baseline views instantly.
+
+### 3. Bug Patterns & Pre-Deploy Hardening
+- **Header Syntax Guard**:
+  - Resolved an unclosed ternary expression in header rendering logic that caused SWC/webpack build workers to hang and throw parse errors.
+- **Interface Parity Across Component Boundaries**:
+  - Synchronized component prop interfaces (`AdminNavProps`) with parent page callers (`app/admin/compiler/page.tsx`), preventing TypeScript contract mismatches during `next build`.
+- **Stale Build Cache Mitigation**:
+  - Cleared the `.next` compilation cache directory when App Router manifests diverged across rapid multi-file refactoring steps to avoid transient compilation failures.
+
+### 4. Verification & Definition of Done
+- **Type Safety**: Full TypeScript validation pass (`npx tsc --noEmit` exit code 0).
+- **Test Coverage Expansion**: Added Suite 7 to `verify-revizz.ts` validating all filter conditions, regex extractors, sorting mechanisms, and state transitions (40/40 assertions passing).
+- **Production Build**: Next.js production build (`next build`) succeeded with all static/dynamic routes cleanly compiled.
+- **Remote Synchronization**: Safely committed and pushed to `origin/main` (commit `8785fe8`).
