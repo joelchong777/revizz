@@ -9,6 +9,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Question } from '../hooks/useQuizGame';
 import { cn } from '@/lib/utils';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 
 interface QuestionCardProps {
   question: Question;
@@ -379,12 +380,14 @@ export function QuestionCard({
         )}
 
         <div className="text-[17px] leading-relaxed font-semibold text-text break-words overflow-x-auto min-h-[48px]">
-          <ReactMarkdown
-            remarkPlugins={[remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-          >
-            {question.stem_markdown}
-          </ReactMarkdown>
+          <MarkdownErrorBoundary fallbackText={question.stem_markdown}>
+            <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+            >
+              {question.stem_markdown}
+            </ReactMarkdown>
+          </MarkdownErrorBoundary>
         </div>
 
         {/* Diagram container */}
@@ -530,12 +533,14 @@ export function QuestionCard({
 
               {/* Option Text Markdown */}
               <span className="flex-1 text-base font-semibold text-text break-words min-w-0">
-                <ReactMarkdown
-                  remarkPlugins={[remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {opt.text_markdown}
-                </ReactMarkdown>
+                <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                  >
+                    {opt.text_markdown}
+                  </ReactMarkdown>
+                </MarkdownErrorBoundary>
               </span>
 
               {/* Status Stamp / Hotkey Tag */}

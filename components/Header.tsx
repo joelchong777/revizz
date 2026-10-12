@@ -106,27 +106,27 @@ export function Header({
   const prevStreakRef = useRef(displayStreak);
   const prevXpRef = useRef(displayXp);
 
-  // Spring scale bounce when streak (🔥) updates
+  // Tactile scale bounce when streak (🔥) updates (tween transition prevents multi-keyframe spring crashes)
   useEffect(() => {
     if (prevStreakRef.current !== displayStreak) {
       prevStreakRef.current = displayStreak;
       if (!shouldReduceMotion) {
         streakControls.start({
           scale: [1, 1.25, 1],
-          transition: { type: 'spring' as const, stiffness: 500, damping: 15 },
+          transition: { type: 'tween', duration: 0.3, ease: 'easeOut' },
         });
       }
     }
   }, [displayStreak, shouldReduceMotion, streakControls]);
 
-  // Spring scale bounce when XP (⚡) updates
+  // Tactile scale bounce when XP (⚡) updates (tween transition prevents multi-keyframe spring crashes)
   useEffect(() => {
     if (prevXpRef.current !== displayXp) {
       prevXpRef.current = displayXp;
       if (!shouldReduceMotion) {
         xpControls.start({
           scale: [1, 1.25, 1],
-          transition: { type: 'spring' as const, stiffness: 500, damping: 15 },
+          transition: { type: 'tween', duration: 0.3, ease: 'easeOut' },
         });
       }
     }

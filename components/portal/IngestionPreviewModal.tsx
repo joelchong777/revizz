@@ -22,6 +22,7 @@ import "katex/dist/katex.min.css";
 import type { StagingQuestion } from "@/types/ingestion";
 import { sanitizeKaTeX } from "@/lib/ingestion/katexSanitizer";
 import { IngestionLivePreview } from "./IngestionLivePreview";
+import { MarkdownErrorBoundary } from "@/components/ui/MarkdownErrorBoundary";
 
 export interface IngestionPreviewModalProps {
   isOpen: boolean;
@@ -248,9 +249,11 @@ export default function IngestionPreviewModal({
               {/* Question Stem */}
               <div className="p-4 sm:p-5 rounded-2xl bg-white border-[1.5px] border-[#dcd3c4] shadow-xs">
                 <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed">
-                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                    {sanitizedStem || "_No question stem text provided._"}
-                  </ReactMarkdown>
+                  <MarkdownErrorBoundary fallbackText={sanitizedStem || ""}>
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      {sanitizedStem || "_No question stem text provided._"}
+                    </ReactMarkdown>
+                  </MarkdownErrorBoundary>
                 </div>
               </div>
 
@@ -313,9 +316,11 @@ export default function IngestionPreviewModal({
 
                         {/* Option Markdown Content */}
                         <div className="flex-1 min-w-0 prose prose-sm max-w-none text-xs sm:text-sm font-medium leading-relaxed">
-                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                            {optSanitized || "_Empty option_"}
-                          </ReactMarkdown>
+                          <MarkdownErrorBoundary fallbackText={optSanitized || ""}>
+                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                              {optSanitized || "_Empty option_"}
+                            </ReactMarkdown>
+                          </MarkdownErrorBoundary>
                         </div>
 
                         {/* Official Correct Key Tag */}
@@ -353,9 +358,11 @@ export default function IngestionPreviewModal({
                   <div className="p-4 bg-white border-t border-[#dcd3c4]">
                     {sanitizedExplanation ? (
                       <div className="prose prose-sm max-w-none text-xs sm:text-sm text-[#201e1d] leading-relaxed">
-                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                          {sanitizedExplanation}
-                        </ReactMarkdown>
+                        <MarkdownErrorBoundary fallbackText={sanitizedExplanation}>
+                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                            {sanitizedExplanation}
+                          </ReactMarkdown>
+                        </MarkdownErrorBoundary>
                       </div>
                     ) : (
                       <p className="text-xs text-[#82796a] italic">

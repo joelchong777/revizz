@@ -817,6 +817,53 @@ test('Preserves modern gemini-3.8-flash and cleans prefix', () => {
 });
 
 // -----------------------------------------------------------------------------
+// [Suite 9] Dynamic Resilience & Framer Motion Keyframe Integrity
+// -----------------------------------------------------------------------------
+console.log('\n\x1b[1m\x1b[34m[Suite 9] Dynamic Resilience & Framer Motion Keyframe Integrity\x1b[0m');
+
+test('Motion Keyframe Guard: Header.tsx uses tween type on multi-keyframe scale animations', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const headerPath = path.resolve(process.cwd(), 'components/Header.tsx');
+  const content = fs.readFileSync(headerPath, 'utf8');
+
+  // Verify scale: [1, 1.25, 1] transitions do NOT use type: 'spring'
+  const streakScaleMatch = content.includes("scale: [1, 1.25, 1]");
+  assertEqual(streakScaleMatch, true, 'Header contains 3-keyframe scale pulse');
+
+  // Ensure tween is declared
+  const hasTweenType = content.includes("type: 'tween'");
+  assertEqual(hasTweenType, true, 'Header declares type: tween to prevent spring solver crash');
+
+  // Ensure no spring on multi-keyframe scale
+  const hasSpringOnMultiKeyframe = content.includes("scale: [1, 1.25, 1],\n          transition: { type: 'spring'");
+  assertEqual(hasSpringOnMultiKeyframe, false, 'Header does not use spring with 3 keyframes');
+});
+
+test('Markdown Error Boundary: Defensive wrapper exists and exports cleanly', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const boundaryPath = path.resolve(process.cwd(), 'components/ui/MarkdownErrorBoundary.tsx');
+  assertEqual(fs.existsSync(boundaryPath), true, 'MarkdownErrorBoundary.tsx exists');
+
+  const content = fs.readFileSync(boundaryPath, 'utf8');
+  assertEqual(content.includes('class MarkdownErrorBoundary'), true, 'Defines MarkdownErrorBoundary class');
+  assertEqual(content.includes('getDerivedStateFromError'), true, 'Implements getDerivedStateFromError lifecycle');
+  assertEqual(content.includes('componentDidCatch'), true, 'Implements componentDidCatch lifecycle');
+});
+
+test('QuestionCard Protection: QuestionCard wraps stem and options in MarkdownErrorBoundary', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
+  const content = fs.readFileSync(cardPath, 'utf8');
+
+  assertEqual(content.includes("import { MarkdownErrorBoundary }"), true, 'QuestionCard imports MarkdownErrorBoundary');
+  assertEqual(content.includes("<MarkdownErrorBoundary fallbackText={question.stem_markdown}>"), true, 'Question stem protected by error boundary');
+  assertEqual(content.includes("<MarkdownErrorBoundary fallbackText={opt.text_markdown}>"), true, 'Option labels protected by error boundary');
+});
+
+// -----------------------------------------------------------------------------
 // Test Summary Output
 // -----------------------------------------------------------------------------
 console.log('\n========================================================');

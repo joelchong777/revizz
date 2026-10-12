@@ -21,6 +21,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
 import { saveTestDraft, listTestDrafts, autoSelectQuestions } from '@/lib/testCompiler';
 import {
@@ -607,9 +608,11 @@ export default function TestCompilerHub() {
                   </div>
 
                   <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed mb-4">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {q.stem_markdown || ''}
-                    </ReactMarkdown>
+                    <MarkdownErrorBoundary fallbackText={q.stem_markdown || ''}>
+                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                        {q.stem_markdown || ''}
+                      </ReactMarkdown>
+                    </MarkdownErrorBoundary>
                   </div>
 
                   {q.image_url && (
@@ -635,9 +638,11 @@ export default function TestCompilerHub() {
                       >
                         <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
                         <div className="flex-1">
-                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                            {opt.text_markdown}
-                          </ReactMarkdown>
+                          <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
+                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                              {opt.text_markdown}
+                            </ReactMarkdown>
+                          </MarkdownErrorBoundary>
                         </div>
                       </div>
                     ))}

@@ -318,3 +318,55 @@
 - **Git & Live Vercel Production Release**:
   - Clean atomic commits pushed to `origin/main` (`cc70066..c09a046`).
   - Production deployment verified live and accessible at `https://revizz-sand.vercel.app`.
+
+## Reflection Log Entry - 2026-10-12 (Comprehensive Systems & Codebase Audit: Motion Spring Trap Remediation & Defensive Error Boundaries)
+
+- **Date**: 2026-10-12
+- **Topic**: Comprehensive Systems & Codebase Audit: Framer Motion Spring Trap Remediation, Defensive Markdown Error Boundaries, and Dual Design System Verification
+- **Auditor**: Principal Systems & Codebase Auditor (Pro Tier)
+
+### 1. Framer Motion Multi-Keyframe Spring Trap Remediation (`Header.tsx`)
+- **Audit Finding**:
+  - Scanning the codebase for multi-keyframe transform arrays revealed a critical latent spring crash in `components/Header.tsx` (lines 114-117 and 127-130).
+  - Streak and XP indicator pills animated `scale: [1, 1.25, 1]` with `{ type: 'spring' as const, stiffness: 500, damping: 15 }`.
+  - Motion's spring solver internally throws a fatal runtime exception (`Error: Only two keyframes currently supported with spring and inertia animations`) whenever three keyframes are animated under a spring transition.
+- **Architectural Remediation**:
+  - Replaced the spring configuration with `{ type: 'tween', duration: 0.3, ease: 'easeOut' }`.
+  - Preserved the snappy tactile pulse effect while eliminating all risk of fatal uncaught runtime crashes when streaks or XP update during student gameplay.
+
+### 2. Defensive UI Resilience: `MarkdownErrorBoundary`
+- **Audit Finding**:
+  - Unsanitized OCR output and complex KaTeX math formulas in Cambridge economics past papers can contain syntax anomalies (e.g. unescaped dollar signs, unclosed delimiters).
+  - Previously, `ReactMarkdown` with `remark-math` and `rehype-katex` rendered directly within components without defensive boundaries. A parsing failure would crash React's component tree, destroying quiz progress or curation state.
+- **Architectural Implementation**:
+  - Implemented `components/ui/MarkdownErrorBoundary.tsx`, a robust React Error Boundary that catches LaTeX/Markdown render exceptions and presents a clean inline alert without unmounting the surrounding interface.
+  - Integrated `MarkdownErrorBoundary` across high-risk dynamic rendering zones:
+    1. `components/QuestionCard.tsx`: Wrapped both question stem and option text choices.
+    2. `components/portal/IngestionPreviewModal.tsx`: Wrapped question stem, option choices, and official mark scheme derivations.
+    3. `components/portal/compiler/TestCompilerHub.tsx`: Wrapped test question stems and option choices in the compilation pool.
+
+### 3. Portal Partitioning & Dual Design System Audit
+- **Teacher Portal (`/portal`) vs. App Admin (`/admin`)**:
+  - Clean separation confirmed: pedagogical workflows (Roster, Assignments, Test Compiler, Question Bank) are isolated to `/portal`, while pipeline infrastructure (Ingestion Studio v2, Staged Papers, Diagnostics) is partitioned to `/admin`.
+  - Sidebar navigation ergonomics in both `AdminNav.tsx` and `AppAdminNav.tsx` strictly follow the architectural standard: `w-[264px]` width, uniform `w-7 h-7` icon frames, `truncate` and `min-w-0` on labels, and rounded pill badges with `shrink-0 whitespace-nowrap` preventing line wrapping.
+- **Dual Design System Token Alignment**:
+  - Student gameplay surface (`/`): Framed mobile/tablet canvas via `AppShell.tsx`, playful `Caprasimo` typography, 3D neobrutalist borders (`border-4 border-[#201e1d]`), tactile drop shadows (`shadow-[6px_6px_0_#201e1d]`), and bright reward tokens.
+  - Admin & Teacher console (`/portal`, `/admin`): Full-width unconstrained canvas via `AppShell.tsx`, professional `Space Grotesk` headers, `JetBrains Mono` telemetry indicators, and calm, organic tones (`#f5ead8`, `#f9f4ed`, `#dcd3c4`, `#c67139`).
+
+### 4. Test Compiler & Ingestion Studio v2 Compliance
+- **Test Compiler**:
+  - Adheres strictly to Option 3 layout architecture: horizontal sticky filter bar (`sticky top-0 z-10 backdrop-blur-sm`), dedicated 100vh-compliant Test Assembly Drawer (`h-[calc(100vh-130px)]`), collapsible settings accordion (`max-h-[35vh]`), and permanently pinned action footer (`Save Draft`, `PDF / Print`).
+- **Ingestion Studio v2**:
+  - Unified into Master Studio Frame (`IngestionStudioFrame.tsx`).
+  - State-aware `IngestionHeader.tsx` correctly distinguishes Setup Mode from Workspace Mode.
+  - Client-side validation guard in `IngestionHub.tsx` verifies stem, option count (4), and single-correct answer parity prior to triggering Supabase upserts, auto-jumping to broken items with actionable diagnostics.
+
+### 5. Verification & Definition of Done
+- **Expanded Test Suite**:
+  - Added `[Suite 9] Dynamic Resilience & Framer Motion Keyframe Integrity` to `scripts/verify-revizz.ts`.
+  - Total automated assertions: 47/47 passing (100% pass rate).
+- **TypeScript Static Verification**:
+  - `npx tsc --noEmit` passed with 0 errors.
+- **Local Git Repository Status**:
+  - All modifications staged and committed locally under clean semantic conventions.
+  - Remote repository push held per strict Rule 10 constraints.
