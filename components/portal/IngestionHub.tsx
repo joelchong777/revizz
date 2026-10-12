@@ -264,24 +264,26 @@ export default function IngestionHub() {
       <IngestionStudioFrame
         mode={mode}
         header={
-          <IngestionHeader
-            mode={mode}
-            paper={paper}
-            onOpenSettings={() => setIsSettingsModalOpen(true)}
-            onPublish={handleUpsertToSupabase}
-            publishStatus={publishStatus}
-            publishMessage={publishMessage}
-            lifecycleState={lifecycleState}
-            showPdfViewer={showPdfViewer}
-            onTogglePdfViewer={() => setShowPdfViewer((prev) => !prev)}
-            onUndo={undo}
-            onRedo={redo}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            onSwitchPaper={() => setIsSetupOpen(true)}
-            onSaveDraft={() => saveDraftToLocalStorage()}
-            onReturnToStudio={() => setIsSetupOpen(false)}
-          />
+          mode === "workspace" ? (
+            <IngestionHeader
+              mode={mode}
+              paper={paper}
+              onOpenSettings={() => setIsSettingsModalOpen(true)}
+              onPublish={handleUpsertToSupabase}
+              publishStatus={publishStatus}
+              publishMessage={publishMessage}
+              lifecycleState={lifecycleState}
+              showPdfViewer={showPdfViewer}
+              onTogglePdfViewer={() => setShowPdfViewer((prev) => !prev)}
+              onUndo={undo}
+              onRedo={redo}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onSwitchPaper={() => setIsSetupOpen(true)}
+              onSaveDraft={() => saveDraftToLocalStorage()}
+              onReturnToStudio={() => setIsSetupOpen(false)}
+            />
+          ) : null
         }
         progressShelf={
           isExtracting ? (

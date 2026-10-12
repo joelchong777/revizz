@@ -10,12 +10,10 @@ import {
   Redo2,
   CheckCircle2,
   AlertTriangle,
-  Sparkles,
   FileUp,
   BookmarkCheck,
   Edit2,
   Settings,
-  ArrowLeft,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -62,8 +60,8 @@ export default function IngestionHeader({
   onPublish,
   publishStatus,
   publishMessage: _publishMessage,
-  onReturnToStudio,
-  hasActivePaper,
+  onReturnToStudio: _onReturnToStudio,
+  hasActivePaper: _hasActivePaper,
   lifecycleState: _lifecycleState = "draft",
   showPdfViewer = true,
   onTogglePdfViewer,
@@ -147,47 +145,10 @@ export default function IngestionHeader({
 
   // -------------------------------------------------------------
   // MODE: SETUP (Wizard / Setup Mode)
-  // Clean pipeline branding, sample loaders, active return, ZERO phantom controls
+  // When in setup mode, the wizard renders its own hero / inputs. Return null.
   // -------------------------------------------------------------
   if (currentMode === "setup") {
-    const hasPaperInMemory = Boolean(
-      hasActivePaper || (paper && paper.questions && paper.questions.length > 0)
-    );
-
-    return (
-      <header className="w-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[2px_2px_0_#201e1d] flex flex-col md:flex-row md:items-center justify-between gap-4 font-body">
-        {/* Left Section: Pipeline Tag & Title */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-[#c67139] text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-[1.5px_1.5px_0_#201e1d]">
-              <Sparkles className="w-3.5 h-3.5 text-[#c67139]" />
-              Cambridge Multimodal Pipeline
-            </span>
-            <span className="text-xs text-[#645c50] font-semibold">
-              Gemini Vision 2.5 Ingestion
-            </span>
-          </div>
-          <h1 className="font-heading font-black text-lg sm:text-xl text-[#201e1d] tracking-tight">
-            Digitize &amp; Upsert Past Exam Papers
-          </h1>
-        </div>
-
-        {/* Right Section: Return to Studio if paper is in memory (No fake presets) */}
-        {hasPaperInMemory && onReturnToStudio && (
-          <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
-            <button
-              type="button"
-              onClick={onReturnToStudio}
-              className="px-4 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs sm:text-sm font-black text-[#201e1d] flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] transition-all cursor-pointer"
-              title="Return to the active paper curation workspace"
-            >
-              <ArrowLeft className="w-4 h-4 text-[#201e1d]" />
-              <span>← Return to Studio</span>
-            </button>
-          </div>
-        )}
-      </header>
-    );
+    return null;
   }
 
   // -------------------------------------------------------------
