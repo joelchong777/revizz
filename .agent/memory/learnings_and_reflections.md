@@ -370,3 +370,28 @@
 - **Local Git Repository Status**:
   - All modifications staged and committed locally under clean semantic conventions.
   - Remote repository push held per strict Rule 10 constraints.
+
+## Reflection Log Entry - 2026-10-12 (Ingestion Setup Header Streamlining & Worktree Live Release)
+
+- **Date**: 2026-10-12
+- **Topic**: Ingestion Setup Header Redundancy Removal, Worktree Isolation & Atomic Release
+- **Context & Problem**:
+  - The Ingestion Studio frame (`IngestionStudioFrame.tsx`) previously rendered a docked top header card via `IngestionHeader.tsx` even in `setup` mode.
+  - In `setup` mode, `IngestionSetupWizard.tsx` already contains its own dedicated header banner with paper metadata, subject presets, and session navigation.
+  - This caused visual duplication, rendering an extraneous neobrutalist card ("CAMBRIDGE MULTIMODAL PIPELINE / Gemini Vision 2.5 Ingestion / Digitize & Upsert Past Exam Papers") above the wizard.
+
+### 1. Architectural Insights & Solutions
+- **Component Role Decoupling**:
+  - `IngestionHeader.tsx` is specialized strictly for the active curation studio (`workspace` mode: paper identity pill, health score, validation counters, undo/redo, and Push Live CTA).
+  - In `setup` mode, `IngestionHeader.tsx` returns `null`, and `IngestionHub.tsx` conditionally passes `header={mode === "workspace" ? <IngestionHeader ... /> : null}`.
+  - This eliminates container nesting bloat and lets `IngestionSetupWizard.tsx` own the full initial viewport cleanly.
+
+### 2. Worktree Isolation & Atomic Release Protocol
+- **Git Worktree Workflow**:
+  - Feature work was isolated in `.worktrees/ingestion-header-clean` branched directly from `origin/main`.
+  - Shared assets (`node_modules`, `.env.local`, `.vercel`) were symlinked into the worktree.
+  - Re-verified via `npx tsc --noEmit` (0 errors), `verify-ingestion-v2.ts` (125/125 passed), and `verify-revizz.ts` (56/56 passed).
+- **Production Deployment**:
+  - Pushed atomically via `git push origin feat/ingestion-header-clean:main` (commit `faf5c70`).
+  - Triggered and verified live Vercel production deployment (`https://revizz-sand.vercel.app`).
+  - Completed clean worktree teardown and pruned the feature branch.
