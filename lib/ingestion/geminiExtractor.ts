@@ -41,17 +41,67 @@ export function normalizeGeminiModel(model?: string): string {
   return trimmed;
 }
 
+export async function toBase64(
+  data: Buffer | Uint8Array | ArrayBuffer | Blob | string
+): Promise<string> {
+  if (typeof data === 'string') {
+    const match = data.match(/^data:application\/pdf;base64,(.+)$/);
+    return match ? match[1] : data;
+  }
+  if (typeof Buffer !== 'undefined' && Buffer.isBuffer(data)) {
+    return data.toString('base64');
+  }
+  if (typeof Blob !== 'undefined' && data instanceof Blob) {
+    const arrayBuffer = await data.arrayBuffer();
+    return arrayBufferToBase64(arrayBuffer);
+  }
+  if (data instanceof ArrayBuffer) {
+    return arrayBufferToBase64(data);
+  }
+  if (data instanceof Uint8Array) {
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(data).toString('base64');
+    }
+    return uint8ArrayToBase64(data);
+  }
+  return String(data);
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(buffer).toString('base64');
+  }
+  return uint8ArrayToBase64(new Uint8Array(buffer));
+}
+
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes).toString('base64');
+  }
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i += 8192) {
+    const chunk = bytes.subarray(i, Math.min(i + 8192, len));
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+  }
+  return btoa(binary);
+}
+
 export async function extractQuestionsChunked(
-  qpBuffer: Buffer,
-  msBuffer: Buffer,
+  qpInput: Buffer | Uint8Array | ArrayBuffer | Blob | string,
+  msInput: Buffer | Uint8Array | ArrayBuffer | Blob | string,
   apiKey: string,
   options: ExtractionOptions = {}
 ): Promise<StagingQuestion[]> {
-  const batchSize = options.batchSize || 10;
+  const batchSize = options.batchSize || 5;
   const startQuestion = options.startQuestion || 1;
   const endQuestion = options.endQuestion || 40;
   const model = normalizeGeminiModel(options.model || 'gemini-3.8-flash');
   const maxRetries = options.maxRetries || 3;
+
+  // Pre-encode base64 once up front to conserve CPU & memory across batch iterations
+  const qpBase64 = await toBase64(qpInput);
+  const msBase64 = await toBase64(msInput);
 
   const allQuestions: StagingQuestion[] = [];
   const totalQuestions = Math.max(1, endQuestion - startQuestion + 1);
@@ -68,8 +118,8 @@ export async function extractQuestionsChunked(
     while (attempt < maxRetries && !success) {
       try {
         batchQuestions = await extractBatch(
-          qpBuffer,
-          msBuffer,
+          qpBase64,
+          msBase64,
           currentStart,
           currentEnd,
           apiKey,
@@ -107,8 +157,8 @@ export async function extractQuestionsChunked(
 }
 
 async function extractBatch(
-  qpBuffer: Buffer,
-  msBuffer: Buffer,
+  qpBase64: string,
+  msBase64: string,
   startQ: number,
   endQ: number,
   apiKey: string,
@@ -184,13 +234,13 @@ Do not include any markdown wrappers like \`\`\`json around the output. Output p
           {
             inline_data: {
               mime_type: 'application/pdf',
-              data: qpBuffer.toString('base64'),
+              data: qpBase64,
             },
           },
           {
             inline_data: {
               mime_type: 'application/pdf',
-              data: msBuffer.toString('base64'),
+              data: msBase64,
             },
           },
           {
@@ -205,17 +255,49 @@ Do not include any markdown wrappers like \`\`\`json around the output. Output p
     },
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (fetchErr: any) {
+    if (fetchErr.name === 'AbortError') {
+      throw new Error(`Gemini API request timed out after 30s for questions ${startQ}-${endQ}.`);
+    }
+    throw new Error(`Gemini API connection failed: ${fetchErr.message}`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`API Error ${response.status}: ${errorText}`);
+    let diagnostic = errorText;
+    try {
+      const errJson = JSON.parse(errorText);
+      if (errJson?.error?.message) {
+        diagnostic = errJson.error.message;
+      }
+    } catch {
+      // Retain raw error text
+    }
+    if (response.status === 400 && diagnostic.toLowerCase().includes('api key')) {
+      throw new Error(`Invalid Gemini API Key: ${diagnostic}`);
+    }
+    if (response.status === 429) {
+      throw new Error(`Gemini API rate limit exceeded (HTTP 429): ${diagnostic}`);
+    }
+    if (response.status === 403) {
+      throw new Error(`Gemini API access forbidden (HTTP 403): ${diagnostic}`);
+    }
+    throw new Error(`Gemini API Error (HTTP ${response.status}): ${diagnostic}`);
   }
 
   const data = await response.json();

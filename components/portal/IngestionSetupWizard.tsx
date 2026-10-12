@@ -47,6 +47,7 @@ export interface IngestionSetupWizardProps {
     series: string;
     paperCode: string;
     apiKey?: string;
+    batchSize?: number;
   }) => void;
   onUploadJson: (file: File) => void;
   onStartBlank: (meta: {
@@ -108,6 +109,11 @@ export default function IngestionSetupWizard({
   // Gemini API Key state (optional client override)
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [batchSize, setBatchSize] = useState<number>(5);
+
+  const totalPayloadBytes = (qpFile?.size || 0) + (msFile?.size || 0);
+  const totalPayloadMb = totalPayloadBytes / (1024 * 1024);
+  const isPayloadLarge = totalPayloadBytes > 4.5 * 1024 * 1024;
 
   const currentSubject = useMemo(() => {
     if (selectedSubjectCode === "custom") {
@@ -525,9 +531,45 @@ export default function IngestionSetupWizard({
             )}
           </div>
         </div>
+
+        {/* Payload Size Diagnostic Indicator */}
+        {totalPayloadBytes > 0 && (
+          <div
+            className={`p-3.5 rounded-xl border-[1.5px] flex items-center justify-between gap-3 text-xs font-bold transition-all ${
+              isPayloadLarge
+                ? "bg-[#fee2e2] border-[#b91c1c] text-[#b91c1c]"
+                : totalPayloadMb > 3.5
+                ? "bg-[#fef3c7] border-[#d97706] text-[#92400e]"
+                : "bg-[#f0fae1] border-[#728157] text-[#3d472b]"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">{isPayloadLarge ? "⚠️" : "📦"}</span>
+              <div>
+                <span>Combined PDF Size: {totalPayloadMb.toFixed(1)} MB</span>
+                {isPayloadLarge ? (
+                  <p className="text-[11px] font-semibold text-[#b91c1c] mt-0.5">
+                    Exceeds Vercel's 4.5 MB serverless limit. Please provide a Gemini API Key in Step 3 for direct browser extraction (supports up to 20 MB).
+                  </p>
+                ) : totalPayloadMb > 3.5 ? (
+                  <p className="text-[11px] font-semibold text-[#92400e] mt-0.5">
+                    Approaching Vercel's 4.5 MB limit. If network error occurs, supply a Gemini API Key in Step 3 for direct extraction.
+                  </p>
+                ) : (
+                  <p className="text-[11px] font-semibold text-[#56633f] mt-0.5">
+                    Well within serverless payload limits.
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-white/70 border border-current shrink-0">
+              {isPayloadLarge ? "Direct Mode Required" : "Standard OK"}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Step 3: Gemini Vision API Configuration (Optional) */}
+      {/* Step 3: Gemini Vision API & Extraction Configuration */}
       <div className="bg-white/80 border-[1.5px] border-[#dcd3c4] rounded-2xl p-5 flex flex-col gap-3.5 shadow-xs">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
@@ -535,50 +577,76 @@ export default function IngestionSetupWizard({
               3
             </span>
             <h3 className="font-heading text-sm font-black text-[#201e1d]">
-              Gemini API Key Configuration
+              Gemini Vision & Batch Configuration
             </h3>
           </div>
           <span className="text-[11px] font-semibold text-[#82796a]">
-            Optional client override
+            {isPayloadLarge ? "API Key Required (> 4.5 MB)" : "Optional client override"}
           </span>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="gemini-api-key-input"
-            className="text-xs font-bold text-[#645c50] flex items-center gap-1.5"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-[#c67139]" />
-            <span>Gemini API Key (Optional if set in .env.local)</span>
-          </label>
-          <div className="relative flex items-center">
-            <input
-              id="gemini-api-key-input"
-              type={showApiKey ? "text" : "password"}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Paste AIzaSy... key (optional - leave blank to use server .env.local)"
-              className="w-full pl-3.5 pr-11 py-2.5 text-xs sm:text-sm font-mono rounded-xl border-[1.5px] border-[#dcd3c4] bg-[#f9f4ed] text-[#201e1d] placeholder:text-[#82796a] outline-none focus:border-[#c67139] transition-all"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <button
-              type="button"
-              onClick={() => setShowApiKey((prev) => !prev)}
-              className="absolute right-2.5 p-1 rounded-lg text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer"
-              title={showApiKey ? "Mask API key" : "Show API key"}
-              aria-label={showApiKey ? "Mask API key" : "Show API key"}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          {/* Gemini API Key Input */}
+          <div className="md:col-span-2 flex flex-col gap-1.5">
+            <label
+              htmlFor="gemini-api-key-input"
+              className="text-xs font-bold text-[#645c50] flex items-center gap-1.5"
             >
-              {showApiKey ? (
-                <EyeOff className="w-4 h-4 text-[#201e1d]" />
-              ) : (
-                <Eye className="w-4 h-4 text-[#645c50]" />
-              )}
-            </button>
+              <KeyRound className="w-3.5 h-3.5 text-[#c67139]" />
+              <span>Gemini API Key {isPayloadLarge ? "(Required for > 4.5 MB PDF)" : "(Optional if set in .env.local)"}</span>
+            </label>
+            <div className="relative flex items-center">
+              <input
+                id="gemini-api-key-input"
+                type={showApiKey ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={isPayloadLarge ? "Required: Paste AIzaSy... key to bypass 4.5 MB limit" : "Paste AIzaSy... key (optional - leave blank to use server .env.local)"}
+                className={`w-full pl-3.5 pr-11 py-2.5 text-xs sm:text-sm font-mono rounded-xl border-[1.5px] bg-[#f9f4ed] text-[#201e1d] placeholder:text-[#82796a] outline-none transition-all ${
+                  isPayloadLarge && !apiKey.trim()
+                    ? "border-[#b91c1c] ring-1 ring-[#b91c1c]"
+                    : "border-[#dcd3c4] focus:border-[#c67139]"
+                }`}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey((prev) => !prev)}
+                className="absolute right-2.5 p-1 rounded-lg text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer"
+                title={showApiKey ? "Mask API key" : "Show API key"}
+                aria-label={showApiKey ? "Mask API key" : "Show API key"}
+              >
+                {showApiKey ? (
+                  <EyeOff className="w-4 h-4 text-[#201e1d]" />
+                ) : (
+                  <Eye className="w-4 h-4 text-[#645c50]" />
+                )}
+              </button>
+            </div>
+            <p className="text-[11px] text-[#82796a]">
+              Direct client extraction via API key bypasses all Vercel payload and timeout limits (supports up to 20 MB).
+            </p>
           </div>
-          <p className="text-[11px] text-[#82796a]">
-            If <code className="font-mono bg-[#eee7db] px-1 py-0.5 rounded text-[#201e1d]">GEMINI_API_KEY</code> is configured in <code className="font-mono bg-[#eee7db] px-1 py-0.5 rounded text-[#201e1d]">.env.local</code> on the server, this field can be left blank.
-          </p>
+
+          {/* Batch Size Selector */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-[#645c50] flex items-center gap-1.5">
+              <span>Batch Size (Questions / Batch)</span>
+            </label>
+            <select
+              value={batchSize}
+              onChange={(e) => setBatchSize(Number(e.target.value))}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors"
+            >
+              <option value={5}>5 Questions (Recommended - Fast & Stable)</option>
+              <option value={10}>10 Questions (Standard Batch)</option>
+              <option value={2}>2 Questions (Ultra-Safe / High-Detail)</option>
+            </select>
+            <p className="text-[11px] text-[#82796a]">
+              Smaller batches stream progress faster and prevent proxy timeout drops.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -627,6 +695,7 @@ export default function IngestionSetupWizard({
                 series,
                 paperCode,
                 apiKey: apiKey.trim() || undefined,
+                batchSize,
               });
             }
           }}

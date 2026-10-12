@@ -8,6 +8,7 @@ import {
   PaperLifecycleState,
   validateStagingPaper,
 } from '@/types/ingestion';
+import { extractQuestionsChunked } from '@/lib/ingestion/geminiExtractor';
 
 export type PublishStatus = 'idle' | 'validating' | 'publishing' | 'success' | 'error';
 export type StatusFilter = 'all' | 'valid' | 'review' | 'diagrams';
@@ -829,6 +830,25 @@ const actions: IngestionActions = {
       return;
     }
 
+    const totalBytes = currentQpFile.size + currentMsFile.size;
+    const isOverServerlessLimit = totalBytes > 4.5 * 1024 * 1024;
+    const totalMb = (totalBytes / (1024 * 1024)).toFixed(1);
+    const clientApiKey = (options?.apiKey || '').trim();
+    const batchSize = options?.batchSize || 5;
+    const startQuestion = options?.startQuestion || 1;
+    const endQuestion = options?.endQuestion || 40;
+    const model = options?.model || 'gemini-3.8-flash';
+
+    // Guard: Scanned PDFs exceeding Vercel 4.5 MB request limit require direct client extraction
+    if (isOverServerlessLimit && !clientApiKey) {
+      setState({
+        isExtracting: false,
+        error: `Combined PDF size (${totalMb} MB) exceeds Vercel's 4.5 MB serverless limit. Please provide a Gemini API Key in the setup wizard for direct client extraction (up to 20 MB supported), or compress your PDFs.`,
+        lifecycleState: 'draft',
+      });
+      return;
+    }
+
     if (activeAbortController) {
       activeAbortController.abort();
     }
@@ -840,35 +860,132 @@ const actions: IngestionActions = {
       lifecycleState: 'extracting',
       extractionProgress: {
         stage: 'start',
-        currentBatch: 'Uploading PDFs and starting Gemini pipeline...',
+        currentBatch: clientApiKey
+          ? 'Starting direct Gemini extraction in browser...'
+          : 'Uploading PDFs and starting Gemini pipeline...',
         percent: 5,
         batchCount: 0,
       },
     });
 
+    const mergeQuestionsIntoStore = (
+      batchQuestions: StagingQuestion[],
+      stage: string,
+      currentBatch: string,
+      percent: number,
+      batchCount: number
+    ) => {
+      const currentPaper = getState().paper;
+      const existingQuestions = currentPaper?.questions ? [...currentPaper.questions] : [];
+
+      const questionMap = new Map<number, StagingQuestion>();
+      for (const q of existingQuestions) {
+        questionMap.set(q.question_number, q);
+      }
+      for (const newQ of batchQuestions) {
+        questionMap.set(newQ.question_number, newQ);
+      }
+
+      const mergedQuestions = Array.from(questionMap.values()).sort(
+        (a, b) => a.question_number - b.question_number
+      );
+
+      const inferredMeta = inferPaperMetadata(currentQpFile.name || '');
+
+      const updatedPaper: StagingPaper = currentPaper
+        ? { ...currentPaper, questions: mergedQuestions }
+        : {
+            id: inferredMeta.id,
+            lifecycle_state: 'extracting',
+            state: 'extracting',
+            source_qp_filename: currentQpFile.name,
+            source_ms_filename: currentMsFile.name,
+            subject: { code: inferredMeta.subjectCode, name: inferredMeta.subjectName, icon: inferredMeta.icon },
+            paper: { series: inferredMeta.series, paper_code: inferredMeta.paperCode, year: inferredMeta.year },
+            syllabus_topics: [{ name: 'General', order_index: 1 }],
+            questions: mergedQuestions,
+          };
+
+      setState({
+        paper: updatedPaper,
+        extractionProgress: {
+          stage,
+          currentBatch,
+          percent,
+          batchCount,
+        },
+      });
+    };
+
     try {
+      // 1. Direct Client-Side Extraction Fallback (when client API key is provided)
+      // Bypasses Vercel 4.5 MB payload limits and 15s/60s serverless timeout completely!
+      if (clientApiKey) {
+        const qpArrayBuffer = await currentQpFile.arrayBuffer();
+        const msArrayBuffer = await currentMsFile.arrayBuffer();
+
+        const questions = await extractQuestionsChunked(
+          qpArrayBuffer,
+          msArrayBuffer,
+          clientApiKey,
+          {
+            batchSize,
+            startQuestion,
+            endQuestion,
+            model,
+            onProgress: (progress) => {
+              mergeQuestionsIntoStore(
+                progress.questions,
+                'extracting',
+                progress.currentBatch,
+                progress.percent,
+                progress.batchCount
+              );
+            },
+          }
+        );
+
+        setState({
+          isExtracting: false,
+          lifecycleState: 'review',
+          extractionProgress: {
+            stage: 'complete',
+            currentBatch: 'Extraction completed successfully!',
+            percent: 100,
+            batchCount: questions.length,
+          },
+        });
+        actions.saveDraftToLocalStorage();
+        return;
+      }
+
+      // 2. Serverless SSE Stream Execution
       const formData = new FormData();
       formData.append('qp', currentQpFile);
       formData.append('ms', currentMsFile);
       formData.append('stream', 'true');
-      if (options?.batchSize) formData.append('batch_size', String(options.batchSize));
-      if (options?.startQuestion) formData.append('start_question', String(options.startQuestion));
-      if (options?.endQuestion) formData.append('end_question', String(options.endQuestion));
-      formData.append('model', options?.model || 'gemini-3.8-flash');
-
-      const headers: Record<string, string> = {};
-      if (options?.apiKey) {
-        headers['x-gemini-api-key'] = options.apiKey;
-      }
+      formData.append('batch_size', String(batchSize));
+      formData.append('start_question', String(startQuestion));
+      formData.append('end_question', String(endQuestion));
+      formData.append('model', model);
 
       const res = await fetch('/api/ingest/extract', {
         method: 'POST',
-        headers,
         body: formData,
         signal: activeAbortController.signal,
       });
 
       if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error(
+            `Combined PDF size (${totalMb} MB) exceeds Vercel's 4.5 MB serverless limit (HTTP 413). Provide a Gemini API Key in the setup wizard for direct client extraction.`
+          );
+        }
+        if (res.status === 504) {
+          throw new Error(
+            'Extraction server timed out (HTTP 504). Please try a smaller batch size (e.g. 5 questions) or provide a Gemini API Key in the setup wizard.'
+          );
+        }
         const errorJson = await res.json().catch(() => ({}));
         throw new Error(errorJson.error || `Extraction server error: HTTP ${res.status}`);
       }
@@ -891,7 +1008,8 @@ const actions: IngestionActions = {
 
         for (const chunk of lines) {
           const trimmed = chunk.trim();
-          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          // Skip empty lines and keepalive comments (: keepalive)
+          if (!trimmed || trimmed.startsWith(':') || !trimmed.startsWith('data:')) continue;
           const jsonStr = trimmed.slice(5).trim();
           if (!jsonStr) continue;
 
@@ -909,46 +1027,7 @@ const actions: IngestionActions = {
 
             // Merge questions incrementally if delivered
             if (Array.isArray(payload.questions) && payload.questions.length > 0) {
-              const currentPaper = getState().paper;
-              const existingQuestions = currentPaper?.questions ? [...currentPaper.questions] : [];
-
-              const questionMap = new Map<number, StagingQuestion>();
-              for (const q of existingQuestions) {
-                questionMap.set(q.question_number, q);
-              }
-              for (const newQ of payload.questions) {
-                questionMap.set(newQ.question_number, newQ);
-              }
-
-              const mergedQuestions = Array.from(questionMap.values()).sort(
-                (a, b) => a.question_number - b.question_number
-              );
-
-              const inferredMeta = inferPaperMetadata(currentQpFile.name || '');
-
-              const updatedPaper: StagingPaper = currentPaper
-                ? { ...currentPaper, questions: mergedQuestions }
-                : {
-                    id: inferredMeta.id,
-                    lifecycle_state: 'extracting',
-                    state: 'extracting',
-                    source_qp_filename: currentQpFile.name,
-                    source_ms_filename: currentMsFile.name,
-                    subject: { code: inferredMeta.subjectCode, name: inferredMeta.subjectName, icon: inferredMeta.icon },
-                    paper: { series: inferredMeta.series, paper_code: inferredMeta.paperCode, year: inferredMeta.year },
-                    syllabus_topics: [{ name: 'General', order_index: 1 }],
-                    questions: mergedQuestions,
-                  };
-
-              setState({
-                paper: updatedPaper,
-                extractionProgress: {
-                  stage,
-                  currentBatch,
-                  percent,
-                  batchCount,
-                },
-              });
+              mergeQuestionsIntoStore(payload.questions, stage, currentBatch, percent, batchCount);
             } else {
               setState({
                 extractionProgress: {
@@ -1003,9 +1082,22 @@ const actions: IngestionActions = {
           publishMessage: 'Extraction cancelled by user.',
         });
       } else {
+        let friendlyError = err.message || 'Extraction failed.';
+        const isNetworkErr =
+          err.name === 'TypeError' ||
+          /fetch|network|connection|load failed|aborted/i.test(friendlyError);
+
+        if (isNetworkErr) {
+          if (isOverServerlessLimit) {
+            friendlyError = `Network error: PDF files (${totalMb} MB) exceed Vercel's 4.5 MB serverless limit. Please provide a Gemini API Key in the setup wizard for direct client extraction (up to 20 MB supported), or compress your PDFs.`;
+          } else {
+            friendlyError = `Network error: The extraction connection timed out or was terminated by the server proxy. Try setting the batch size to 5, or provide a Gemini API Key in the setup wizard for direct client extraction.`;
+          }
+        }
+
         setState({
           isExtracting: false,
-          error: err.message || 'Extraction failed.',
+          error: friendlyError,
           lifecycleState: getState().paper?.questions?.length ? 'review' : 'draft',
         });
       }

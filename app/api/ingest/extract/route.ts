@@ -3,6 +3,7 @@ import { extractQuestionsChunked, normalizeGeminiModel } from '@/lib/ingestion/g
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 function cleanBase64String(str: string): string {
   const match = str.match(/^data:application\/pdf;base64,(.+)$/);
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     let msBuffer: Buffer | null = null;
     let qpFilename = 'question_paper.pdf';
     let msFilename = 'mark_scheme.pdf';
-    let batchSize = 10;
+    let batchSize = 5;
     let startQuestion = 1;
     let endQuestion = 40;
     let model = 'gemini-3.8-flash';
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
       }
 
       const rawBatchSize = formData.get('batch_size') || formData.get('batchSize');
-      if (rawBatchSize) batchSize = Math.max(1, parseInt(String(rawBatchSize), 10) || 10);
+      if (rawBatchSize) batchSize = Math.max(1, parseInt(String(rawBatchSize), 10) || 5);
 
       const rawStartQ = formData.get('start_question') || formData.get('startQuestion');
       if (rawStartQ) startQuestion = Math.max(1, parseInt(String(rawStartQ), 10) || 1);
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest) {
       if (body.source_ms_filename) msFilename = String(body.source_ms_filename);
 
       if (body.batch_size || body.batchSize) {
-        batchSize = Math.max(1, parseInt(String(body.batch_size || body.batchSize), 10) || 10);
+        batchSize = Math.max(1, parseInt(String(body.batch_size || body.batchSize), 10) || 5);
       }
       if (body.start_question || body.startQuestion) {
         startQuestion = Math.max(1, parseInt(String(body.start_question || body.startQuestion), 10) || 1);
@@ -234,9 +235,27 @@ export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
     const customStream = new ReadableStream({
       async start(controller) {
+        let isClosed = false;
+
         const sendEvent = (data: Record<string, any>) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+          if (isClosed) return;
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+          } catch {
+            // Stream closed or disconnected by client
+          }
         };
+
+        // Periodic keep-alive ping comment (: keepalive\n\n) every 3 seconds
+        // Keeps Vercel, Cloudflare, and browser proxies from timing out during Gemini processing
+        const keepAliveTimer = setInterval(() => {
+          if (isClosed) return;
+          try {
+            controller.enqueue(encoder.encode(': keepalive\n\n'));
+          } catch {
+            clearInterval(keepAliveTimer);
+          }
+        }, 3000);
 
         try {
           sendEvent({
@@ -279,7 +298,13 @@ export async function POST(request: NextRequest) {
             error: err?.message || 'Extraction pipeline failed.',
           });
         } finally {
-          controller.close();
+          clearInterval(keepAliveTimer);
+          isClosed = true;
+          try {
+            controller.close();
+          } catch {
+            // Already closed
+          }
         }
       },
     });

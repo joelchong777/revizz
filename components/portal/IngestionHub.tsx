@@ -170,12 +170,14 @@ export default function IngestionHub() {
     series: string;
     paperCode: string;
     apiKey?: string;
+    batchSize?: number;
   }) => {
     setIsSetupOpen(false);
     await startExtraction({
       qpFile: params.qpFile,
       msFile: params.msFile || undefined,
       apiKey: params.apiKey,
+      batchSize: params.batchSize,
     });
     // Update metadata if specified
     if (params.subjectCode) {

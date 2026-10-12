@@ -50,7 +50,7 @@ import {
   filterAndSortQuestions,
   countActiveFilters,
 } from '../lib/compilerFilters';
-import { normalizeGeminiModel } from '../lib/ingestion/geminiExtractor';
+import { normalizeGeminiModel, toBase64 } from '../lib/ingestion/geminiExtractor';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -814,6 +814,34 @@ test('Remaps deprecated gemini-1.5 models to gemini-3.8-flash', () => {
 test('Preserves modern gemini-3.8-flash and cleans prefix', () => {
   assertEqual(normalizeGeminiModel('gemini-3.8-flash'), 'gemini-3.8-flash', 'gemini-3.8-flash preserved');
   assertEqual(normalizeGeminiModel('models/gemini-3.8-flash'), 'gemini-3.8-flash', 'models/ prefix stripped');
+});
+
+test('toBase64 converts Buffer, Uint8Array, and strips data URI prefix cleanly', async () => {
+  const testStr = 'Hello Cambridge PDF';
+  const buf = Buffer.from(testStr, 'utf8');
+  const expectedB64 = buf.toString('base64');
+
+  const resBuf = await toBase64(buf);
+  assertEqual(resBuf, expectedB64, 'Buffer converted to base64');
+
+  const uint8 = new Uint8Array(buf);
+  const resUint8 = await toBase64(uint8);
+  assertEqual(resUint8, expectedB64, 'Uint8Array converted to base64');
+
+  const resDataUri = await toBase64(`data:application/pdf;base64,${expectedB64}`);
+  assertEqual(resDataUri, expectedB64, 'Data URI stripped cleanly');
+});
+
+test('Ingestion Serverless Route config: maxDuration = 60, default batchSize = 5, keepalive ping present', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const routePath = path.resolve(process.cwd(), 'app/api/ingest/extract/route.ts');
+  const content = fs.readFileSync(routePath, 'utf8');
+
+  assertEqual(content.includes('export const maxDuration = 60;'), true, 'Route exports maxDuration = 60');
+  assertEqual(content.includes('let batchSize = 5;'), true, 'Route sets default batchSize to 5');
+  assertEqual(content.includes("': keepalive\\n\\n'"), true, 'Route SSE stream emits keepalive comments');
+  assertEqual(content.includes("'X-Accel-Buffering': 'no'"), true, 'Route disables proxy buffering');
 });
 
 // -----------------------------------------------------------------------------
