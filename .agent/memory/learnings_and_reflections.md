@@ -234,3 +234,32 @@
 - **Test Coverage Expansion**: Added Suite 7 to `verify-revizz.ts` validating all filter conditions, regex extractors, sorting mechanisms, and state transitions (40/40 assertions passing).
 - **Production Build**: Next.js production build (`next build`) succeeded with all static/dynamic routes cleanly compiled.
 - **Remote Synchronization**: Safely committed and pushed to `origin/main` (commit `8785fe8`).
+
+## Reflection Log Entry - 2026-10-12 (Test Compiler Layout Overhaul: Horizontal Sticky Filter Toolbar & Dedicated Assembly Drawer)
+
+- **Date**: 2026-10-12
+- **Topic**: Test Compiler Layout Overhaul (Option 3: Horizontal Sticky Filter Toolbar & 100vh Dedicated Test Assembly Drawer)
+- **Problem & Viewport Budget**:
+  - Previously, Card B (Filters) and Card C (Test Assembly Drawer) were vertically stacked in a 420px right rail.
+  - Their combined height totaled 1100px–1250px, which severely exceeded laptop 100vh screens (>350px overflow beyond the fold).
+  - Users were forced to constantly scroll the right sidebar to access essential compilation controls, and the primary action CTAs ("Save Draft", "PDF / Print") were repeatedly pushed completely off-screen.
+
+- **Solution Architecture (Option 3)**:
+  1. **Horizontal Sticky Filter Toolbar**:
+     - Relocated Search & Filters into an expansive horizontal sticky toolbar (`sticky top-0 z-10 backdrop-blur-sm`) directly positioned above the question feed.
+     - Divided into two high-density ergonomic rows:
+       - *Top Row*: Live question counter badges, Quick Action buttons ("Auto-Generate Preset", "Saved Drafts", "Clear Selection"), full-width search input with instant clear button, and "Reset All" active filter trigger.
+       - *Bottom Controls Row*: Dropdowns for Topic, Exam Series / Year, and Stem Sorting, alongside Selection Status pills (`All`, `Selected`, `Unselected`) and Content Format toggles (`Diagrams`, `Tables`, `Math / Calc`).
+  2. **Dedicated 100vh-Compliant Test Assembly Drawer**:
+     - Redesigned the right column into an exclusive, dedicated Test Assembly Drawer (`flex flex-col p-5 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] overflow-hidden`).
+     - *Collapsible Settings Accordion*: Layout & Settings panel is collapsible with an internal constrained scroll viewport (`max-h-[35vh] overflow-y-auto`) so configuring paper metadata or toggling bubble sheets/mark schemes never pushes the bottom CTAs off-screen.
+     - *Flexible Question Reordering List*: Sized with `flex-1 min-h-0 overflow-y-auto`, enabling smooth scrolling through chosen questions regardless of test length.
+     - *Pinned Action Footer*: Fixed at the bottom (`shrink-0 mt-auto pt-3 border-t-[1.5px] border-[#dcd3c4]`) ensuring "Save Draft" and "PDF / Print" CTAs remain permanently visible and accessible at all times without scrolling.
+
+- **Learnings & Viewport Height Tuning**:
+  - When embedding a persistent 100vh sticky rail within a portal layout featuring top headers (`h-16`) and outer padding, calculating drawer height strictly as `100vh-32px` causes the footer to touch or bleed beneath the browser bottom bar.
+  - Adjusting container height to account for navbar and breadcrumb offsets (`h-[calc(100vh-130px)] max-h-[calc(100vh-130px)]`) grants critical breathing room above the screen edge, preserving perfect 100vh viewport compliance on all 13"–16" laptop displays.
+
+- **Verification & Definition of Done**:
+  - TypeScript validation: `npx tsc --noEmit` passed with 0 errors.
+  - Automated test suites: `npm test` passed with 40/40 tests passing (`verify-revizz.ts`).

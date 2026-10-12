@@ -666,7 +666,7 @@ export default function TestCompilerHub() {
         {/* RIGHT COLUMN: Dedicated Persistent Test Assembly Drawer (100vh compliant) */}
         <aside
           aria-label="Test Assembly Drawer"
-          className="lg:sticky lg:top-4 h-[calc(100vh-32px)] max-h-[calc(100vh-32px)] flex flex-col p-5 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] overflow-hidden"
+          className="lg:sticky lg:top-4 h-[calc(100vh-130px)] max-h-[calc(100vh-130px)] flex flex-col p-5 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] overflow-hidden"
         >
           {/* Summary Header */}
           <div className="shrink-0 flex items-center justify-between border-b-[1.5px] border-[#dcd3c4] pb-4">
