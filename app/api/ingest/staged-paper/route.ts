@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
           { status: 404 }
         );
       }
-      return NextResponse.json({ success: true, papers: [] });
+      return NextResponse.json({ success: true, papers: [], stagedPapers: [] });
     }
 
     // Scenario 1: Specific paper requested by ID
@@ -89,16 +89,65 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Scenario 2: List all available staged JSON papers
+    // Scenario 2: List all available staged JSON papers with rich metadata
     const entries = fs.readdirSync(stagingDir, { withFileTypes: true });
-    const papers = entries
+    const jsonFiles = entries
       .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.json'))
-      .map((entry) => entry.name.replace(/\.json$/i, ''))
-      .sort();
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const papers: string[] = [];
+    const stagedPapers: Array<{
+      id: string;
+      filename: string;
+      subject?: { code?: string; name?: string; icon?: string };
+      paper?: { year?: number; series?: string; paper_code?: string };
+      questionsCount?: number;
+      lifecycle_state?: string;
+    }> = [];
+
+    for (const file of jsonFiles) {
+      const cleanId = file.name.replace(/\.json$/i, '');
+      papers.push(cleanId);
+
+      const filePath = path.join(stagingDir, file.name);
+      try {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const parsedJson = JSON.parse(fileContent);
+
+        stagedPapers.push({
+          id: typeof parsedJson?.id === 'string' && parsedJson.id ? parsedJson.id : cleanId,
+          filename: file.name,
+          subject: parsedJson?.subject
+            ? {
+                code: parsedJson.subject.code,
+                name: parsedJson.subject.name,
+                icon: parsedJson.subject.icon,
+              }
+            : undefined,
+          paper: parsedJson?.paper
+            ? {
+                year: parsedJson.paper.year,
+                series: parsedJson.paper.series,
+                paper_code: parsedJson.paper.paper_code,
+              }
+            : undefined,
+          questionsCount: Array.isArray(parsedJson?.questions) ? parsedJson.questions.length : 0,
+          lifecycle_state: parsedJson?.lifecycle_state || parsedJson?.state || 'draft',
+        });
+      } catch {
+        stagedPapers.push({
+          id: cleanId,
+          filename: file.name,
+          questionsCount: 0,
+          lifecycle_state: 'draft',
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,
       papers,
+      stagedPapers,
     });
   } catch (err: any) {
     return NextResponse.json(

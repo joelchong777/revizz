@@ -416,6 +416,12 @@ export default function IngestionHub() {
             onStartExtraction={handleStartExtraction}
             onResumeExtraction={resumeExtraction}
             onUploadJson={handleFileUpload}
+            onLoadStagedPaper={(loadedPaper) => {
+              const res = loadJson(loadedPaper);
+              if (res.success) {
+                setIsSetupOpen(false);
+              }
+            }}
             onStartBlank={handleStartBlank}
             onResumeDraft={() => {
               loadDraftFromLocalStorage();

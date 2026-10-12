@@ -934,6 +934,51 @@ test('QuestionCard Protection: QuestionCard wraps stem and options in MarkdownEr
 });
 
 // -----------------------------------------------------------------------------
+// [Suite 10] Antigravity Dedicated Agent Workflow & Staged Paper Route
+// -----------------------------------------------------------------------------
+console.log('\n\x1b[1m\x1b[34m[Suite 10] Antigravity Dedicated Agent Workflow & Staged Paper Route\x1b[0m');
+
+test('Staged Paper API Contract: Route returns both papers and rich stagedPapers metadata', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const routePath = path.resolve(process.cwd(), 'app/api/ingest/staged-paper/route.ts');
+  assertEqual(fs.existsSync(routePath), true, 'staged-paper route exists');
+
+  const content = fs.readFileSync(routePath, 'utf8');
+  assertEqual(content.includes('stagedPapers'), true, 'Route returns stagedPapers metadata array');
+  assertEqual(content.includes('papers'), true, 'Route preserves backward compatible papers array');
+  assertEqual(content.includes('questionsCount'), true, 'stagedPapers includes questionsCount property');
+});
+
+test('Setup Wizard Dual-Workflow: IngestionSetupWizard has both Cloud and Agent workflows', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const wizardPath = path.resolve(process.cwd(), 'components/portal/IngestionSetupWizard.tsx');
+  assertEqual(fs.existsSync(wizardPath), true, 'IngestionSetupWizard.tsx exists');
+
+  const content = fs.readFileSync(wizardPath, 'utf8');
+  assertEqual(content.includes('AI Cloud Pipeline'), true, 'Provides Workflow 1: AI Cloud Pipeline');
+  assertEqual(content.includes('Antigravity Agent Workflow'), true, 'Provides Workflow 2: Antigravity Agent Workflow');
+  assertEqual(content.includes('Auto-Detected Staged Papers'), true, 'Renders Auto-Detected Staged Papers section');
+  assertEqual(content.includes('Agent JSON Dropzone'), true, 'Renders Agent JSON Dropzone section');
+  assertEqual(content.includes('Antigravity Autonomous Ingestion Agent'), true, 'Renders Antigravity Agent guide cheatsheet');
+  assertEqual(content.includes('npm run ingest -- --qp'), true, 'Contains CLI terminal cheatsheet command');
+  assertEqual(content.includes('Ingest paper <qp_file> and <ms_file>'), true, 'Contains agent in-chat instruction prompt');
+});
+
+test('Ingestion Skill Documentation: SKILL.md documents dedicated agent ingestion workflow', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const skillPath = path.resolve(process.cwd(), '.agent/skills/revizz-ingestion-studio/SKILL.md');
+  assertEqual(fs.existsSync(skillPath), true, 'revizz-ingestion-studio SKILL.md exists');
+
+  const content = fs.readFileSync(skillPath, 'utf8');
+  assertEqual(content.includes('Dedicated Antigravity Agent Ingestion Command & Workflow'), true, 'SKILL.md has Dedicated Antigravity Agent section');
+  assertEqual(content.includes('npm run ingest -- --qp <path-to-qp.pdf> --ms <path-to-ms.pdf>'), true, 'SKILL.md documents terminal CLI command');
+  assertEqual(content.includes('Ingest paper <path-to-qp.pdf> and <path-to-ms.pdf>'), true, 'SKILL.md documents chat prompt');
+});
+
+// -----------------------------------------------------------------------------
 // Test Summary Output
 // -----------------------------------------------------------------------------
 console.log('\n========================================================');

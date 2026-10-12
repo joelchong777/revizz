@@ -205,7 +205,43 @@ topics (id, paper_id, name)    questions (id, paper_id, topic_id, question_numbe
 
 ---
 
-## 7. Verification & Testing Commands
+## 7. Dedicated Antigravity Agent Ingestion Command & Workflow
+
+When a user requests to process a Cambridge past paper using a dedicated Antigravity agent (offline / local processing) and then upload/curate it via the UI:
+
+### 7.1. Terminal CLI Command
+Agents or users can trigger the automated end-to-end extraction pipeline via npm:
+```bash
+npm run ingest -- --qp <path-to-qp.pdf> --ms <path-to-ms.pdf>
+```
+
+Optional flags:
+- `--syllabus <path>`: Match questions against official syllabus topic names.
+- `--batch-size <n>`: Questions per chunked Gemini batch (default: `10`).
+- `--dry-run`: Validate extraction schema without saving files.
+- `--push`: Directly upsert the finished paper to Supabase.
+
+### 7.2. Agent In-Chat Prompt
+When prompted in chat:
+> *"Ingest paper <path-to-qp.pdf> and <path-to-ms.pdf>"*
+
+The Antigravity agent autonomously:
+1. Validates file existence and parses paper metadata (subject, year, series, paper code).
+2. Extracts stems and 4-option MCQs in safe multimodal chunks.
+3. Sanitizes math and escapes currency (`\$100`) via `katexSanitizer`.
+4. Crops diagrams at 300 DPI into `staging/slices/` and records coordinates.
+5. Saves the validated staging paper to `staging/<paper_id>.json`.
+
+### 7.3. UI Staged Loading in Studio
+Once the agent completes extraction:
+1. Open **Ingestion Studio** at `/admin?tab=ingestion`.
+2. Toggle to **"Antigravity Agent Workflow"**.
+3. The newly generated paper automatically appears under **Auto-Detected Staged Papers** (or drag & drop the JSON file into the **Agent JSON Dropzone**).
+4. Click **[Load into Studio]** to immediately inspect, review diagrams, verify LaTeX, and push to production.
+
+---
+
+## 8. Verification & Testing Commands
 
 Always run the verification suites before submitting ingestion changes:
 
