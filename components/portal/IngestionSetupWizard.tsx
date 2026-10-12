@@ -49,6 +49,7 @@ export interface IngestionSetupWizardProps {
     apiKey?: string;
     batchSize?: number;
   }) => void;
+  onResumeExtraction?: () => void;
   onUploadJson: (file: File) => void;
   onStartBlank: (meta: {
     subjectCode: string;
@@ -76,6 +77,7 @@ export interface IngestionSetupWizardProps {
  */
 export default function IngestionSetupWizard({
   onStartExtraction,
+  onResumeExtraction,
   onUploadJson,
   onStartBlank,
   onResumeDraft,
@@ -294,9 +296,20 @@ export default function IngestionSetupWizard({
 
       {/* Extraction Error Alert */}
       {extractionError && (
-        <div className="p-3.5 bg-[#fee2e2] border-[1.5px] border-[#b91c1c] rounded-2xl flex items-center gap-3 text-xs font-bold text-[#b91c1c] shadow-xs">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{extractionError}</span>
+        <div className="p-4 bg-[#fee2e2] border-[1.5px] border-[#b91c1c] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm font-bold text-[#b91c1c] shadow-xs">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="whitespace-pre-line">{extractionError}</span>
+          </div>
+          {activePaper?.questions && activePaper.questions.length > 0 && activePaper.questions.length < 40 && onResumeExtraction && (
+            <button
+              type="button"
+              onClick={onResumeExtraction}
+              className="px-3.5 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] border border-[#201e1d] hover:bg-[#b2622d] font-heading font-black text-xs active:translate-y-0.5 shadow-xs transition-colors shrink-0 cursor-pointer"
+            >
+              Resume Extraction (from Q{Math.max(...activePaper.questions.map((q) => q.question_number || 0)) + 1})
+            </button>
+          )}
         </div>
       )}
 

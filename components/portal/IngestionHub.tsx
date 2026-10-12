@@ -53,10 +53,12 @@ export default function IngestionHub() {
     setShowPdfViewer,
     setActivePdfPage,
     startExtraction,
+    resumeExtraction,
     cancelExtraction,
     undo,
     redo,
     setPaper,
+    setError,
     resetStore,
   } = useIngestionStore();
 
@@ -283,82 +285,136 @@ export default function IngestionHub() {
         }
         progressShelf={
           isExtracting ? (
-            <div className="p-4 sm:p-5 bg-[#e0e7ff] border-[1.5px] border-[#312e81] text-[#1e1b4b] rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 font-body animate-pulse">
-              <div className="flex items-center gap-3.5 w-full md:w-auto">
-                <div className="w-10 h-10 rounded-xl bg-[#4f46e5] text-white flex items-center justify-center shrink-0 border border-[#312e81] shadow-xs">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-[#4f46e5]">
-                      Gemini Live Extraction
-                    </span>
-                    <span className="px-2 py-0.2 bg-white border border-[#312e81] rounded-full text-[10px] font-black">
-                      {extractionProgress.percent}%
-                    </span>
-                  </div>
-                  <h4 className="font-heading text-sm sm:text-base font-black text-[#1e1b4b]">
-                    {extractionProgress.currentBatch || "Streaming Cambridge questions..."}
-                  </h4>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                <div className="w-48 bg-white border border-[#312e81] rounded-full h-3 overflow-hidden hidden sm:block">
-                  <div
-                    className="bg-[#4f46e5] h-full transition-all duration-300"
-                    style={{ width: `${extractionProgress.percent}%` }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={cancelExtraction}
-                  className="px-3 py-1.5 bg-white hover:bg-rose-100 border border-[#312e81] rounded-full text-xs font-bold text-[#b91c1c] active:translate-y-0.5 cursor-pointer shadow-xs transition-colors"
+            (() => {
+              const isRetrying = extractionProgress.stage === "retrying";
+              return (
+                <div
+                  className={`p-4 sm:p-5 border-[1.5px] rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 font-body animate-pulse ${
+                    isRetrying
+                      ? "bg-[#fef3c7] border-[#d97706] text-[#78350f]"
+                      : "bg-[#e0e7ff] border-[#312e81] text-[#1e1b4b]"
+                  }`}
                 >
-                  Cancel Extraction
-                </button>
-              </div>
-            </div>
+                  <div className="flex items-center gap-3.5 w-full md:w-auto">
+                    <div
+                      className={`w-10 h-10 rounded-xl text-white flex items-center justify-center shrink-0 border shadow-xs ${
+                        isRetrying
+                          ? "bg-[#d97706] border-[#b45309]"
+                          : "bg-[#4f46e5] border-[#312e81]"
+                      }`}
+                    >
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xs font-black uppercase tracking-wider ${
+                            isRetrying ? "text-[#b45309]" : "text-[#4f46e5]"
+                          }`}
+                        >
+                          {isRetrying
+                            ? "Google API Capacity Spike (Auto-Retrying)"
+                            : "Gemini Live Extraction"}
+                        </span>
+                        <span className="px-2 py-0.2 bg-white border border-current rounded-full text-[10px] font-black">
+                          {extractionProgress.percent}%
+                        </span>
+                      </div>
+                      <h4 className="font-heading text-sm sm:text-base font-black">
+                        {extractionProgress.currentBatch || "Streaming Cambridge questions..."}
+                      </h4>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <div className="w-48 bg-white border border-current rounded-full h-3 overflow-hidden hidden sm:block">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          isRetrying ? "bg-[#d97706]" : "bg-[#4f46e5]"
+                        }`}
+                        style={{ width: `${extractionProgress.percent}%` }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={cancelExtraction}
+                      className="px-3 py-1.5 bg-white hover:bg-rose-100 border border-current rounded-full text-xs font-bold text-[#b91c1c] active:translate-y-0.5 cursor-pointer shadow-xs transition-colors"
+                    >
+                      Cancel Extraction
+                    </button>
+                  </div>
+                </div>
+              );
+            })()
           ) : null
         }
         statusShelf={
-          publishStatus !== "idle" && publishMessage ? (
-            <div
-              className={`p-4 border-[1.5px] rounded-2xl font-bold flex items-center justify-between gap-4 shadow-sm ${
-                publishStatus === "validating" || publishStatus === "publishing"
-                  ? "bg-[#ffe1d0] text-[#c67139] border-[#c67139]"
-                  : publishStatus === "success"
-                  ? "bg-[#f0fae1] text-[#3d472b] border-[#8fa073]"
-                  : "bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {publishStatus === "validating" || publishStatus === "publishing" ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : publishStatus === "success" ? (
-                  <CheckCircle2 className="w-5 h-5 text-[#3d472b]" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-[#b91c1c]" />
-                )}
-                <span className="text-xs sm:text-sm whitespace-pre-line">{publishMessage}</span>
+          <>
+            {extractionError && (
+              <div className="p-4 border-[1.5px] rounded-2xl font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-[#b91c1c] shrink-0" />
+                  <span className="text-xs sm:text-sm whitespace-pre-line">{extractionError}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  {questions.length > 0 && questions.length < 40 && (
+                    <button
+                      type="button"
+                      onClick={() => resumeExtraction()}
+                      className="px-3.5 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] border border-[#201e1d] hover:bg-[#b2622d] font-heading font-black text-xs active:translate-y-0.5 shadow-xs transition-colors cursor-pointer"
+                    >
+                      Resume Extraction (from Q{Math.max(...questions.map((q) => q.question_number || 0)) + 1})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="text-xs font-bold underline hover:opacity-80 cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </div>
               </div>
-              {publishStatus !== "publishing" && publishStatus !== "validating" && (
-                <button
-                  type="button"
-                  onClick={() => setPublishStatus("idle")}
-                  className="text-xs font-bold underline hover:opacity-80 cursor-pointer shrink-0"
-                >
-                  Dismiss
-                </button>
-              )}
-            </div>
-          ) : null
+            )}
+            {publishStatus !== "idle" && publishMessage && (
+              <div
+                className={`p-4 border-[1.5px] rounded-2xl font-bold flex items-center justify-between gap-4 shadow-sm ${
+                  publishStatus === "validating" || publishStatus === "publishing"
+                    ? "bg-[#ffe1d0] text-[#c67139] border-[#c67139]"
+                    : publishStatus === "success"
+                    ? "bg-[#f0fae1] text-[#3d472b] border-[#8fa073]"
+                    : "bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {publishStatus === "validating" || publishStatus === "publishing" ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : publishStatus === "success" ? (
+                    <CheckCircle2 className="w-5 h-5 text-[#3d472b]" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-[#b91c1c]" />
+                  )}
+                  <span className="text-xs sm:text-sm whitespace-pre-line">{publishMessage}</span>
+                </div>
+                {publishStatus !== "publishing" && publishStatus !== "validating" && (
+                  <button
+                    type="button"
+                    onClick={() => setPublishStatus("idle")}
+                    className="text-xs font-bold underline hover:opacity-80 cursor-pointer shrink-0"
+                  >
+                    Dismiss
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         }
       >
         {mode === "setup" ? (
           /* Step 1: Cambridge Paper Setup & PDF Ingestion Wizard */
           <IngestionSetupWizard
             onStartExtraction={handleStartExtraction}
+            onResumeExtraction={resumeExtraction}
             onUploadJson={handleFileUpload}
             onStartBlank={handleStartBlank}
             onResumeDraft={() => {

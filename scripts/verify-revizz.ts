@@ -50,7 +50,7 @@ import {
   filterAndSortQuestions,
   countActiveFilters,
 } from '../lib/compilerFilters';
-import { normalizeGeminiModel, toBase64 } from '../lib/ingestion/geminiExtractor';
+import { normalizeGeminiModel, toBase64, isTransientCapacityError } from '../lib/ingestion/geminiExtractor';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -842,6 +842,42 @@ test('Ingestion Serverless Route config: maxDuration = 60, default batchSize = 5
   assertEqual(content.includes('let batchSize = 5;'), true, 'Route sets default batchSize to 5');
   assertEqual(content.includes("': keepalive\\n\\n'"), true, 'Route SSE stream emits keepalive comments');
   assertEqual(content.includes("'X-Accel-Buffering': 'no'"), true, 'Route disables proxy buffering');
+});
+
+test('isTransientCapacityError detects HTTP 503, 429, 502, 504 and high demand capacity spikes', () => {
+  const err503 = new Error('Gemini API Error (HTTP 503): This model is currently experiencing high demand.');
+  (err503 as any).status = 503;
+  const res503 = isTransientCapacityError(err503);
+  assertEqual(res503.isTransient, true, 'HTTP 503 is recognized as transient');
+  assertEqual(res503.status, 503, 'status code 503 extracted');
+
+  const err429 = new Error('Gemini API rate limit exceeded (HTTP 429): Quota exhausted');
+  const res429 = isTransientCapacityError(err429);
+  assertEqual(res429.isTransient, true, 'HTTP 429 rate limit is recognized as transient');
+  assertEqual(res429.status, 429, 'status code 429 extracted');
+
+  const errDemand = new Error('The service is experiencing spikes in demand. Please try again later.');
+  const resDemand = isTransientCapacityError(errDemand);
+  assertEqual(resDemand.isTransient, true, 'Spikes in demand phrase recognized as transient');
+
+  const errAuth = new Error('Invalid Gemini API Key: API_KEY_INVALID');
+  (errAuth as any).status = 400;
+  const resAuth = isTransientCapacityError(errAuth);
+  assertEqual(resAuth.isTransient, false, 'Invalid API Key is not transient');
+});
+
+test('Exponential Backoff with Jitter: delay formula stays bounded within [1.5, 30] seconds', () => {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const delay = Math.min(30, Math.pow(2, attempt) * 1.5 + Math.random() * 2);
+    assertEqual(delay >= 1.5, true, `Attempt ${attempt} delay is at least 1.5s`);
+    assertEqual(delay <= 30, true, `Attempt ${attempt} delay is capped at 30s`);
+  }
+});
+
+test('Model Fallback Cascade: normalizeGeminiModel preserves sibling fallback models when requested', () => {
+  assertEqual(normalizeGeminiModel('gemini-2.5-flash', { allowFallbackModels: true }), 'gemini-2.5-flash', 'gemini-2.5-flash fallback preserved');
+  assertEqual(normalizeGeminiModel('gemini-1.5-flash', { allowFallbackModels: true }), 'gemini-1.5-flash', 'gemini-1.5-flash fallback preserved');
+  assertEqual(normalizeGeminiModel('gemini-3.8-flash', { allowFallbackModels: true }), 'gemini-3.8-flash', 'gemini-3.8-flash preserved');
 });
 
 // -----------------------------------------------------------------------------

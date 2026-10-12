@@ -8,10 +8,12 @@ import type {
 export type { StagingQuestion, StagingOption, StagingDiagram };
 
 export interface ExtractionProgress {
+  stage?: string;
   currentBatch: string;
   percent: number;
   batchCount: number;
-  questions: StagingQuestion[];
+  questions?: StagingQuestion[];
+  warning?: string;
 }
 
 export interface ExtractionOptions {
@@ -27,13 +29,19 @@ export interface ExtractionOptions {
  * Normalizes a Gemini model identifier.
  * - Defaults to 'gemini-3.8-flash' if not provided or empty.
  * - Automatically strips any leading 'models/' prefix.
- * - Remaps deprecated models ('gemini-2.0', 'gemini-1.5') to 'gemini-3.8-flash'.
+ * - Remaps deprecated models ('gemini-2.0', 'gemini-1.5') to 'gemini-3.8-flash' unless allowFallbackModels is true.
  */
-export function normalizeGeminiModel(model?: string): string {
+export function normalizeGeminiModel(
+  model?: string,
+  options?: { allowFallbackModels?: boolean }
+): string {
   if (!model) return 'gemini-3.8-flash';
   let trimmed = model.trim();
   if (trimmed.startsWith('models/')) {
     trimmed = trimmed.replace(/^models\//, '');
+  }
+  if (options?.allowFallbackModels) {
+    return trimmed || 'gemini-3.8-flash';
   }
   if (!trimmed || trimmed.includes('gemini-2.0') || trimmed.includes('gemini-1.5')) {
     return 'gemini-3.8-flash';
@@ -87,6 +95,33 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+export function isTransientCapacityError(error: any): { isTransient: boolean; status: number } {
+  const status =
+    error?.status ||
+    (error?.message?.match(/HTTP (\d+)/i)
+      ? parseInt(error.message.match(/HTTP (\d+)/i)[1], 10)
+      : 0);
+  const msg = String(error?.message || '').toLowerCase();
+  const isCapacityMsg =
+    msg.includes('high demand') ||
+    msg.includes('spikes in demand') ||
+    msg.includes('resource exhausted') ||
+    msg.includes('rate limit') ||
+    msg.includes('overloaded') ||
+    msg.includes('service unavailable') ||
+    msg.includes('temporarily unavailable') ||
+    msg.includes('timed out');
+
+  const isTransient =
+    status === 503 ||
+    status === 429 ||
+    status === 502 ||
+    status === 504 ||
+    isCapacityMsg;
+
+  return { isTransient, status: status || (isCapacityMsg ? 503 : 0) };
+}
+
 export async function extractQuestionsChunked(
   qpInput: Buffer | Uint8Array | ArrayBuffer | Blob | string,
   msInput: Buffer | Uint8Array | ArrayBuffer | Blob | string,
@@ -97,7 +132,7 @@ export async function extractQuestionsChunked(
   const startQuestion = options.startQuestion || 1;
   const endQuestion = options.endQuestion || 40;
   const model = normalizeGeminiModel(options.model || 'gemini-3.8-flash');
-  const maxRetries = options.maxRetries || 3;
+  const maxRetries = options.maxRetries || 5;
 
   // Pre-encode base64 once up front to conserve CPU & memory across batch iterations
   const qpBase64 = await toBase64(qpInput);
@@ -106,6 +141,7 @@ export async function extractQuestionsChunked(
   const allQuestions: StagingQuestion[] = [];
   const totalQuestions = Math.max(1, endQuestion - startQuestion + 1);
   let batchIndex = 0;
+  const siblingFallbackModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
 
   for (let currentStart = startQuestion; currentStart <= endQuestion; currentStart += batchSize) {
     const currentEnd = Math.min(currentStart + batchSize - 1, endQuestion);
@@ -114,6 +150,9 @@ export async function extractQuestionsChunked(
     let attempt = 0;
     let success = false;
     let batchQuestions: StagingQuestion[] = [];
+    let currentModel = model;
+    let fallbackIndex = 0;
+    let lastError: any = null;
 
     while (attempt < maxRetries && !success) {
       try {
@@ -123,28 +162,86 @@ export async function extractQuestionsChunked(
           currentStart,
           currentEnd,
           apiKey,
-          model
+          currentModel
         );
         allQuestions.push(...batchQuestions);
         success = true;
-      } catch (error) {
+      } catch (error: any) {
+        lastError = error;
         attempt++;
-        if (attempt >= maxRetries) {
+        const { isTransient, status } = isTransientCapacityError(error);
+
+        if (attempt >= maxRetries || !isTransient) {
           console.error(
-            `Failed to extract questions ${currentStart}-${currentEnd} after ${maxRetries} attempts.`,
+            `Failed to extract questions ${currentStart}-${currentEnd} after attempt ${attempt}/${maxRetries}.`,
             error
           );
-          throw error;
+          break;
         }
-        // Exponential backoff
-        await new Promise((res) => setTimeout(res, Math.pow(2, attempt) * 1000));
+
+        // Model Fallback Cascade:
+        // If gemini-3.8-flash returns 503 after 2 retry attempts, attempt fallback to sibling multimodal models:
+        // gemini-2.5-flash or gemini-1.5-flash.
+        if (status === 503 && attempt >= 2 && fallbackIndex < siblingFallbackModels.length) {
+          const nextModel = siblingFallbackModels[fallbackIndex++];
+          console.warn(
+            `[Gemini Resilience] HTTP 503 encountered. Falling back from ${currentModel} to ${nextModel} for Q${currentStart}-Q${currentEnd}.`
+          );
+          currentModel = nextModel;
+        }
+
+        // Exponential backoff with random jitter:
+        // delay = min(30, (2 ** attempt) * 1.5 + Math.random() * 2) seconds
+        const delaySeconds = Math.min(30, Math.pow(2, attempt) * 1.5 + Math.random() * 2);
+        const delayMs = Math.round(delaySeconds * 1000);
+
+        if (options.onProgress) {
+          const percent = Math.min(100, Math.round((allQuestions.length / totalQuestions) * 100));
+          await options.onProgress({
+            stage: 'retrying',
+            currentBatch: `Google API high demand (${status || 503}). Auto-retrying Q${currentStart}-Q${currentEnd} in ${Math.round(delaySeconds)}s (attempt ${attempt + 1}/${maxRetries})...`,
+            percent,
+            batchCount: batchIndex,
+            questions: [],
+          });
+        }
+
+        await new Promise((res) => setTimeout(res, delayMs));
       }
+    }
+
+    if (!success) {
+      // Partial Extraction Preservation (No Lost Work):
+      // If an unrecoverable 503 occurs after all 5 retries on a specific batch, and allQuestions.length > 0:
+      // Do NOT throw an unhandled fatal error that throws away the entire session!
+      // Return the successfully extracted questions with a flag or warning in onProgress / result.
+      const { isTransient, status } = isTransientCapacityError(lastError);
+      if (allQuestions.length > 0 && isTransient) {
+        console.warn(
+          `[Gemini Resilience] Preserving partial extraction: ${allQuestions.length} questions saved before batch Q${currentStart}-Q${currentEnd} encountered unrecoverable ${status || 503}.`
+        );
+        if (options.onProgress) {
+          const percent = Math.min(100, Math.round((allQuestions.length / totalQuestions) * 100));
+          await options.onProgress({
+            stage: 'partial_complete',
+            currentBatch: `Google Gemini API is currently experiencing a capacity spike (HTTP ${status || 503}). Saved ${allQuestions.length} extracted questions.`,
+            percent,
+            batchCount: batchIndex,
+            questions: [],
+            warning: `Google Gemini API capacity spike (HTTP ${status || 503}). Saved ${allQuestions.length} extracted questions. You can review them now or click 'Resume Extraction' for remaining questions.`,
+          });
+        }
+        return allQuestions;
+      }
+
+      throw lastError || new Error(`Failed to extract questions ${currentStart}-${currentEnd}.`);
     }
 
     if (options.onProgress) {
       const currentBatchStr = `Q${currentStart}-Q${currentEnd}`;
       const percent = Math.min(100, Math.round((allQuestions.length / totalQuestions) * 100));
       await options.onProgress({
+        stage: 'extracting',
         currentBatch: currentBatchStr,
         percent,
         batchCount: batchIndex,
@@ -164,7 +261,7 @@ async function extractBatch(
   apiKey: string,
   model: string
 ): Promise<StagingQuestion[]> {
-  const normalizedModel = normalizeGeminiModel(model);
+  const normalizedModel = normalizeGeminiModel(model, { allowFallbackModels: true });
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${normalizedModel}:generateContent?key=${apiKey}`;
 
   const systemPrompt = `You are an expert Cambridge Assessment International Education (CAIE) Examination Ingestion Specialist.
@@ -289,15 +386,28 @@ Do not include any markdown wrappers like \`\`\`json around the output. Output p
       // Retain raw error text
     }
     if (response.status === 400 && diagnostic.toLowerCase().includes('api key')) {
-      throw new Error(`Invalid Gemini API Key: ${diagnostic}`);
+      const err: any = new Error(`Invalid Gemini API Key: ${diagnostic}`);
+      err.status = 400;
+      throw err;
     }
     if (response.status === 429) {
-      throw new Error(`Gemini API rate limit exceeded (HTTP 429): ${diagnostic}`);
+      const err: any = new Error(`Gemini API rate limit exceeded (HTTP 429): ${diagnostic}`);
+      err.status = 429;
+      throw err;
+    }
+    if (response.status === 503) {
+      const err: any = new Error(`Gemini API Error (HTTP 503): ${diagnostic}`);
+      err.status = 503;
+      throw err;
     }
     if (response.status === 403) {
-      throw new Error(`Gemini API access forbidden (HTTP 403): ${diagnostic}`);
+      const err: any = new Error(`Gemini API access forbidden (HTTP 403): ${diagnostic}`);
+      err.status = 403;
+      throw err;
     }
-    throw new Error(`Gemini API Error (HTTP ${response.status}): ${diagnostic}`);
+    const err: any = new Error(`Gemini API Error (HTTP ${response.status}): ${diagnostic}`);
+    err.status = response.status;
+    throw err;
   }
 
   const data = await response.json();

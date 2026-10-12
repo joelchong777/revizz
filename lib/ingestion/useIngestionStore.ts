@@ -104,6 +104,11 @@ export interface IngestionActions {
     model?: string;
     apiKey?: string;
   }) => Promise<void>;
+  resumeExtraction: (options?: {
+    batchSize?: number;
+    model?: string;
+    apiKey?: string;
+  }) => Promise<void>;
   cancelExtraction: () => void;
 
   // History Undo / Redo
@@ -934,27 +939,89 @@ const actions: IngestionActions = {
             endQuestion,
             model,
             onProgress: (progress) => {
-              mergeQuestionsIntoStore(
-                progress.questions,
-                'extracting',
-                progress.currentBatch,
-                progress.percent,
-                progress.batchCount
-              );
+              if (progress.stage === 'retrying') {
+                setState({
+                  extractionProgress: {
+                    stage: 'retrying',
+                    currentBatch: progress.currentBatch,
+                    percent: progress.percent,
+                    batchCount: progress.batchCount,
+                  },
+                });
+                return;
+              }
+
+              if (progress.stage === 'partial_complete') {
+                const existingCount = getState().paper?.questions?.length || 0;
+                const pausedMessage = `Google Gemini API is currently experiencing a capacity spike (HTTP 503). Saved ${existingCount} extracted questions. You can review them now or click 'Resume Extraction' for remaining questions.`;
+                setState({
+                  isExtracting: false,
+                  lifecycleState: 'review',
+                  error: pausedMessage,
+                  publishMessage: pausedMessage,
+                  extractionProgress: {
+                    stage: 'paused_503',
+                    currentBatch: pausedMessage,
+                    percent: progress.percent,
+                    batchCount: existingCount,
+                  },
+                });
+                actions.saveDraftToLocalStorage();
+                return;
+              }
+
+              if (Array.isArray(progress.questions) && progress.questions.length > 0) {
+                mergeQuestionsIntoStore(
+                  progress.questions,
+                  progress.stage || 'extracting',
+                  progress.currentBatch,
+                  progress.percent,
+                  progress.batchCount
+                );
+              } else {
+                setState({
+                  extractionProgress: {
+                    stage: progress.stage || 'extracting',
+                    currentBatch: progress.currentBatch,
+                    percent: progress.percent,
+                    batchCount: progress.batchCount,
+                  },
+                });
+              }
             },
           }
         );
 
-        setState({
-          isExtracting: false,
-          lifecycleState: 'review',
-          extractionProgress: {
-            stage: 'complete',
-            currentBatch: 'Extraction completed successfully!',
-            percent: 100,
-            batchCount: questions.length,
-          },
-        });
+        const currentTotal = getState().paper?.questions?.length || questions.length;
+        const isPartial = currentTotal < (endQuestion - startQuestion + 1);
+
+        if (isPartial) {
+          const pausedMessage = `Google Gemini API is currently experiencing a capacity spike (HTTP 503). Saved ${currentTotal} extracted questions. You can review them now or click 'Resume Extraction' for remaining questions.`;
+          setState({
+            isExtracting: false,
+            lifecycleState: 'review',
+            error: pausedMessage,
+            publishMessage: pausedMessage,
+            extractionProgress: {
+              stage: 'paused_503',
+              currentBatch: pausedMessage,
+              percent: Math.min(100, Math.round((currentTotal / 40) * 100)),
+              batchCount: currentTotal,
+            },
+          });
+        } else {
+          setState({
+            isExtracting: false,
+            lifecycleState: 'review',
+            error: null,
+            extractionProgress: {
+              stage: 'complete',
+              currentBatch: 'Extraction completed successfully!',
+              percent: 100,
+              batchCount: currentTotal,
+            },
+          });
+        }
         actions.saveDraftToLocalStorage();
         return;
       }
@@ -1025,6 +1092,37 @@ const actions: IngestionActions = {
             const percent = typeof payload.percent === 'number' ? payload.percent : 50;
             const batchCount = typeof payload.batchCount === 'number' ? payload.batchCount : (payload.questions?.length || 0);
 
+            if (stage === 'retrying') {
+              setState({
+                extractionProgress: {
+                  stage: 'retrying',
+                  currentBatch,
+                  percent,
+                  batchCount,
+                },
+              });
+              continue;
+            }
+
+            if (stage === 'partial_complete' || payload.stage === 'partial_complete') {
+              const existingCount = getState().paper?.questions?.length || 0;
+              const pausedMessage = `Google Gemini API is currently experiencing a capacity spike (HTTP 503). Saved ${existingCount} extracted questions. You can review them now or click 'Resume Extraction' for remaining questions.`;
+              setState({
+                isExtracting: false,
+                lifecycleState: 'review',
+                error: pausedMessage,
+                publishMessage: pausedMessage,
+                extractionProgress: {
+                  stage: 'paused_503',
+                  currentBatch: pausedMessage,
+                  percent: typeof payload.percent === 'number' ? payload.percent : Math.round((existingCount / 40) * 100),
+                  batchCount: existingCount,
+                },
+              });
+              actions.saveDraftToLocalStorage();
+              return;
+            }
+
             // Merge questions incrementally if delivered
             if (Array.isArray(payload.questions) && payload.questions.length > 0) {
               mergeQuestionsIntoStore(payload.questions, stage, currentBatch, percent, batchCount);
@@ -1043,6 +1141,7 @@ const actions: IngestionActions = {
               setState({
                 isExtracting: false,
                 lifecycleState: 'review',
+                error: null,
                 extractionProgress: {
                   stage: 'complete',
                   currentBatch: 'Extraction completed successfully!',
@@ -1082,6 +1181,27 @@ const actions: IngestionActions = {
           publishMessage: 'Extraction cancelled by user.',
         });
       } else {
+        const existingCount = getState().paper?.questions?.length || 0;
+        const is503 = /503|high demand|spikes in demand|capacity/i.test(err?.message || '');
+
+        if (is503 && existingCount > 0) {
+          const pausedMessage = `Google Gemini API is currently experiencing a capacity spike (HTTP 503). Saved ${existingCount} extracted questions. You can review them now or click 'Resume Extraction' for remaining questions.`;
+          setState({
+            isExtracting: false,
+            error: pausedMessage,
+            publishMessage: pausedMessage,
+            lifecycleState: 'review',
+            extractionProgress: {
+              stage: 'paused_503',
+              currentBatch: pausedMessage,
+              percent: Math.min(100, Math.round((existingCount / 40) * 100)),
+              batchCount: existingCount,
+            },
+          });
+          actions.saveDraftToLocalStorage();
+          return;
+        }
+
         let friendlyError = err.message || 'Extraction failed.';
         const isNetworkErr =
           err.name === 'TypeError' ||
@@ -1100,8 +1220,37 @@ const actions: IngestionActions = {
           error: friendlyError,
           lifecycleState: getState().paper?.questions?.length ? 'review' : 'draft',
         });
+        actions.saveDraftToLocalStorage();
       }
     }
+  },
+
+  async resumeExtraction(options?: {
+    batchSize?: number;
+    model?: string;
+    apiKey?: string;
+  }): Promise<void> {
+    const existingQuestions = getState().paper?.questions || [];
+    const maxExtractedQ = existingQuestions.length > 0
+      ? Math.max(...existingQuestions.map((q) => q.question_number || 0))
+      : 0;
+    const startQuestion = maxExtractedQ + 1;
+    const endQuestion = 40;
+
+    if (startQuestion > endQuestion) {
+      setState({
+        publishMessage: 'All questions (1-40) have already been extracted.',
+      });
+      return;
+    }
+
+    await actions.startExtraction({
+      startQuestion,
+      endQuestion,
+      batchSize: options?.batchSize,
+      model: options?.model,
+      apiKey: options?.apiKey,
+    });
   },
 
   cancelExtraction(): void {

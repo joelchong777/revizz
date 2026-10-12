@@ -208,16 +208,24 @@ export async function POST(request: NextRequest) {
           model,
         });
 
+        const expectedTotal = Math.max(1, endQuestion - startQuestion + 1);
+        const isPartial = questions.length < expectedTotal;
+
         return NextResponse.json({
           success: true,
+          partial: isPartial,
           total_questions: questions.length,
           questions,
+          warning: isPartial
+            ? `Google Gemini API capacity spike (HTTP 503). Saved ${questions.length} extracted questions.`
+            : undefined,
           source_metadata: {
             source_qp_filename: qpFilename,
             source_ms_filename: msFilename,
             batch_size: batchSize,
             start_question: startQuestion,
             end_question: endQuestion,
+            last_extracted_question: questions.length > 0 ? questions[questions.length - 1].question_number : 0,
           },
         });
       } catch (extractErr: any) {
@@ -273,29 +281,38 @@ export async function POST(request: NextRequest) {
             model,
             onProgress: (progress) => {
               sendEvent({
-                stage: 'extracting',
+                stage: progress.stage || 'extracting',
                 currentBatch: progress.currentBatch,
                 percent: progress.percent,
                 batchCount: progress.batchCount,
-                questions: progress.questions,
+                questions: progress.questions || [],
+                warning: progress.warning,
               });
             },
           });
 
+          const expectedTotal = Math.max(1, endQuestion - startQuestion + 1);
+          const isPartial = questions.length < expectedTotal;
+
           sendEvent({
-            stage: 'complete',
-            percent: 100,
+            stage: isPartial ? 'partial_complete' : 'complete',
+            percent: isPartial ? Math.round((questions.length / expectedTotal) * 100) : 100,
             total_questions: questions.length,
             questions,
+            warning: isPartial
+              ? `Google Gemini API capacity spike (HTTP 503). Saved ${questions.length} extracted questions. You can review them now or click 'Resume Extraction' for remaining questions.`
+              : undefined,
             source_metadata: {
               source_qp_filename: qpFilename,
               source_ms_filename: msFilename,
+              last_extracted_question: questions.length > 0 ? questions[questions.length - 1].question_number : 0,
             },
           });
         } catch (err: any) {
           sendEvent({
             stage: 'error',
             error: err?.message || 'Extraction pipeline failed.',
+            status: (err as any)?.status || (err?.message?.includes('503') ? 503 : undefined),
           });
         } finally {
           clearInterval(keepAliveTimer);
