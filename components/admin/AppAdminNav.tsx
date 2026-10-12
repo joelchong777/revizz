@@ -14,7 +14,6 @@ import {
   Home,
   X,
   ShieldCheck,
-  ExternalLink
 } from 'lucide-react';
 
 export interface AppAdminNavProps {
@@ -45,17 +44,32 @@ export default function AppAdminNav({
 
   const navItemClass = (tabKey: string) => {
     const isActive = active === tabKey;
-    return `w-full flex items-center justify-between px-3 py-2.5 rounded-2xl transition-all text-sm select-none cursor-pointer border-2 ${
+    return `w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-150 text-[13px] select-none cursor-pointer group text-left ${
       isActive
-        ? 'bg-[#ffe1d0] text-[#201e1d] font-black border-[#201e1d] shadow-offset-2'
-        : 'bg-transparent text-[#474238] font-bold border-transparent hover:bg-[#f5ead8] hover:border-[#201e1d]/20 active:translate-y-0.5'
-    }`;
+        ? 'bg-[#ffe1d0] text-[#201e1d] font-bold border-[1.5px] border-[#201e1d] shadow-offset-2'
+        : 'bg-transparent text-[#474238] font-medium border-[1.5px] border-transparent hover:bg-[#f5ead8] hover:text-[#201e1d] hover:border-[#201e1d]/15 active:translate-y-0.5'
+    } ${compact ? 'justify-center px-2' : ''}`;
+  };
+
+  const renderIcon = (Icon: React.ElementType, tabKey: string) => {
+    const isActive = active === tabKey;
+    return (
+      <span
+        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+          isActive
+            ? 'bg-[#201e1d] text-[#f9f4ed]'
+            : 'bg-[#f5ead8] text-[#645c50] group-hover:bg-[#ffe1d0] group-hover:text-[#201e1d]'
+        }`}
+      >
+        <Icon className="w-4 h-4" />
+      </span>
+    );
   };
 
   return (
     <aside
-      className={`h-full flex flex-col justify-between p-4 box-border bg-[#ebddc5] border-r-2 border-[#201e1d] font-body text-[#201e1d] z-30 transition-all ${
-        compact ? 'w-[76px]' : 'w-[250px]'
+      className={`h-full flex flex-col justify-between p-3.5 box-border bg-[#ebddc5] border-r-2 border-[#201e1d] font-body text-[#201e1d] z-30 transition-all ${
+        compact ? 'w-[76px]' : 'w-[264px]'
       }`}
     >
       <div className="flex flex-col gap-4">
@@ -69,16 +83,18 @@ export default function AppAdminNav({
             >
               <span className="font-heading font-black text-sm text-[#201e1d]">R</span>
             </Link>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="font-heading font-black text-lg tracking-tight leading-none text-[#201e1d]">
-                  REVIZZ
+            {!compact && (
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-heading font-black text-lg tracking-tight leading-none text-[#201e1d]">
+                    REVIZZ
+                  </span>
+                </div>
+                <span className="font-mono text-[9px] uppercase tracking-wider text-[#645c50] font-bold mt-0.5">
+                  Command Deck
                 </span>
               </div>
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[#645c50] font-bold mt-0.5">
-                Command Deck
-              </span>
-            </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -96,145 +112,177 @@ export default function AppAdminNav({
         </div>
 
         {/* Platform Ops Badge */}
-        <div className="px-1">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d] font-mono text-[10px] font-bold tracking-wider shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-            APP ADMIN · PLATFORM OPS
-          </span>
-        </div>
+        {!compact && (
+          <div className="px-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d] font-mono text-[10px] font-bold tracking-wider shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              APP ADMIN · PLATFORM OPS
+            </span>
+          </div>
+        )}
 
         {/* Quick Cross-Portal Switcher Actions */}
-        <div className="space-y-1.5 pt-0.5">
+        <div className="flex flex-col gap-1.5 pt-0.5">
           <Link
             href="/portal"
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#ffe1d0] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all text-xs font-bold text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#ffe1d0] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all text-xs font-bold text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
+              compact ? 'justify-center px-1' : ''
+            }`}
             title="Open Teacher Classroom Portal"
           >
-            <span className="flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-[#201e1d]" />
-              <span>Teacher Portal 🎓</span>
+            <span className="w-7 h-7 rounded-lg bg-[#201e1d] text-[#f9f4ed] flex items-center justify-center shrink-0 group-hover:rotate-6 transition-transform">
+              <GraduationCap className="w-4 h-4" />
             </span>
-            <ExternalLink className="w-3.5 h-3.5 text-[#645c50] group-hover:text-[#201e1d]" />
+            {!compact && (
+              <>
+                <span className="flex-1 min-w-0 truncate font-bold text-[13px] text-[#201e1d]">Teacher Portal</span>
+                <span className="text-xs shrink-0">🎓</span>
+              </>
+            )}
           </Link>
 
           <Link
             href="/"
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold text-[#645c50] hover:text-[#201e1d] hover:bg-[#f5ead8] transition-colors cursor-pointer"
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#f5ead8] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-xs font-bold text-[#474238] hover:text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
+              compact ? 'justify-center px-1' : ''
+            }`}
             title="Return to Student Practice"
           >
-            <span className="flex items-center gap-2">
-              <span className="text-sm">🏠</span>
-              <span>Student Home</span>
+            <span className="w-7 h-7 rounded-lg bg-[#ebddc5] text-[#474238] flex items-center justify-center shrink-0 border border-[#201e1d]/20 group-hover:bg-[#201e1d] group-hover:text-[#f9f4ed] transition-colors">
+              <Home className="w-4 h-4" />
             </span>
-            <span className="text-[10px] font-mono text-[#645c50]">/</span>
+            {!compact && (
+              <>
+                <span className="flex-1 min-w-0 truncate font-bold text-[13px]">Student Home</span>
+                <span className="text-xs shrink-0">🏠</span>
+              </>
+            )}
           </Link>
         </div>
 
         {/* Navigation Sections */}
-        <div className="flex flex-col gap-4 overflow-y-auto pr-0.5">
+        <div className="flex flex-col gap-4 overflow-y-auto pr-0.5 no-scrollbar">
           {/* Section 1: Content Pipeline */}
           <div>
-            <div className="px-2 mb-1.5 flex items-center justify-between">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
-                Content Pipeline
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
+            {!compact && (
+              <div className="px-2 mb-1.5 flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
+                  Content Pipeline
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+            )}
             <nav className="flex flex-col gap-1">
               <button
                 type="button"
                 onClick={() => handleNavClick('ingestion')}
                 className={navItemClass('ingestion')}
+                title="Ingestion Studio"
               >
-                <span className="flex items-center gap-2.5">
-                  <FileText className="w-4 h-4 text-[#201e1d]" />
-                  <span>Ingestion Studio</span>
-                </span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#ccdbb2] border border-[#201e1d]/30 text-[#201e1d]">
-                  [ 1 STAGED ]
-                </span>
+                {renderIcon(FileText, 'ingestion')}
+                {!compact && (
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Ingestion Studio</span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-bold border border-[#201e1d]/20 shrink-0 whitespace-nowrap">
+                      1 staged
+                    </span>
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleNavClick('staged')}
                 className={navItemClass('staged')}
+                title="Staged Papers"
               >
-                <span className="flex items-center gap-2.5">
-                  <Layers className="w-4 h-4 text-[#201e1d]" />
-                  <span>Staged Papers</span>
-                </span>
+                {renderIcon(Layers, 'staged')}
+                {!compact && (
+                  <span className="flex-1 min-w-0 truncate">Staged Papers</span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleNavClick('diagnostics')}
                 className={navItemClass('diagnostics')}
+                title="Ingestion Diagnostics"
               >
-                <span className="flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 text-[#201e1d]" />
-                  <span>Ingestion Diagnostics</span>
-                </span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#8c491a] border border-[#201e1d]/30">
-                  [ OCR/KaTeX ]
-                </span>
+                {renderIcon(Sparkles, 'diagnostics')}
+                {!compact && (
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Ingestion Diagnostics</span>
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f0fae1] text-[#3d472b] text-[10px] font-bold border border-[#201e1d]/15 shrink-0 whitespace-nowrap">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                      <span>Live</span>
+                    </span>
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleNavClick('bank')}
                 className={navItemClass('bank')}
+                title="Global Question Bank"
               >
-                <span className="flex items-center gap-2.5">
-                  <BookOpen className="w-4 h-4 text-[#201e1d]" />
-                  <span>Global Question Bank</span>
-                </span>
+                {renderIcon(BookOpen, 'bank')}
+                {!compact && (
+                  <span className="flex-1 min-w-0 truncate">Global Question Bank</span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleNavClick('flagged')}
                 className={navItemClass('flagged')}
+                title="Flagged Questions"
               >
-                <span className="flex items-center gap-2.5">
-                  <Flag className="w-4 h-4 text-[#201e1d]" />
-                  <span>Flagged Questions</span>
-                </span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#f5d0bd] text-[#8c491a] border border-[#201e1d]/30">
-                  [ 8 ]
-                </span>
+                {renderIcon(Flag, 'flagged')}
+                {!compact && (
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Flagged Questions</span>
+                    <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
+                      8
+                    </span>
+                  </>
+                )}
               </button>
             </nav>
           </div>
 
           {/* Section 2: Platform & System */}
           <div>
-            <div className="px-2 mb-1.5">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
-                Platform & System
-              </span>
-            </div>
+            {!compact && (
+              <div className="px-2 mb-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
+                  Platform & System
+                </span>
+              </div>
+            )}
             <nav className="flex flex-col gap-1">
               <button
                 type="button"
                 onClick={() => handleNavClick('system')}
                 className={navItemClass('system')}
+                title="System Overview"
               >
-                <span className="flex items-center gap-2.5">
-                  <Activity className="w-4 h-4 text-[#201e1d]" />
-                  <span>System Overview</span>
-                </span>
+                {renderIcon(Activity, 'system')}
+                {!compact && (
+                  <span className="flex-1 min-w-0 truncate">System Overview</span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleNavClick('school')}
                 className={navItemClass('school')}
+                title="School Licences"
               >
-                <span className="flex items-center gap-2.5">
-                  <Building2 className="w-4 h-4 text-[#201e1d]" />
-                  <span>School Licences</span>
-                </span>
+                {renderIcon(Building2, 'school')}
+                {!compact && (
+                  <span className="flex-1 min-w-0 truncate">School Licences</span>
+                )}
               </button>
             </nav>
           </div>
@@ -247,15 +295,17 @@ export default function AppAdminNav({
           <div className="w-8 h-8 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2">
             AD
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-black text-[#201e1d] truncate">
-              {userDisplayName}
-            </span>
-            <span className="text-[10px] font-bold text-[#645c50] flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-700" />
-              Super Admin
-            </span>
-          </div>
+          {!compact && (
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-black text-[#201e1d] truncate">
+                {userDisplayName}
+              </span>
+              <span className="text-[10px] font-bold text-[#645c50] flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-700" />
+                Super Admin
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </aside>
