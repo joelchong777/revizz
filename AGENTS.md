@@ -33,3 +33,28 @@
      c) Terminate any active subagents (`manage_subagents(kill_all)`) and background daemon processes (`manage_task(kill)`).
      d) Provide a final, structured archive and handoff summary of all work done, files changed, and current deployment status.
      e) Shut down gracefully, ready to be deleted, ensuring everything is safely preserved on record for later review.
+12. **Worktree Isolation & Independent Live Release Protocol**:
+   - **Branch & Worktree Initialization**: Every chat session / master agent modifying code must create a dedicated git worktree from `origin/main` (NEVER from local `main`):
+     ```bash
+     git fetch origin main
+     git worktree add -b feat/<topic> .worktrees/<topic> origin/main
+     ```
+     Symlink shared assets (`node_modules`, `.env.local`):
+     ```bash
+     ln -s ../node_modules .worktrees/<topic>/node_modules
+     ln -s ../.env.local .worktrees/<topic>/.env.local 2>/dev/null || true
+     ```
+   - **Local Main Protection**: No agent may commit directly to local `main` while work is in progress. All changes, subagents, and tests operate exclusively in `.worktrees/<topic>`.
+   - **Independent Live Release (Atomic Push)**:
+     When the user explicitly commands a push or redeploy:
+     - Rebase the worktree branch on latest `origin/main` (`git fetch origin main && git rebase origin/main`).
+     - Re-verify (`npx tsc --noEmit` and tests).
+     - Push ONLY this chat's isolated branch to remote main:
+       ```bash
+       git push origin feat/<topic>:main
+       ```
+       This guarantees that ONLY the commits crafted in this chat go live, and uncommitted or WIP commits on local `main` from other chats/agents can NEVER accidentally leak into production.
+   - **Teardown & Cleanup**:
+     - Kill any dev server or daemon processes running in the worktree.
+     - Remove worktree: `git worktree remove --force .worktrees/<topic>`
+     - Optionally prune branch: `git branch -d feat/<topic>`

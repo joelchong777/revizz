@@ -43,3 +43,6 @@ staging/
 # python
 __pycache__/
 *.pyc
+
+# git worktrees
+.worktrees/
