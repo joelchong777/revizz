@@ -52,24 +52,21 @@ export function TopicMasteryList({
   const getTier = (p: number) => {
     if (p > 80) {
       return {
-        label: '👑 Master (>80%)',
-        shortLabel: '👑 Master',
-        bg: 'bg-emerald-50 text-emerald-900 border border-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]',
-        bar: 'bg-emerald-600',
+        label: '👑 Master',
+        bg: 'bg-accent-2-300',
+        bar: 'bg-accent-2-500',
       };
     }
     if (p >= 50) {
       return {
-        label: '⚡ Proficient (50–80%)',
-        shortLabel: '⚡ Proficient',
-        bg: 'bg-blue-50 text-blue-900 border border-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.15)]',
-        bar: 'bg-blue-600',
+        label: '⚡ Proficient',
+        bg: 'bg-accent-300',
+        bar: 'bg-accent-400',
       };
     }
     return {
-      label: '🌱 Novice (<50%)',
-      shortLabel: '🌱 Novice',
-      bg: 'bg-neutral-100 text-neutral-700 border border-neutral-300',
+      label: '🌱 Novice',
+      bg: 'bg-neutral-200',
       bar: 'bg-neutral-400',
     };
   };
@@ -93,7 +90,7 @@ export function TopicMasteryList({
       totalQuestions,
       masteredCount,
       percentage,
-      tierLabel: tier.shortLabel,
+      tierLabel: tier.label,
       tierBg: tier.bg,
       barColor: tier.bar,
     };
@@ -115,77 +112,68 @@ export function TopicMasteryList({
   };
 
   return (
-    <div className="w-full flex flex-col gap-3.5 select-none">
+    <div className="w-full flex flex-col gap-3 select-none">
       {/* Subject Overall Mastery Card */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-white/95 border-[1.5px] border-[#201e1d]/20 shadow-sm flex flex-col gap-3">
+      <div className="p-4 sm:p-5 rounded-[24px] bg-surface border-2 border-text shadow-offset-4 flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-                SYLLABUS COVERAGE RADAR
-              </span>
-            </div>
-            <h2 className="font-heading font-black text-lg sm:text-xl text-text leading-tight truncate">
-              {subject} Telemetry
+            <h2 className="font-heading text-lg text-text leading-tight truncate">
+              {subject} Mastery
             </h2>
-            <span className="font-mono text-xs font-semibold text-neutral-600 mt-0.5">
-              {totalMasteredAll} of {totalQuestionsAll} specification items mastered
+            <span className="text-xs font-semibold text-neutral-700">
+              {totalMasteredAll} of {totalQuestionsAll} syllabus questions mastered
             </span>
           </div>
 
           <span
             className={cn(
-              'px-2.5 py-1 rounded-md font-mono text-xs font-bold whitespace-nowrap flex-shrink-0',
+              'px-3 py-1 rounded-full border-[1.5px] border-text text-xs font-bold whitespace-nowrap text-text flex-shrink-0',
               overallTier.bg
             )}
           >
-            {overallTier.shortLabel}
+            {overallTier.label}
           </span>
         </div>
 
         {/* Overall Progress Bar */}
-        <div className="flex items-center gap-3 mt-1">
-          <div className="flex-1 h-2 rounded-full bg-[#201e1d]/10 overflow-hidden">
+        <div className="flex items-center gap-2.5 mt-1">
+          <div className="flex-1 h-3.5 rounded-full bg-bg border-2 border-text overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all duration-700 ease-out',
+                'h-full border-r-2 border-text transition-all duration-700 ease-out',
                 overallTier.bar
               )}
               style={{ width: `${overallPercentage}%` }}
             />
           </div>
-          <span className="font-mono font-bold text-xs text-text w-10 text-right tabular-nums">
+          <span className="font-bold text-xs text-text w-9 text-right tabular-nums">
             {overallPercentage}%
           </span>
         </div>
 
         {/* Badges Legend */}
-        <div className="pt-2 border-t border-[#201e1d]/10 flex items-center justify-between font-mono text-[10px] sm:text-[11px] font-bold text-neutral-600">
+        <div className="pt-2 border-t border-text/15 flex items-center justify-between text-[11px] font-bold text-neutral-700">
           <span>🌱 Novice (&lt;50%)</span>
           <span>⚡ Proficient (50–80%)</span>
           <span>👑 Master (&gt;80%)</span>
         </div>
       </div>
 
-      {/* Chapters Precision Radar List */}
+      {/* Chapters List Matching Mockup */}
       <div className="flex flex-col gap-2.5">
         {chapters.map((c) => (
           <div
             key={c.topic.id}
-            className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-white/90 border border-[#201e1d]/15 shadow-xs hover:border-[#201e1d]/30 transition-all"
+            className="flex flex-col gap-2 p-3 sm:px-3.5 rounded-[22px] bg-neutral-100 border-2 border-text shadow-offset-3"
           >
-            {/* Header row: Topic Code + Topic Name + Tier Badge + Practice Button */}
+            {/* Header row: Topic Name + Tier Badge + Practice Button */}
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-[#201e1d] font-mono text-[10px] font-bold text-[#f9f4ed] flex-shrink-0">
-                0{c.topic.orderIndex}
-              </span>
-              <span className="flex-1 font-heading font-bold text-sm text-text truncate">
+              <span className="flex-1 font-bold text-sm text-text truncate">
                 {c.topic.name}
               </span>
               <span
                 className={cn(
-                  'px-2 py-0.5 rounded font-mono text-[10px] font-bold whitespace-nowrap flex-shrink-0',
+                  'px-2.5 py-0.5 rounded-full border-[1.5px] border-text text-xs font-bold whitespace-nowrap text-text flex-shrink-0',
                   c.tierBg
                 )}
               >
@@ -195,24 +183,24 @@ export function TopicMasteryList({
                 type="button"
                 onClick={() => handlePractice(c.topic.id, c.topic.name)}
                 title={`Practice questions for ${c.topic.name}`}
-                className="px-2.5 py-1 rounded-lg bg-[#201e1d] hover:bg-[#34302d] text-[#f9f4ed] font-mono text-xs font-bold transition-transform active:scale-95 cursor-pointer flex-shrink-0"
+                className="px-2.5 py-1 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 text-xs font-bold border-[1.5px] border-text shadow-xs active:scale-95 transition-transform cursor-pointer flex-shrink-0"
               >
-                DRILL →
+                Practice
               </button>
             </div>
 
-            {/* Precision Progress Bar Row */}
+            {/* Progress bar row */}
             <div className="flex items-center gap-2.5">
-              <div className="flex-1 h-1.5 rounded-full bg-[#201e1d]/10 overflow-hidden">
+              <div className="flex-1 h-3.5 rounded-full bg-bg border-2 border-text overflow-hidden">
                 <div
                   className={cn(
-                    'h-full rounded-full transition-all duration-700 ease-out',
+                    'h-full border-r-2 border-text transition-all duration-700 ease-out',
                     c.barColor
                   )}
                   style={{ width: `${c.percentage}%` }}
                 />
               </div>
-              <span className="font-mono font-bold text-xs text-text w-9 text-right tabular-nums">
+              <span className="font-bold text-xs text-text w-9 text-right tabular-nums">
                 {c.percentage}%
               </span>
             </div>

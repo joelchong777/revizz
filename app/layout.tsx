@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Figtree, JetBrains_Mono } from "next/font/google";
+import { Caprasimo, Figtree, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
-const spaceGrotesk = Space_Grotesk({
-  weight: ["400", "600", "700"],
+const caprasimo = Caprasimo({
+  weight: "400",
   subsets: ["latin"],
   variable: "--font-heading",
   display: "swap",
@@ -15,6 +15,13 @@ const figtree = Figtree({
   weight: ["400", "600", "700"],
   subsets: ["latin"],
   variable: "--font-body",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  weight: ["400", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-admin-heading",
   display: "swap",
 });
 
@@ -46,7 +53,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${figtree.variable} ${jetbrainsMono.variable}`}
+      className={`${caprasimo.variable} ${figtree.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
       <head>
         {/* Preload critical KaTeX font subsets for instant formula rendering */}

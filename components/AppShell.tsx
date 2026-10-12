@@ -19,7 +19,7 @@ export function AppShell({ children }: AppShellProps) {
 
   // Student App ('/'): framed canvas on desktop, fluid on mobile & tablet
   return (
-    <div className="w-full max-w-xl mx-auto md:my-8 md:p-6 md:rounded-[32px] md:border-[1.5px] md:border-[#201e1d]/20 md:shadow-[0_24px_64px_-12px_rgba(32,30,29,0.14),0_0_0_1px_rgba(255,255,255,0.7)] bg-[#f7efe4]/95 backdrop-blur-xl min-h-screen md:min-h-[85vh] flex flex-col px-3 sm:px-4">
+    <div className="w-full max-w-xl mx-auto md:my-8 md:p-6 md:rounded-3xl md:border-4 md:border-slate-800 md:shadow-[0_16px_0_0_rgba(15,23,42,0.15)] bg-amber-50/60 min-h-screen md:min-h-[85vh] flex flex-col px-3 sm:px-4">
       <Header />
       <div className="flex-1 flex flex-col">{children}</div>
     </div>
