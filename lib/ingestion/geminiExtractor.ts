@@ -3,7 +3,7 @@ import type {
   StagingOption,
   BoundingBox as StagingDiagram,
   QuestionValidationStatus,
-} from '@/types/ingestion';
+} from '../../types/ingestion';
 
 export type { StagingQuestion, StagingOption, StagingDiagram };
 
@@ -23,6 +23,24 @@ export interface ExtractionOptions {
   onProgress?: (progress: ExtractionProgress) => void | Promise<void>;
 }
 
+/**
+ * Normalizes a Gemini model identifier.
+ * - Defaults to 'gemini-3.8-flash' if not provided or empty.
+ * - Automatically strips any leading 'models/' prefix.
+ * - Remaps deprecated models ('gemini-2.0', 'gemini-1.5') to 'gemini-3.8-flash'.
+ */
+export function normalizeGeminiModel(model?: string): string {
+  if (!model) return 'gemini-3.8-flash';
+  let trimmed = model.trim();
+  if (trimmed.startsWith('models/')) {
+    trimmed = trimmed.replace(/^models\//, '');
+  }
+  if (!trimmed || trimmed.includes('gemini-2.0') || trimmed.includes('gemini-1.5')) {
+    return 'gemini-3.8-flash';
+  }
+  return trimmed;
+}
+
 export async function extractQuestionsChunked(
   qpBuffer: Buffer,
   msBuffer: Buffer,
@@ -32,7 +50,7 @@ export async function extractQuestionsChunked(
   const batchSize = options.batchSize || 10;
   const startQuestion = options.startQuestion || 1;
   const endQuestion = options.endQuestion || 40;
-  const model = options.model || 'gemini-2.0-flash';
+  const model = normalizeGeminiModel(options.model || 'gemini-3.8-flash');
   const maxRetries = options.maxRetries || 3;
 
   const allQuestions: StagingQuestion[] = [];
@@ -96,7 +114,8 @@ async function extractBatch(
   apiKey: string,
   model: string
 ): Promise<StagingQuestion[]> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const normalizedModel = normalizeGeminiModel(model);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${normalizedModel}:generateContent?key=${apiKey}`;
 
   const systemPrompt = `You are an expert Cambridge Assessment International Education (CAIE) Examination Ingestion Specialist.
 Your task is to extract questions ${startQ} to ${endQ} from the provided Question Paper (QP) PDF and match them strictly with the official CAIE Mark Scheme (MS) PDF.

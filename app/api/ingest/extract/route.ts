@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractQuestionsChunked } from '@/lib/ingestion/geminiExtractor';
+import { extractQuestionsChunked, normalizeGeminiModel } from '@/lib/ingestion/geminiExtractor';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ function cleanBase64String(str: string): string {
  *    - batch_size / batchSize (optional number, default 10)
  *    - start_question / startQuestion (optional number, default 1)
  *    - end_question / endQuestion (optional number, default 40)
- *    - model (optional string, default 'gemini-2.0-flash')
+ *    - model (optional string, default 'gemini-3.8-flash'; automatically remaps legacy gemini-2.0 and gemini-1.5 models)
  *    - stream (optional boolean / string, default true)
  *
  * 2. application/json:
@@ -33,7 +33,7 @@ function cleanBase64String(str: string): string {
  *    - batch_size / batchSize (optional number, default 10)
  *    - start_question / startQuestion (optional number, default 1)
  *    - end_question / endQuestion (optional number, default 40)
- *    - model (optional string, default 'gemini-2.0-flash')
+ *    - model (optional string, default 'gemini-3.8-flash'; automatically remaps legacy gemini-2.0 and gemini-1.5 models)
  *    - stream (optional boolean, default true)
  *
  * Response:
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     let batchSize = 10;
     let startQuestion = 1;
     let endQuestion = 40;
-    let model = 'gemini-2.0-flash';
+    let model = 'gemini-3.8-flash';
     let isStreaming = true;
 
     if (contentType.includes('multipart/form-data')) {
@@ -173,6 +173,9 @@ export async function POST(request: NextRequest) {
       if (body.model) model = String(body.model).trim();
       if (body.stream === false) isStreaming = false;
     }
+
+    // Normalize model and apply fallback remapping for legacy models (gemini-2.0, gemini-1.5)
+    model = normalizeGeminiModel(model);
 
     if (searchParams.get('stream') === 'false') {
       isStreaming = false;

@@ -50,6 +50,7 @@ import {
   filterAndSortQuestions,
   countActiveFilters,
 } from '../lib/compilerFilters';
+import { normalizeGeminiModel } from '../lib/ingestion/geminiExtractor';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -786,6 +787,33 @@ test('Active Filter Counter & Reset State Verification', () => {
     sortBy: 'shortest',
   });
   assertEqual(activeCount, 8, 'Accurately counts all 8 active filters');
+});
+
+// -----------------------------------------------------------------------------
+// [Suite 8] Gemini Ingestion Model Migration & Normalization
+// -----------------------------------------------------------------------------
+console.log('\n[Suite 8] Gemini Ingestion Model Migration & Normalization');
+
+test('Defaults undefined or empty model to gemini-3.8-flash', () => {
+  assertEqual(normalizeGeminiModel(), 'gemini-3.8-flash', 'undefined defaults to gemini-3.8-flash');
+  assertEqual(normalizeGeminiModel(''), 'gemini-3.8-flash', 'empty string defaults to gemini-3.8-flash');
+  assertEqual(normalizeGeminiModel('   '), 'gemini-3.8-flash', 'whitespace string defaults to gemini-3.8-flash');
+});
+
+test('Remaps deprecated gemini-2.0 models to gemini-3.8-flash', () => {
+  assertEqual(normalizeGeminiModel('gemini-2.0-flash'), 'gemini-3.8-flash', 'gemini-2.0-flash remapped');
+  assertEqual(normalizeGeminiModel('models/gemini-2.0-flash'), 'gemini-3.8-flash', 'models/gemini-2.0-flash remapped');
+  assertEqual(normalizeGeminiModel('gemini-2.0-flash-exp'), 'gemini-3.8-flash', 'gemini-2.0-flash-exp remapped');
+});
+
+test('Remaps deprecated gemini-1.5 models to gemini-3.8-flash', () => {
+  assertEqual(normalizeGeminiModel('gemini-1.5-flash'), 'gemini-3.8-flash', 'gemini-1.5-flash remapped');
+  assertEqual(normalizeGeminiModel('models/gemini-1.5-pro'), 'gemini-3.8-flash', 'models/gemini-1.5-pro remapped');
+});
+
+test('Preserves modern gemini-3.8-flash and cleans prefix', () => {
+  assertEqual(normalizeGeminiModel('gemini-3.8-flash'), 'gemini-3.8-flash', 'gemini-3.8-flash preserved');
+  assertEqual(normalizeGeminiModel('models/gemini-3.8-flash'), 'gemini-3.8-flash', 'models/ prefix stripped');
 });
 
 // -----------------------------------------------------------------------------

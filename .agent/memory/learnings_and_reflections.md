@@ -263,3 +263,58 @@
 - **Verification & Definition of Done**:
   - TypeScript validation: `npx tsc --noEmit` passed with 0 errors.
   - Automated test suites: `npm test` passed with 40/40 tests passing (`verify-revizz.ts`).
+
+## Reflection Log Entry - 2026-10-12 (Teacher vs App Admin Architectural Separation, Dual Design System, & Navigation Ergonomics)
+
+- **Date**: 2026-10-12
+- **Topic**: Teacher vs App Admin Architectural Separation, Context-Sensitive Dual Design System, Sidebar Ergonomics & Live Production Deployment
+
+### 1. Teacher Portal (`/portal`) vs App Admin Console (`/admin`) Partitioning
+- **Architectural Motivation & Role Separation**:
+  - Educational workflows and platform operations have fundamentally different operational personas and security boundaries. Blending them into a single monolithic "Admin" interface creates cognitive friction, permission bloat, and UI compromises.
+  - **Teacher Portal (`/portal`)**: Focused on pedagogical workflows and student cohort supervision:
+    - Student management & class roster tracking (`/portal/students`).
+    - Granular cohort & individual performance analytics (`/portal/stats`).
+    - Curriculum question verification and tagging (`/portal/questions`).
+    - Physical and digital worksheet compilation (`/portal/test-compiler`).
+    - Homework assignment dispatch and deadline tracking (`/portal/homework`).
+  - **App Admin Console (`/admin`)**: Dedicated to system infrastructure, data ingestion pipelines, and platform operations:
+    - Cambridge exam paper ingestion studio (`/admin/ingest`).
+    - Staged paper extraction review & OCR verification (`/admin/staged`).
+    - Database and platform diagnostics (`/admin/diagnostics`).
+    - Edge function telemetry and overall system health.
+- **Route Handling & `AppShell.tsx` Layout Partitioning**:
+  - Modified `src/components/layout/AppShell.tsx` to detect both teacher and admin route prefixes (`isTeacherPortal = pathname.startsWith('/portal')`, `isAdminConsole = pathname.startsWith('/admin')`).
+  - Implemented unconstrained, edge-to-edge canvas rendering (`w-full min-h-screen`) across both portals, bypassing the fixed-width phone/tablet container constraint (`max-w-[480px]`) reserved exclusively for the student mobile gameplay view.
+
+### 2. Context-Sensitive Dual Design System (Playful Student vs Professional Admin)
+- **Why Uniform Visual Overhauls Fail in EdTech**:
+  - In gamified learning applications, applying a single visual aesthetic across all surfaces fails both user personas.
+  - Students require high-engagement, tactile, and motivating micro-interactions: bold borders (`border-4 border-[#201e1d]`), bouncy spring animations, cheerful color blocks (`#fef08a`, `#ffc480`, `#bbf7d0`), chunky 3D neobrutalist drop shadows (`shadow-[6px_6px_0px_#201e1d]`), and whimsical typography (`Caprasimo`).
+  - Educators and platform engineers require high-density, serious command-deck layouts: dense tabular data, tabular numbers, precise telemetry, low-latency navigation, and understated borders that maximize data visibility without visual fatigue.
+- **Dual-Token Coexistence Architecture**:
+  - Preserved `--font-heading` (`Caprasimo`, display serif/chunky cartoon aesthetic) specifically for student quiz loops, reward modals, and streak animations.
+  - Introduced `--font-admin-heading` (`Space Grotesk`) and paired with `--font-mono` (`JetBrains Mono`) for admin/teacher headers, stat cards, metric counters, and telemetry data tables.
+  - Tokenized color variables to allow high-contrast, clean status pills in admin interfaces (`bg-emerald-50 text-emerald-700 border-emerald-300`, `bg-amber-50 text-amber-700 border-amber-300`) while maintaining vibrant pastel fills for student cards.
+
+### 3. Sidebar Navigation Layout Bug Pattern & Resolution
+- **The "Ugly Squished Badge" Incident**:
+  - *Symptom*: When rendering admin navigation links inside a narrow `w-[250px]` flexbox container, badges containing literal bracket notation and uppercase text (e.g., `[ 1 STAGED ]`, `[ OCR/KaTeX ]`) triggered unexpected multi-line wrapping.
+  - *Root Cause*: Lack of flex container bounds, unconstrained badge widths, and un-truncated navigation labels forced badges onto second and third lines, blowing up row heights, misaligning adjacent icons, and severely disrupting visual hierarchy.
+- **Architectural Resolution & Navigation Ergonomics**:
+  - **Sidebar Expansion**: Expanded the sidebar width from `w-[250px]` to `w-[264px]`, granting adequate breathing room for multi-item labels and badges.
+  - **Fixed Icon Bounding Frames**: Encapsulated navigation icons in uniform 7×7 (`w-7 h-7`) fixed-size flex containers with centered alignment, eliminating vertical shift when labels wrap or adjust.
+  - **Text Truncation & Label Hierarchy**: Applied `truncate` and `min-w-0` to route label spans, ensuring long text gracefully clips rather than breaking container flex rows.
+  - **Sleek Status Pills**: Replaced bracketed text with compact, rounded badge pills:
+    - Dynamic count pill: `1 staged` (`bg-[#ffeb80] text-[#201e1d] px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#201e1d]`).
+    - Telemetry status: Pulsing emerald dot (`Live`) with `w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse`.
+    - Compact circular bubbles: Fixed circular badge `8` (`w-5 h-5 flex items-center justify-center rounded-full bg-[#f4ebe1] text-[11px] font-bold`).
+
+### 4. Verification & Live Production Deployment
+- **Bundled Verification Contract**:
+  - Automated test suite execution: `npm test` verified with 40/40 tests passing (`verify-revizz.ts`).
+  - Type safety audit: `npx tsc --noEmit` passed cleanly with 0 TypeScript errors.
+  - Production build verification: `next build` compiled cleanly across all 10/10 static and dynamic routes.
+- **Git & Live Vercel Production Release**:
+  - Clean atomic commits pushed to `origin/main` (`cc70066..c09a046`).
+  - Production deployment verified live and accessible at `https://revizz-sand.vercel.app`.

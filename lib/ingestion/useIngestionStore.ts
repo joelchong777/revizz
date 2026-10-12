@@ -854,7 +854,7 @@ const actions: IngestionActions = {
       if (options?.batchSize) formData.append('batch_size', String(options.batchSize));
       if (options?.startQuestion) formData.append('start_question', String(options.startQuestion));
       if (options?.endQuestion) formData.append('end_question', String(options.endQuestion));
-      if (options?.model) formData.append('model', options.model);
+      formData.append('model', options?.model || 'gemini-3.8-flash');
 
       const headers: Record<string, string> = {};
       if (options?.apiKey) {

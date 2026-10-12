@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-**Revizz Ingestion System v2** is a high-throughput, web-based examination ingestion workstation engineered for Cambridge Assessment International Education (CAIE) Multiple Choice Question (MCQ) examinations. Built with Next.js, TypeScript, Tailwind CSS, KaTeX, Sharp, Google Gemini 2.0 Vision, and Supabase, Ingestion v2 replaces manual paper transcription with an automated, pedagogically rigorous, and visually synchronized digitization pipeline.
+**Revizz Ingestion System v2** is a high-throughput, web-based examination ingestion workstation engineered for Cambridge Assessment International Education (CAIE) Multiple Choice Question (MCQ) examinations. Built with Next.js, TypeScript, Tailwind CSS, KaTeX, Sharp, Google Gemini 3.8 Flash Vision, and Supabase, Ingestion v2 replaces manual paper transcription with an automated, pedagogically rigorous, and visually synchronized digitization pipeline.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -19,7 +19,7 @@
 │                     │                           │                     │                │
 │ • CAIE QP PDF       │ • PDF Viewer (Left)       │ • 6-Point Checklist │ • Subjects     │
 │ • CAIE MS PDF       │ • Question Editor (Right) │ • KaTeX AST Linter  │ • Papers       │
-│ • Gemini 2.0 Flash  │ • 8-Handle Diagram Crop   │ • Distractor Audit  │ • Topics       │
+│ • Gemini 3.8 Flash  │ • 8-Handle Diagram Crop   │ • Distractor Audit  │ • Topics       │
 │ • SSE Progress Stream│ • KaTeX Quick Toolbar    │ • 1-Click DOM Focus │ • Questions    │
 │ • Metadata Autodetect│ • Distractor Generator   │ • Copy/Export JSON  │ • Options DB   │
 └─────────────────────┴───────────────────────────┴─────────────────────┴────────────────┘
@@ -55,7 +55,7 @@ flowchart TD
         A["Drop Question Paper (QP.pdf)"] --> C{"Auto-Detect Metadata"}
         B["Drop Mark Scheme (MS.pdf)"] --> C
         C --> D["Start Live Extraction Pipeline"]
-        D --> E["SSE Stream: Gemini 2.0 Flash (Batches of 10)"]
+        D --> E["SSE Stream: Gemini 3.8 Flash (Batches of 10)"]
     end
 
     subgraph S2["Stage 2: Dual-Pane Curation Studio"]
@@ -240,7 +240,7 @@ Once the Quality Gate passes, click **`[Push Live]`** in the top navigation bar.
 
 ### 1. `POST /api/ingest/extract`
 
-Extracts Cambridge questions and matches them against mark scheme answer keys using Gemini 2.0 Multimodal Vision and OCR.
+Extracts Cambridge questions and matches them against mark scheme answer keys using Gemini 3.8 Flash Multimodal Vision and OCR.
 
 - **Route Runtime**: `nodejs`
 - **Dynamic Mode**: `force-dynamic`
@@ -264,7 +264,7 @@ x-gemini-api-key: [OPTIONAL_OVERRIDE_KEY]
 | `batch_size` | number | Questions per Gemini batch (default: `10`, range: `1..20`). |
 | `start_question`| number | First question number to extract (default: `1`). |
 | `end_question` | number | Final question number to extract (default: `40`). |
-| `model` | string | Gemini model identifier (default: `'gemini-2.0-flash'`). |
+| `model` | string | Gemini model identifier (default: `'gemini-3.8-flash'`). |
 | `stream` | boolean | Set `true` for SSE progress streaming (default: `true`). |
 
 ##### Mode B: `application/json` (Base64 Payloads)
@@ -277,7 +277,7 @@ x-gemini-api-key: [OPTIONAL_OVERRIDE_KEY]
   "batch_size": 10,
   "start_question": 1,
   "end_question": 40,
-  "model": "gemini-2.0-flash",
+  "model": "gemini-3.8-flash",
   "stream": true
 }
 ```
