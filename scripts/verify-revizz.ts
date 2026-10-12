@@ -800,6 +800,12 @@ test('Defaults undefined or empty model to gemini-3.8-flash', () => {
   assertEqual(normalizeGeminiModel('   '), 'gemini-3.8-flash', 'whitespace string defaults to gemini-3.8-flash');
 });
 
+test('Remaps deprecated gemini-2.5 models to gemini-3.8-flash', () => {
+  assertEqual(normalizeGeminiModel('gemini-2.5-flash'), 'gemini-3.8-flash', 'gemini-2.5-flash remapped');
+  assertEqual(normalizeGeminiModel('models/gemini-2.5-flash'), 'gemini-3.8-flash', 'models/gemini-2.5-flash remapped');
+  assertEqual(normalizeGeminiModel('gemini-2.5-pro'), 'gemini-3.8-flash', 'gemini-2.5-pro remapped');
+});
+
 test('Remaps deprecated gemini-2.0 models to gemini-3.8-flash', () => {
   assertEqual(normalizeGeminiModel('gemini-2.0-flash'), 'gemini-3.8-flash', 'gemini-2.0-flash remapped');
   assertEqual(normalizeGeminiModel('models/gemini-2.0-flash'), 'gemini-3.8-flash', 'models/gemini-2.0-flash remapped');
@@ -874,10 +880,10 @@ test('Exponential Backoff with Jitter: delay formula stays bounded within [1.5, 
   }
 });
 
-test('Model Fallback Cascade: normalizeGeminiModel preserves sibling fallback models when requested', () => {
-  assertEqual(normalizeGeminiModel('gemini-2.5-flash', { allowFallbackModels: true }), 'gemini-2.5-flash', 'gemini-2.5-flash fallback preserved');
-  assertEqual(normalizeGeminiModel('gemini-1.5-flash', { allowFallbackModels: true }), 'gemini-1.5-flash', 'gemini-1.5-flash fallback preserved');
-  assertEqual(normalizeGeminiModel('gemini-3.8-flash', { allowFallbackModels: true }), 'gemini-3.8-flash', 'gemini-3.8-flash preserved');
+test('Strict Gemini 3.8 Preservation: all legacy variants strictly remap to gemini-3.8-flash without fallback', () => {
+  assertEqual(normalizeGeminiModel('gemini-2.5-flash'), 'gemini-3.8-flash', 'gemini-2.5-flash strictly maps to gemini-3.8-flash');
+  assertEqual(normalizeGeminiModel('gemini-1.5-flash'), 'gemini-3.8-flash', 'gemini-1.5-flash strictly maps to gemini-3.8-flash');
+  assertEqual(normalizeGeminiModel('gemini-3.8-flash'), 'gemini-3.8-flash', 'gemini-3.8-flash strictly preserved');
 });
 
 // -----------------------------------------------------------------------------

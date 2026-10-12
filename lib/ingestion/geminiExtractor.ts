@@ -29,21 +29,20 @@ export interface ExtractionOptions {
  * Normalizes a Gemini model identifier.
  * - Defaults to 'gemini-3.8-flash' if not provided or empty.
  * - Automatically strips any leading 'models/' prefix.
- * - Remaps deprecated models ('gemini-2.0', 'gemini-1.5') to 'gemini-3.8-flash' unless allowFallbackModels is true.
+ * - Remaps deprecated or unavailable models ('gemini-2.5', 'gemini-2.0', 'gemini-1.5') to 'gemini-3.8-flash'.
  */
-export function normalizeGeminiModel(
-  model?: string,
-  options?: { allowFallbackModels?: boolean }
-): string {
+export function normalizeGeminiModel(model?: string): string {
   if (!model) return 'gemini-3.8-flash';
   let trimmed = model.trim();
   if (trimmed.startsWith('models/')) {
     trimmed = trimmed.replace(/^models\//, '');
   }
-  if (options?.allowFallbackModels) {
-    return trimmed || 'gemini-3.8-flash';
-  }
-  if (!trimmed || trimmed.includes('gemini-2.0') || trimmed.includes('gemini-1.5')) {
+  if (
+    !trimmed ||
+    trimmed.includes('gemini-2.5') ||
+    trimmed.includes('gemini-2.0') ||
+    trimmed.includes('gemini-1.5')
+  ) {
     return 'gemini-3.8-flash';
   }
   return trimmed;
@@ -141,7 +140,6 @@ export async function extractQuestionsChunked(
   const allQuestions: StagingQuestion[] = [];
   const totalQuestions = Math.max(1, endQuestion - startQuestion + 1);
   let batchIndex = 0;
-  const siblingFallbackModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
 
   for (let currentStart = startQuestion; currentStart <= endQuestion; currentStart += batchSize) {
     const currentEnd = Math.min(currentStart + batchSize - 1, endQuestion);
@@ -150,8 +148,6 @@ export async function extractQuestionsChunked(
     let attempt = 0;
     let success = false;
     let batchQuestions: StagingQuestion[] = [];
-    let currentModel = model;
-    let fallbackIndex = 0;
     let lastError: any = null;
 
     while (attempt < maxRetries && !success) {
@@ -162,7 +158,7 @@ export async function extractQuestionsChunked(
           currentStart,
           currentEnd,
           apiKey,
-          currentModel
+          model
         );
         allQuestions.push(...batchQuestions);
         success = true;
@@ -177,17 +173,6 @@ export async function extractQuestionsChunked(
             error
           );
           break;
-        }
-
-        // Model Fallback Cascade:
-        // If gemini-3.8-flash returns 503 after 2 retry attempts, attempt fallback to sibling multimodal models:
-        // gemini-2.5-flash or gemini-1.5-flash.
-        if (status === 503 && attempt >= 2 && fallbackIndex < siblingFallbackModels.length) {
-          const nextModel = siblingFallbackModels[fallbackIndex++];
-          console.warn(
-            `[Gemini Resilience] HTTP 503 encountered. Falling back from ${currentModel} to ${nextModel} for Q${currentStart}-Q${currentEnd}.`
-          );
-          currentModel = nextModel;
         }
 
         // Exponential backoff with random jitter:
@@ -261,7 +246,7 @@ async function extractBatch(
   apiKey: string,
   model: string
 ): Promise<StagingQuestion[]> {
-  const normalizedModel = normalizeGeminiModel(model, { allowFallbackModels: true });
+  const normalizedModel = normalizeGeminiModel(model);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${normalizedModel}:generateContent?key=${apiKey}`;
 
   const systemPrompt = `You are an expert Cambridge Assessment International Education (CAIE) Examination Ingestion Specialist.
