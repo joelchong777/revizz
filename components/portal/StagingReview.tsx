@@ -19,7 +19,7 @@ interface StagedQuestion {
     image_url?: string;
     alt_description?: string;
   };
-  status: 'complete' | 'review';
+  status: 'complete' | 'review' | 'withdrawn';
 }
 
 interface StagedPaperMetadata {
@@ -184,7 +184,7 @@ export default function StagingReview() {
           is_correct: q.correct_option_id === opt.id,
         })),
         explanation_markdown: q.explanation_markdown,
-        status: q.status === 'complete' ? 'active' : 'draft',
+        status: (q.status === 'withdrawn' ? 'withdrawn' : 'active') as 'active' | 'withdrawn',
       })),
     };
 
@@ -207,6 +207,7 @@ export default function StagingReview() {
     }
 
     const reader = new FileReader();
+    reader.onerror = () => setPublishError(`Failed to read "${file.name}".`);
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string;
@@ -302,7 +303,7 @@ export default function StagingReview() {
           is_correct: q.correct_option_id === opt.id,
         })),
         explanation_markdown: q.explanation_markdown,
-        status: (q.status === 'complete' ? 'active' : 'draft') as 'active' | 'draft',
+        status: (q.status === 'withdrawn' ? 'withdrawn' : 'active') as 'active' | 'withdrawn',
       })),
     };
 
@@ -327,7 +328,7 @@ export default function StagingReview() {
     } catch (err: any) {
       const errorMsg = err?.message || 'Failed to publish staged paper to Supabase.';
       setPublishError(errorMsg);
-      setPublishMessage(`Publish failed: ${errorMsg}`);
+      setPublishMessage(null);
     } finally {
       setIsPublishing(false);
     }

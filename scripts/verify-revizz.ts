@@ -1432,6 +1432,7 @@ async function runSuite13() {
     assertEqual(hubContent.includes('<IngestionPipelineModal'), true, 'Renders IngestionPipelineModal overlay');
     assertEqual(hubContent.includes('loadJson(json, { name: file.name, size: file.size })'), true, 'Forwards file name and size to loadJson');
     assertEqual(hubContent.includes('setIsPipelineModalOpen(true)'), true, 'Opens pipeline modal upon JSON load and upsert');
+    assertEqual(hubContent.includes('window.location.href = "/admin?tab=bank";'), true, 'IngestionHub routes "View in Question Bank" to /admin?tab=bank');
   });
 
   await testAsync('StagingReview replaces mock setTimeout with real Supabase API call, real receipt, and direct JSON upload', () => {
@@ -1448,6 +1449,12 @@ async function runSuite13() {
     assertEqual(stagingContent.includes('Upload JSON Paper 📄'), true, 'Contains Upload JSON Paper button');
     assertEqual(stagingContent.includes('Upload or Drop Staging JSON Past Paper'), true, 'Contains direct JSON dropzone');
     assertEqual(stagingContent.includes('accept=".json,application/json,text/json"'), true, 'File input accepts JSON MIME types');
+
+    // Review feedback items
+    assertEqual(stagingContent.includes("status: (q.status === 'withdrawn' ? 'withdrawn' : 'active') as 'active' | 'withdrawn'"), true, 'StagingReview sets question status to active | withdrawn');
+    assertEqual(stagingContent.includes("'draft'"), false, 'StagingReview never outputs draft status for staged questions');
+    assertEqual(stagingContent.includes('setPublishMessage(null);'), true, 'StagingReview catch block clears publishMessage on failure');
+    assertEqual(stagingContent.includes('reader.onerror = () => setPublishError('), true, 'StagingReview handleLoadJsonFile handles FileReader error');
   });
 
   await testAsync('IngestionSetupWizard provides prominent JSON upload in both Cloud and Agent tabs with valid MIME types', () => {

@@ -548,7 +548,7 @@ export default function IngestionHub() {
         onViewQuestionBank={() => {
           setIsPipelineModalOpen(false);
           if (typeof window !== "undefined") {
-            window.location.href = "/admin?tab=compiler";
+            window.location.href = "/admin?tab=bank";
           }
         }}
       />
