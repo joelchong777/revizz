@@ -15,7 +15,10 @@ import {
   ArrowDown,
   Table,
   Calculator,
-  RotateCcw
+  RotateCcw,
+  ChevronDown,
+  ChevronUp,
+  Filter
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -59,7 +62,8 @@ export default function TestCompilerHub() {
   const [includeBubbleSheet, setIncludeBubbleSheet] = useState(true);
   const [includeMarkScheme, setIncludeMarkScheme] = useState(true);
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(true);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // --- Modals State ---
@@ -277,278 +281,34 @@ export default function TestCompilerHub() {
     <div className="flex flex-col gap-6 text-[#201e1d] font-body pb-12">
       {/* Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
-        {/* LEFT COLUMN: Test Compiler */}
+        {/* LEFT COLUMN: Question Bank Canvas */}
         <div className="flex flex-col gap-3 min-w-0">
-          {/* Horizontal Top Filter Toolbar (Sticky) */}
-          <div className="sticky top-0 z-10 p-3.5 sm:p-4 rounded-3xl bg-[#f9f4ed] border-2 border-[#dcd3c4] shadow-sm flex flex-col gap-3 backdrop-blur-sm">
-            {/* List Header Strip */}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="font-heading font-black text-[#201e1d] text-base">Test Compiler</h2>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
-                  {filteredQuestions.length} of {CAMBRIDGE_QUESTIONS.length} found
-                </span>
-                {activeFilterCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
-                    {activeFilterCount} active
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleSelectAllFiltered}
-                aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                className="text-xs font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 rounded-md transition-all active:translate-y-0.5 cursor-pointer"
-              >
-                {allFilteredSelected ? 'Deselect All' : 'Select All Filtered'}
-              </button>
-            </div>
-
-            {/* Row 1 / Top Row: Quick actions, Text Search, Reset All */}
-            <div className="flex flex-wrap items-center gap-2.5 pt-2.5 border-t border-[#dcd3c4]">
-              {/* Quick Actions */}
-              <div className="flex items-center gap-2 flex-wrap shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsAutoModalOpen(true)}
-                  title="Auto-generate question preset"
-                  aria-label="Auto-generate question preset"
-                  className="px-3.5 py-1.5 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-bold text-[#3d472b] hover:bg-[#e1eecc] hover:border-[#64724d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                >
-                  <Zap className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Auto-Generate Preset</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenDrafts}
-                  title="View and load saved test drafts"
-                  aria-label="View and load saved test drafts"
-                  className="px-3.5 py-1.5 rounded-full bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#474238] hover:bg-[#eee7db] hover:border-[#201e1d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Saved Drafts</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClearSelection}
-                  title="Clear all selected questions"
-                  aria-label="Clear all selected questions"
-                  disabled={selectedQuestionIds.length === 0}
-                  className="px-3.5 py-1.5 rounded-full bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#474238] hover:bg-[#eee7db] hover:border-[#201e1d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#dcd3c4] disabled:hover:bg-white disabled:active:translate-y-0"
-                >
-                  <X className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Clear Selection</span>
-                </button>
-              </div>
-
-              {/* Text Search Input */}
-              <div className="relative flex-1 min-w-[200px]">
-                <label htmlFor="compiler-search-input" className="sr-only">
-                  Search stems, question IDs, citations, and option texts
-                </label>
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none" aria-hidden="true" />
-                <input
-                  id="compiler-search-input"
-                  type="text"
-                  placeholder="Search stems, citations, IDs, options..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  aria-label="Search questions by stem, citations, IDs, or option text"
-                  className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-medium text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] placeholder:text-[#a19786] transition-all"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch('')}
-                    aria-label="Clear search query"
-                    title="Clear search query"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-
-              {/* Reset All Button */}
+          {/* Sleek, Compact Sticky Header Bar */}
+          <div className="sticky top-0 z-10 px-4 py-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex items-center justify-between gap-3 backdrop-blur-sm">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="font-heading font-black text-[#201e1d] text-base">Question Bank</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
+                {filteredQuestions.length} of {CAMBRIDGE_QUESTIONS.length} questions
+              </span>
               {activeFilterCount > 0 && (
-                <button
-                  type="button"
-                  onClick={handleResetAllFilters}
-                  aria-label="Reset all search and filter controls to default"
-                  title="Reset all filters"
-                  className="px-3 py-1.5 rounded-full bg-white border border-[#c67139] text-[#c67139] text-xs font-bold hover:bg-[#ffe1d0] flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 transition-all shadow-sm shrink-0"
-                >
-                  <RotateCcw className="w-3 h-3" aria-hidden="true" />
-                  <span>Reset All ({activeFilterCount})</span>
-                </button>
+                <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
+                  {activeFilterCount} active
+                </span>
               )}
             </div>
-
-            {/* Row 2 / Filter Controls Row */}
-            <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-[#dcd3c4]">
-              {/* Dropdowns Group */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Topic Dropdown */}
-                <div className="w-36 sm:w-44">
-                  <label htmlFor="compiler-topic-filter" className="sr-only">
-                    Topic
-                  </label>
-                  <select
-                    id="compiler-topic-filter"
-                    aria-label="Filter by Cambridge topic"
-                    value={selectedTopicId}
-                    onChange={(e) => setSelectedTopicId(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all"
-                  >
-                    <option value="all">All Topics</option>
-                    {CAMBRIDGE_TOPICS.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Exam Series / Year Dropdown */}
-                <div className="w-32 sm:w-36">
-                  <label htmlFor="compiler-series-filter" className="sr-only">
-                    Exam Series / Year
-                  </label>
-                  <select
-                    id="compiler-series-filter"
-                    aria-label="Filter by exam series or year"
-                    value={selectedSeries}
-                    onChange={(e) => setSelectedSeries(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all"
-                  >
-                    <option value="all">All Series / Years</option>
-                    {availableSeries.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Sort By Dropdown */}
-                <div className="w-32 sm:w-36">
-                  <label htmlFor="compiler-sort-control" className="sr-only">
-                    Sort By
-                  </label>
-                  <select
-                    id="compiler-sort-control"
-                    aria-label="Sort questions"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all"
-                  >
-                    <option value="paper">Paper Order</option>
-                    <option value="shortest">Shortest Stem</option>
-                    <option value="longest">Longest / Scenario</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Selection Status Pills */}
-              <div className="flex items-center gap-1.5" role="radiogroup" aria-label="Selection status filter">
-                {(
-                  [
-                    { id: 'all', label: 'All Questions', count: CAMBRIDGE_QUESTIONS.length },
-                    { id: 'selected', label: 'Selected in Test', count: selectedQuestionIds.length },
-                    {
-                      id: 'unselected',
-                      label: 'Unselected',
-                      count: Math.max(0, CAMBRIDGE_QUESTIONS.length - selectedQuestionIds.length),
-                    },
-                  ] as const
-                ).map((opt) => {
-                  const isActive = selectionFilter === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={isActive}
-                      aria-label={`Filter by ${opt.label} (${opt.count} questions)`}
-                      onClick={() => setSelectionFilter(opt.id)}
-                      className={`px-2.5 py-1 rounded-xl border-[1.5px] text-xs font-bold transition-all flex items-center gap-1.5 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 cursor-pointer ${
-                        isActive
-                          ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
-                          : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db] hover:border-[#201e1d]'
-                      }`}
-                    >
-                      <span>{opt.label}</span>
-                      <span
-                        className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                          isActive ? 'bg-[#c67139] text-white' : 'bg-[#eee7db] text-[#645c50]'
-                        }`}
-                      >
-                        {opt.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Content Type Pills */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={withDiagramsOnly}
-                  aria-label="Filter questions with diagrams only"
-                  title="Toggle diagrams only filter"
-                  onClick={() => setWithDiagramsOnly(!withDiagramsOnly)}
-                  className={`px-2.5 py-1 rounded-xl border-[1.5px] text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 cursor-pointer ${
-                    withDiagramsOnly
-                      ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
-                      : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db] hover:border-[#201e1d]'
-                  }`}
-                >
-                  <ImageIcon className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>With Diagrams</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={withTablesOnly}
-                  aria-label="Filter questions with data tables only"
-                  title="Toggle data tables only filter"
-                  onClick={() => setWithTablesOnly(!withTablesOnly)}
-                  className={`px-2.5 py-1 rounded-xl border-[1.5px] text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 cursor-pointer ${
-                    withTablesOnly
-                      ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
-                      : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db] hover:border-[#201e1d]'
-                  }`}
-                >
-                  <Table className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>With Data Tables</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={withMathOnly}
-                  aria-label="Filter questions with calculations or math formulas only"
-                  title="Toggle calculations / math filter"
-                  onClick={() => setWithMathOnly(!withMathOnly)}
-                  className={`px-2.5 py-1 rounded-xl border-[1.5px] text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 cursor-pointer ${
-                    withMathOnly
-                      ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
-                      : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db] hover:border-[#201e1d]'
-                  }`}
-                >
-                  <Calculator className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Calculations / Math</span>
-                </button>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={handleSelectAllFiltered}
+              aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+              title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+              className="text-xs font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 rounded-md transition-all active:translate-y-0.5 cursor-pointer"
+            >
+              {allFilteredSelected ? 'Deselect All' : 'Select All Filtered'}
+            </button>
           </div>
 
-          {/* Scrollable Question Cards */}
-          <div className="h-[calc(100vh-220px)] min-h-[480px] overflow-y-auto pr-2 flex flex-col gap-4">
+          {/* Scrollable Question Cards Container */}
+          <div className="h-[calc(100vh-140px)] min-h-[520px] overflow-y-auto pr-2 flex flex-col gap-4">
             {filteredQuestions.map((q) => {
               const isSelected = selectedQuestionIds.includes(q.id);
               return (
@@ -668,207 +428,483 @@ export default function TestCompilerHub() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Dedicated Persistent Test Assembly Drawer (100vh compliant) */}
-        <aside
-          aria-label="Test Assembly Drawer"
-          className="lg:sticky lg:top-4 h-[calc(100vh-130px)] max-h-[calc(100vh-130px)] flex flex-col p-5 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] overflow-hidden"
-        >
-          {/* Summary Header */}
-          <div className="shrink-0 flex items-center justify-between border-b-[1.5px] border-[#dcd3c4] pb-4">
-            <div>
-              <h2 className="font-heading text-xl font-black text-[#201e1d]">Test Assembly</h2>
-              <div className="flex gap-3 text-xs font-bold text-[#645c50] mt-1">
-                <span>{selectedQuestionIds.length} Questions</span>
-                <span>•</span>
-                <span>{selectedQuestionIds.length} Marks</span>
-                <span>•</span>
-                <span>~{estimatedTime} mins</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center font-black text-[#201e1d] shadow-offset-2">
-              {selectedQuestionIds.length}
-            </div>
-          </div>
-
-          {/* Collapsible Settings */}
-          <div className="shrink-0 flex flex-col gap-2.5 border-b-[1.5px] border-[#dcd3c4] py-3.5">
-            <button
-              type="button"
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              aria-expanded={isSettingsOpen}
-              aria-label={isSettingsOpen ? 'Collapse layout and settings' : 'Expand layout and settings'}
-              className="flex items-center justify-between font-bold text-sm text-[#201e1d] w-full p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-1 active:translate-y-0.5 transition-all cursor-pointer"
-            >
+        {/* RIGHT COLUMN: Controls & Test Assembly Drawer */}
+        <div className="flex flex-col gap-3.5 lg:sticky lg:top-4 h-[calc(100vh-130px)] max-h-[calc(100vh-130px)] min-w-0">
+          {/* Panel 1: Compact Question Filters & Tools (shrink-0) */}
+          <div className="p-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex flex-col gap-2.5 shrink-0">
+            {/* Header: Title, Found Badge, Reset Button, Collapse Toggle */}
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Settings2 className="w-4 h-4" aria-hidden="true" />
-                <span>Layout & Settings</span>
-              </div>
-              <span aria-hidden="true" className="text-xs text-[#645c50]">{isSettingsOpen ? '▲' : '▼'}</span>
-            </button>
-
-            {isSettingsOpen && (
-              <div className="flex flex-col gap-2.5 max-h-[35vh] overflow-y-auto pr-1">
-                <input
-                  type="text"
-                  value={testTitle}
-                  onChange={(e) => setTestTitle(e.target.value)}
-                  placeholder="Test Title"
-                  aria-label="Test Title"
-                  className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                />
-                <input
-                  type="text"
-                  value={schoolName}
-                  onChange={(e) => setSchoolName(e.target.value)}
-                  placeholder="School Name"
-                  aria-label="School Name"
-                  className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    value={dateString}
-                    onChange={(e) => setDateString(e.target.value)}
-                    placeholder="Exam Date"
-                    aria-label="Exam Date"
-                    className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                  />
-                  <input
-                    type="number"
-                    value={durationMinutes}
-                    onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
-                    placeholder="Duration (m)"
-                    aria-label="Duration in minutes"
-                    className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                  />
+                <div className="flex items-center gap-1.5">
+                  <Filter className="w-4 h-4 text-[#201e1d]" aria-hidden="true" />
+                  <span className="font-heading font-black text-sm text-[#201e1d]">Question Filters</span>
                 </div>
-                <input
-                  type="text"
-                  value={testCode}
-                  onChange={(e) => setTestCode(e.target.value)}
-                  placeholder="Test Code"
-                  aria-label="Test Code"
-                  className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                />
-
-                {/* Layout Toggles */}
-                <div className="flex flex-col gap-2 mt-1">
-                  {[
-                    { label: 'Cambridge Cover Page', state: includeCoverPage, set: setIncludeCoverPage, id: 'toggle-cover-page' },
-                    { label: 'Candidate Details Header', state: includeCandidateHeader, set: setIncludeCandidateHeader, id: 'toggle-header' },
-                    { label: 'Candidate MCQ Bubble Sheet', state: includeBubbleSheet, set: setIncludeBubbleSheet, id: 'toggle-bubble' },
-                    { label: 'Teacher Mark Scheme', state: includeMarkScheme, set: setIncludeMarkScheme, id: 'toggle-mark-scheme' },
-                  ].map((toggle, i) => (
-                    <label key={i} htmlFor={toggle.id} className="flex items-center gap-2.5 text-xs text-[#201e1d] cursor-pointer">
-                      <button
-                        id={toggle.id}
-                        type="button"
-                        role="switch"
-                        aria-checked={toggle.state}
-                        aria-label={toggle.label}
-                        onClick={() => toggle.set(!toggle.state)}
-                        className={`w-8 h-4 shrink-0 rounded-full relative transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 ${
-                          toggle.state ? 'bg-[#728157]' : 'bg-[#c0b6a5]'
-                        }`}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${
-                            toggle.state ? 'right-0.5' : 'left-0.5'
-                          }`}
-                        />
-                      </button>
-                      <span className="font-bold">{toggle.label}</span>
-                    </label>
-                  ))}
-                </div>
+                <span className="px-2 py-0.5 rounded-full bg-[#eee7db] text-[10px] font-bold text-[#645c50]">
+                  {filteredQuestions.length} found
+                </span>
               </div>
-            )}
-          </div>
-
-          {/* Selected Questions List */}
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2 py-3">
-            {selectedQuestions.length === 0 ? (
-              <div className="text-center py-8 text-[#645c50] text-xs font-medium flex flex-col items-center justify-center gap-1.5 h-full">
-                <span>No questions selected yet. Add some from the bank.</span>
-              </div>
-            ) : (
-              selectedQuestions.map((q, idx) => (
-                <div
-                  key={q.id}
-                  className="flex items-start gap-2 p-2 rounded-xl hover:bg-[#eee7db] transition-colors group"
+              <div className="flex items-center gap-1.5">
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleResetAllFilters}
+                    aria-label="Reset all filters"
+                    title="Reset all filters"
+                    className="px-2 py-0.5 rounded-full bg-white border border-[#c67139] text-[#c67139] text-[10px] font-bold hover:bg-[#ffe1d0] flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 transition-all shadow-xs"
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" aria-hidden="true" />
+                    <span>Reset ({activeFilterCount})</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                  aria-expanded={isFiltersExpanded}
+                  aria-label={isFiltersExpanded ? 'Collapse filters' : 'Expand filters'}
+                  title={isFiltersExpanded ? 'Collapse filters' : 'Expand filters'}
+                  className="p-1 rounded-lg text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] active:translate-y-0.5 transition-all cursor-pointer"
                 >
-                  <span className="w-5 text-center text-xs font-black text-[#645c50] mt-0.5">{idx + 1}.</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-[#201e1d] line-clamp-1">{q.stem_markdown}</div>
-                    <div className="text-[10px] text-[#645c50] font-mono mt-0.5">{q.citation || q.id}</div>
-                  </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
+                  {isFiltersExpanded ? (
+                    <ChevronUp className="w-4 h-4" aria-hidden="true" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible Body */}
+            {isFiltersExpanded && (
+              <div className="flex flex-col gap-2.5 pt-1 border-t border-[#dcd3c4]">
+                {/* Search Input */}
+                <div className="relative">
+                  <label htmlFor="compiler-search-input" className="sr-only">
+                    Search stems, question IDs, citations, and option texts
+                  </label>
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none" aria-hidden="true" />
+                  <input
+                    id="compiler-search-input"
+                    type="text"
+                    placeholder="Search stems, citations, IDs, options..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    aria-label="Search questions by stem, citations, IDs, or option text"
+                    className="w-full py-1.5 pl-8 pr-7 rounded-xl bg-white border border-[#dcd3c4] text-xs font-medium text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] placeholder:text-[#a19786] transition-all"
+                  />
+                  {search && (
                     <button
                       type="button"
-                      onClick={() => handleMoveQuestion(idx, 'up')}
-                      disabled={idx === 0}
-                      aria-label={`Move question ${idx + 1} up`}
-                      title="Move question up"
-                      className="p-1 hover:bg-[#dcd3c4] rounded disabled:opacity-30 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMoveQuestion(idx, 'down')}
-                      disabled={idx === selectedQuestions.length - 1}
-                      aria-label={`Move question ${idx + 1} down`}
-                      title="Move question down"
-                      className="p-1 hover:bg-[#dcd3c4] rounded disabled:opacity-30 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveQuestion(idx)}
-                      aria-label={`Remove question ${idx + 1} from selection`}
-                      title="Remove question"
-                      className="p-1 hover:bg-[#ffc6a5] text-[#c67139] rounded ml-1 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                      onClick={() => setSearch('')}
+                      aria-label="Clear search query"
+                      title="Clear search query"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
+                  )}
+                </div>
+
+                {/* Dropdowns Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="col-span-2">
+                    <label htmlFor="compiler-topic-filter" className="sr-only">
+                      Topic
+                    </label>
+                    <select
+                      id="compiler-topic-filter"
+                      aria-label="Filter by Cambridge topic"
+                      value={selectedTopicId}
+                      onChange={(e) => setSelectedTopicId(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all truncate"
+                    >
+                      <option value="all">All Topics</option>
+                      {CAMBRIDGE_TOPICS.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="compiler-series-filter" className="sr-only">
+                      Exam Series / Year
+                    </label>
+                    <select
+                      id="compiler-series-filter"
+                      aria-label="Filter by exam series or year"
+                      value={selectedSeries}
+                      onChange={(e) => setSelectedSeries(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all truncate"
+                    >
+                      <option value="all">All Series / Years</option>
+                      {availableSeries.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="compiler-sort-control" className="sr-only">
+                      Sort By
+                    </label>
+                    <select
+                      id="compiler-sort-control"
+                      aria-label="Sort questions"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all truncate"
+                    >
+                      <option value="paper">Paper Order</option>
+                      <option value="shortest">Shortest Stem</option>
+                      <option value="longest">Longest / Scenario</option>
+                    </select>
                   </div>
                 </div>
-              ))
+
+                {/* Selection Status Segmented Pill */}
+                <div
+                  className="grid grid-cols-3 p-0.5 rounded-xl bg-[#eee7db] text-[11px] font-bold"
+                  role="radiogroup"
+                  aria-label="Selection status filter"
+                >
+                  {(
+                    [
+                      { id: 'all', label: 'All', count: CAMBRIDGE_QUESTIONS.length },
+                      { id: 'selected', label: 'Selected', count: selectedQuestionIds.length },
+                      {
+                        id: 'unselected',
+                        label: 'Unselected',
+                        count: Math.max(0, CAMBRIDGE_QUESTIONS.length - selectedQuestionIds.length),
+                      },
+                    ] as const
+                  ).map((opt) => {
+                    const isActive = selectionFilter === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isActive}
+                        aria-label={`Filter by ${opt.label} (${opt.count} questions)`}
+                        onClick={() => setSelectionFilter(opt.id)}
+                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
+                          isActive
+                            ? 'bg-white text-[#201e1d] shadow-[0_1px_2px_rgba(0,0,0,0.1)] border border-[#dcd3c4]'
+                            : 'text-[#645c50] hover:text-[#201e1d]'
+                        }`}
+                      >
+                        <span className="truncate">{opt.label}</span>
+                        <span
+                          className={`text-[10px] font-mono px-1 rounded-full ${
+                            isActive ? 'bg-[#ffe1d0] text-[#c67139]' : 'bg-[#e2d9cb] text-[#645c50]'
+                          }`}
+                        >
+                          {opt.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Content Type Chips */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={withDiagramsOnly}
+                    aria-label="Filter questions with diagrams only"
+                    title="Toggle diagrams only filter"
+                    onClick={() => setWithDiagramsOnly(!withDiagramsOnly)}
+                    className={`px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
+                      withDiagramsOnly
+                        ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
+                        : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
+                    }`}
+                  >
+                    <ImageIcon className="w-3 h-3" aria-hidden="true" />
+                    <span>Diagrams</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={withTablesOnly}
+                    aria-label="Filter questions with data tables only"
+                    title="Toggle data tables only filter"
+                    onClick={() => setWithTablesOnly(!withTablesOnly)}
+                    className={`px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
+                      withTablesOnly
+                        ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
+                        : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
+                    }`}
+                  >
+                    <Table className="w-3 h-3" aria-hidden="true" />
+                    <span>Tables</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={withMathOnly}
+                    aria-label="Filter questions with calculations or math formulas only"
+                    title="Toggle calculations / math filter"
+                    onClick={() => setWithMathOnly(!withMathOnly)}
+                    className={`px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
+                      withMathOnly
+                        ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
+                        : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
+                    }`}
+                  >
+                    <Calculator className="w-3 h-3" aria-hidden="true" />
+                    <span>Math</span>
+                  </button>
+                </div>
+
+                {/* Quick Utility Buttons */}
+                <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#dcd3c4]/70 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setIsAutoModalOpen(true)}
+                    title="Auto-generate question preset"
+                    aria-label="Auto-generate question preset"
+                    className="px-2.5 py-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                  >
+                    <Zap className="w-3 h-3" aria-hidden="true" />
+                    <span>Auto Preset</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenDrafts}
+                    title="View and load saved test drafts"
+                    aria-label="View and load saved test drafts"
+                    className="px-2.5 py-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                  >
+                    <Save className="w-3 h-3" aria-hidden="true" />
+                    <span>Drafts</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleClearSelection}
+                    title="Clear all selected questions"
+                    aria-label="Clear all selected questions"
+                    disabled={selectedQuestionIds.length === 0}
+                    className="px-2.5 py-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1 transition-all cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0"
+                  >
+                    <X className="w-3 h-3" aria-hidden="true" />
+                    <span>Clear Selection</span>
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Pinned Action Footer */}
-          <div className="shrink-0 pt-3 border-t-[1.5px] border-[#dcd3c4] flex flex-col gap-2 mt-auto">
-            {saveSuccess && (
-              <div className="text-[11px] font-bold text-[#56633f] flex items-center justify-center gap-1 mb-1">
-                <Check className="w-3 h-3" /> Draft saved
+          {/* Panel 2: Dedicated Test Assembly Drawer (flex-1 min-h-0 flex flex-col) */}
+          <aside
+            aria-label="Test Assembly Drawer"
+            className="flex-1 min-h-0 flex flex-col p-4 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] overflow-hidden"
+          >
+            {/* Summary Header */}
+            <div className="shrink-0 flex items-center justify-between border-b-[1.5px] border-[#dcd3c4] pb-3">
+              <div>
+                <h2 className="font-heading text-lg font-black text-[#201e1d]">Test Assembly</h2>
+                <div className="flex gap-2 text-xs font-bold text-[#645c50] mt-0.5">
+                  <span>{selectedQuestionIds.length} Questions</span>
+                  <span>•</span>
+                  <span>{selectedQuestionIds.length} Marks</span>
+                  <span>•</span>
+                  <span>~{estimatedTime} mins</span>
+                </div>
               </div>
-            )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleSaveDraft}
-                title="Save test configuration as draft"
-                aria-label="Save current test configuration as draft"
-                className="flex-1 py-2.5 rounded-full bg-white border-2 border-[#201e1d] font-bold text-xs shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] transition-all cursor-pointer"
-              >
-                Save Draft
-              </button>
-              <button
-                type="button"
-                onClick={handleGeneratePDF}
-                disabled={selectedQuestions.length === 0}
-                title={selectedQuestions.length === 0 ? 'Select questions to generate PDF' : 'Generate printable PDF'}
-                aria-label="Generate printable PDF of compiled test paper"
-                className="flex-[2] py-2.5 rounded-full bg-[#c67139] border-2 border-[#201e1d] text-[#f9f4ed] font-black text-sm shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Download className="w-4 h-4" aria-hidden="true" /> PDF / Print
-              </button>
+              <div className="w-10 h-10 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center font-black text-[#201e1d] shadow-offset-2 text-sm">
+                {selectedQuestionIds.length}
+              </div>
             </div>
-          </div>
-        </aside>
+
+            {/* Collapsible Settings */}
+            <div className="shrink-0 flex flex-col gap-2 border-b-[1.5px] border-[#dcd3c4] py-2.5">
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                aria-expanded={isSettingsOpen}
+                aria-label={isSettingsOpen ? 'Collapse layout and settings' : 'Expand layout and settings'}
+                className="flex items-center justify-between font-bold text-xs text-[#201e1d] w-full p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-1 active:translate-y-0.5 transition-all cursor-pointer hover:bg-[#eee7db]"
+              >
+                <div className="flex items-center gap-2">
+                  <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Layout & Settings</span>
+                </div>
+                <span aria-hidden="true" className="text-[10px] text-[#645c50]">{isSettingsOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {isSettingsOpen && (
+                <div className="flex flex-col gap-2 max-h-[22vh] overflow-y-auto pr-1">
+                  <input
+                    type="text"
+                    value={testTitle}
+                    onChange={(e) => setTestTitle(e.target.value)}
+                    placeholder="Test Title"
+                    aria-label="Test Title"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                  />
+                  <input
+                    type="text"
+                    value={schoolName}
+                    onChange={(e) => setSchoolName(e.target.value)}
+                    placeholder="School Name"
+                    aria-label="School Name"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={dateString}
+                      onChange={(e) => setDateString(e.target.value)}
+                      placeholder="Exam Date"
+                      aria-label="Exam Date"
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                    />
+                    <input
+                      type="number"
+                      value={durationMinutes}
+                      onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
+                      placeholder="Duration (m)"
+                      aria-label="Duration in minutes"
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={testCode}
+                    onChange={(e) => setTestCode(e.target.value)}
+                    placeholder="Test Code"
+                    aria-label="Test Code"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                  />
+
+                  {/* Layout Toggles */}
+                  <div className="flex flex-col gap-1.5 mt-0.5">
+                    {[
+                      { label: 'Cambridge Cover Page', state: includeCoverPage, set: setIncludeCoverPage, id: 'toggle-cover-page' },
+                      { label: 'Candidate Details Header', state: includeCandidateHeader, set: setIncludeCandidateHeader, id: 'toggle-header' },
+                      { label: 'Candidate MCQ Bubble Sheet', state: includeBubbleSheet, set: setIncludeBubbleSheet, id: 'toggle-bubble' },
+                      { label: 'Teacher Mark Scheme', state: includeMarkScheme, set: setIncludeMarkScheme, id: 'toggle-mark-scheme' },
+                    ].map((toggle, i) => (
+                      <label key={i} htmlFor={toggle.id} className="flex items-center gap-2 text-xs text-[#201e1d] cursor-pointer">
+                        <button
+                          id={toggle.id}
+                          type="button"
+                          role="switch"
+                          aria-checked={toggle.state}
+                          aria-label={toggle.label}
+                          onClick={() => toggle.set(!toggle.state)}
+                          className={`w-7 h-4 shrink-0 rounded-full relative transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 ${
+                            toggle.state ? 'bg-[#728157]' : 'bg-[#c0b6a5]'
+                          }`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${
+                              toggle.state ? 'right-0.5' : 'left-0.5'
+                            }`}
+                          />
+                        </button>
+                        <span className="font-bold text-[11px]">{toggle.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Selected Questions List */}
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2 py-2">
+              {selectedQuestions.length === 0 ? (
+                <div className="text-center py-8 text-[#645c50] text-xs font-medium flex flex-col items-center justify-center gap-1.5 h-full">
+                  <span>No questions selected yet. Add some from the bank.</span>
+                </div>
+              ) : (
+                selectedQuestions.map((q, idx) => (
+                  <div
+                    key={q.id}
+                    className="flex items-start gap-2 p-2 rounded-xl hover:bg-[#eee7db] transition-colors group"
+                  >
+                    <span className="w-5 text-center text-xs font-black text-[#645c50] mt-0.5">{idx + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-[#201e1d] line-clamp-1">{q.stem_markdown}</div>
+                      <div className="text-[10px] text-[#645c50] font-mono mt-0.5">{q.citation || q.id}</div>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveQuestion(idx, 'up')}
+                        disabled={idx === 0}
+                        aria-label={`Move question ${idx + 1} up`}
+                        title="Move question up"
+                        className="p-1 hover:bg-[#dcd3c4] rounded disabled:opacity-30 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveQuestion(idx, 'down')}
+                        disabled={idx === selectedQuestions.length - 1}
+                        aria-label={`Move question ${idx + 1} down`}
+                        title="Move question down"
+                        className="p-1 hover:bg-[#dcd3c4] rounded disabled:opacity-30 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveQuestion(idx)}
+                        aria-label={`Remove question ${idx + 1} from selection`}
+                        title="Remove question"
+                        className="p-1 hover:bg-[#ffc6a5] text-[#c67139] rounded ml-1 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Pinned Action Footer */}
+            <div className="shrink-0 pt-3 border-t-[1.5px] border-[#dcd3c4] flex flex-col gap-2 mt-auto">
+              {saveSuccess && (
+                <div className="text-[11px] font-bold text-[#56633f] flex items-center justify-center gap-1 mb-1">
+                  <Check className="w-3 h-3" /> Draft saved
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  title="Save test configuration as draft"
+                  aria-label="Save current test configuration as draft"
+                  className="flex-1 py-2.5 rounded-full bg-white border-2 border-[#201e1d] font-bold text-xs shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] transition-all cursor-pointer"
+                >
+                  Save Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGeneratePDF}
+                  disabled={selectedQuestions.length === 0}
+                  title={selectedQuestions.length === 0 ? 'Select questions to generate PDF' : 'Generate printable PDF'}
+                  aria-label="Generate printable PDF of compiled test paper"
+                  className="flex-[2] py-2.5 rounded-full bg-[#c67139] border-2 border-[#201e1d] text-[#f9f4ed] font-black text-sm shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" aria-hidden="true" /> PDF / Print
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
 
       {/* Auto-Generate Modal */}
