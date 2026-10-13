@@ -103,6 +103,20 @@ function test(name: string, fn: () => void) {
   }
 }
 
+async function testAsync(name: string, fn: () => void | Promise<void>) {
+  totalTests++;
+  try {
+    await fn();
+    passedTests++;
+    console.log(`  \x1b[32m✓\x1b[0m ${name}`);
+  } catch (err: any) {
+    failedTests++;
+    const message = `  \x1b[31m✗\x1b[0m ${name}\n    Error: ${err.message || err}`;
+    failures.push(message);
+    console.log(message);
+  }
+}
+
 function assert(condition: boolean, message: string) {
   if (!condition) {
     throw new Error(message);
@@ -1274,17 +1288,195 @@ test('End-to-end load of /Users/joelchong/Downloads/0455_s24_12.json into ingest
 });
 
 // -----------------------------------------------------------------------------
-// Test Summary Output
+// [Suite 13] Ingestion Pipeline Overhaul, Status Feedback & Supabase Upsert Receipts
 // -----------------------------------------------------------------------------
-console.log('\n========================================================');
-console.log(`   TOTAL TESTS: ${totalTests}`);
-console.log(`   \x1b[32mPASSED:      ${passedTests}\x1b[0m`);
-if (failedTests > 0) {
-  console.log(`   \x1b[31mFAILED:      ${failedTests}\x1b[0m`);
-  console.log('========================================================\n');
-  process.exit(1);
-} else {
-  console.log(`   \x1b[32mALL ASSERTIONS PASSED PERFECTLY!\x1b[0m`);
-  console.log('========================================================\n');
-  process.exit(0);
+async function runSuite13() {
+  console.log('\n[Suite 13] Ingestion Pipeline Overhaul, Status Feedback & Supabase Upsert Receipts');
+
+  await testAsync('Pipeline Modal State & Summary Tracking in useIngestionStore', async () => {
+    ingestionStore.resetStore();
+    const state = ingestionStore.getState();
+    assertEqual(state.isPipelineModalOpen, false, 'Modal closed by default');
+    assertEqual(state.pipelineStep, 'preview', 'Pipeline step is preview');
+    assertEqual(state.lastPublishReceipt, null, 'No last receipt initially');
+    assertEqual(state.pipelineFileSummary, null, 'No file summary initially');
+
+    ingestionStore.setIsPipelineModalOpen(true);
+    assertEqual(ingestionStore.getState().isPipelineModalOpen, true, 'setIsPipelineModalOpen(true) works');
+    ingestionStore.setPipelineStep('upserting');
+    assertEqual(ingestionStore.getState().pipelineStep, 'upserting', 'setPipelineStep works');
+
+    const sampleJson = {
+      subject: { code: '0455', name: 'Economics', icon: '📈' },
+      paper: { series: 's', paper_code: '12', year: 2024 },
+      syllabus_topics: [
+        { name: 'Basic Economic Problem', order_index: 1 },
+        { name: 'Allocation of Resources', order_index: 2 },
+      ],
+      questions: [
+        {
+          question_number: 1,
+          cambridge_source_ref: 'Cambridge 0455/12 s24 Q1',
+          topic_name: 'Basic Economic Problem',
+          stem_markdown: 'What is defined as the next best alternative given up?',
+          options: [
+            { label: 'A', content_markdown: 'Opportunity cost', is_correct: true },
+            { label: 'B', content_markdown: 'Sunk cost', is_correct: false },
+            { label: 'C', content_markdown: 'Accounting cost', is_correct: false },
+            { label: 'D', content_markdown: 'Marginal revenue', is_correct: false },
+          ],
+          explanation_markdown: 'Opportunity cost is the benefit of the next best alternative foregone.',
+        },
+      ],
+    };
+
+    const res = ingestionStore.loadJson(sampleJson, { name: 'cambridge_econ_test.json', size: 2048 });
+    assertEqual(res.success, true, 'loadJson with fileMeta succeeds');
+    assertEqual(ingestionStore.getState().isPipelineModalOpen, true, 'isPipelineModalOpen set to true upon load');
+    assertEqual(ingestionStore.getState().pipelineStep, 'preview', 'pipelineStep set to preview');
+    const summary = ingestionStore.getState().pipelineFileSummary;
+    assert(Boolean(summary), 'pipelineFileSummary exists');
+    assertEqual(summary?.name, 'cambridge_econ_test.json', 'File name preserved');
+    assertEqual(summary?.size, 2048, 'File size preserved');
+    assertEqual(summary?.questionCount, 1, 'Question count is 1');
+    assertEqual(summary?.validCount, 1, 'Valid question count is 1');
+    assertEqual(summary?.optionCount, 4, 'Option count is 4');
+    assertEqual(summary?.topicCount, 2, 'Topic count is 2');
+  });
+
+  await testAsync('publishToSupabase records real database receipt, updates lifecycle and transitions pipelineStep', async () => {
+    // Mock global fetch for /api/ingest/publish
+    const origFetch = (globalThis as any).fetch;
+    (globalThis as any).fetch = async (url: string, init?: any) => {
+      if (url === '/api/ingest/publish') {
+        const body = JSON.parse(init?.body || '{}');
+        const qCount = body.paper?.questions?.length || 1;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            paper_id: '0455_s24_12',
+            subjects_count: 1,
+            topics_count: 2,
+            questions_count: qCount,
+            options_count: qCount * 4,
+          }),
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    };
+
+    try {
+      const pubRes = await ingestionStore.publishToSupabase();
+      assertEqual(pubRes.success, true, 'publishToSupabase returns success true');
+      assertEqual(ingestionStore.getState().pipelineStep, 'success', 'pipelineStep transitions to success');
+      assertEqual(ingestionStore.getState().lifecycleState, 'published', 'lifecycleState transitions to published');
+
+      const receipt = ingestionStore.getState().lastPublishReceipt;
+      assert(Boolean(receipt), 'lastPublishReceipt is stored in state');
+      assertEqual(receipt?.paper_id, '0455_s24_12', 'Receipt paper_id matches');
+      assertEqual(receipt?.questions_count, 1, 'Receipt questions_count matches');
+      assertEqual(receipt?.options_count, 4, 'Receipt options_count matches');
+      assertEqual(receipt?.topics_count, 2, 'Receipt topics_count matches');
+    } finally {
+      (globalThis as any).fetch = origFetch;
+    }
+  });
+
+  await testAsync('publishToSupabase handles API errors gracefully and updates error state', async () => {
+    const origFetch = (globalThis as any).fetch;
+    (globalThis as any).fetch = async () => ({
+      ok: false,
+      status: 500,
+      json: async () => ({
+        success: false,
+        error: 'Database connection failed: Postgres timeout',
+      }),
+    });
+
+    try {
+      const failRes = await ingestionStore.publishToSupabase();
+      assertEqual(failRes.success, false, 'publishToSupabase reports failure on API error');
+      assertEqual(ingestionStore.getState().publishStatus, 'error', 'publishStatus transitions to error');
+      assertEqual(ingestionStore.getState().pipelineStep, 'error', 'pipelineStep transitions to error');
+      assert(ingestionStore.getState().publishMessage.includes('Database connection failed'), 'Error message preserved');
+    } finally {
+      (globalThis as any).fetch = origFetch;
+    }
+  });
+
+  await testAsync('IngestionPipelineModal component exports cleanly with neobrutalist audit, status warning, and receipt', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const modalPath = path.resolve(process.cwd(), 'components/portal/IngestionPipelineModal.tsx');
+    assertEqual(fs.existsSync(modalPath), true, 'IngestionPipelineModal.tsx exists');
+
+    const content = fs.readFileSync(modalPath, 'utf8');
+    assertEqual(content.includes('export default function IngestionPipelineModal'), true, 'Default export exists');
+    assertEqual(content.includes('Schema & Integrity Audit'), true, 'Contains Schema & Integrity Audit');
+    assertEqual(content.includes('Ready to Upsert: Loaded in browser memory only'), true, 'Contains Supabase memory warning');
+    assertEqual(content.includes('Upsert') && content.includes('Questions to Supabase Live Bank'), true, 'Contains Primary Upsert CTA');
+    assertEqual(content.includes('Open Studio Workspace to Inspect/Edit'), true, 'Contains Secondary Workspace CTA');
+    assertEqual(content.includes('Supabase Database Receipt'), true, 'Contains Database Receipt Card');
+    assertEqual(content.includes('View in Question Bank'), true, 'Contains Question Bank link');
+    assertEqual(content.includes('Upload Another Paper'), true, 'Contains Upload Another Paper action');
+  });
+
+  await testAsync('IngestionHub integrates IngestionPipelineModal with file metadata forwarding and live upsert', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const hubContent = fs.readFileSync(path.resolve(process.cwd(), 'components/portal/IngestionHub.tsx'), 'utf8');
+
+    assertEqual(hubContent.includes('import IngestionPipelineModal from "./IngestionPipelineModal";'), true, 'Imports IngestionPipelineModal');
+    assertEqual(hubContent.includes('<IngestionPipelineModal'), true, 'Renders IngestionPipelineModal overlay');
+    assertEqual(hubContent.includes('loadJson(json, { name: file.name, size: file.size })'), true, 'Forwards file name and size to loadJson');
+    assertEqual(hubContent.includes('setIsPipelineModalOpen(true)'), true, 'Opens pipeline modal upon JSON load and upsert');
+  });
+
+  await testAsync('StagingReview replaces mock setTimeout with real Supabase API call, real receipt, and direct JSON upload', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const stagingContent = fs.readFileSync(path.resolve(process.cwd(), 'components/portal/StagingReview.tsx'), 'utf8');
+
+    // Verify mock setTimeout publishing was completely eliminated
+    assertEqual(stagingContent.includes('setTimeout(() => setPublishMessage(null), 5000);'), false, 'Mock setTimeout publish eliminated');
+    assertEqual(stagingContent.includes("fetch('/api/ingest/publish'"), true, 'Wires handlePublish to real /api/ingest/publish');
+    assertEqual(stagingContent.includes('publishReceipt'), true, 'Tracks publishReceipt state');
+    assertEqual(stagingContent.includes('publishError'), true, 'Tracks publishError state');
+    assertEqual(stagingContent.includes('Supabase Live Upsert Receipt:'), true, 'Displays real Supabase Live Upsert Receipt banner');
+    assertEqual(stagingContent.includes('Upload JSON Paper 📄'), true, 'Contains Upload JSON Paper button');
+    assertEqual(stagingContent.includes('Upload or Drop Staging JSON Past Paper'), true, 'Contains direct JSON dropzone');
+    assertEqual(stagingContent.includes('accept=".json,application/json,text/json"'), true, 'File input accepts JSON MIME types');
+  });
+
+  await testAsync('IngestionSetupWizard provides prominent JSON upload in both Cloud and Agent tabs with valid MIME types', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const wizardContent = fs.readFileSync(path.resolve(process.cwd(), 'components/portal/IngestionSetupWizard.tsx'), 'utf8');
+
+    assertEqual(wizardContent.includes('Have a Pre-staged Cambridge JSON Paper?'), true, 'Cloud tab includes fast-track JSON past paper card');
+    assertEqual(wizardContent.includes('Upload JSON Past Paper'), true, 'Upload JSON Past Paper action is prominent');
+    assertEqual(wizardContent.includes('Drop Antigravity Agent JSON File Here'), true, 'Agent tab includes prominent JSON dropzone');
+    assertEqual(wizardContent.includes('accept=".json,application/json,text/json"'), true, 'Accepts JSON extensions and MIME types');
+  });
+
+  // Summary Output
+  console.log('\n========================================================');
+  console.log(`   TOTAL TESTS: ${totalTests}`);
+  console.log(`   \x1b[32mPASSED:      ${passedTests}\x1b[0m`);
+  if (failedTests > 0) {
+    console.log(`   \x1b[31mFAILED:      ${failedTests}\x1b[0m`);
+    console.log('========================================================\n');
+    process.exit(1);
+  } else {
+    console.log(`   \x1b[32mALL ASSERTIONS PASSED PERFECTLY!\x1b[0m`);
+    console.log('========================================================\n');
+    process.exit(0);
+  }
 }
+
+runSuite13().catch((err) => {
+  console.error('Fatal test error in Suite 13:', err);
+  process.exit(1);
+});

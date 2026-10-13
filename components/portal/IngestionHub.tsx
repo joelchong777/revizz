@@ -6,6 +6,7 @@ import IngestionHeader from "./IngestionHeader";
 import IngestionStudioFrame from "./IngestionStudioFrame";
 import IngestionWorkspace from "./IngestionWorkspace";
 import { IngestionSettingsModal } from "./IngestionModals";
+import IngestionPipelineModal from "./IngestionPipelineModal";
 import type { StagingPaper, StagingQuestion } from "@/types/ingestion";
 import {
   CheckCircle2,
@@ -31,6 +32,11 @@ export default function IngestionHub() {
     activePdfPage,
     showPdfViewer,
     lifecycleState,
+    isPipelineModalOpen,
+    setIsPipelineModalOpen,
+    pipelineStep,
+    setPipelineStep,
+    lastPublishReceipt,
     canUndo,
     canRedo,
     loadJson,
@@ -103,10 +109,11 @@ export default function IngestionHub() {
         }
 
         const json = JSON.parse(text);
-        const res = loadJson(json);
+        const res = loadJson(json, { name: file.name, size: file.size });
         if (res.success) {
           setIsSetupOpen(false);
-          setPublishStatus("success");
+          setIsPipelineModalOpen(true);
+          setPipelineStep("preview");
           const qCount = Array.isArray(json)
             ? json.length
             : (json?.questions?.length || json?.paper?.questions?.length || "all");
@@ -194,7 +201,8 @@ export default function IngestionHub() {
       return;
     }
 
-    // Call store publishing action
+    // Open pipeline modal and trigger upsert
+    setIsPipelineModalOpen(true);
     await publishToSupabase();
   };
 
@@ -457,9 +465,13 @@ export default function IngestionHub() {
             onUploadJson={handleFileUpload}
             isReadingFile={isReadingFile}
             onLoadStagedPaper={(loadedPaper) => {
-              const res = loadJson(loadedPaper);
+              const res = loadJson(loadedPaper, {
+                name: `${loadedPaper.id || "staged_paper"}.json`,
+              });
               if (res.success) {
                 setIsSetupOpen(false);
+                setIsPipelineModalOpen(true);
+                setPipelineStep("preview");
                 setPublishStatus("success");
                 setPublishMessage("Staged paper loaded and validated successfully.");
               } else {
@@ -519,6 +531,26 @@ export default function IngestionHub() {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         onSave={(meta) => updatePaperMetadata(meta)}
+      />
+
+      {/* Overlays: Paper Ingestion Pipeline & Supabase Upsert Modal */}
+      <IngestionPipelineModal
+        isOpen={isPipelineModalOpen}
+        onClose={() => setIsPipelineModalOpen(false)}
+        onOpenWorkspace={() => {
+          setIsPipelineModalOpen(false);
+          setIsSetupOpen(false);
+        }}
+        onUploadAnother={() => {
+          setIsPipelineModalOpen(false);
+          setIsSetupOpen(true);
+        }}
+        onViewQuestionBank={() => {
+          setIsPipelineModalOpen(false);
+          if (typeof window !== "undefined") {
+            window.location.href = "/admin?tab=compiler";
+          }
+        }}
       />
     </div>
   );

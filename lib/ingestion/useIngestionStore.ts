@@ -12,6 +12,28 @@ import { extractQuestionsChunked } from './geminiExtractor';
 
 export type PublishStatus = 'idle' | 'validating' | 'publishing' | 'success' | 'error';
 export type StatusFilter = 'all' | 'valid' | 'review' | 'diagrams';
+export type PipelineStep = 'preview' | 'upserting' | 'success' | 'error';
+
+export interface PublishReceipt {
+  success: boolean;
+  paper_id: string;
+  subjects_count: number;
+  topics_count: number;
+  questions_count: number;
+  options_count: number;
+  error?: string;
+  timestamp?: string;
+}
+
+export interface PipelineFileSummary {
+  name: string;
+  size: number;
+  questionCount?: number;
+  validCount?: number;
+  topicCount?: number;
+  optionCount?: number;
+  diagramCount?: number;
+}
 
 export interface ExtractionProgress {
   stage: string;
@@ -51,6 +73,12 @@ export interface IngestionState {
   // Paper lifecycle state
   lifecycleState: PaperLifecycleState;
 
+  // Ingestion Pipeline Modal state & Supabase receipts
+  lastPublishReceipt: PublishReceipt | null;
+  isPipelineModalOpen: boolean;
+  pipelineStep: PipelineStep;
+  pipelineFileSummary: PipelineFileSummary | null;
+
   // Undo / Redo history indicators
   canUndo: boolean;
   canRedo: boolean;
@@ -58,7 +86,10 @@ export interface IngestionState {
 
 export interface IngestionActions {
   loadPreset: (id?: string) => Promise<void>;
-  loadJson: (jsonContent: any) => { success: boolean; errors?: string[] };
+  loadJson: (
+    jsonContent: any,
+    fileMeta?: { name?: string; size?: number }
+  ) => { success: boolean; errors?: string[] };
   updatePaperMetadata: (updates: Partial<StagingPaper>) => void;
   setSelectedIdx: (idx: number) => void;
   addQuestion: () => void;
@@ -83,6 +114,12 @@ export interface IngestionActions {
   setSearchQuery: (query: string) => void;
   setStatusFilter: (filter: StatusFilter) => void;
   resetStore: () => void;
+
+  // Pipeline modal & receipt actions
+  setIsPipelineModalOpen: (open: boolean) => void;
+  setPipelineStep: (step: PipelineStep) => void;
+  setPipelineFileSummary: (summary: PipelineFileSummary | null) => void;
+  setLastPublishReceipt: (receipt: PublishReceipt | null) => void;
 
   // Dual-pane & PDF session actions
   setShowPdfViewer: (show: boolean | ((prev: boolean) => boolean)) => void;
@@ -152,6 +189,11 @@ const initialRawState: IngestionState = {
 
   showPdfViewer: true,
   lifecycleState: 'draft',
+
+  lastPublishReceipt: null,
+  isPipelineModalOpen: false,
+  pipelineStep: 'preview',
+  pipelineFileSummary: null,
 
   canUndo: false,
   canRedo: false,
@@ -527,7 +569,10 @@ const actions: IngestionActions = {
     }
   },
 
-  loadJson(jsonContent: any): { success: boolean; errors?: string[] } {
+  loadJson(
+    jsonContent: any,
+    fileMeta?: { name?: string; size?: number }
+  ): { success: boolean; errors?: string[] } {
     try {
       let parsed = jsonContent;
       if (typeof jsonContent === 'string') {
@@ -539,6 +584,7 @@ const actions: IngestionActions = {
         setState({
           publishStatus: 'error',
           publishMessage: errorMsg,
+          pipelineStep: 'error',
         });
         return { success: false, errors: [errorMsg] };
       }
@@ -549,6 +595,7 @@ const actions: IngestionActions = {
         setState({
           publishStatus: 'error',
           publishMessage: errorMsg,
+          pipelineStep: 'error',
         });
         return { success: false, errors: [errorMsg] };
       }
@@ -560,6 +607,7 @@ const actions: IngestionActions = {
         setState({
           publishStatus: 'error',
           publishMessage: `JSON schema validation failed: ${errors[0] || 'Unknown error'}`,
+          pipelineStep: 'error',
         });
         return {
           success: false,
@@ -571,6 +619,38 @@ const actions: IngestionActions = {
       redoStack = [];
 
       const loadedPaper = validation.data || candidatePaper;
+
+      const validQuestions = (loadedPaper.questions || []).filter((q) => {
+        if (q.status === 'withdrawn') return false;
+        if (!q.stem_markdown || !q.stem_markdown.trim()) return false;
+        if (!Array.isArray(q.options) || q.options.length !== 4) return false;
+        const correct = q.options.filter((o) => o.is_correct).length;
+        return correct === 1;
+      });
+
+      const totalOptions = (loadedPaper.questions || []).reduce(
+        (sum, q) => sum + (q.options?.length || 0),
+        0
+      );
+
+      const diagramsCount = (loadedPaper.questions || []).filter(
+        (q) => Boolean(q.diagram?.has_diagram || (q as any).has_diagram)
+      ).length;
+
+      const summary: PipelineFileSummary = {
+        name: fileMeta?.name || 'Uploaded JSON Paper',
+        size:
+          fileMeta?.size ||
+          (typeof jsonContent === 'string'
+            ? jsonContent.length
+            : JSON.stringify(jsonContent).length),
+        questionCount: loadedPaper.questions?.length || 0,
+        validCount: validQuestions.length,
+        optionCount: totalOptions,
+        topicCount: loadedPaper.syllabus_topics?.length || 0,
+        diagramCount: diagramsCount,
+      };
+
       setState({
         paper: loadedPaper,
         selectedIdx: 0,
@@ -578,6 +658,9 @@ const actions: IngestionActions = {
         publishMessage: `JSON paper loaded successfully (${loadedPaper.questions?.length || 0} questions).`,
         lifecycleState: 'review',
         activePdfPage: loadedPaper.questions?.[0]?.page_number || 1,
+        pipelineFileSummary: summary,
+        isPipelineModalOpen: true,
+        pipelineStep: 'preview',
       });
 
       return { success: true };
@@ -586,6 +669,7 @@ const actions: IngestionActions = {
       setState({
         publishStatus: 'error',
         publishMessage: `Failed to parse JSON: ${errorMsg}`,
+        pipelineStep: 'error',
       });
       return {
         success: false,
@@ -828,6 +912,7 @@ const actions: IngestionActions = {
       setState({
         publishStatus: 'error',
         publishMessage: err,
+        pipelineStep: 'error',
       });
       return { success: false, error: err };
     }
@@ -836,6 +921,7 @@ const actions: IngestionActions = {
     setState({
       publishStatus: 'validating',
       publishMessage: 'Validating staging paper schema and integrity...',
+      pipelineStep: 'upserting',
     });
 
     const validation = validateStagingPaper(currentPaper, { allowPartialBatch: true });
@@ -844,6 +930,7 @@ const actions: IngestionActions = {
       setState({
         publishStatus: 'error',
         publishMessage: `Cannot publish - validation failed:\n${errorDetails}`,
+        pipelineStep: 'error',
       });
       return { success: false, error: errorDetails };
     }
@@ -852,6 +939,7 @@ const actions: IngestionActions = {
     setState({
       publishStatus: 'publishing',
       publishMessage: 'Publishing relational paper & questions to Supabase...',
+      pipelineStep: 'upserting',
     });
 
     try {
@@ -868,18 +956,31 @@ const actions: IngestionActions = {
         throw new Error(result.error || `Publish failed with status code ${res.status}`);
       }
 
+      const receipt: PublishReceipt = {
+        success: true,
+        paper_id: result.paper_id || currentPaper.id,
+        subjects_count: result.subjects_count ?? 1,
+        topics_count: result.topics_count ?? (currentPaper.syllabus_topics?.length || 1),
+        questions_count: result.questions_count ?? currentPaper.questions.length,
+        options_count: result.options_count ?? (currentPaper.questions.length * 4),
+        timestamp: new Date().toISOString(),
+      };
+
       setState({
         publishStatus: 'success',
-        publishMessage: `Paper successfully published! Upserted ${result.questions_count ?? currentPaper.questions.length} questions.`,
+        publishMessage: `Paper successfully published! Upserted ${receipt.questions_count} questions.`,
         lifecycleState: 'published',
+        lastPublishReceipt: receipt,
+        pipelineStep: 'success',
       });
 
-      return { success: true, data: result };
+      return { success: true, data: receipt };
     } catch (err: any) {
       const errorMsg = err.message || 'Unknown network error during publish.';
       setState({
         publishStatus: 'error',
         publishMessage: `Publish failed: ${errorMsg}`,
+        pipelineStep: 'error',
       });
       return { success: false, error: errorMsg };
     }
@@ -1009,6 +1110,22 @@ const actions: IngestionActions = {
       activeAbortController = null;
     }
     setState({ ...initialRawState });
+  },
+
+  setIsPipelineModalOpen(open: boolean): void {
+    setState({ isPipelineModalOpen: open });
+  },
+
+  setPipelineStep(step: PipelineStep): void {
+    setState({ pipelineStep: step });
+  },
+
+  setPipelineFileSummary(summary: PipelineFileSummary | null): void {
+    setState({ pipelineFileSummary: summary });
+  },
+
+  setLastPublishReceipt(receipt: PublishReceipt | null): void {
+    setState({ lastPublishReceipt: receipt });
   },
 
   setShowPdfViewer(show: boolean | ((prev: boolean) => boolean)): void {

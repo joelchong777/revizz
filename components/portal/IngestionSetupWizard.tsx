@@ -668,6 +668,71 @@ export default function IngestionSetupWizard({
         )}
       </div>
 
+      {/* Fast-Track JSON Past Paper Card / Dropzone */}
+      <div className="bg-[#fff7f0] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_#201e1d] flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚡</span>
+            <div>
+              <h3 className="font-heading text-sm sm:text-base font-black text-[#201e1d]">
+                Have a Pre-staged Cambridge JSON Paper?
+              </h3>
+              <p className="text-xs text-[#645c50] font-medium">
+                Skip OCR extraction completely. Upload or drag-and-drop your Cambridge JSON file to inspect &amp; upsert immediately.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setUploadError(null);
+              jsonInputRef.current?.click();
+            }}
+            className="px-4 py-2 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white text-xs font-heading font-black shadow-[2px_2px_0_#201e1d] border-2 border-[#201e1d] active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Upload JSON Past Paper</span>
+          </button>
+        </div>
+
+        {/* Dropzone for JSON file */}
+        <div
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDraggingJson(true);
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = "copy";
+            setIsDraggingJson(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDraggingJson(false);
+          }}
+          onDrop={handleJsonDrop}
+          onClick={() => {
+            if (isReading) return;
+            setUploadError(null);
+            jsonInputRef.current?.click();
+          }}
+          className={`p-4 border-2 border-dashed rounded-xl flex items-center justify-center text-center gap-3 cursor-pointer transition-all ${
+            isDraggingJson
+              ? "bg-[#ffe1d0] border-[#c67139] shadow-sm scale-[1.01]"
+              : "bg-white/80 border-[#dcd3c4] hover:bg-white hover:border-[#c67139]"
+          }`}
+        >
+          <FileCode className="w-5 h-5 text-[#c67139] shrink-0" />
+          <span className="text-xs font-bold text-[#645c50]">
+            Drag &amp; drop your Cambridge JSON file here (e.g.{" "}
+            <span className="font-mono text-[#c67139] font-black">0455_s24_12.json</span>) or click to browse
+          </span>
+        </div>
+      </div>
+
       {/* Step 2: Dual PDF Dropzones (QP & MS) */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">

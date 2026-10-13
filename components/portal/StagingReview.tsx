@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import QuestionCard from '@/components/QuestionCard';
 import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
+import { normalizeStagingPayload, PublishReceipt } from '@/lib/ingestion/useIngestionStore';
 
 interface StagedQuestion {
   id: string;
@@ -75,6 +76,11 @@ export default function StagingReview() {
   const [selectedQuestionIdx, setSelectedQuestionIdx] = useState(0);
   const [stagedQuestions, setStagedQuestions] = useState<StagedQuestion[]>(initialStagedQuestions);
   const [publishMessage, setPublishMessage] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishReceipt, setPublishReceipt] = useState<PublishReceipt | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -192,10 +198,139 @@ export default function StagingReview() {
     downloadAnchor.remove();
   };
 
-  const handlePublish = () => {
-    const batchId = `BATCH-${paperData.subject.code}-${paperData.paper.series.toUpperCase()}${paperData.paper.year}-${paperData.paper.paper_code}`;
-    setPublishMessage(`Batch ${batchId} approved! All ${totalCount} questions staged to Supabase Live Bank.`);
-    setTimeout(() => setPublishMessage(null), 5000);
+  const handleLoadJsonFile = (file: File) => {
+    const isJsonExt = file.name.toLowerCase().endsWith('.json');
+    const isJsonType = !file.type || file.type === 'application/json' || file.type === 'text/json';
+    if (!isJsonExt && !isJsonType) {
+      setPublishError(`Invalid file "${file.name}": Please select a valid .json file.`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        if (!text || !text.trim()) {
+          setPublishError(`"${file.name}" is an empty file.`);
+          return;
+        }
+
+        const json = JSON.parse(text);
+        const normalized = normalizeStagingPayload(json);
+        if (!normalized || !Array.isArray(normalized.questions) || normalized.questions.length === 0) {
+          setPublishError(`Could not parse "${file.name}" into a valid Cambridge paper: missing questions.`);
+          return;
+        }
+
+        setPaperData({
+          subject: {
+            code: normalized.subject.code || DEFAULT_PAPER_DATA.subject.code,
+            name: normalized.subject.name || DEFAULT_PAPER_DATA.subject.name,
+            icon: normalized.subject.icon || DEFAULT_PAPER_DATA.subject.icon,
+          },
+          paper: {
+            series: normalized.paper.series || DEFAULT_PAPER_DATA.paper.series,
+            paper_code: normalized.paper.paper_code || DEFAULT_PAPER_DATA.paper.paper_code,
+            year: Number(normalized.paper.year) || DEFAULT_PAPER_DATA.paper.year,
+          },
+          syllabus_topics: Array.isArray(normalized.syllabus_topics) && normalized.syllabus_topics.length > 0
+            ? normalized.syllabus_topics
+            : DEFAULT_PAPER_DATA.syllabus_topics,
+        });
+
+        const loadedQuestions: StagedQuestion[] = normalized.questions.map((q: any, idx) => {
+          const options = (q.options || []).map((opt: any) => ({
+            id: opt.id || `opt-${(opt.label || 'A').toLowerCase()}`,
+            text_markdown: opt.content_markdown || opt.text_markdown || '',
+          }));
+          const correctOpt = q.options?.find((opt: any) => opt.is_correct);
+          const correct_option_id = correctOpt
+            ? (correctOpt.id || `opt-${(correctOpt.label || 'A').toLowerCase()}`)
+            : (options[0]?.id || 'opt-a');
+
+          return {
+            id: q.id || `${normalized.subject.code}-${normalized.paper.series}${normalized.paper.year}-${normalized.paper.paper_code}-q${String(q.question_number || idx + 1).padStart(2, '0')}`,
+            stem_markdown: q.stem_markdown || '',
+            options,
+            correct_option_id,
+            explanation_markdown: q.explanation_markdown || '',
+            citation: q.cambridge_source_ref || `Cambridge ${normalized.subject.code}/${normalized.paper.paper_code} Q${idx + 1}`,
+            topic_id: q.topic_id || (q.topic_name ? q.topic_name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'general'),
+            topic: q.topic_name || 'General',
+            has_diagram: Boolean(q.diagram?.has_diagram || q.has_diagram),
+            image_url: q.diagram?.image_url,
+            diagram: q.diagram,
+            status: ((q.diagram?.has_diagram || q.has_diagram) ? 'review' : 'complete') as 'complete' | 'review',
+          };
+        });
+
+        setStagedQuestions(loadedQuestions);
+        setSelectedQuestionIdx(0);
+        setPublishReceipt(null);
+        setPublishError(null);
+        setPublishMessage(`Loaded "${file.name}" successfully (${loadedQuestions.length} questions). Ready to review and publish to Supabase!`);
+      } catch (err: any) {
+        setPublishError(`Failed to parse "${file.name}": ${err?.message || 'Syntax error'}`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    setPublishError(null);
+    setPublishReceipt(null);
+    setPublishMessage('Publishing staged paper & questions to Supabase Live Bank...');
+
+    const activePaperPayload = {
+      id: `${paperData.subject.code}_${paperData.paper.series}${String(paperData.paper.year).slice(-2)}_${paperData.paper.paper_code}`,
+      subject: paperData.subject,
+      paper: paperData.paper,
+      syllabus_topics: paperData.syllabus_topics,
+      questions: stagedQuestions.map((q, idx) => ({
+        question_number: idx + 1,
+        cambridge_source_ref: q.citation || `Cambridge ${paperData.subject.code}/${paperData.paper.paper_code} ${paperData.paper.series}${paperData.paper.year} Q${idx + 1}`,
+        topic_name: q.topic,
+        stem_markdown: q.stem_markdown,
+        diagram: {
+          has_diagram: q.has_diagram,
+          image_url: q.image_url,
+        },
+        options: q.options.map((opt, optIdx) => ({
+          label: (['A', 'B', 'C', 'D'][optIdx] || 'A') as 'A' | 'B' | 'C' | 'D',
+          content_markdown: opt.text_markdown,
+          is_correct: q.correct_option_id === opt.id,
+        })),
+        explanation_markdown: q.explanation_markdown,
+        status: (q.status === 'complete' ? 'active' : 'draft') as 'active' | 'draft',
+      })),
+    };
+
+    try {
+      const res = await fetch('/api/ingest/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paper: activePaperPayload }),
+      });
+
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || `Publish failed with status ${res.status}`);
+      }
+
+      setPublishReceipt(result);
+      setPublishMessage(
+        `Batch BATCH-${paperData.subject.code}-${paperData.paper.series.toUpperCase()}${paperData.paper.year}-${paperData.paper.paper_code} published! Upserted ${result.questions_count ?? totalCount} questions to Supabase.`
+      );
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to publish staged paper to Supabase.';
+      setPublishError(errorMsg);
+      setPublishMessage(`Publish failed: ${errorMsg}`);
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   if (!activeQuestion) {
@@ -204,6 +339,19 @@ export default function StagingReview() {
 
   return (
     <div className="flex flex-col space-y-6">
+      {/* Hidden File Input for Direct JSON Upload */}
+      <input
+        ref={jsonInputRef}
+        type="file"
+        accept=".json,application/json,text/json"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleLoadJsonFile(file);
+          e.target.value = '';
+        }}
+      />
+
       {/* Top Bar */}
       <div className="bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-4 rounded-[28px] p-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-3">
@@ -219,17 +367,115 @@ export default function StagingReview() {
             </div>
           </div>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-xl font-bold border-2 border-emerald-300">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => jsonInputRef.current?.click()}
+            className="px-4 py-2 bg-white hover:bg-[#eee7db] text-[#201e1d] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Upload JSON Paper 📄</span>
+          </button>
+          <div className="bg-emerald-100 text-emerald-800 px-3.5 py-2 rounded-xl font-bold text-xs border-2 border-emerald-300">
             {validatedCount} / {totalCount} Validated ✅
           </div>
-          <div className="bg-[#ffe1d0] text-[#c67139] px-4 py-2 rounded-xl font-bold border-2 border-[#c67139]/40">
+          <div className="bg-[#ffe1d0] text-[#c67139] px-3.5 py-2 rounded-xl font-bold text-xs border-2 border-[#c67139]/40">
             {diagramCount} Diagrams Extracted 🖼️
           </div>
         </div>
       </div>
 
-      {publishMessage && (
+      {/* Direct JSON Dropzone */}
+      <div
+        onDragEnter={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'copy';
+          setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+          const file = e.dataTransfer.files?.[0];
+          if (file) handleLoadJsonFile(file);
+        }}
+        onClick={() => jsonInputRef.current?.click()}
+        className={`border-2 border-dashed rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 cursor-pointer transition-all ${
+          isDragging
+            ? 'bg-[#ffe1d0] border-[#c67139] shadow-md scale-[1.01]'
+            : 'bg-white/80 border-[#dcd3c4] hover:bg-white hover:border-[#c67139]'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] text-[#c67139] flex items-center justify-center font-bold text-lg shadow-xs">
+            📄
+          </div>
+          <div>
+            <div className="font-heading font-black text-sm text-[#201e1d]">
+              Upload or Drop Staging JSON Past Paper
+            </div>
+            <div className="text-xs text-[#645c50] font-medium">
+              Load an Antigravity JSON past paper directly into this staging reviewer to inspect questions and publish to Supabase.
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            jsonInputRef.current?.click();
+          }}
+          className="px-4 py-2 bg-[#201e1d] hover:bg-[#3d3835] text-white text-xs font-heading font-black rounded-xl border border-[#201e1d] active:translate-y-0.5 shadow-xs transition-all shrink-0 cursor-pointer"
+        >
+          Select JSON File
+        </button>
+      </div>
+
+      {publishReceipt && (
+        <div className="bg-[#f0fae1] border-2 border-[#728157] rounded-2xl p-4 sm:p-5 shadow-[4px_4px_0_#728157] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <div className="font-heading font-black text-emerald-950 text-base">
+                Supabase Live Upsert Receipt: {publishReceipt.paper_id}
+              </div>
+              <div className="text-xs text-emerald-800 font-bold mt-0.5">
+                {publishReceipt.questions_count} questions • {publishReceipt.options_count} options • {publishReceipt.topics_count} topics • Status: Live in Bank
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setPublishReceipt(null)}
+            className="px-3.5 py-1.5 bg-white border border-[#728157] text-[#3d472b] rounded-xl text-xs font-bold hover:bg-[#f0fae1] cursor-pointer"
+          >
+            Dismiss Receipt
+          </button>
+        </div>
+      )}
+
+      {publishError && (
+        <div className="bg-[#fee2e2] border-2 border-[#b91c1c] text-[#b91c1c] rounded-2xl p-4 shadow-sm flex items-center justify-between">
+          <span className="font-bold text-xs sm:text-sm">⚠️ {publishError}</span>
+          <button
+            onClick={() => setPublishError(null)}
+            className="text-xs font-bold underline ml-4 hover:opacity-80 cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {publishMessage && !publishReceipt && (
         <div className="bg-emerald-50 border-2 border-emerald-500 text-emerald-900 p-4 rounded-2xl font-bold text-sm shadow-sm flex items-center justify-between">
           <span>🚀 {publishMessage}</span>
           <button
@@ -412,9 +658,19 @@ export default function StagingReview() {
           </button>
           <button
             onClick={handlePublish}
-            className="w-full sm:w-auto px-8 py-3 bg-[#c67139] text-white font-black text-lg rounded-2xl border-2 border-[#201e1d] shadow-offset-4 hover:bg-[#b2622d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+            disabled={isPublishing}
+            className={`w-full sm:w-auto px-8 py-3 bg-[#c67139] text-white font-black text-lg rounded-2xl border-2 border-[#201e1d] shadow-offset-4 hover:bg-[#b2622d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 ${
+              isPublishing ? 'opacity-70 cursor-wait' : 'cursor-pointer'
+            }`}
           >
-            Approve & Publish to Supabase Live 🚀
+            {isPublishing ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                <span>Upserting to Supabase...</span>
+              </>
+            ) : (
+              <span>Approve & Publish to Supabase Live 🚀</span>
+            )}
           </button>
         </div>
       </div>
