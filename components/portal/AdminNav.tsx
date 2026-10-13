@@ -97,7 +97,7 @@ export default function AdminNav({
   return (
     <aside
       className={`h-full flex flex-col justify-between p-3.5 box-border bg-[#ebddc5] border-r-2 border-[#201e1d] font-body text-[#201e1d] z-30 transition-all ${
-        compact ? 'w-[76px]' : 'w-[264px]'
+        compact ? 'w-[76px]' : 'w-[264px] shrink-0'
       }`}
       style={{
         background: 'var(--color-surface, #ebddc5)',
@@ -137,7 +137,7 @@ export default function AdminNav({
           {onClose && (
             <button
               onClick={onClose}
-              className="md:hidden p-1 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-colors"
+              className="lg:hidden p-1 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-colors"
               aria-label="Close sidebar"
             >
               <X className="w-4 h-4 text-[#201e1d]" />
