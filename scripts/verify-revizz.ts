@@ -51,6 +51,7 @@ import {
   countActiveFilters,
 } from '../lib/compilerFilters';
 import { normalizeGeminiModel, toBase64, isTransientCapacityError } from '../lib/ingestion/geminiExtractor';
+import { normalizeStagingPayload, ingestionStore } from '../lib/ingestion/useIngestionStore';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -79,6 +80,7 @@ const mockStorage = new LocalStorageMock();
   dispatchEvent: (_event: any) => true,
   addEventListener: () => {},
   removeEventListener: () => {},
+  localStorage: mockStorage,
 };
 
 // Lightweight Test Runner
@@ -976,6 +978,203 @@ test('Ingestion Skill Documentation: SKILL.md documents dedicated agent ingestio
   assertEqual(content.includes('Dedicated Antigravity Agent Ingestion Command & Workflow'), true, 'SKILL.md has Dedicated Antigravity Agent section');
   assertEqual(content.includes('npm run ingest -- --qp <path-to-qp.pdf> --ms <path-to-ms.pdf>'), true, 'SKILL.md documents terminal CLI command');
   assertEqual(content.includes('Ingest paper <path-to-qp.pdf> and <path-to-ms.pdf>'), true, 'SKILL.md documents chat prompt');
+});
+
+// -----------------------------------------------------------------------------
+// [Suite 11] Ingestion Studio JSON Paper & Slice Upload Verification
+// -----------------------------------------------------------------------------
+console.log('\n\x1b[1m\x1b[34m[Suite 11] Ingestion Studio JSON Paper & Slice Upload Verification\x1b[0m');
+
+test('Direct StagingPaper JSON (staging/0455_s24_12.json) loads paper without evaluating to metadata object', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.resolve(process.cwd(), 'staging/0455_s24_12.json');
+  assertEqual(fs.existsSync(filePath), true, 'staging/0455_s24_12.json exists');
+
+  const rawJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  const res = ingestionStore.loadJson(rawJson);
+
+  assertEqual(res.success, true, 'loadJson succeeded for direct staging paper');
+  const storePaper = ingestionStore.getState().paper;
+  assert(Boolean(storePaper), 'Store paper must not be null');
+  assertEqual(Array.isArray(storePaper?.questions), true, 'Store paper must have questions array');
+  assertEqual(storePaper?.questions.length, 30, 'Store paper contains exactly 30 questions');
+  assertEqual(storePaper?.subject.code, '0455', 'Subject code is 0455');
+  assertEqual(storePaper?.paper.series, 's', 'Series is s');
+  assertEqual(storePaper?.paper.year, 2024, 'Year is 2024');
+  assertEqual(storePaper?.paper.paper_code, '12', 'Paper code is 12');
+  assertEqual(ingestionStore.getState().publishStatus, 'idle', 'publishStatus resets to idle on success');
+});
+
+test('Wrapped { paper: StagingPaper } format unpacks questions and metadata cleanly', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.resolve(process.cwd(), 'staging/0455_s24_12.json');
+  const rawPaper = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  const wrapped = { paper: rawPaper };
+  const res = ingestionStore.loadJson(wrapped);
+
+  assertEqual(res.success, true, 'loadJson succeeded for wrapped paper');
+  const storePaper = ingestionStore.getState().paper;
+  assertEqual(storePaper?.questions.length, 30, 'Unpacked wrapped questions length is 30');
+  assertEqual(storePaper?.paper.paper_code, '12', 'Unpacked paper code matches');
+});
+
+test('Plain array of questions normalizes into full valid staging paper', () => {
+  const sampleQuestions = [
+    {
+      question_number: 1,
+      cambridge_source_ref: '0455/12/S/24 Q1',
+      topic_name: 'The basic economic problem',
+      stem_markdown: 'What is the basic economic problem?',
+      options: [
+        { label: 'A', content_markdown: 'Scarcity of resources relative to unlimited wants', is_correct: true },
+        { label: 'B', content_markdown: 'Inflation', is_correct: false },
+        { label: 'C', content_markdown: 'Deflation', is_correct: false },
+        { label: 'D', content_markdown: 'Recession', is_correct: false },
+      ],
+      explanation_markdown: 'The fundamental economic problem is scarcity.',
+      status: 'active',
+    },
+    {
+      question_number: 2,
+      cambridge_source_ref: '0455/12/S/24 Q2',
+      topic_name: 'The allocation of resources',
+      stem_markdown: 'What causes a shift in the demand curve?',
+      options: [
+        { label: 'A', content_markdown: 'Change in income', is_correct: true },
+        { label: 'B', content_markdown: 'Change in price', is_correct: false },
+        { label: 'C', content_markdown: 'Change in supply', is_correct: false },
+        { label: 'D', content_markdown: 'Movement along curve', is_correct: false },
+      ],
+      explanation_markdown: 'Non-price factors shift the demand curve.',
+      status: 'active',
+    },
+  ];
+
+  const res = ingestionStore.loadJson(sampleQuestions);
+  assertEqual(res.success, true, 'Plain questions array successfully converted into valid paper');
+
+  const storePaper = ingestionStore.getState().paper;
+  assert(Boolean(storePaper), 'Store paper must exist');
+  assertEqual(storePaper?.questions.length, 2, '2 questions loaded');
+  assertEqual(storePaper?.subject.code, '0455', 'Inferred or defaulted subject code');
+  assertEqual(storePaper?.paper.series, 's', 'Inferred or defaulted series');
+  assertEqual((storePaper?.syllabus_topics?.length ?? 0) >= 2, true, 'Derived syllabus topics from questions');
+});
+
+test('Object slice { questions: [...] } without root metadata synthesizes valid schema', () => {
+  const slicePayload = {
+    questions: [
+      {
+        question_number: 1,
+        topic_name: 'Market Failure',
+        stem_markdown: 'Why do public goods cause market failure?',
+        options: [
+          { label: 'A', content_markdown: 'Non-excludable and non-rival', is_correct: true },
+          { label: 'B', content_markdown: 'High profits', is_correct: false },
+          { label: 'C', content_markdown: 'Overproduction', is_correct: false },
+          { label: 'D', content_markdown: 'Government regulation', is_correct: false },
+        ],
+        explanation_markdown: 'Free-rider problem occurs.',
+      },
+    ],
+  };
+
+  const res = ingestionStore.loadJson(slicePayload);
+  assertEqual(res.success, true, 'Slice without root metadata successfully normalized');
+  const storePaper = ingestionStore.getState().paper;
+  assertEqual(storePaper?.questions.length, 1, '1 question loaded');
+  assertEqual(storePaper?.subject.code, '0455', 'Defaulted subject code');
+  assertEqual(storePaper?.paper.year, 2024, 'Defaulted year');
+  assertEqual(storePaper?.syllabus_topics?.[0]?.name, 'Market Failure', 'Derived topic from question');
+});
+
+test('Lenient metadata coercion: string year, numeric paper_code, and missing icon', () => {
+  const rawPayload = {
+    subject: { code: '0478', name: 'Computer Science' },
+    paper: { series: 'w', paper_code: 11, year: '2023' },
+    questions: [
+      {
+        question_number: 1,
+        topic_name: 'Data representation',
+        stem_markdown: 'Convert 1010 to denary.',
+        options: [
+          { label: 'A', content_markdown: '10', is_correct: true },
+          { label: 'B', content_markdown: '8', is_correct: false },
+          { label: 'C', content_markdown: '12', is_correct: false },
+          { label: 'D', content_markdown: '14', is_correct: false },
+        ],
+        explanation_markdown: '8 + 2 = 10.',
+      },
+    ],
+  };
+
+  const res = ingestionStore.loadJson(rawPayload);
+  assertEqual(res.success, true, 'Lenient metadata payload normalized and loaded');
+
+  const storePaper = ingestionStore.getState().paper;
+  assertEqual(storePaper?.subject.code, '0478', 'Subject code preserved');
+  assertEqual(typeof storePaper?.subject.icon === 'string' && storePaper?.subject.icon.length > 0, true, 'Default icon provided');
+  assertEqual(storePaper?.paper.year, 2023, 'Year coerced to number 2023');
+  assertEqual(storePaper?.paper.paper_code, '11', 'Paper code coerced to string "11"');
+  assertEqual(storePaper?.paper.series, 'w', 'Series lowercased');
+});
+
+test('Validation failure handling: invalid payload sets error state and clear message', () => {
+  // Empty object with no questions
+  const emptyRes = ingestionStore.loadJson({});
+  assertEqual(emptyRes.success, false, 'Empty object fails loadJson');
+  assertEqual(ingestionStore.getState().publishStatus, 'error', 'publishStatus set to error');
+  assert(ingestionStore.getState().publishMessage.length > 0, 'Informative publishMessage set');
+
+  // Non-object
+  const invalidRes = ingestionStore.loadJson(12345);
+  assertEqual(invalidRes.success, false, 'Primitive number fails loadJson');
+  assertEqual(ingestionStore.getState().publishStatus, 'error', 'publishStatus set to error');
+
+  // Question with only 2 options (violates 4 options requirement)
+  const invalidQuestionRes = ingestionStore.loadJson({
+    questions: [
+      {
+        question_number: 1,
+        stem_markdown: 'Question with too few options',
+        options: [
+          { label: 'A', content_markdown: 'Opt A', is_correct: true },
+          { label: 'B', content_markdown: 'Opt B', is_correct: false },
+        ],
+        explanation_markdown: 'Test',
+      },
+    ],
+  });
+  assertEqual(invalidQuestionRes.success, false, 'Question with 2 options fails validation');
+  assert(Boolean(invalidQuestionRes.errors?.[0]?.includes('4 options')), 'Error message cites 4 options requirement');
+});
+
+test('Ingestion UI Components: file input accept types, e.target.value resets, and error feedback', () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  // 1. IngestionSetupWizard.tsx checks
+  const wizardPath = path.resolve(process.cwd(), 'components/portal/IngestionSetupWizard.tsx');
+  const wizardContent = fs.readFileSync(wizardPath, 'utf8');
+  assertEqual(wizardContent.includes('accept=".json,application/json,text/json"'), true, 'Wizard file input accepts .json,application/json,text/json');
+  assertEqual(wizardContent.includes('e.target.value = ""'), true, 'Wizard resets e.target.value to allow re-uploading same file');
+  assertEqual(wizardContent.includes('setUploadError'), true, 'Wizard has setUploadError feedback handler');
+
+  // 2. IngestionModals.tsx checks
+  const modalsPath = path.resolve(process.cwd(), 'components/portal/IngestionModals.tsx');
+  const modalsContent = fs.readFileSync(modalsPath, 'utf8');
+  assertEqual(modalsContent.includes('accept=".json,application/json,text/json"'), true, 'Modals file input accepts .json,application/json,text/json');
+  assertEqual(modalsContent.includes('e.target.value = ""'), true, 'Modals resets e.target.value');
+  assertEqual(modalsContent.includes('Array.isArray(parsed.paper.questions)'), true, 'Modals distinguishes wrapped paper with questions');
+
+  // 3. IngestionHub.tsx checks
+  const hubPath = path.resolve(process.cwd(), 'components/portal/IngestionHub.tsx');
+  const hubContent = fs.readFileSync(hubPath, 'utf8');
+  assertEqual(hubContent.includes('Validation failed for'), true, 'IngestionHub handles JSON loading failures with user feedback');
+  assertEqual(hubContent.includes('Failed to load staged paper'), true, 'IngestionHub handles staged paper load failure with user feedback');
 });
 
 // -----------------------------------------------------------------------------

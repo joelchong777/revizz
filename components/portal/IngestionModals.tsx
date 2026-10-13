@@ -784,6 +784,7 @@ export function IngestionPayloadModal({
     const file = e.target.files?.[0];
     if (file) {
       onUploadJson(file);
+      e.target.value = "";
       onClose();
     }
   };
@@ -797,9 +798,11 @@ export function IngestionPayloadModal({
 
     try {
       const parsed = JSON.parse(trimmed);
-      const targetPaper = parsed?.paper || parsed;
-      if (!targetPaper || typeof targetPaper !== "object") {
-        setPasteError("JSON must contain a staging paper object.");
+      const targetPaper = (parsed?.paper && Array.isArray(parsed.paper.questions))
+        ? parsed.paper
+        : (Array.isArray(parsed?.questions) ? parsed : (Array.isArray(parsed) ? parsed : (parsed?.paper || parsed)));
+      if (!targetPaper || (typeof targetPaper !== "object" && !Array.isArray(targetPaper))) {
+        setPasteError("JSON must contain a staging paper object or questions array.");
         return;
       }
       onPasteJson(trimmed);
@@ -923,7 +926,7 @@ export function IngestionPayloadModal({
                 </button>
                 <input
                   type="file"
-                  accept=".json,application/json"
+                  accept=".json,application/json,text/json"
                   ref={fileInputRef}
                   className="hidden"
                   onChange={handleFileInputChange}

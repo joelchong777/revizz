@@ -89,14 +89,37 @@ export default function IngestionHub() {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const json = JSON.parse(e.target?.result as string);
+        const text = e.target?.result as string;
+        if (!text || !text.trim()) {
+          setPublishStatus("error");
+          setPublishMessage(`Upload error: "${file.name}" is an empty file.`);
+          return;
+        }
+
+        const json = JSON.parse(text);
         const res = loadJson(json);
         if (res.success) {
           setIsSetupOpen(false);
+          setPublishStatus("success");
+          const qCount = Array.isArray(json)
+            ? json.length
+            : (json?.questions?.length || json?.paper?.questions?.length || "all");
+          setPublishMessage(`Loaded "${file.name}" successfully (${qCount} questions).`);
+        } else {
+          setPublishStatus("error");
+          setPublishMessage(
+            `Validation failed for "${file.name}":\n${(res.errors || []).join("\n")}`
+          );
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to parse uploaded JSON file", err);
+        setPublishStatus("error");
+        setPublishMessage(`Invalid JSON in "${file.name}": ${err?.message || "Syntax error"}`);
       }
+    };
+    reader.onerror = () => {
+      setPublishStatus("error");
+      setPublishMessage(`Failed to read file "${file.name}".`);
     };
     reader.readAsText(file);
   };
@@ -422,12 +445,26 @@ export default function IngestionHub() {
               const res = loadJson(loadedPaper);
               if (res.success) {
                 setIsSetupOpen(false);
+                setPublishStatus("success");
+                setPublishMessage("Staged paper loaded and validated successfully.");
+              } else {
+                setPublishStatus("error");
+                setPublishMessage(
+                  `Failed to load staged paper:\n${(res.errors || []).join("\n")}`
+                );
               }
             }}
             onStartBlank={handleStartBlank}
             onResumeDraft={() => {
-              loadDraftFromLocalStorage();
-              setIsSetupOpen(false);
+              const ok = loadDraftFromLocalStorage();
+              if (ok) {
+                setIsSetupOpen(false);
+                setPublishStatus("success");
+                setPublishMessage("Browser draft restored successfully.");
+              } else {
+                setPublishStatus("error");
+                setPublishMessage("Could not restore draft from localStorage (validation failed).");
+              }
             }}
             onDiscardDraft={handleResetAll}
             onResetAll={handleResetAll}

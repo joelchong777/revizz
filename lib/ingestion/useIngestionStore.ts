@@ -7,8 +7,8 @@ import {
   StagingOption,
   PaperLifecycleState,
   validateStagingPaper,
-} from '@/types/ingestion';
-import { extractQuestionsChunked } from '@/lib/ingestion/geminiExtractor';
+} from '../../types/ingestion';
+import { extractQuestionsChunked } from './geminiExtractor';
 
 export type PublishStatus = 'idle' | 'validating' | 'publishing' | 'success' | 'error';
 export type StatusFilter = 'all' | 'valid' | 'review' | 'diagrams';
@@ -181,7 +181,7 @@ function pushUndoHistory(questions: StagingQuestion[]) {
 // Active abort controller for stream extraction
 let activeAbortController: AbortController | null = null;
 
-function inferPaperMetadata(filename: string) {
+export function inferPaperMetadata(filename: string) {
   const clean = filename.toLowerCase();
   let subjectCode = '0455';
   let subjectName = 'Economics';
@@ -227,6 +227,235 @@ function inferPaperMetadata(filename: string) {
   };
 }
 
+/**
+ * Robust normalizer for Cambridge MCQ staging paper payloads.
+ * Handles:
+ * - Direct StagingPaper (Array.isArray(parsed.questions))
+ * - Wrapped paper object (parsed.paper && Array.isArray(parsed.paper.questions))
+ * - Plain array of questions (Array.isArray(parsed))
+ * - Partial object (parsed.questions without full root metadata)
+ * - Coercion of year, paper_code, topic synthesis, and icon fallback
+ */
+export function normalizeStagingPayload(payload: any): StagingPaper | null {
+  if (!payload) return null;
+
+  let parsed = payload;
+  if (typeof payload === 'string') {
+    try {
+      parsed = JSON.parse(payload);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!parsed || (typeof parsed !== 'object' && !Array.isArray(parsed))) {
+    return null;
+  }
+
+  let questions: any[] = [];
+  let container: Record<string, any> = {};
+
+  if (Array.isArray(parsed)) {
+    questions = parsed;
+    container = {};
+  } else if (parsed.paper && typeof parsed.paper === 'object' && Array.isArray(parsed.paper.questions)) {
+    // Wrapped format: { paper: StagingPaper, ... }
+    questions = parsed.paper.questions;
+    container = { ...parsed.paper };
+  } else if (parsed.data && typeof parsed.data === 'object' && Array.isArray(parsed.data.questions)) {
+    // API envelope format: { success: true, data: StagingPaper }
+    questions = parsed.data.questions;
+    container = { ...parsed.data };
+  } else if (Array.isArray(parsed.questions)) {
+    // Direct StagingPaper or object with questions: [...]
+    questions = parsed.questions;
+    container = { ...parsed };
+  } else {
+    return null;
+  }
+
+  // 1. Infer metadata if Cambridge citation/ref is found
+  let inferred = {
+    subjectCode: '0455',
+    subjectName: 'Economics',
+    icon: '📈',
+    series: 's',
+    year: 2024,
+    paperCode: '12',
+  };
+
+  const refCandidate =
+    (typeof container.id === 'string' && container.id) ||
+    (typeof container.source_qp_filename === 'string' && container.source_qp_filename) ||
+    (questions.find((q: any) => q && typeof q.cambridge_source_ref === 'string' && q.cambridge_source_ref)?.cambridge_source_ref) ||
+    '';
+
+  if (refCandidate) {
+    const parsedInfer = inferPaperMetadata(refCandidate);
+    inferred = { ...inferred, ...parsedInfer };
+  }
+
+  // 2. Subject normalization
+  let subjectCode = inferred.subjectCode;
+  let subjectName = inferred.subjectName;
+  let subjectIcon = inferred.icon;
+
+  if (container.subject && typeof container.subject === 'object') {
+    if (typeof container.subject.code === 'string' && container.subject.code.trim()) {
+      subjectCode = container.subject.code.trim();
+    }
+    if (typeof container.subject.name === 'string' && container.subject.name.trim()) {
+      subjectName = container.subject.name.trim();
+    }
+    if (typeof container.subject.icon === 'string' && container.subject.icon.trim()) {
+      subjectIcon = container.subject.icon.trim();
+    }
+  }
+
+  // 3. Paper metadata normalization
+  const rawPaperMeta =
+    container.paper && typeof container.paper === 'object' && !Array.isArray(container.paper.questions)
+      ? container.paper
+      : {};
+
+  let finalYear = Number(rawPaperMeta.year);
+  if (isNaN(finalYear) || finalYear <= 0) {
+    if (container.detected_year) finalYear = Number(container.detected_year);
+  }
+  if (isNaN(finalYear) || finalYear <= 0) {
+    finalYear = inferred.year || 2024;
+  }
+
+  const finalSeries = String(
+    rawPaperMeta.series || container.detected_series || inferred.series || 's'
+  ).trim().toLowerCase();
+
+  const finalPaperCode = String(
+    rawPaperMeta.paper_code !== undefined
+      ? rawPaperMeta.paper_code
+      : (container.detected_paper_code !== undefined ? container.detected_paper_code : inferred.paperCode)
+  ).trim();
+
+  // 4. Syllabus topics normalization
+  let finalTopics: { name: string; order_index: number }[] = [];
+  if (Array.isArray(container.syllabus_topics) && container.syllabus_topics.length > 0) {
+    finalTopics = container.syllabus_topics
+      .map((t: any, idx: number) => {
+        const name = typeof t === 'string' ? t.trim() : (typeof t?.name === 'string' ? t.name.trim() : '');
+        const order_index = typeof t?.order_index === 'number' ? t.order_index : (parseInt(t?.order_index, 10) || (idx + 1));
+        return { name, order_index };
+      })
+      .filter((t: any) => Boolean(t.name));
+  }
+
+  if (finalTopics.length === 0) {
+    const topicSet = new Set<string>();
+    for (const q of questions) {
+      if (q && typeof q.topic_name === 'string' && q.topic_name.trim()) {
+        topicSet.add(q.topic_name.trim());
+      } else if (q && typeof q.topic === 'string' && q.topic.trim()) {
+        topicSet.add(q.topic.trim());
+      }
+    }
+    if (topicSet.size > 0) {
+      finalTopics = Array.from(topicSet).map((name, idx) => ({ name, order_index: idx + 1 }));
+    } else {
+      finalTopics = [{ name: 'General', order_index: 1 }];
+    }
+  }
+
+  // 5. Questions normalization
+  const sanitizedQuestions: StagingQuestion[] = questions.map((q: any, idx: number) => {
+    const qNum =
+      typeof q?.question_number === 'number'
+        ? q.question_number
+        : (parseInt(q?.question_number, 10) || idx + 1);
+
+    const topicName =
+      (typeof q?.topic_name === 'string' && q.topic_name.trim())
+        ? q.topic_name.trim()
+        : ((typeof q?.topic === 'string' && q.topic.trim()) ? q.topic.trim() : 'General');
+
+    const stemMarkdown =
+      typeof q?.stem_markdown === 'string'
+        ? q.stem_markdown
+        : (typeof q?.stem === 'string' ? q.stem : (typeof q?.question === 'string' ? q.question : ''));
+
+    const explanationMarkdown =
+      typeof q?.explanation_markdown === 'string'
+        ? q.explanation_markdown
+        : (typeof q?.explanation === 'string' ? q.explanation : '');
+
+    let options: StagingOption[] = [];
+    if (Array.isArray(q?.options)) {
+      options = q.options.map((o: any, oIdx: number) => {
+        const defaultLabel = (['A', 'B', 'C', 'D'][oIdx] || 'A') as 'A' | 'B' | 'C' | 'D';
+        const rawLabel = typeof o?.label === 'string' ? o.label.trim().toUpperCase() : defaultLabel;
+        const validLabel = (['A', 'B', 'C', 'D'].includes(rawLabel) ? rawLabel : defaultLabel) as 'A' | 'B' | 'C' | 'D';
+        const content =
+          typeof o?.content_markdown === 'string'
+            ? o.content_markdown
+            : (typeof o?.content === 'string' ? o.content : (typeof o?.text === 'string' ? o.text : ''));
+        const isCorrect = Boolean(o?.is_correct ?? o?.correct);
+        return {
+          label: validLabel,
+          content_markdown: content,
+          is_correct: isCorrect,
+        };
+      });
+    }
+
+    return {
+      question_number: qNum,
+      cambridge_source_ref:
+        typeof q?.cambridge_source_ref === 'string'
+          ? q.cambridge_source_ref
+          : (typeof q?.source_ref === 'string' ? q.source_ref : ''),
+      topic_name: topicName,
+      stem_markdown: stemMarkdown,
+      explanation_markdown: explanationMarkdown,
+      options,
+      status: q?.status === 'withdrawn' ? 'withdrawn' : 'active',
+      page_number:
+        typeof q?.page_number === 'number'
+          ? q.page_number
+          : (parseInt(q?.page_number, 10) || undefined),
+      diagram: q?.diagram,
+      diagrams: q?.diagrams,
+      distractor_analysis: q?.distractor_analysis,
+      validation_status: q?.validation_status,
+    };
+  });
+
+  const candidateId =
+    container.id ||
+    `${subjectCode}_${finalSeries}${String(finalYear).slice(-2)}_${finalPaperCode}`;
+
+  return {
+    id: candidateId,
+    lifecycle_state: container.lifecycle_state || container.state || 'review',
+    state: container.state || container.lifecycle_state || 'review',
+    source_qp_filename: container.source_qp_filename,
+    source_ms_filename: container.source_ms_filename,
+    total_pages: container.total_pages,
+    detected_year: finalYear,
+    detected_series: finalSeries,
+    detected_paper_code: finalPaperCode,
+    subject: {
+      code: subjectCode,
+      name: subjectName,
+      icon: subjectIcon,
+    },
+    paper: {
+      series: finalSeries,
+      paper_code: finalPaperCode,
+      year: finalYear,
+    },
+    syllabus_topics: finalTopics,
+    questions: sanitizedQuestions,
+  };
+}
+
 function getState(): IngestionState {
   return state;
 }
@@ -266,7 +495,10 @@ const actions: IngestionActions = {
       }
 
       const data = await res.json();
-      const paperData: StagingPaper = data?.paper || data;
+      const paperData = normalizeStagingPayload(data);
+      if (!paperData) {
+        throw new Error(`Failed to parse preset "${targetId}" into a valid staging paper.`);
+      }
 
       // Validate paper against staging schema
       const validation = validateStagingPaper(paperData, { allowPartialBatch: true });
@@ -302,17 +534,36 @@ const actions: IngestionActions = {
         parsed = JSON.parse(jsonContent);
       }
 
-      if (!parsed || typeof parsed !== 'object') {
-        return { success: false, errors: ['Invalid JSON payload: expected an object.'] };
+      if (!parsed || (typeof parsed !== 'object' && !Array.isArray(parsed))) {
+        const errorMsg = 'Invalid JSON payload: expected an object or array.';
+        setState({
+          publishStatus: 'error',
+          publishMessage: errorMsg,
+        });
+        return { success: false, errors: [errorMsg] };
       }
 
-      const candidatePaper = parsed.paper || parsed;
+      const candidatePaper = normalizeStagingPayload(parsed);
+      if (!candidatePaper) {
+        const errorMsg = 'Failed to interpret JSON as a Cambridge staging paper: missing questions or unrecognized structure.';
+        setState({
+          publishStatus: 'error',
+          publishMessage: errorMsg,
+        });
+        return { success: false, errors: [errorMsg] };
+      }
+
       const validation = validateStagingPaper(candidatePaper, { allowPartialBatch: true });
 
       if (!validation.success) {
+        const errors = validation.errors || ['Schema validation failed for provided JSON.'];
+        setState({
+          publishStatus: 'error',
+          publishMessage: `JSON schema validation failed: ${errors[0] || 'Unknown error'}`,
+        });
         return {
           success: false,
-          errors: validation.errors || ['Schema validation failed for provided JSON.'],
+          errors,
         };
       }
 
@@ -324,16 +575,21 @@ const actions: IngestionActions = {
         paper: loadedPaper,
         selectedIdx: 0,
         publishStatus: 'idle',
-        publishMessage: 'JSON paper loaded and validated successfully.',
+        publishMessage: `JSON paper loaded successfully (${loadedPaper.questions?.length || 0} questions).`,
         lifecycleState: 'review',
         activePdfPage: loadedPaper.questions?.[0]?.page_number || 1,
       });
 
       return { success: true };
     } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to parse JSON content.';
+      setState({
+        publishStatus: 'error',
+        publishMessage: `Failed to parse JSON: ${errorMsg}`,
+      });
       return {
         success: false,
-        errors: [err?.message || 'Failed to parse JSON content.'],
+        errors: [errorMsg],
       };
     }
   },
@@ -659,7 +915,7 @@ const actions: IngestionActions = {
       const raw = window.localStorage.getItem(storageKey);
       if (!raw) return false;
       const parsed = JSON.parse(raw);
-      const candidatePaper = parsed?.paper || parsed;
+      const candidatePaper = normalizeStagingPayload(parsed);
       if (!candidatePaper) return false;
 
       const validation = validateStagingPaper(candidatePaper, { allowPartialBatch: true });
@@ -1350,5 +1606,7 @@ export const ingestionStore = {
   setState,
   subscribe,
   getSnapshot,
+  normalizeStagingPayload,
+  inferPaperMetadata,
   ...actions,
 };
