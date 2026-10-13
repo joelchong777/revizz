@@ -65,6 +65,7 @@ export default function IngestionHub() {
   // Local switch to toggle setup wizard screen even when paper is active
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [hasSavedDraftState, setHasSavedDraftState] = useState(false);
+  const [isReadingFile, setIsReadingFile] = useState(false);
 
   // Check draft existence on mount without force-loading sample preset!
   useEffect(() => {
@@ -86,6 +87,10 @@ export default function IngestionHub() {
 
   // Handler for uploading JSON file via Wizard
   const handleFileUpload = (file: File) => {
+    setIsReadingFile(true);
+    setPublishStatus("idle");
+    setPublishMessage(`Reading and parsing "${file.name}"...`);
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -93,6 +98,7 @@ export default function IngestionHub() {
         if (!text || !text.trim()) {
           setPublishStatus("error");
           setPublishMessage(`Upload error: "${file.name}" is an empty file.`);
+          setIsReadingFile(false);
           return;
         }
 
@@ -115,11 +121,19 @@ export default function IngestionHub() {
         console.error("Failed to parse uploaded JSON file", err);
         setPublishStatus("error");
         setPublishMessage(`Invalid JSON in "${file.name}": ${err?.message || "Syntax error"}`);
+      } finally {
+        setIsReadingFile(false);
       }
     };
-    reader.onerror = () => {
+    reader.onerror = (err) => {
+      console.error("FileReader error while reading JSON file", err);
       setPublishStatus("error");
       setPublishMessage(`Failed to read file "${file.name}".`);
+      setIsReadingFile(false);
+    };
+    reader.onabort = () => {
+      console.warn("FileReader read aborted for", file.name);
+      setIsReadingFile(false);
     };
     reader.readAsText(file);
   };
@@ -441,6 +455,7 @@ export default function IngestionHub() {
             onStartExtraction={handleStartExtraction}
             onResumeExtraction={resumeExtraction}
             onUploadJson={handleFileUpload}
+            isReadingFile={isReadingFile}
             onLoadStagedPaper={(loadedPaper) => {
               const res = loadJson(loadedPaper);
               if (res.success) {

@@ -1178,6 +1178,102 @@ test('Ingestion UI Components: file input accept types, e.target.value resets, a
 });
 
 // -----------------------------------------------------------------------------
+// [Suite 12] Ingestion Studio Dropzone & Drag-and-Drop Resilience
+// -----------------------------------------------------------------------------
+console.log('\n\x1b[1m\x1b[34m[Suite 12] Ingestion Studio Dropzone & Drag-and-Drop Resilience\x1b[0m');
+
+test('IngestionSetupWizard QP and MS dropzones check for JSON files (.json extension or application/json MIME) and call onUploadJson', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const wizardPath = path.resolve(process.cwd(), 'components/portal/IngestionSetupWizard.tsx');
+  const wizardContent = fs.readFileSync(wizardPath, 'utf8');
+
+  // Verify handleDrop checks for JSON extension and MIME
+  assertEqual(wizardContent.includes('const isJsonExt = file.name.toLowerCase().endsWith(".json");'), true, 'handleDrop checks for .json extension');
+  assertEqual(wizardContent.includes('const isJsonType = file.type === "application/json" || file.type === "text/json";'), true, 'handleDrop checks for application/json or text/json MIME');
+  assertEqual(wizardContent.includes('handleTriggerUploadJson(file);'), true, 'handleDrop routes JSON files to handleTriggerUploadJson');
+  assertEqual(wizardContent.includes('onUploadJson(file)'), true, 'handleTriggerUploadJson delegates to onUploadJson callback');
+
+  // Verify QP and MS dropzone JSX handlers bind handleDrop
+  assertEqual(wizardContent.includes('onDrop={(e) => handleDrop(e, "qp")}'), true, 'QP dropzone dispatches to handleDrop(e, "qp")');
+  assertEqual(wizardContent.includes('onDrop={(e) => handleDrop(e, "ms")}'), true, 'MS dropzone dispatches to handleDrop(e, "ms")');
+
+  // Verify dropEffect and HTML5 dragover/dragenter preventDefault
+  assertEqual(wizardContent.includes('setIsDraggingQp(true)'), true, 'QP dragenter sets isDraggingQp');
+  assertEqual(wizardContent.includes('setIsDraggingMs(true)'), true, 'MS dragenter sets isDraggingMs');
+});
+
+test('IngestionSetupWizard Agent dropzone has pointer-events-none on child elements, e.dataTransfer.dropEffect = "copy", and onDragEnter', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const wizardPath = path.resolve(process.cwd(), 'components/portal/IngestionSetupWizard.tsx');
+  const wizardContent = fs.readFileSync(wizardPath, 'utf8');
+
+  // Verify Agent dropzone has copy dropEffect, onDragEnter, and onDrop
+  assertEqual(wizardContent.includes('e.dataTransfer.dropEffect = "copy";'), true, 'Dropzone sets dropEffect to copy');
+  assertEqual(wizardContent.includes('setIsDraggingJson(true);'), true, 'Agent dropzone onDragEnter and onDragOver activate drag state');
+  assertEqual(wizardContent.includes('onDrop={handleJsonDrop}'), true, 'Agent dropzone binds handleJsonDrop');
+
+  // Verify pointer-events-none prevents child flicker
+  assertEqual(wizardContent.includes('pointer-events-none'), true, 'Child elements contain pointer-events-none');
+
+  // Verify FileReader spinner state passing from IngestionHub
+  const hubPath = path.resolve(process.cwd(), 'components/portal/IngestionHub.tsx');
+  const hubContent = fs.readFileSync(hubPath, 'utf8');
+  assertEqual(hubContent.includes('isReadingFile={isReadingFile}'), true, 'IngestionHub passes isReadingFile prop to IngestionSetupWizard');
+  assertEqual(wizardContent.includes('isReadingFile = false'), true, 'IngestionSetupWizard accepts isReadingFile prop');
+  assertEqual(wizardContent.includes('Reading JSON File...'), true, 'IngestionSetupWizard renders reading spinner feedback');
+});
+
+test('Container dropzone fallback handles root dragover and routes JSON to onUploadJson', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const wizardPath = path.resolve(process.cwd(), 'components/portal/IngestionSetupWizard.tsx');
+  const wizardContent = fs.readFileSync(wizardPath, 'utf8');
+
+  // Verify container dropzone on root div
+  assertEqual(wizardContent.includes('data-testid="ingestion-setup-wizard"'), true, 'Setup wizard container has testid');
+  assertEqual(wizardContent.includes('e.dataTransfer.dropEffect = "copy"'), true, 'Container sets dropEffect = "copy"');
+  assertEqual(wizardContent.includes('handleTriggerUploadJson(file);'), true, 'Container onDrop triggers upload for JSON');
+});
+
+test('End-to-end load of /Users/joelchong/Downloads/0455_s24_12.json into ingestionStore.loadJson succeeds with 30 questions', () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  const downloadPath = '/Users/joelchong/Downloads/0455_s24_12.json';
+  const fallbackPath = path.resolve(process.cwd(), 'staging/0455_s24_12.json');
+  const targetPath = fs.existsSync(downloadPath) ? downloadPath : fallbackPath;
+
+  assertEqual(fs.existsSync(targetPath), true, `Target JSON file exists (${targetPath})`);
+
+  const fileContent = fs.readFileSync(targetPath, 'utf8');
+  assert(fileContent.length > 0, 'Target JSON file is non-empty');
+
+  const rawJson = JSON.parse(fileContent);
+  const res = ingestionStore.loadJson(rawJson);
+
+  assertEqual(res.success, true, 'ingestionStore.loadJson returns success true');
+  const storePaper = ingestionStore.getState().paper;
+  assert(Boolean(storePaper), 'Store paper exists after loadJson');
+  assertEqual(storePaper?.questions.length, 30, 'Store paper contains exactly 30 questions');
+  assertEqual(storePaper?.subject.code, '0455', 'Subject code matches 0455 (Economics)');
+  assertEqual(storePaper?.paper.year, 2024, 'Year matches 2024');
+  assertEqual(storePaper?.paper.series, 's', 'Series matches s (Summer)');
+  assertEqual(storePaper?.paper.paper_code, '12', 'Paper code matches 12');
+
+  // Verify question integrity across loaded paper
+  for (const q of storePaper?.questions || []) {
+    assert(Boolean(q.stem_markdown && q.stem_markdown.trim().length > 0), `Question ${q.question_number} has stem`);
+    assertEqual(q.options.length, 4, `Question ${q.question_number} has 4 options`);
+    const correctCount = q.options.filter((o: any) => o.is_correct).length;
+    assertEqual(correctCount, 1, `Question ${q.question_number} has exactly 1 correct option`);
+  }
+
+  assertEqual(ingestionStore.getState().publishStatus, 'idle', 'publishStatus is idle');
+});
+
+// -----------------------------------------------------------------------------
 // Test Summary Output
 // -----------------------------------------------------------------------------
 console.log('\n========================================================');
