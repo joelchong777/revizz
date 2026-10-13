@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
 import { QuizRoundConfig } from '../hooks/useQuizGame';
 import { getReviewPileCount, subscribeMasteryChanges, getFirstTryCorrectIds } from '@/lib/mastery';
 import { playPop } from '@/lib/audio';
@@ -8,6 +9,7 @@ import { TopicMasteryList } from './TopicMasteryList';
 import { CAMBRIDGE_TOPICS, CAMBRIDGE_QUESTIONS } from '@/lib/questions';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { fetchSubjectsFromDb, getSubjectEmoji, DbSubject, FALLBACK_SUBJECTS } from '@/lib/subjects';
 
 interface StartFlowProps {
   onStart: (config: QuizRoundConfig) => void;
@@ -15,29 +17,41 @@ interface StartFlowProps {
   onPracticeTopic: (topicId: string, topicName: string) => void;
 }
 
-interface SubjectItem {
-  key: string;
-  name: string;
-  code: string;
-  emoji: string;
-}
-
-const SUBJECTS: SubjectItem[] = [
-  { key: 'phy', name: 'Physics', code: '0625', emoji: '⚛️' },
-  { key: 'econ', name: 'Economics', code: '0455', emoji: '📊' },
-  { key: 'chem', name: 'Chemistry', code: '0620', emoji: '🧪' },
-  { key: 'bio', name: 'Biology', code: '0610', emoji: '🧬' },
-];
-
 export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlowProps) {
   const { userProfile } = useAuth();
-  const [selectedSubjectKey, setSelectedSubjectKey] = useState<string>('econ');
+  const [subjects, setSubjects] = useState<DbSubject[]>(FALLBACK_SUBJECTS);
+  const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>('0455');
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'review'>('standard');
   const [roundLength, setRoundLength] = useState<3 | 5 | 10 | 'endless'>(5);
   const [isTimed, setIsTimed] = useState<boolean>(true);
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [isMasteryOpen, setIsMasteryOpen] = useState<boolean>(false);
   const [tierCounts, setTierCounts] = useState({ master: 0, proficient: 0, novice: 0 });
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDropdownOpen]);
 
   useEffect(() => {
     const updateStats = () => {
@@ -64,6 +78,7 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
     updateStats();
     const unsubscribe = subscribeMasteryChanges(updateStats);
 
+    let savedSubject: string | null = null;
     const saved = localStorage.getItem('revizz_last_config');
     if (saved) {
       try {
@@ -73,17 +88,62 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
         if (parsed.sourceType === 'review') setSelectedMode('review');
         else if (parsed.sourceType === 'topic') setSelectedMode('topic');
         else setSelectedMode('standard');
+        if (parsed.subject && typeof parsed.subject === 'string') {
+          savedSubject = parsed.subject;
+          const initialSaved = parsed.subject;
+          const matchedFallback = FALLBACK_SUBJECTS.find(
+            (s) =>
+              initialSaved === `${s.name} ${s.code}` ||
+              initialSaved === s.code ||
+              initialSaved.includes(s.code) ||
+              initialSaved.toLowerCase().includes(s.name.toLowerCase())
+          );
+          if (matchedFallback) {
+            setSelectedSubjectCode(matchedFallback.code);
+          }
+        }
       } catch {
         // ignore
       }
     }
+
+    fetchSubjectsFromDb().then((dbSubjects) => {
+      if (dbSubjects && dbSubjects.length > 0) {
+        setSubjects(dbSubjects);
+        const subjectToRestore = savedSubject;
+        if (subjectToRestore) {
+          const matched = dbSubjects.find(
+            (s) =>
+              subjectToRestore === `${s.name} ${s.code}` ||
+              subjectToRestore === s.code ||
+              subjectToRestore.includes(s.code) ||
+              subjectToRestore.toLowerCase().includes(s.name.toLowerCase())
+          );
+          if (matched) {
+            setSelectedSubjectCode(matched.code);
+            return;
+          }
+        }
+        setSelectedSubjectCode((prev) => {
+          if (dbSubjects.some((s) => s.code === prev)) {
+            return prev;
+          }
+          const defaultSubject = dbSubjects.find((s) => s.code === '0455') || dbSubjects[0];
+          return defaultSubject.code;
+        });
+      }
+    });
 
     return () => {
       unsubscribe();
     };
   }, []);
 
-  const currentSubject = SUBJECTS.find((s) => s.key === selectedSubjectKey) || SUBJECTS[1];
+  const currentSubject =
+    subjects.find((s) => s.code === selectedSubjectCode) ||
+    subjects.find((s) => s.code === '0455') ||
+    subjects[0] ||
+    FALLBACK_SUBJECTS[0];
   const firstName = userProfile?.display_name ? userProfile.display_name.split(' ')[0] : 'Alex';
 
   const handleStart = () => {
@@ -107,9 +167,10 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
     onStart(roundConfig);
   };
 
-  const handleSubjectSelect = (key: string) => {
+  const handleSubjectSelect = (code: string) => {
     playPop();
-    setSelectedSubjectKey(key);
+    setSelectedSubjectCode(code);
+    setIsDropdownOpen(false);
   };
 
   const handleModeSelect = (mode: 'standard' | 'topic' | 'review') => {
@@ -139,36 +200,90 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
         </p>
       </div>
 
-      {/* 1. Subject Selection */}
+      {/* 1. Subject Selection Dropdown */}
       <div className="flex flex-col gap-2.5">
         <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
           Subject
         </h2>
-        <div className="grid grid-cols-2 gap-2.5">
-          {SUBJECTS.map((s) => {
-            const isSelected = selectedSubjectKey === s.key;
-            return (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => handleSubjectSelect(s.key)}
-                className={cn(
-                  'flex items-center gap-2.5 p-3 sm:px-3.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
-                  isSelected
-                    ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                    : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-                )}
-              >
-                <span className="text-[22px] leading-none">{s.emoji}</span>
-                <span className="flex flex-col leading-[1.15] min-w-0">
-                  <span className="font-heading text-base text-text truncate">{s.name}</span>
-                  <span className="text-xs font-bold opacity-75 text-text">{s.code}</span>
+        <div ref={dropdownRef} className="relative w-full">
+          {/* Dropdown Trigger */}
+          <button
+            type="button"
+            onClick={() => {
+              playPop();
+              setIsDropdownOpen((prev) => !prev);
+            }}
+            aria-haspopup="listbox"
+            aria-expanded={isDropdownOpen}
+            aria-label="Select subject"
+            className="border-2 border-text bg-neutral-100 rounded-[20px] shadow-offset-3 p-3.5 px-4 flex items-center justify-between cursor-pointer w-full transition-all hover:bg-neutral-200/50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-2xl leading-none flex-shrink-0">
+                {getSubjectEmoji(currentSubject)}
+              </span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-heading text-base sm:text-lg text-text truncate">
+                  {currentSubject.name}
                 </span>
-              </button>
-            );
-          })}
+                <span className="text-xs font-bold text-neutral-700 bg-neutral-200/80 px-2 py-0.5 rounded-full border border-text/20 flex-shrink-0">
+                  {currentSubject.code}
+                </span>
+              </div>
+            </div>
+            <ChevronDown
+              className={cn(
+                'w-5 h-5 text-text transition-transform duration-200 flex-shrink-0',
+                isDropdownOpen && 'rotate-180'
+              )}
+            />
+          </button>
+
+          {/* Dropdown Menu Panel */}
+          {isDropdownOpen && (
+            <div
+              role="listbox"
+              className="absolute top-full left-0 right-0 mt-2 z-30 bg-neutral-100 border-2 border-text rounded-[20px] shadow-offset-4 overflow-hidden py-1.5 animate-in fade-in-50 zoom-in-95 duration-150"
+            >
+              {subjects.map((s) => {
+                const isSelected = s.code === currentSubject.code;
+                return (
+                  <button
+                    key={s.id || s.code}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleSubjectSelect(s.code)}
+                    className={cn(
+                      'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
+                      isSelected
+                        ? 'bg-accent-2-300 font-bold'
+                        : 'hover:bg-neutral-200/60'
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xl leading-none flex-shrink-0">
+                        {getSubjectEmoji(s)}
+                      </span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-heading text-base text-text truncate">
+                          {s.name}
+                        </span>
+                        <span className="text-xs font-bold text-neutral-700 bg-neutral-200/80 px-2 py-0.5 rounded-full border border-text/20 flex-shrink-0">
+                          {s.code}
+                        </span>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <Check className="w-5 h-5 text-text flex-shrink-0 stroke-[2.5]" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-        {selectedSubjectKey !== 'econ' && (
+        {currentSubject.code !== '0455' && (
           <p className="text-xs text-neutral-700 font-semibold m-0">
             Preview bank: rounds use Cambridge Economics 0455 questions for every subject.
           </p>
