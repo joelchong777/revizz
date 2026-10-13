@@ -102,7 +102,9 @@ export async function GET(request: NextRequest) {
       subject?: { code?: string; name?: string; icon?: string };
       paper?: { year?: number; series?: string; paper_code?: string };
       questionsCount?: number;
+      diagramsCount?: number;
       lifecycle_state?: string;
+      isValid?: boolean;
     }> = [];
 
     for (const file of jsonFiles) {
@@ -113,6 +115,10 @@ export async function GET(request: NextRequest) {
       try {
         const fileContent = fs.readFileSync(filePath, 'utf8');
         const parsedJson = JSON.parse(fileContent);
+        const questions = Array.isArray(parsedJson?.questions) ? parsedJson.questions : [];
+        const diagramsCount = questions.filter(
+          (q: any) => Boolean(q?.diagram?.has_diagram || q?.has_diagram || q?.diagram?.image_url || q?.image_url)
+        ).length;
 
         stagedPapers.push({
           id: typeof parsedJson?.id === 'string' && parsedJson.id ? parsedJson.id : cleanId,
@@ -131,15 +137,19 @@ export async function GET(request: NextRequest) {
                 paper_code: parsedJson.paper.paper_code,
               }
             : undefined,
-          questionsCount: Array.isArray(parsedJson?.questions) ? parsedJson.questions.length : 0,
-          lifecycle_state: parsedJson?.lifecycle_state || parsedJson?.state || 'draft',
+          questionsCount: questions.length,
+          diagramsCount,
+          lifecycle_state: parsedJson?.lifecycle_state || parsedJson?.state || 'review',
+          isValid: questions.length > 0,
         });
       } catch {
         stagedPapers.push({
           id: cleanId,
           filename: file.name,
           questionsCount: 0,
+          diagramsCount: 0,
           lifecycle_state: 'draft',
+          isValid: false,
         });
       }
     }
@@ -154,6 +164,66 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: err?.message || 'Internal server error while processing staged paper.',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/ingest/staged-paper
+ * 
+ * Body: { paper: StagingPaper, id?: string }
+ * Saves or updates a staged paper JSON document into the staging directory.
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const rawPaper = body?.paper ?? body;
+    if (!rawPaper || typeof rawPaper !== 'object') {
+      return NextResponse.json(
+        { success: false, error: 'Missing paper object in request body.' },
+        { status: 400 }
+      );
+    }
+
+    const validation = validateStagingPaper(rawPaper, { allowPartialBatch: true });
+    if (!validation.success || !validation.data) {
+      return NextResponse.json(
+        { success: false, error: 'Paper failed validation', details: validation.errors },
+        { status: 422 }
+      );
+    }
+
+    const paper = validation.data;
+    const stagingDir = path.resolve(process.cwd(), 'staging');
+    if (!fs.existsSync(stagingDir)) {
+      fs.mkdirSync(stagingDir, { recursive: true });
+    }
+
+    const cleanSubject = (paper.subject.code || 'paper').replace(/[^a-zA-Z0-9_-]/g, '');
+    const cleanSeries = (paper.paper.series || 's').toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
+    const cleanYear = String(paper.paper.year).slice(-2);
+    const cleanPaperCode = (paper.paper.paper_code || '1').replace(/[^a-zA-Z0-9_-]/g, '');
+    const defaultId = `${cleanSubject}_${cleanSeries}${cleanYear}_${cleanPaperCode}`;
+    const rawId = body.id || paper.id || defaultId;
+    const cleanId = path.basename(rawId).replace(/\.json$/i, '').trim() || defaultId;
+
+    const filePath = path.join(stagingDir, `${cleanId}.json`);
+    const paperToSave = { ...paper, id: cleanId };
+    fs.writeFileSync(filePath, JSON.stringify(paperToSave, null, 2), 'utf8');
+
+    return NextResponse.json({
+      success: true,
+      id: cleanId,
+      filename: `${cleanId}.json`,
+      paper: paperToSave,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: err?.message || 'Failed to save staged paper to staging directory.',
       },
       { status: 500 }
     );

@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import IngestionHub from '@/components/portal/IngestionHub';
 import AdminCMS from '@/components/portal/AdminCMS';
+import StagingReview from '@/components/portal/StagingReview';
 import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
 import { useQuestions } from '@/lib/questions';
@@ -121,7 +122,7 @@ export default function AppAdminHub({
 
     case 'staged':
       return (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -136,7 +137,7 @@ export default function AppAdminHub({
                 Staged Papers Queue
               </h1>
               <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
-                Audit complete extracted papers and diagram bindings before committing them to the global live question pool.
+                Audit extracted papers and diagram bindings before committing them to the global live question pool.
               </p>
             </div>
             <button
@@ -147,7 +148,7 @@ export default function AppAdminHub({
               + Ingest New Paper
             </button>
           </div>
-          <AdminCMS initialView="staged" />
+          <StagingReview onOpenFullStudio={(paperId) => onSelectTab(`ingestion`)} />
         </div>
       );
 

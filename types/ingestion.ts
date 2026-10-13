@@ -55,7 +55,7 @@ export type QuestionValidationStatus = z.infer<typeof QuestionValidationStatusSc
 /**
  * Question status enum.
  */
-export const QuestionStatusSchema = z.enum(['active', 'withdrawn']);
+export const QuestionStatusSchema = z.enum(['active', 'withdrawn', 'needs_review']);
 export type QuestionStatus = z.infer<typeof QuestionStatusSchema>;
 
 /**
