@@ -45,7 +45,7 @@ export interface IngestionWorkspaceProps {
  * Dual-Pane Active Verification & Authoring Workspace docked inside IngestionStudioFrame.
  *
  * - Left Pane: Cambridge PDF Viewer with smooth collapse/expand rail, page navigation,
- *   zoom controls, and diagram bounding box selector.
+ *   zoom controls, and diagram bounding box selector. Proportioned at 42-44% for desktop balance.
  * - Right Pane:
  *   * Horizontally docked IngestionQuestionNav strip at top.
  *   * Active Question Authoring Canvas (Stem, Options, Media/Explanation) below.
@@ -72,7 +72,7 @@ export function IngestionWorkspace({
 }: IngestionWorkspaceProps) {
   return (
     <div
-      className={`flex flex-col xl:flex-row items-stretch gap-6 w-full ${className}`}
+      className={`flex flex-col xl:flex-row items-stretch gap-5 w-full ${className}`}
       data-testid="ingestion-dual-pane-workspace"
     >
       {/* =========================================================================
@@ -80,30 +80,32 @@ export function IngestionWorkspace({
          ========================================================================= */}
       {showPdfViewer ? (
         <div
-          className="w-full xl:w-[46%] 2xl:w-[48%] min-h-[750px] xl:h-[calc(100vh-210px)] sticky top-6 bg-white border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-sm flex flex-col shrink-0 overflow-hidden font-body transition-all duration-300"
+          className="w-full xl:w-[42%] 2xl:w-[44%] min-h-[720px] xl:h-[calc(100vh-180px)] sticky top-4 bg-white border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_#201e1d] flex flex-col shrink-0 overflow-hidden font-body transition-all duration-300"
           data-testid="ingestion-pdf-pane-expanded"
         >
           {/* PDF Header bar with collapse toggle */}
-          <div className="bg-[#fcfaf6] px-3.5 py-2.5 border-b-[1.5px] border-[#dcd3c4] flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#201e1d]">
+          <div className="bg-[#fcfaf6] px-3.5 py-2.5 border-b-2 border-[#201e1d] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 text-xs text-[#201e1d]">
               <BookOpen className="w-4 h-4 text-[#c67139]" />
-              <span className="font-heading font-black tracking-tight">
+              <span className="font-adminHeading font-bold text-sm tracking-tight text-[#201e1d]">
                 Cambridge PDF Source Reference
               </span>
               {paper?.paper?.paper_code && (
-                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#eee7db] text-[#474238]">
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#eee7db] text-[#474238] border border-[#dcd3c4]">
                   Paper {paper.paper.paper_code}
                 </span>
               )}
             </div>
+
             <button
               type="button"
               onClick={onTogglePdfViewer}
-              className="p-1.5 bg-[#f9f4ed] hover:bg-[#ffe1d0] hover:text-[#c67139] border border-[#dcd3c4] rounded-full text-[#201e1d] cursor-pointer transition-colors shadow-xs"
-              title="Collapse PDF Pane"
+              className="px-2.5 py-1 bg-[#f9f4ed] hover:bg-[#ffe1d0] hover:text-[#c67139] border-2 border-[#201e1d] rounded-full text-xs font-adminHeading font-bold text-[#201e1d] cursor-pointer transition-colors shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 flex items-center gap-1"
+              title="Collapse PDF Pane (Expand Authoring Canvas)"
               aria-label="Collapse PDF Pane"
             >
               <PanelLeftClose className="w-3.5 h-3.5" />
+              <span className="text-[11px] hidden sm:inline">Collapse PDF</span>
             </button>
           </div>
 
@@ -136,19 +138,19 @@ export function IngestionWorkspace({
       ) : (
         /* Collapsed Left Pane Vertical Rail */
         <div
-          className="w-12 bg-white border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-sm flex flex-col items-center py-4 gap-4 shrink-0 transition-all duration-300 sticky top-6 hover:border-[#c0b6a5]"
+          className="w-12 bg-white border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_#201e1d] flex flex-col items-center py-4 gap-4 shrink-0 transition-all duration-300 sticky top-4 hover:border-[#c67139]"
           data-testid="ingestion-pdf-pane-collapsed"
         >
           <button
             type="button"
             onClick={onTogglePdfViewer}
-            className="p-2 bg-[#f9f4ed] hover:bg-[#ffe1d0] hover:text-[#c67139] border-[1.5px] border-[#dcd3c4] rounded-full cursor-pointer text-[#201e1d] transition-colors shadow-xs"
+            className="p-2 bg-[#f9f4ed] hover:bg-[#ffe1d0] hover:text-[#c67139] border-2 border-[#201e1d] rounded-full cursor-pointer text-[#201e1d] transition-colors shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5"
             title="Expand PDF Source Pane"
             aria-label="Expand PDF Source Pane"
           >
             <PanelLeftOpen className="w-4 h-4" />
           </button>
-          <div className="rotate-90 text-xs font-bold text-[#645c50] tracking-wider uppercase whitespace-nowrap mt-12 flex items-center gap-1.5 select-none">
+          <div className="rotate-90 text-xs font-adminHeading font-bold text-[#645c50] tracking-wider uppercase whitespace-nowrap mt-12 flex items-center gap-1.5 select-none">
             <BookOpen className="w-3.5 h-3.5 -rotate-90 text-[#c67139]" />
             <span>PDF Source</span>
           </div>
@@ -158,7 +160,7 @@ export function IngestionWorkspace({
       {/* =========================================================================
           RIGHT PANE: Question Navigation Strip (Top) + Active Authoring Canvas
          ========================================================================= */}
-      <div className="flex-1 min-w-0 w-full flex flex-col gap-5">
+      <div className="flex-1 min-w-0 w-full flex flex-col gap-4">
         {/* Top: Docked Horizontally Scrollable Question Navigation Strip */}
         <IngestionQuestionNav
           questions={questions}
@@ -181,7 +183,7 @@ export function IngestionWorkspace({
 
         {/* Active Question Verification & Authoring Card */}
         {currentQuestion ? (
-          <div className="flex flex-col gap-5 w-full">
+          <div className="flex flex-col gap-4 w-full">
             {/* Stem Markdown & KaTeX Formula Editor */}
             <IngestionStemEditor
               questionNumber={currentQuestion.question_number || selectedIdx + 1}
@@ -286,12 +288,12 @@ export function IngestionWorkspace({
           </div>
         ) : (
           /* Empty State when no question selected */
-          <div className="flex-1 bg-white border-[1.5px] border-[#dcd3c4] rounded-2xl p-8 sm:p-12 shadow-sm flex flex-col items-center justify-center text-center gap-4 min-h-[420px]">
-            <div className="w-16 h-16 rounded-full bg-[#eee7db] border-[1.5px] border-[#dcd3c4] flex items-center justify-center text-3xl shadow-xs">
+          <div className="flex-1 bg-white border-2 border-[#201e1d] rounded-2xl p-8 sm:p-12 shadow-[3px_3px_0_#201e1d] flex flex-col items-center justify-center text-center gap-4 min-h-[420px]">
+            <div className="w-16 h-16 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center text-3xl shadow-[2px_2px_0_#201e1d]">
               📝
             </div>
             <div>
-              <h3 className="font-heading text-2xl font-black text-[#201e1d]">
+              <h3 className="font-adminHeading text-xl font-bold text-[#201e1d]">
                 No Question Selected
               </h3>
               <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-1 max-w-md">
@@ -301,7 +303,7 @@ export function IngestionWorkspace({
             <button
               type="button"
               onClick={onAddQuestion}
-              className="px-5 py-2.5 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading font-black text-xs hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-5 py-2.5 rounded-full bg-[#c67139] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-adminHeading font-bold text-xs hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add First Question</span>

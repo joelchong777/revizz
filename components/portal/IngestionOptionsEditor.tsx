@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import {
   CheckCircle2,
   Sparkles,
@@ -201,10 +202,10 @@ export function IngestionOptionsEditor({
       {/* Matrix Header Banner */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1 select-none">
         <div className="flex items-center gap-2">
-          <span className="font-heading font-black text-xs uppercase tracking-wider text-[#201e1d]">
+          <span className="font-adminHeading font-bold text-xs uppercase tracking-wider text-[#201e1d]">
             MCQ Options (A-D)
           </span>
-          <span className="bg-[#eee7db] text-[#474238] rounded-full px-2.5 py-0.5 text-[11px] font-bold">
+          <span className="bg-white border border-[#201e1d] text-[#201e1d] rounded-full px-2.5 py-0.5 text-[11px] font-mono font-bold shadow-[1px_1px_0_#201e1d]">
             Exactly 1 Correct
           </span>
         </div>
@@ -212,11 +213,11 @@ export function IngestionOptionsEditor({
         {/* Hotkeys Quick Reference */}
         <div className="flex items-center gap-1.5 text-xs text-[#645c50] font-medium">
           <span className="text-[11px] text-[#645c50] font-bold hidden sm:inline">Hotkeys:</span>
-          <kbd className="px-1.5 py-0.5 rounded-full bg-[#eee7db] border border-[#dcd3c4] font-mono text-[11px] font-bold text-[#474238]">
+          <kbd className="px-1.5 py-0.5 rounded-full bg-white border border-[#201e1d] font-mono text-[11px] font-bold text-[#201e1d] shadow-[1px_1px_0_#201e1d]">
             1-4
           </kbd>
           <span>or</span>
-          <kbd className="px-1.5 py-0.5 rounded-full bg-[#eee7db] border border-[#dcd3c4] font-mono text-[11px] font-bold text-[#474238]">
+          <kbd className="px-1.5 py-0.5 rounded-full bg-white border border-[#201e1d] font-mono text-[11px] font-bold text-[#201e1d] shadow-[1px_1px_0_#201e1d]">
             A-D
           </kbd>
           <span className="text-[#82796a] text-[11px] hidden md:inline">to mark answer key</span>
@@ -242,10 +243,10 @@ export function IngestionOptionsEditor({
           <div
             key={label}
             className={cn(
-              'group flex flex-col transition-all duration-150 select-none overflow-hidden',
+              'group flex flex-col transition-all duration-150 select-none overflow-hidden rounded-xl p-3 text-[#201e1d]',
               isCorrect
-                ? 'bg-[#f0fae1] border-[1.5px] border-[#728157] rounded-xl p-3 text-[#201e1d] shadow-sm'
-                : 'bg-white border-[1.5px] border-[#dcd3c4] rounded-xl p-3 text-[#201e1d] hover:border-[#c0b6a5]'
+                ? 'bg-[#f0fae1] border-2 border-[#728157] shadow-[2px_2px_0_#728157]'
+                : 'bg-white border-2 border-[#dcd3c4] hover:border-[#201e1d] shadow-[2px_2px_0_#dcd3c4]'
             )}
           >
             {/* Top row: Option Selector Badge + Content Input */}
@@ -264,25 +265,25 @@ export function IngestionOptionsEditor({
                   label === 'A' ? 1 : label === 'B' ? 2 : label === 'C' ? 3 : 4
                 })`}
                 className={cn(
-                  'flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-colors cursor-pointer select-none shrink-0',
+                  'flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all cursor-pointer select-none shrink-0 border-2 active:translate-y-0.5',
                   isCorrect
-                    ? 'bg-[#f0fae1] border-[1.5px] border-[#728157] text-[#201e1d]'
-                    : 'bg-[#f9f4ed] hover:bg-[#eee7db] border-[1.5px] border-[#dcd3c4] text-[#645c50] hover:text-[#201e1d]'
+                    ? 'bg-white border-[#728157] text-[#201e1d] shadow-[1px_1px_0_#728157]'
+                    : 'bg-[#f9f4ed] hover:bg-[#eee7db] border-[#dcd3c4] hover:border-[#201e1d] text-[#645c50] hover:text-[#201e1d]'
                 )}
               >
                 {/* Option Letter Badge */}
                 <div
                   className={cn(
                     isCorrect
-                      ? 'w-7 h-7 rounded-full bg-[#728157] text-[#f9f4ed] font-bold text-xs flex items-center justify-center shrink-0'
-                      : 'w-7 h-7 rounded-full bg-[#eee7db] text-[#474238] font-bold text-xs flex items-center justify-center shrink-0 hover:bg-[#c67139] hover:text-white transition-colors cursor-pointer'
+                      ? 'w-7 h-7 rounded-full bg-[#728157] text-[#f9f4ed] font-bold text-xs flex items-center justify-center shrink-0 border border-[#56633f]'
+                      : 'w-7 h-7 rounded-full bg-[#eee7db] text-[#474238] font-bold text-xs flex items-center justify-center shrink-0 border border-[#dcd3c4] hover:bg-[#c67139] hover:text-white transition-colors cursor-pointer'
                   )}
                 >
                   {label}
                 </div>
 
                 <div className="flex flex-col text-left pr-1">
-                  <span className="font-heading font-bold text-[11px] uppercase tracking-wide">
+                  <span className="font-adminHeading font-bold text-[11px] uppercase tracking-wide">
                     {isCorrect ? 'Correct Key' : 'Mark Key'}
                   </span>
                   <span className="text-[10px] font-mono text-[#645c50]">
@@ -307,20 +308,22 @@ export function IngestionOptionsEditor({
                 {/* KaTeX Live Preview for Option Content */}
                 {opt.content_markdown && opt.content_markdown.trim() && (
                   <div className="px-3 py-1.5 rounded-lg border border-[#dcd3c4] bg-[#f9f4ed] text-xs text-[#201e1d] flex items-start gap-2 overflow-x-auto shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#645c50] font-mono select-none shrink-0 mt-0.5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50] select-none shrink-0 mt-0.5">
                       Preview:
                     </span>
                     <div className="prose prose-xs max-w-none text-[#201e1d] flex-1 font-body">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
-                      >
-                        {sanitizeKaTeX(opt.content_markdown)}
-                      </ReactMarkdown>
+                      <MarkdownErrorBoundary fallbackText={opt.content_markdown}>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkMath]}
+                          rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
+                        >
+                          {sanitizeKaTeX(opt.content_markdown)}
+                        </ReactMarkdown>
+                      </MarkdownErrorBoundary>
                     </div>
 
                     {!katexStatus.isValid && (
-                      <span className="text-[10px] font-bold text-[#c67139] shrink-0 select-none">
+                      <span className="text-[10px] font-mono font-bold text-[#c67139] shrink-0 select-none">
                         KaTeX Error
                       </span>
                     )}

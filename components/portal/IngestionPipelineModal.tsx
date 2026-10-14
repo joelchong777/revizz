@@ -151,7 +151,7 @@ export default function IngestionPipelineModal({
               <span className="text-2xl">📋</span>
               <h2
                 id="ingestion-pipeline-title"
-                className="font-heading text-lg sm:text-2xl font-black text-[#201e1d]"
+                className="font-adminHeading text-lg sm:text-2xl font-bold text-[#201e1d]"
               >
                 Cambridge Ingestion Pipeline
               </h2>
@@ -181,7 +181,7 @@ export default function IngestionPipelineModal({
                   <FileText className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="font-heading font-black text-sm sm:text-base text-[#201e1d] break-all">
+                  <div className="font-adminHeading font-bold text-sm sm:text-base text-[#201e1d] break-all">
                     {fileName}
                   </div>
                   <div className="text-xs font-mono font-bold text-[#82796a]">
@@ -191,37 +191,37 @@ export default function IngestionPipelineModal({
                   </div>
                 </div>
               </div>
-              <span className="self-start sm:self-auto px-3 py-1 bg-emerald-100 text-emerald-800 border-2 border-emerald-300 rounded-full font-heading font-black text-[11px] uppercase tracking-wider">
+              <span className="self-start sm:self-auto px-3 py-1 bg-emerald-100 text-emerald-800 border-2 border-emerald-300 rounded-full font-adminHeading font-bold text-[11px] uppercase tracking-wider">
                 ✓ JSON Parsed
               </span>
             </div>
 
             {/* Schema & Integrity Audit Card */}
             <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_#201e1d] flex flex-col gap-3">
-              <h3 className="font-heading text-xs font-black text-[#201e1d] uppercase tracking-wider">
+              <h3 className="font-adminHeading text-xs font-bold text-[#201e1d] uppercase tracking-wider">
                 Schema &amp; Integrity Audit
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4]">
-                  <div className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
+                  <div className="font-adminHeading text-xl sm:text-2xl font-bold text-[#201e1d] font-mono">
                     {totalQuestions}
                   </div>
                   <div className="text-[11px] font-bold text-[#645c50]">Questions Parsed</div>
                 </div>
                 <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-300">
-                  <div className="font-heading text-xl sm:text-2xl font-black text-emerald-700">
+                  <div className="font-adminHeading text-xl sm:text-2xl font-bold text-emerald-700 font-mono">
                     {validQuestionsCount}
                   </div>
                   <div className="text-[11px] font-bold text-emerald-800">Valid Questions</div>
                 </div>
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4]">
-                  <div className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
+                  <div className="font-adminHeading text-xl sm:text-2xl font-bold text-[#201e1d] font-mono">
                     {totalOptionsCount}
                   </div>
                   <div className="text-[11px] font-bold text-[#645c50]">Total Options</div>
                 </div>
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4]">
-                  <div className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
+                  <div className="font-adminHeading text-xl sm:text-2xl font-bold text-[#201e1d] font-mono">
                     {totalTopicsCount}
                   </div>
                   <div className="text-[11px] font-bold text-[#645c50]">Syllabus Topics</div>
@@ -240,7 +240,7 @@ export default function IngestionPipelineModal({
             <div className="bg-[#fffbeb] border-2 border-[#d97706] rounded-2xl p-4 shadow-[3px_3px_0_#d97706] flex items-start gap-3">
               <div className="text-2xl shrink-0 mt-0.5">⚠️</div>
               <div className="flex flex-col gap-1">
-                <div className="font-heading text-xs sm:text-sm font-black text-[#92400e]">
+                <div className="font-adminHeading text-xs sm:text-sm font-bold text-[#92400e]">
                   Ready to Upsert: Loaded in browser memory only. Not yet written to live database.
                 </div>
                 <p className="text-xs text-[#78350f] font-medium leading-relaxed">
@@ -254,7 +254,7 @@ export default function IngestionPipelineModal({
               <button
                 type="button"
                 onClick={handleOpenWorkspace}
-                className="w-full sm:w-auto px-5 py-3 rounded-2xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs sm:text-sm font-heading font-black text-[#201e1d] shadow-[3px_3px_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer text-center"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs sm:text-sm font-adminHeading font-bold text-[#201e1d] shadow-[3px_3px_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer text-center"
               >
                 🛠️ Open Studio Workspace to Inspect/Edit
               </button>
@@ -262,7 +262,7 @@ export default function IngestionPipelineModal({
               <button
                 type="button"
                 onClick={handleStartUpsert}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border-2 border-[#201e1d] bg-[#c67139] hover:bg-[#b2622d] text-white font-heading font-black text-sm sm:text-base shadow-[4px_4px_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border-2 border-[#201e1d] bg-[#c67139] hover:bg-[#b2622d] text-white font-adminHeading font-bold text-sm sm:text-base shadow-[4px_4px_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <UploadCloud className="w-5 h-5" />
                 <span>🚀 Upsert {totalQuestions} Questions to Supabase Live Bank</span>
@@ -279,7 +279,7 @@ export default function IngestionPipelineModal({
             </div>
 
             <div className="flex flex-col gap-1 max-w-md">
-              <h3 className="font-heading text-lg font-black text-[#201e1d]">
+              <h3 className="font-adminHeading text-lg font-bold text-[#201e1d]">
                 Upserting to Supabase Live Bank...
               </h3>
               <p className="text-xs sm:text-sm font-medium text-[#645c50]">
@@ -307,7 +307,7 @@ export default function IngestionPipelineModal({
                   <Check className="w-6 h-6 stroke-[3]" />
                 </div>
                 <div>
-                  <h3 className="font-heading text-sm sm:text-base font-black text-emerald-950">
+                  <h3 className="font-adminHeading text-sm sm:text-base font-bold text-emerald-950">
                     Paper Successfully Upserted to Supabase!
                   </h3>
                   <p className="text-xs text-emerald-800 font-medium">
@@ -318,11 +318,11 @@ export default function IngestionPipelineModal({
 
               {/* Helpful Post-Publish Action */}
               <div className="flex items-center gap-2 self-stretch sm:self-auto justify-between sm:justify-end border-t sm:border-t-0 border-emerald-200 pt-2 sm:pt-0 shrink-0">
-                <span className="text-xs font-black text-emerald-950 hidden md:inline">
+                <span className="text-xs font-adminHeading font-bold text-emerald-950 hidden md:inline">
                   Paper is live in Supabase!
                 </span>
                 {archiveSuccess ? (
-                  <span className="px-3 py-1.5 bg-emerald-100 border border-emerald-400 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-1">
+                  <span className="px-3 py-1.5 bg-emerald-100 border border-emerald-400 text-emerald-900 rounded-xl text-xs font-mono font-bold flex items-center gap-1">
                     ✓ {archiveSuccess}
                   </span>
                 ) : (
@@ -330,7 +330,7 @@ export default function IngestionPipelineModal({
                     type="button"
                     onClick={handleArchivePaper}
                     disabled={isArchiving}
-                    className="px-3.5 py-2 bg-[#728157] hover:bg-[#5e6b47] text-white rounded-xl text-xs font-heading font-black shadow-xs active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-2 bg-[#728157] hover:bg-[#5e6b47] text-white rounded-xl text-xs font-adminHeading font-bold shadow-xs active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     title="Archive local staged JSON file to staging/archive/"
                   >
                     {isArchiving ? (
@@ -359,7 +359,7 @@ export default function IngestionPipelineModal({
               <div className="flex items-center justify-between border-b border-[#eee7db] pb-3">
                 <div className="flex items-center gap-2">
                   <Database className="w-4 h-4 text-[#c67139]" />
-                  <span className="font-heading text-xs font-black text-[#201e1d] uppercase tracking-wider">
+                  <span className="font-adminHeading text-xs font-bold text-[#201e1d] uppercase tracking-wider">
                     Supabase Database Receipt
                   </span>
                 </div>
@@ -378,35 +378,35 @@ export default function IngestionPipelineModal({
 
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4] flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-[#82796a] uppercase">Subject</span>
-                  <span className="font-heading font-black text-[#201e1d] text-sm">
+                  <span className="font-adminHeading font-bold text-[#201e1d] text-sm">
                     {paper?.subject?.name || "Economics"} ({paper?.subject?.code || "0455"})
                   </span>
                 </div>
 
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4] flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-[#82796a] uppercase">Questions Upserted</span>
-                  <span className="font-heading font-black text-emerald-700 text-base">
+                  <span className="font-adminHeading font-bold text-emerald-700 text-base">
                     {receipt?.questions_count ?? totalQuestions} Questions
                   </span>
                 </div>
 
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4] flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-[#82796a] uppercase">Options Upserted</span>
-                  <span className="font-heading font-black text-emerald-700 text-base">
+                  <span className="font-adminHeading font-bold text-emerald-700 text-base">
                     {receipt?.options_count ?? totalOptionsCount} Options (4/Q)
                   </span>
                 </div>
 
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4] flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-[#82796a] uppercase">Topics Mapped</span>
-                  <span className="font-heading font-black text-[#201e1d] text-sm">
+                  <span className="font-adminHeading font-bold text-[#201e1d] text-sm">
                     {receipt?.topics_count ?? totalTopicsCount} Syllabus Topics
                   </span>
                 </div>
 
                 <div className="p-3 bg-[#fdfbf7] rounded-xl border border-[#dcd3c4] flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-[#82796a] uppercase">Live Status</span>
-                  <span className="font-heading font-black text-emerald-600 text-sm flex items-center gap-1">
+                  <span className="font-adminHeading font-bold text-emerald-600 text-sm flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Live in Bank
                   </span>
                 </div>
@@ -435,7 +435,7 @@ export default function IngestionPipelineModal({
               <button
                 type="button"
                 onClick={handleViewQuestionBank}
-                className="w-full sm:w-auto px-5 py-3 rounded-2xl border-2 border-[#201e1d] bg-[#728157] hover:bg-[#5e6b47] text-white font-heading font-black text-xs sm:text-sm shadow-[3px_3px_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl border-2 border-[#201e1d] bg-[#728157] hover:bg-[#5e6b47] text-white font-adminHeading font-bold text-xs sm:text-sm shadow-[3px_3px_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>View in Question Bank</span>
                 <ExternalLink className="w-4 h-4" />
@@ -450,7 +450,7 @@ export default function IngestionPipelineModal({
             <div className="bg-[#fee2e2] border-2 border-[#b91c1c] rounded-2xl p-4 shadow-[4px_4px_0_#b91c1c] flex items-start gap-3">
               <AlertTriangle className="w-6 h-6 text-[#b91c1c] shrink-0 mt-0.5" />
               <div className="flex flex-col gap-1">
-                <h3 className="font-heading text-sm font-black text-[#b91c1c]">
+                <h3 className="font-adminHeading text-sm font-bold text-[#b91c1c]">
                   Supabase Upsert Failed
                 </h3>
                 <p className="text-xs text-[#7f1d1d] font-mono whitespace-pre-wrap break-all">
@@ -463,14 +463,14 @@ export default function IngestionPipelineModal({
               <button
                 type="button"
                 onClick={handleOpenWorkspace}
-                className="w-full sm:w-auto px-5 py-3 rounded-2xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-heading font-black text-[#201e1d] shadow-[3px_3px_0_#201e1d] active:translate-y-0.5 transition-all cursor-pointer"
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#201e1d] shadow-[3px_3px_0_#201e1d] active:translate-y-0.5 transition-all cursor-pointer"
               >
                 🛠️ Fix Questions in Studio Workspace
               </button>
               <button
                 type="button"
                 onClick={handleStartUpsert}
-                className="w-full sm:w-auto px-6 py-3 rounded-2xl border-2 border-[#201e1d] bg-[#c67139] hover:bg-[#b2622d] text-white font-heading font-black text-xs sm:text-sm shadow-[3px_3px_0_#201e1d] active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl border-2 border-[#201e1d] bg-[#c67139] hover:bg-[#b2622d] text-white font-adminHeading font-bold text-xs sm:text-sm shadow-[3px_3px_0_#201e1d] active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <RotateCw className="w-4 h-4" />
                 <span>Retry Supabase Upsert</span>

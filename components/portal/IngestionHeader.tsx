@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { StagingPaper, PaperLifecycleState } from "@/types/ingestion";
 import {
@@ -17,6 +17,15 @@ import {
   Settings,
   Archive,
   Trash2,
+  TrendingUp,
+  FlaskConical,
+  Atom,
+  Calculator,
+  Globe,
+  MoreHorizontal,
+  FileCode,
+  SlidersHorizontal,
+  Check,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -58,6 +67,51 @@ export interface IngestionHeaderProps {
   onTogglePreview?: () => void;
 }
 
+/**
+ * Intelligent icon renderer: maps icon slugs (e.g. "trending-up") to actual Lucide components,
+ * cleanly renders Unicode emoji glyphs, and never displays raw string identifiers.
+ */
+function renderSubjectIcon(icon?: string) {
+  if (!icon) return <span className="text-base select-none leading-none">📝</span>;
+  const clean = icon.trim();
+  const lower = clean.toLowerCase();
+
+  // Lucide icon name mappings
+  if (
+    lower === "trending-up" ||
+    lower === "trending_up" ||
+    lower === "trendingup" ||
+    lower.includes("trending") ||
+    lower.includes("econ")
+  ) {
+    return <TrendingUp className="w-4 h-4 text-[#c67139]" />;
+  }
+  if (lower === "atom" || lower.includes("physics")) {
+    return <Atom className="w-4 h-4 text-[#c67139]" />;
+  }
+  if (lower === "flask" || lower === "flask-conical" || lower.includes("chemistry")) {
+    return <FlaskConical className="w-4 h-4 text-[#c67139]" />;
+  }
+  if (lower === "calculator" || lower.includes("math")) {
+    return <Calculator className="w-4 h-4 text-[#c67139]" />;
+  }
+  if (lower === "globe" || lower.includes("geography")) {
+    return <Globe className="w-4 h-4 text-[#c67139]" />;
+  }
+  if (lower === "book" || lower === "book-open") {
+    return <BookOpen className="w-4 h-4 text-[#c67139]" />;
+  }
+
+  // If it's a Unicode emoji
+  const isEmoji = /\p{Extended_Pictographic}/u.test(clean);
+  if (isEmoji) {
+    return <span className="text-base select-none leading-none">{clean}</span>;
+  }
+
+  // Safe fallback
+  return <span className="text-base select-none leading-none">📝</span>;
+}
+
 export default function IngestionHeader({
   mode,
   paper,
@@ -79,39 +133,56 @@ export default function IngestionHeader({
   isDraftSaved = false,
   onArchiveStagedPaper,
   onDeleteStagedPaper,
+  onOpenPayloads,
+  onOpenAudit,
 }: IngestionHeaderProps) {
   const [justSaved, setJustSaved] = useState(false);
-  const [archiveState, setArchiveState] = useState<'idle' | 'archiving' | 'archived' | 'error'>('idle');
+  const [archiveState, setArchiveState] = useState<"idle" | "archiving" | "archived" | "error">("idle");
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-  const [deleteState, setDeleteState] = useState<'idle' | 'deleting' | 'deleted' | 'error'>('idle');
+  const [deleteState, setDeleteState] = useState<"idle" | "deleting" | "deleted" | "error">("idle");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close more menu on click outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
+    }
+    if (isMoreMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isMoreMenuOpen]);
 
   const performArchive = async () => {
     if (!paper?.id) return;
     setShowArchiveConfirm(false);
-    setArchiveState('archiving');
+    setArchiveState("archiving");
     setArchiveError(null);
     try {
       if (onArchiveStagedPaper) {
         const res = await onArchiveStagedPaper(paper.id);
-        if (!res.success) throw new Error(res.error || 'Failed to archive staged paper');
+        if (!res.success) throw new Error(res.error || "Failed to archive staged paper");
       } else {
-        const res = await fetch('/api/ingest/staged-paper', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'archive', id: paper.id }),
+        const res = await fetch("/api/ingest/staged-paper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "archive", id: paper.id }),
         });
         const result = await res.json().catch(() => ({}));
         if (!res.ok || !result.success) {
           throw new Error(result.error || `Archive failed with status ${res.status}`);
         }
       }
-      setArchiveState('archived');
+      setArchiveState("archived");
     } catch (err: any) {
-      setArchiveState('error');
-      setArchiveError(err?.message || 'Error archiving paper');
+      setArchiveState("error");
+      setArchiveError(err?.message || "Error archiving paper");
     }
   };
 
@@ -191,7 +262,7 @@ export default function IngestionHeader({
   // Defensive Subject & Paper metadata formatting
   const subjectCode = paper?.subject?.code || (paper?.id ? paper.id.split("_")[0] : "Cambridge");
   const subjectName = paper?.subject?.name || "Exam Paper";
-  const subjectIcon = paper?.subject?.icon || "📝";
+  const subjectIconRaw = paper?.subject?.icon;
   const paperCode = paper?.paper?.paper_code || (paper?.id ? paper.id.split("_")[2] : "MCQ");
 
   // Formatted series and year: e.g. "Summer 2024"
@@ -223,119 +294,87 @@ export default function IngestionHeader({
 
   // -------------------------------------------------------------
   // MODE: WORKSPACE (Active Curation Studio)
-  // Paper identity badge, live counters, workspace tools, Neobrutalist Upsert CTA
+  // Streamlined 2-cluster layout: Paper Identity (Left) | Controls & Primary CTA (Right)
   // -------------------------------------------------------------
   return (
     <>
-      <header className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0_#201e1d] flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 font-body">
-        {/* Left Section: Subject & Paper Code Badge + Validation Indicators */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3.5 flex-wrap">
-          {/* Paper Identity Badge */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 bg-white border-2 border-[#201e1d] rounded-full px-3.5 py-1.5 shadow-[2px_2px_0_#201e1d]">
-              <span className="text-base select-none">{subjectIcon}</span>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#201e1d]">
-                <span className="font-adminHeading font-bold text-sm text-[#201e1d]">
-                  {subjectCode} / {paperCode}
-                </span>
-                <span className="text-[#82796a]">·</span>
-                <span className="text-[#201e1d] font-bold">{subjectName}</span>
+      <header className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 sm:p-3.5 shadow-[2px_2px_0_#201e1d] flex flex-col xl:flex-row xl:items-center justify-between gap-3 font-body">
+        {/* Left Section: Paper Identity Pill + Total Count + Validation Indicators */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Paper Identity Pill */}
+          <div className="flex items-center gap-2 bg-white border-2 border-[#201e1d] rounded-full px-3.5 py-1.5 shadow-[2px_2px_0_#201e1d]">
+            <span className="flex items-center justify-center shrink-0">
+              {renderSubjectIcon(subjectIconRaw)}
+            </span>
+            <div className="flex items-center gap-1.5 text-xs text-[#201e1d]">
+              <span className="font-adminHeading font-bold text-sm text-[#201e1d]">
+                {subjectCode} / {paperCode}
+              </span>
+              <span className="text-[#82796a]">·</span>
+              <span className="text-[#201e1d] font-bold">{subjectName}</span>
+              {(seriesName || fullYear) && (
                 <span className="text-[#645c50] font-mono text-[11px] font-semibold">
                   {seriesName} {fullYear}
                 </span>
-              </div>
-
-              {onOpenSettings && (
-                <button
-                  type="button"
-                  onClick={onOpenSettings}
-                  title="Edit paper subject, year, series, and code metadata"
-                  className="ml-1 p-1 rounded-full text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer active:translate-y-0.5"
-                  aria-label="Edit metadata"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
               )}
             </div>
 
-            {/* Total Questions Badge */}
-            <span className="px-3 py-1 rounded-full bg-white border-2 border-[#201e1d] text-[#201e1d] text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]">
-              {totalCount} Questions
-            </span>
-
-            {/* Validation Counters */}
-            {totalCount > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="px-2.5 py-1 rounded-full bg-[#d1fae5] border-2 border-[#201e1d] text-[#065f46] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d]"
-                  title={`${validCount} questions pass all validation checks`}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#065f46]" />
-                  <span>{validCount}/{totalCount} Valid ✓</span>
-                </span>
-
-                {reviewCount > 0 && (
-                  <span
-                    className="px-2.5 py-1 rounded-full bg-[#fef3c7] border-2 border-[#201e1d] text-[#92400e] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d]"
-                    title={`${reviewCount} questions require curator review`}
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#92400e]" />
-                    <span>{reviewCount} Review ⚠</span>
-                  </span>
-                )}
-              </div>
+            {onOpenSettings && (
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                title="Edit paper subject, year, series, and code metadata"
+                className="ml-0.5 p-1 rounded-full text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer active:translate-y-0.5"
+                aria-label="Edit metadata"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
-        </div>
 
-        {/* Right Section: Workspace Controls & Primary Upsert CTA */}
-        <div className="flex items-center gap-2 sm:gap-2.5 self-end xl:self-auto flex-wrap">
-          {/* Switch Paper / Upload New */}
-          {onSwitchPaper && (
-            <button
-              type="button"
-              onClick={onSwitchPaper}
-              className="px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
-              title="Switch paper or upload a new PDF"
-            >
-              <FileUp className="w-3.5 h-3.5 text-[#201e1d]" />
-              <span className="hidden sm:inline">Switch Paper / Upload New</span>
-              <span className="sm:hidden">New Paper</span>
-            </button>
-          )}
+          {/* Total Questions Count Badge */}
+          <span className="px-3 py-1 rounded-full bg-white border-2 border-[#201e1d] text-[#201e1d] text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]">
+            {totalCount} Questions
+          </span>
 
-          {/* Undo / Redo Controls */}
-          {onUndo && onRedo && (
-            <div className="flex items-center border-2 border-[#201e1d] rounded-full bg-white overflow-hidden shadow-[2px_2px_0_#201e1d]">
-              <button
-                type="button"
-                onClick={onUndo}
-                disabled={!canUndo}
-                aria-label="Undo edit"
-                title="Undo question edit (Ctrl+Z)"
-                className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed border-r-2 border-[#201e1d] text-[#201e1d] transition-colors cursor-pointer active:translate-y-0.5"
+          {/* Validation Counters */}
+          {totalCount > 0 && (
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`px-2.5 py-1 rounded-full border-2 border-[#201e1d] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d] ${
+                  validCount === totalCount
+                    ? "bg-[#d1fae5] text-[#065f46]"
+                    : "bg-[#d1fae5] text-[#065f46]"
+                }`}
+                title={`${validCount} of ${totalCount} questions pass all validation checks`}
               >
-                <Undo2 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={onRedo}
-                disabled={!canRedo}
-                aria-label="Redo edit"
-                title="Redo question edit (Ctrl+Y)"
-                className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] transition-colors cursor-pointer active:translate-y-0.5"
-              >
-                <Redo2 className="w-3.5 h-3.5" />
-              </button>
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#065f46]" />
+                <span>
+                  {validCount}/{totalCount} Valid {validCount === totalCount && "✓"}
+                </span>
+              </span>
+
+              {reviewCount > 0 && (
+                <span
+                  className="px-2.5 py-1 rounded-full bg-[#fef3c7] border-2 border-[#201e1d] text-[#92400e] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d]"
+                  title={`${reviewCount} questions require curator review before publishing`}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#92400e]" />
+                  <span>{reviewCount} Review ⚠</span>
+                </span>
+              )}
             </div>
           )}
+        </div>
 
+        {/* Right Section: Secondary Tools + Overflow Menu + Primary Live CTA */}
+        <div className="flex items-center gap-2 self-end xl:self-auto flex-wrap">
           {/* Split View (PDF) Toggle */}
           {onTogglePdfViewer && (
             <button
               type="button"
               onClick={onTogglePdfViewer}
-              className={`px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
                 showPdfViewer
                   ? "bg-[#ffe1d0] text-[#c67139]"
                   : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
@@ -343,11 +382,11 @@ export default function IngestionHeader({
               title={showPdfViewer ? "Hide PDF Source Pane" : "Show Dual-Pane PDF Source"}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>{showPdfViewer ? "Hide PDF" : "Split View (PDF)"}</span>
+              <span>{showPdfViewer ? "Hide PDF" : "Show PDF"}</span>
             </button>
           )}
 
-          {/* Save Draft Action with Multi-Keyframe Tween Defense */}
+          {/* Save Draft Action with Multi-Keyframe Tween Defense (§12) */}
           {onSaveDraft && (
             <motion.button
               type="button"
@@ -356,92 +395,167 @@ export default function IngestionHeader({
               transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              className={`px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
                 justSaved || isDraftSaved
                   ? "bg-[#d1fae5] text-[#065f46]"
                   : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
               }`}
               title="Save draft to local browser storage"
             >
-              <BookmarkCheck className={`w-3.5 h-3.5 ${justSaved || isDraftSaved ? "text-[#065f46]" : "text-[#56633f]"}`} />
-              <span>{justSaved ? "Draft Saved ✓" : "Save Draft"}</span>
+              <BookmarkCheck
+                className={`w-3.5 h-3.5 ${
+                  justSaved || isDraftSaved ? "text-[#065f46]" : "text-[#56633f]"
+                }`}
+              />
+              <span>{justSaved ? "Saved ✓" : "Save Draft"}</span>
             </motion.button>
           )}
 
-          {/* Paper Settings Button */}
-          {onOpenSettings && (
+          {/* Switch Paper / Upload New */}
+          {onSwitchPaper && (
             <button
               type="button"
-              onClick={onOpenSettings}
-              className="p-2 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
-              title="Paper metadata and syllabus topics"
-              aria-label="Paper settings"
+              onClick={onSwitchPaper}
+              className="px-3 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
+              title="Switch paper or upload a new PDF"
             >
-              <Settings className="w-3.5 h-3.5" />
+              <FileUp className="w-3.5 h-3.5 text-[#201e1d]" />
+              <span className="hidden sm:inline">Switch Paper</span>
+              <span className="sm:hidden">Switch</span>
             </button>
           )}
 
-          {/* Delete Staged Paper Action */}
-          {paper && (
+          {/* More Actions Overflow Dropdown [···] */}
+          <div className="relative" ref={moreMenuRef}>
             <button
               type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={deleteState === "deleting"}
-              className="p-2 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#fee2e2] text-[#645c50] hover:text-[#b91c1c] hover:border-[#b91c1c] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50"
-              title="Delete paper permanently from staging"
-              aria-label="Delete staged paper"
+              onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+              aria-label="More studio actions"
+              title="More actions (Undo, Redo, Settings, Payloads, Audit, Delete)"
+              className="p-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none flex items-center justify-center"
             >
-              {deleteState === "deleting" ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#b91c1c]" />
-              ) : (
-                <Trash2 className="w-3.5 h-3.5" />
-              )}
+              <MoreHorizontal className="w-4 h-4" />
             </button>
-          )}
 
-          {/* Primary CTA: Neobrutalist Upsert to Supabase Button */}
-          <motion.button
-            type="button"
-            onClick={onPublish}
-            disabled={isPublishing || !paper || totalCount === 0}
-            whileHover={!isPublishing && paper && totalCount > 0 ? { scale: 1.01 } : undefined}
-            whileTap={!isPublishing && paper && totalCount > 0 ? { scale: 0.98 } : undefined}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            title={
-              reviewCount > 0
-                ? `${reviewCount} questions require curator review before upsert`
-                : "Upsert all verified questions to Supabase"
-            }
-            className={`px-5 py-2.5 rounded-full border-2 border-[#201e1d] font-adminHeading font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-              publishStatus === "success"
-                ? "bg-[#065f46] text-[#f9f4ed]"
-                : "bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d]"
-            }`}
-          >
-            {isPublishing ? (
-              <Loader2 className="w-4 h-4 animate-spin text-[#f9f4ed]" />
-            ) : publishStatus === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-[#f9f4ed]" />
-            ) : (
-              <UploadCloud className="w-4 h-4 text-[#f9f4ed]" />
+            {isMoreMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-[4px_4px_0_#201e1d] z-50 py-1.5 animate-in fade-in zoom-in-95 font-body">
+                {/* Undo / Redo Row */}
+                {(onUndo || onRedo) && (
+                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#dcd3c4]">
+                    <span className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider">
+                      History
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {onUndo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onUndo();
+                            setIsMoreMenuOpen(false);
+                          }}
+                          disabled={!canUndo}
+                          title="Undo edit (Ctrl+Z)"
+                          className="p-1 rounded-lg border border-[#dcd3c4] bg-white hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] cursor-pointer"
+                        >
+                          <Undo2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onRedo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onRedo();
+                            setIsMoreMenuOpen(false);
+                          }}
+                          disabled={!canRedo}
+                          title="Redo edit (Ctrl+Y)"
+                          className="p-1 rounded-lg border border-[#dcd3c4] bg-white hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] cursor-pointer"
+                        >
+                          <Redo2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Settings Item */}
+                {onOpenSettings && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenSettings();
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-[#645c50]" />
+                    <span>Paper Settings</span>
+                  </button>
+                )}
+
+                {/* Payloads Inspector Item */}
+                {onOpenPayloads && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenPayloads();
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <FileCode className="w-3.5 h-3.5 text-[#645c50]" />
+                    <span>Inspect JSON</span>
+                  </button>
+                )}
+
+                {/* Audit Drawer Item */}
+                {onOpenAudit && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenAudit();
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#645c50]" />
+                    <span>Ingestion Audit</span>
+                  </button>
+                )}
+
+                {/* Delete Staged Paper Item */}
+                {paper && (
+                  <>
+                    <div className="my-1 border-t border-[#dcd3c4]" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        setShowDeleteConfirm(true);
+                      }}
+                      disabled={deleteState === "deleting"}
+                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#b91c1c] hover:bg-[#fee2e2] flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-[#b91c1c]" />
+                      <span>Delete Staged Paper</span>
+                    </button>
+                  </>
+                )}
+              </div>
             )}
-            <span>
-              {publishStatus === "publishing"
-                ? "Upserting..."
-                : publishStatus === "validating"
-                ? "Validating..."
-                : publishStatus === "success"
-                ? "Upserted to Supabase! ✓"
-                : "Upsert to Supabase"}
-            </span>
-          </motion.button>
+          </div>
 
-          {/* Post-publish Archive Staged JSON File Action */}
-          {publishStatus === "success" && paper && (
-            <div className="flex items-center gap-2 bg-[#d1fae5] border-2 border-[#201e1d] rounded-full px-3 py-1.5 shadow-[2px_2px_0_#201e1d]">
-              <span className="text-xs font-bold text-[#065f46] hidden sm:inline">
-                Paper is live in Supabase!
+          {/* Primary CTA / Supabase Live Status Cluster */}
+          {publishStatus === "success" && paper ? (
+            /* Sleek Live in Supabase Status Pill + Clean Archive Action */
+            <div className="flex items-center gap-2 bg-[#d1fae5] border-2 border-[#201e1d] rounded-full px-3.5 py-1.5 shadow-[2px_2px_0_#201e1d]">
+              <span className="text-xs font-adminHeading font-bold text-[#065f46] flex items-center gap-1.5">
+                <Check className="w-4 h-4 stroke-[2.5]" />
+                <span>Live in Supabase</span>
               </span>
+
+              <span className="text-[#065f46]/40">·</span>
+
               {archiveState === "archived" ? (
                 <span className="text-xs font-bold text-[#065f46] flex items-center gap-1 font-mono">
                   ✓ Archived
@@ -451,28 +565,65 @@ export default function IngestionHeader({
                   type="button"
                   onClick={() => setShowArchiveConfirm(true)}
                   disabled={archiveState === "archiving"}
-                  className="px-2.5 py-1 rounded-full bg-[#065f46] text-[#f9f4ed] hover:bg-[#044e39] text-xs font-adminHeading font-bold transition-all cursor-pointer shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 flex items-center gap-1.5"
-                  title="Archive staged paper"
+                  className="px-2.5 py-0.5 rounded-full bg-[#065f46] text-[#f9f4ed] hover:bg-[#044e39] text-xs font-adminHeading font-bold transition-all cursor-pointer shadow-[1px_1px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 flex items-center gap-1.5"
+                  title="Archive staged paper so it no longer appears in uncurated staging list"
                 >
                   {archiveState === "archiving" ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-3 h-3 animate-spin" />
                       <span>Archiving...</span>
                     </>
                   ) : (
                     <>
-                      <Archive className="w-3.5 h-3.5" />
-                      <span>Archive Staged Paper</span>
+                      <Archive className="w-3 h-3" />
+                      <span>Archive Draft</span>
                     </>
                   )}
                 </button>
               )}
               {archiveError && (
                 <span className="text-xs font-bold text-red-600" title={archiveError}>
-                  ⚠️ Error
+                  ⚠️
                 </span>
               )}
             </div>
+          ) : (
+            /* Primary Neobrutalist [Upsert to Supabase] Action */
+            <motion.button
+              type="button"
+              onClick={onPublish}
+              disabled={isPublishing || !paper || totalCount === 0}
+              whileHover={!isPublishing && paper && totalCount > 0 ? { scale: 1.01 } : undefined}
+              whileTap={!isPublishing && paper && totalCount > 0 ? { scale: 0.98 } : undefined}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              title={
+                reviewCount > 0
+                  ? `${reviewCount} questions require curator review before upsert`
+                  : "Upsert all verified questions to Supabase"
+              }
+              className={`px-4 py-2 rounded-full border-2 border-[#201e1d] font-adminHeading font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                publishStatus === "success"
+                  ? "bg-[#065f46] text-[#f9f4ed]"
+                  : "bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d]"
+              }`}
+            >
+              {isPublishing ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[#f9f4ed]" />
+              ) : publishStatus === "success" ? (
+                <CheckCircle2 className="w-4 h-4 text-[#f9f4ed]" />
+              ) : (
+                <UploadCloud className="w-4 h-4 text-[#f9f4ed]" />
+              )}
+              <span>
+                {publishStatus === "publishing"
+                  ? "Upserting..."
+                  : publishStatus === "validating"
+                  ? "Validating..."
+                  : publishStatus === "success"
+                  ? "Upserted to Supabase! ✓"
+                  : "Upsert to Supabase"}
+              </span>
+            </motion.button>
           )}
         </div>
       </header>
@@ -495,7 +646,7 @@ export default function IngestionHeader({
                   Archive Staged Paper?
                 </h3>
                 <p className="text-xs text-[#645c50] font-medium">
-                  Safely archive the published staged paper so it no longer clutters active staging.
+                  Safely archive this published staged paper so it no longer clutters active staging.
                 </p>
               </div>
             </div>
@@ -503,13 +654,11 @@ export default function IngestionHeader({
             {/* Defensive Paper Preview Card */}
             <div className="p-3 bg-white border-2 border-[#201e1d] rounded-xl flex items-center justify-between text-xs font-mono shadow-[2px_2px_0_#201e1d]">
               <div className="flex items-center gap-2 truncate">
-                <span>{subjectIcon}</span>
+                <span>{renderSubjectIcon(subjectIconRaw)}</span>
                 <span className="font-bold text-[#201e1d]">
                   {subjectCode}/{paperCode}
                 </span>
-                <span className="text-[#82796a] truncate">
-                  {subjectName}
-                </span>
+                <span className="text-[#82796a] truncate">{subjectName}</span>
               </div>
               <span className="px-2 py-0.5 bg-[#d1fae5] text-[#065f46] border border-[#065f46]/40 rounded-full text-[10px] font-bold shrink-0">
                 {totalCount} Questions
@@ -517,7 +666,7 @@ export default function IngestionHeader({
             </div>
 
             <p className="text-[11px] text-[#645c50] font-medium leading-relaxed">
-              Archiving prevents this paper from showing up as an uncurated draft while keeping a clean history on disk.
+              Archiving moves this paper to archive storage while keeping a clean history on disk. It will not be lost.
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#dcd3c4]">
@@ -569,7 +718,7 @@ export default function IngestionHeader({
             {/* Defensive Paper Preview Card */}
             <div className="p-3 bg-white border-2 border-[#201e1d] rounded-xl flex items-center justify-between text-xs font-mono shadow-[2px_2px_0_#201e1d]">
               <div className="flex items-center gap-2 truncate">
-                <span>{subjectIcon}</span>
+                <span>{renderSubjectIcon(subjectIconRaw)}</span>
                 <span className="font-bold text-[#201e1d]">
                   {subjectCode}/{paperCode}
                 </span>

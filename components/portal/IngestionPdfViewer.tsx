@@ -149,9 +149,28 @@ export function IngestionPdfViewer({
     setPanOffset({ x: 0, y: 0 });
   };
 
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
+
   // Direct PDF / Image Upload Handler
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type === "application/pdf") {
+      const url = URL.createObjectURL(file);
+      setLocalPdfUrl(url);
+      setLocalImageUrl(null);
+    } else if (file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file);
+      setLocalImageUrl(url);
+    }
+  };
+
+  // Drag and drop file loader
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
     if (file.type === "application/pdf") {
@@ -423,37 +442,37 @@ export function IngestionPdfViewer({
       {/* ========================================================= */}
       {/* 1. TOP HEADER & NAVIGATION TOOLBAR                        */}
       {/* ========================================================= */}
-      <div className="bg-[#fcfaf6] border-b-[1.5px] border-[#dcd3c4] p-3 sm:p-3.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="bg-[#fcfaf6] border-b-2 border-[#201e1d] p-3 sm:p-3.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
         {/* Left: Paper info & Page Controls */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 bg-[#ffe1d0] text-[#c67139] border border-[#c67139]/30 rounded-lg shadow-xs shrink-0">
+            <span className="p-1.5 bg-[#ffe1d0] text-[#c67139] border-2 border-[#201e1d] rounded-lg shadow-[1px_1px_0_#201e1d] shrink-0">
               <FileText className="w-4 h-4" />
             </span>
             <div className="leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d] tracking-tight">
+                <span className="font-adminHeading font-bold text-xs sm:text-sm text-[#201e1d] tracking-tight">
                   PDF Canvas &amp; Cropper
                 </span>
                 <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#eee7db] border border-[#dcd3c4] text-[#474238]">
                   {paperCode}
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-[#645c50]">
+              <p className="text-[11px] font-mono font-semibold text-[#645c50]">
                 Q{questionNumber} Target Canvas
               </p>
             </div>
           </div>
 
-          <div className="h-6 w-[2px] bg-slate-200 hidden sm:block" />
+          <div className="h-6 w-[2px] bg-[#dcd3c4] hidden sm:block" />
 
           {/* Page Stepper Buttons & Numeric Input */}
-          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#dcd3c4] shadow-xs">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_#201e1d]">
             <button
               type="button"
               onClick={() => handlePageSelect(page - 1)}
               disabled={page <= 1}
-              className="p-1 sm:p-1.5 rounded-lg border border-transparent hover:border-[#dcd3c4] hover:bg-[#eee7db] disabled:opacity-30 disabled:hover:border-transparent disabled:hover:bg-transparent transition-all cursor-pointer text-[#201e1d]"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-[#eee7db] disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer text-[#201e1d]"
               title="Previous Page"
             >
               <ChevronLeft className="w-4 h-4 text-[#201e1d]" />
@@ -467,7 +486,7 @@ export function IngestionPdfViewer({
                 max={totalPages}
                 value={page}
                 onChange={(e) => handlePageSelect(Number(e.target.value))}
-                className="w-9 text-center py-0.5 rounded border border-[#dcd3c4] bg-[#fcfaf6] outline-none focus:border-[#c67139] font-bold text-[#201e1d]"
+                className="w-9 text-center py-0.5 rounded border border-[#dcd3c4] bg-[#fcfaf6] outline-none focus:border-[#c67139] font-bold text-[#201e1d] font-mono"
               />
               <span className="text-[#82796a]">/ {totalPages}</span>
             </div>
@@ -476,7 +495,7 @@ export function IngestionPdfViewer({
               type="button"
               onClick={() => handlePageSelect(page + 1)}
               disabled={page >= totalPages}
-              className="p-1 sm:p-1.5 rounded-lg border border-transparent hover:border-[#dcd3c4] hover:bg-[#eee7db] disabled:opacity-30 disabled:hover:border-transparent disabled:hover:bg-transparent transition-all cursor-pointer text-[#201e1d]"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-[#eee7db] disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer text-[#201e1d]"
               title="Next Page"
             >
               <ChevronRight className="w-4 h-4 text-[#201e1d]" />
@@ -487,7 +506,7 @@ export function IngestionPdfViewer({
         {/* Right: Zoom, Pan & Crop Primary Action */}
         <div className="flex items-center gap-2 flex-wrap ml-auto">
           {/* Zoom controls */}
-          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#dcd3c4] shadow-xs">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_#201e1d]">
             <button
               type="button"
               onClick={handleZoomOut}
@@ -513,7 +532,7 @@ export function IngestionPdfViewer({
             <button
               type="button"
               onClick={handleZoomReset}
-              className="px-2 py-0.5 rounded-md hover:bg-[#eee7db] text-[10px] font-bold text-[#474238] border border-[#dcd3c4] transition-colors cursor-pointer"
+              className="px-2 py-0.5 rounded-md hover:bg-[#eee7db] text-[10px] font-adminHeading font-bold text-[#474238] border border-[#dcd3c4] transition-colors cursor-pointer"
               title="Reset Zoom to Fit"
             >
               Fit
@@ -525,10 +544,10 @@ export function IngestionPdfViewer({
             type="button"
             onClick={() => setIsPanMode(!isPanMode)}
             className={cn(
-              "p-2 rounded-xl border-[1.5px] font-bold text-xs shadow-xs transition-all flex items-center gap-1 cursor-pointer",
+              "px-3 py-1.5 rounded-xl border-2 border-[#201e1d] font-adminHeading font-bold text-xs shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer",
               isPanMode
-                ? "bg-[#ffe1d0] border-[#c67139] text-[#c67139]"
-                : "bg-white border-[#dcd3c4] hover:bg-[#eee7db] text-[#474238]"
+                ? "bg-[#ffe1d0] text-[#c67139]"
+                : "bg-white hover:bg-[#eee7db] text-[#474238]"
             )}
             title={isPanMode ? "Pan Mode Active (Drag to Pan)" : "Switch to Pan Mode"}
           >
@@ -540,7 +559,7 @@ export function IngestionPdfViewer({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 bg-white hover:bg-[#eee7db] rounded-xl border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] shadow-xs active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer"
+            className="px-3 py-1.5 bg-white hover:bg-[#eee7db] rounded-xl border-2 border-[#201e1d] text-xs font-adminHeading font-bold text-[#201e1d] shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
             title="Load PDF or Page Image"
           >
             <Upload className="w-3.5 h-3.5" />
@@ -553,12 +572,12 @@ export function IngestionPdfViewer({
             onClick={handleExecuteCrop}
             disabled={isCropping || localIsCropping || !isBBoxActiveOnCurrentPage}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl border-[1.5px] text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs",
+              "px-3.5 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs sm:text-sm font-adminHeading font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]",
               isCropping || localIsCropping
-                ? "bg-[#ffe1d0] text-[#c67139] border-[#c67139] opacity-70 cursor-wait"
+                ? "bg-[#ffe1d0] text-[#c67139] opacity-70 cursor-wait"
                 : isBBoxActiveOnCurrentPage
-                ? "bg-[#c67139] hover:bg-[#b2622d] text-[#f9f4ed] border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
-                : "bg-[#eee7db] text-[#82796a] border-[#dcd3c4] opacity-60 cursor-not-allowed"
+                ? "bg-[#c67139] hover:bg-[#b2622d] text-[#f9f4ed] active:translate-y-0.5 active:shadow-none"
+                : "bg-[#eee7db] text-[#82796a] opacity-60 cursor-not-allowed"
             )}
           >
             <Scissors className="w-4 h-4" />
@@ -669,24 +688,38 @@ export function IngestionPdfViewer({
               />
             </object>
           ) : (
-            /* Empty State: Prompt user to load QP */
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-[#fffdf7]">
-              <div className="w-16 h-16 rounded-2xl bg-[#ffe1d0] border-[1.5px] border-[#c67139] flex items-center justify-center text-2xl shadow-xs mb-3 text-[#c67139]">
+            /* Empty State: Neobrutalist dropzone to load Cambridge QP */
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+              className={cn(
+                "absolute inset-0 flex flex-col items-center justify-center p-8 text-center transition-all select-none",
+                isDragOver
+                  ? "bg-[#ffe1d0]/70 border-4 border-dashed border-[#c67139]"
+                  : "bg-[#fffdf7]"
+              )}
+            >
+              <div className="w-16 h-16 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center text-3xl shadow-[2px_2px_0_#201e1d] mb-3 text-[#c67139]">
                 📄
               </div>
-              <h4 className="font-heading font-black text-lg text-[#201e1d] mb-1">
-                Cambridge PDF Canvas
+              <h4 className="font-adminHeading font-bold text-base sm:text-lg text-[#201e1d] mb-1">
+                Cambridge PDF Source Canvas
               </h4>
-              <p className="text-xs text-[#645c50] max-w-xs mb-4 font-medium">
-                No local PDF attached yet. Load a Cambridge Past Paper QP or drag an image to crop questions interactively.
+              <p className="text-xs text-[#645c50] max-w-sm mb-5 font-medium leading-relaxed">
+                Drop Cambridge Past Paper PDF here, or click to browse. Enables side-by-side verification and bounding-box diagram cropper.
               </p>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2.5">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-[#201e1d] text-[#f9f4ed] rounded-xl border-[1.5px] border-[#201e1d] font-bold text-xs hover:bg-[#383431] shadow-xs cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-[#201e1d] text-[#f9f4ed] rounded-full border-2 border-[#201e1d] font-adminHeading font-bold text-xs hover:bg-[#383431] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex items-center justify-center gap-1.5"
                 >
-                  Upload QP PDF
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Browse Past Paper PDF</span>
                 </button>
                 <button
                   type="button"
@@ -701,7 +734,7 @@ export function IngestionPdfViewer({
                       page_number: page,
                     });
                   }}
-                  className="px-4 py-2 bg-[#f9f4ed] hover:bg-[#eee7db] text-[#201e1d] rounded-xl border-[1.5px] border-[#dcd3c4] font-bold text-xs shadow-xs cursor-pointer transition-colors"
+                  className="px-4 py-2 bg-[#f9f4ed] hover:bg-[#eee7db] text-[#201e1d] rounded-full border-2 border-[#201e1d] font-adminHeading font-bold text-xs shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
                 >
                   Load Sample Diagram
                 </button>

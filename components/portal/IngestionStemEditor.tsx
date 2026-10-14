@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import {
   FileText,
   Bookmark,
@@ -366,16 +367,16 @@ export function IngestionStemEditor({
   return (
     <div
       className={cn(
-        'w-full bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-sm overflow-hidden flex flex-col font-body text-[#201e1d] transition-all',
+        'w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_#201e1d] overflow-hidden flex flex-col font-body text-[#201e1d] transition-all',
         className
       )}
     >
       {/* 1. TOP HEADER BAR */}
-      <div className="p-3.5 sm:p-4 border-b border-[#dcd3c4] bg-[#f9f4ed] flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="p-3.5 sm:p-4 border-b-2 border-[#201e1d] bg-[#f9f4ed] flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Left: Question Badge & Citation */}
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#c67139] text-[#c67139] font-heading font-black text-xs select-none">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffe1d0] border-2 border-[#c67139] text-[#c67139] font-adminHeading font-bold text-xs select-none shadow-[1px_1px_0_#c67139]">
               <FileText className="w-3.5 h-3.5 text-[#c67139]" />
               Question {questionNumber}
             </span>
@@ -388,7 +389,7 @@ export function IngestionStemEditor({
               className="text-xs font-bold uppercase tracking-wider text-[#645c50] flex items-center gap-1 select-none whitespace-nowrap"
             >
               <Bookmark className="w-3.5 h-3.5 text-[#c67139]" />
-              <span className="hidden sm:inline">Citation:</span>
+              <span className="hidden sm:inline font-adminHeading font-bold">Citation:</span>
             </label>
             <input
               id={`citation-q${questionNumber}`}
@@ -396,7 +397,7 @@ export function IngestionStemEditor({
               value={citation}
               onChange={(e) => onChangeCitation(e.target.value)}
               placeholder="e.g. 0455/12/M/J/24 Q1"
-              className="w-44 sm:w-52 px-3 py-1 bg-white border-[1.5px] border-[#dcd3c4] rounded-full text-xs font-mono text-[#201e1d] outline-none focus:border-[#c67139] transition-all placeholder:text-[#82796a]"
+              className="w-44 sm:w-52 px-3 py-1 bg-white border-2 border-[#201e1d] rounded-full text-xs font-mono text-[#201e1d] outline-none focus:border-[#c67139] transition-all placeholder:text-[#82796a] shadow-[1px_1px_0_#201e1d]"
             />
           </div>
         </div>
@@ -410,7 +411,7 @@ export function IngestionStemEditor({
               onClick={() => setIsTopicMenuOpen((prev) => !prev)}
               aria-label="Select syllabus topic"
               title="Assign Cambridge syllabus topic"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-full text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 transition-all cursor-pointer select-none max-w-[220px] truncate"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border-2 border-[#201e1d] rounded-full text-xs font-adminHeading font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 transition-all cursor-pointer select-none max-w-[220px] truncate shadow-[1.5px_1.5px_0_#201e1d]"
             >
               <BookOpen className="w-3.5 h-3.5 text-[#728157] shrink-0" />
               <span className="truncate">{currentTopicDisplay}</span>
@@ -424,8 +425,8 @@ export function IngestionStemEditor({
 
             {/* Fuzzy Dropdown Combobox */}
             {isTopicMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 p-2.5 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-lg z-40 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-2">
-                <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider px-1 flex items-center justify-between">
+              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 p-2.5 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-[4px_4px_0_#201e1d] z-40 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-2 font-body">
+                <div className="text-[11px] font-adminHeading font-bold text-[#645c50] uppercase tracking-wider px-1 flex items-center justify-between">
                   <span>Syllabus Topic</span>
                   <span className="text-[10px] lowercase text-[#82796a] font-mono">
                     {filteredTopics.length} available
@@ -441,7 +442,7 @@ export function IngestionStemEditor({
                     onChange={(e) => setTopicSearchQuery(e.target.value)}
                     placeholder="Search topic (fuzzy match)..."
                     autoFocus
-                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border-[1.5px] border-[#dcd3c4] rounded-full outline-none focus:border-[#c67139] text-[#201e1d] font-sans"
+                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border-2 border-[#dcd3c4] focus:border-[#201e1d] rounded-full outline-none text-[#201e1d] font-sans"
                   />
                   {topicSearchQuery && (
                     <button
@@ -480,7 +481,7 @@ export function IngestionStemEditor({
                           </span>
                           {topic.name}
                         </span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#c67139] shrink-0" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#c67139] shrink-0 stroke-[2.5]" />}
                       </button>
                     );
                   })}
@@ -495,13 +496,13 @@ export function IngestionStemEditor({
           </div>
 
           {/* Dual Split View Controls: [Split View] / [Edit Only] / [Preview Only] */}
-          <div className="inline-flex items-center bg-[#eee7db] p-1 rounded-full border border-[#dcd3c4] select-none">
+          <div className="inline-flex items-center bg-white p-1 rounded-full border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_#201e1d] select-none">
             <button
               type="button"
               onClick={() => setViewMode('split')}
               title="Side-by-side Dual Split View"
               className={cn(
-                'px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
+                'px-3 py-1 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1 cursor-pointer',
                 viewMode === 'split'
                   ? 'bg-[#201e1d] text-[#f9f4ed]'
                   : 'text-[#645c50] hover:text-[#201e1d]'
@@ -515,7 +516,7 @@ export function IngestionStemEditor({
               onClick={() => setViewMode('edit-only')}
               title="Markdown Editor Only"
               className={cn(
-                'px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
+                'px-3 py-1 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1 cursor-pointer',
                 viewMode === 'edit-only'
                   ? 'bg-[#201e1d] text-[#f9f4ed]'
                   : 'text-[#645c50] hover:text-[#201e1d]'
@@ -529,7 +530,7 @@ export function IngestionStemEditor({
               onClick={() => setViewMode('preview-only')}
               title="Live KaTeX Preview Only"
               className={cn(
-                'px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
+                'px-3 py-1 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1 cursor-pointer',
                 viewMode === 'preview-only'
                   ? 'bg-[#201e1d] text-[#f9f4ed]'
                   : 'text-[#645c50] hover:text-[#201e1d]'
@@ -646,10 +647,10 @@ export function IngestionStemEditor({
       </div>
 
       {/* 2. QUICK TYPOGRAPHY TOOLBAR & KATEX VALIDATION BADGE */}
-      <div className="p-2.5 sm:px-4 sm:py-2 border-b border-[#dcd3c4] bg-[#f9f4ed]/80 flex flex-wrap items-center justify-between gap-2.5">
+      <div className="p-2.5 sm:px-4 sm:py-2 border-b-2 border-[#201e1d] bg-[#fcfaf6] flex flex-wrap items-center justify-between gap-2.5">
         {/* Left: Quick Typography Toolbar Buttons */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <div className="hidden lg:flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#645c50] mr-1 select-none">
+          <div className="hidden lg:flex items-center gap-1 text-xs font-adminHeading font-bold uppercase tracking-wider text-[#645c50] mr-1 select-none">
             <Sparkles className="w-3.5 h-3.5 text-[#c67139]" />
             <span>Format:</span>
           </div>
@@ -662,7 +663,7 @@ export function IngestionStemEditor({
               title={tool.tooltip}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleInsert(tool)}
-              className="inline-flex items-center justify-center px-2 py-1 hover:bg-[#eee7db] text-[#645c50] hover:text-[#201e1d] text-xs font-mono font-semibold rounded-lg transition-colors select-none cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center justify-center px-2 py-1 bg-white hover:bg-[#eee7db] border border-[#dcd3c4] hover:border-[#201e1d] text-[#201e1d] text-xs font-mono font-bold rounded-lg transition-colors select-none cursor-pointer whitespace-nowrap shadow-xs"
             >
               {tool.label}
             </button>
@@ -673,7 +674,7 @@ export function IngestionStemEditor({
             type="button"
             onClick={handleCleanKaTeX}
             title="Auto-format delimiters and normalize LaTeX math notation (sanitizeKaTeX)"
-            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-[#eee7db] text-[#474238] text-xs font-semibold border border-[#dcd3c4] rounded-lg transition-colors cursor-pointer select-none"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-[#eee7db] text-[#201e1d] text-xs font-adminHeading font-bold border-2 border-[#201e1d] rounded-lg transition-colors cursor-pointer select-none shadow-[1px_1px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
           >
             <Wand2 className="w-3.5 h-3.5 text-[#728157]" />
             <span>Clean KaTeX</span>
@@ -685,7 +686,7 @@ export function IngestionStemEditor({
               type="button"
               onClick={() => setIsMoreMathOpen((prev) => !prev)}
               onMouseDown={(e) => e.preventDefault()}
-              className="inline-flex items-center gap-1 px-2 py-1 hover:bg-[#eee7db] text-[#645c50] hover:text-[#201e1d] text-xs font-semibold rounded-lg transition-colors cursor-pointer select-none"
+              className="inline-flex items-center gap-1 px-2 py-1 bg-white hover:bg-[#eee7db] text-[#474238] hover:text-[#201e1d] text-xs font-adminHeading font-bold rounded-lg border border-[#dcd3c4] transition-colors cursor-pointer select-none"
             >
               <span>+ More</span>
               <ChevronDown
@@ -697,8 +698,8 @@ export function IngestionStemEditor({
             </button>
 
             {isMoreMathOpen && (
-              <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] rounded-2xl shadow-lg z-30 animate-in fade-in zoom-in-95 duration-100">
-                <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider mb-2 px-1">
+              <div className="absolute left-0 top-full mt-2 w-72 p-3 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-[4px_4px_0_#201e1d] z-30 animate-in fade-in zoom-in-95 duration-100 font-body">
+                <div className="text-[11px] font-adminHeading font-bold text-[#645c50] uppercase tracking-wider mb-2 px-1">
                   Extended Mathematical Tokens
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -712,7 +713,7 @@ export function IngestionStemEditor({
                         handleInsert(tool);
                         setIsMoreMathOpen(false);
                       }}
-                      className="inline-flex items-center justify-center px-2 py-1.5 bg-white hover:bg-[#eee7db] text-[#201e1d] text-xs font-mono font-semibold border border-[#dcd3c4] rounded-lg transition-colors cursor-pointer select-none"
+                      className="inline-flex items-center justify-center px-2 py-1.5 bg-white hover:bg-[#eee7db] text-[#201e1d] text-xs font-mono font-bold border border-[#dcd3c4] hover:border-[#201e1d] rounded-lg transition-colors cursor-pointer select-none"
                     >
                       {tool.label}
                     </button>
@@ -727,7 +728,7 @@ export function IngestionStemEditor({
         <div className="flex items-center gap-2">
           {validationResult.isValid ? (
             <div
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#f0fae1] text-[#3d472b] border border-[#8fa073] font-bold text-xs rounded-full select-none"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#f0fae1] text-[#3d472b] border border-[#8fa073] font-mono font-bold text-xs rounded-full select-none"
               title="KaTeX syntax is valid and ready for student rendering"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-[#728157]" />
@@ -737,7 +738,7 @@ export function IngestionStemEditor({
             <button
               type="button"
               onClick={() => setShowErrorDetails((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ffe1d0] hover:bg-[#fed6bf] text-[#c67139] border border-[#c67139] font-bold text-xs rounded-full cursor-pointer transition-colors select-none"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ffe1d0] hover:bg-[#fed6bf] text-[#c67139] border border-[#c67139] font-mono font-bold text-xs rounded-full cursor-pointer transition-colors select-none"
               title="Click to view KaTeX syntax errors"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-[#c67139]" />
@@ -745,7 +746,7 @@ export function IngestionStemEditor({
             </button>
           )}
 
-          <span className="font-mono text-[11px] text-[#645c50] hidden md:inline ml-1">
+          <span className="font-mono text-[11px] text-[#645c50] hidden md:inline ml-1 font-bold">
             {stemMarkdown.length} chars · {wordCount} words
           </span>
         </div>
@@ -753,20 +754,20 @@ export function IngestionStemEditor({
 
       {/* 3. EXPANDABLE KATEX SYNTAX ERROR BANNER */}
       {(!validationResult.isValid || showErrorDetails) && validationResult.errors.length > 0 && (
-        <div className="p-3.5 bg-[#fff8eb] border-b border-[#dcd3c4] text-[#201e1d] flex items-start gap-3 animate-in fade-in">
+        <div className="p-3.5 bg-[#fff8eb] border-b-2 border-[#201e1d] text-[#201e1d] flex items-start gap-3 animate-in fade-in">
           <div className="p-1 rounded-lg bg-[#ffe1d0] border border-[#c67139]/30 shrink-0 mt-0.5">
             <AlertTriangle className="w-4 h-4 text-[#c67139]" />
           </div>
           <div className="flex-1 space-y-1.5 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-heading font-black text-[#c67139] uppercase tracking-wide">
+              <span className="font-adminHeading font-bold text-[#c67139] uppercase tracking-wide">
                 KaTeX Syntax Verification ({validationResult.errors.length} issue
                 {validationResult.errors.length === 1 ? '' : 's'})
               </span>
               <button
                 type="button"
                 onClick={handleCleanKaTeX}
-                className="px-2.5 py-1 rounded-full bg-white border border-[#dcd3c4] font-bold text-xs text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5"
+                className="px-2.5 py-1 rounded-full bg-white border border-[#201e1d] font-adminHeading font-bold text-xs text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer shadow-[1px_1px_0_#201e1d]"
               >
                 Auto-Fix Delimiters
               </button>
@@ -798,7 +799,7 @@ export function IngestionStemEditor({
           {/* LEFT: Markdown Input Surface */}
           {(viewMode === 'split' || viewMode === 'edit-only') && (
             <div className="flex flex-col gap-2 flex-1">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50] px-1">
+              <div className="flex items-center justify-between text-xs font-adminHeading font-bold uppercase tracking-wider text-[#645c50] px-1">
                 <span className="flex items-center gap-1.5">
                   <Edit3 className="w-3.5 h-3.5 text-[#c67139]" />
                   Markdown Stem Input
@@ -815,7 +816,7 @@ export function IngestionStemEditor({
                   adjustHeight();
                 }}
                 placeholder="Enter Cambridge question stem in Markdown. Use $...$ for inline equations and $$...$$ for display blocks..."
-                className="w-full min-h-[220px] p-3 text-xs sm:text-sm font-mono text-[#201e1d] bg-white border-[1.5px] border-[#dcd3c4] rounded-xl outline-none focus:border-[#c67139] leading-relaxed transition-all resize-y placeholder:text-[#82796a]"
+                className="w-full min-h-[220px] p-3 text-xs sm:text-sm font-mono text-[#201e1d] bg-white border-2 border-[#201e1d] rounded-xl outline-none focus:border-[#c67139] leading-relaxed transition-all resize-y placeholder:text-[#82796a] shadow-[1.5px_1.5px_0_#201e1d]"
               />
             </div>
           )}
@@ -823,42 +824,44 @@ export function IngestionStemEditor({
           {/* RIGHT: Live KaTeX Rendered Preview */}
           {(viewMode === 'split' || viewMode === 'preview-only') && (
             <div className="flex flex-col gap-2 flex-1">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#645c50] px-1">
+              <div className="flex items-center justify-between text-xs font-adminHeading font-bold uppercase tracking-wider text-[#645c50] px-1">
                 <span className="flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-[#728157]" />
                   KaTeX Live Preview
                 </span>
                 {validationResult.isValid && stemMarkdown.trim() && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#3d472b]">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-[#3d472b]">
                     <CheckCircle2 className="w-3 h-3 text-[#728157]" />
                     Verified Output
                   </span>
                 )}
               </div>
-              <div className="w-full min-h-[220px] p-4 rounded-xl border-[1.5px] border-[#dcd3c4] bg-white text-[#201e1d] leading-relaxed overflow-y-auto flex-1">
+              <div className="w-full min-h-[220px] p-4 rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] leading-relaxed overflow-y-auto flex-1 shadow-[1.5px_1.5px_0_#201e1d]">
                 {stemMarkdown.trim() ? (
                   <div className="prose prose-sm max-w-none text-xs sm:text-sm leading-relaxed font-body text-[#201e1d]">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
-                      components={{
-                        p: ({ ...props }) => (
-                          <p className="mb-3 last:mb-0 leading-relaxed text-[#201e1d]" {...props} />
-                        ),
-                        strong: ({ ...props }) => (
-                          <strong className="font-bold text-[#201e1d]" {...props} />
-                        ),
-                        em: ({ ...props }) => <em className="italic" {...props} />,
-                        code: ({ ...props }) => (
-                          <code
-                            className="font-mono text-xs bg-[#eee7db] px-1.5 py-0.5 rounded border border-[#dcd3c4] text-[#201e1d]"
-                            {...props}
-                          />
-                        ),
-                      }}
-                    >
-                      {stemMarkdown}
-                    </ReactMarkdown>
+                    <MarkdownErrorBoundary fallbackText={stemMarkdown}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
+                        components={{
+                          p: ({ ...props }) => (
+                            <p className="mb-3 last:mb-0 leading-relaxed text-[#201e1d]" {...props} />
+                          ),
+                          strong: ({ ...props }) => (
+                            <strong className="font-bold text-[#201e1d]" {...props} />
+                          ),
+                          em: ({ ...props }) => <em className="italic" {...props} />,
+                          code: ({ ...props }) => (
+                            <code
+                              className="font-mono text-xs bg-[#eee7db] px-1.5 py-0.5 rounded border border-[#dcd3c4] text-[#201e1d]"
+                              {...props}
+                            />
+                          ),
+                        }}
+                      >
+                        {stemMarkdown}
+                      </ReactMarkdown>
+                    </MarkdownErrorBoundary>
                   </div>
                 ) : (
                   <div className="text-[#82796a] italic text-sm py-12 text-center flex flex-col items-center justify-center gap-2">

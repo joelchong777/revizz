@@ -8,10 +8,12 @@ import IngestionWorkspace from "./IngestionWorkspace";
 import { IngestionSettingsModal } from "./IngestionModals";
 import IngestionPipelineModal from "./IngestionPipelineModal";
 import type { StagingPaper, StagingQuestion } from "@/types/ingestion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  X,
 } from "lucide-react";
 
 import IngestionSetupWizard from "./IngestionSetupWizard";
@@ -400,19 +402,25 @@ export default function IngestionHub() {
           ) : null
         }
         statusShelf={
-          <>
+          <AnimatePresence>
             {extractionError && (
-              <div className="p-4 border-[1.5px] rounded-2xl font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-[#b91c1c] shrink-0" />
-                  <span className="text-xs sm:text-sm whitespace-pre-line">{extractionError}</span>
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ type: "tween", duration: 0.2 }}
+                className="py-2.5 px-4 border-2 rounded-2xl font-body font-semibold text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[2px_2px_0_#b91c1c] bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]"
+              >
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-[#b91c1c] shrink-0" />
+                  <span className="whitespace-pre-line">{extractionError}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   {questions.length > 0 && questions.length < 40 && (
                     <button
                       type="button"
                       onClick={() => resumeExtraction()}
-                      className="px-3.5 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] border border-[#201e1d] hover:bg-[#b2622d] font-heading font-black text-xs active:translate-y-0.5 shadow-xs transition-colors cursor-pointer"
+                      className="px-3 py-1 rounded-full bg-[#c67139] text-[#f9f4ed] border border-[#201e1d] hover:bg-[#b2622d] font-adminHeading font-bold text-xs active:translate-y-0.5 shadow-xs transition-colors cursor-pointer"
                     >
                       Resume Extraction (from Q{Math.max(...questions.map((q) => q.question_number || 0)) + 1})
                     </button>
@@ -420,45 +428,51 @@ export default function IngestionHub() {
                   <button
                     type="button"
                     onClick={() => setError(null)}
-                    className="text-xs font-bold underline hover:opacity-80 cursor-pointer"
+                    className="p-1 rounded-full hover:bg-black/10 transition-colors cursor-pointer"
+                    title="Dismiss error"
                   >
-                    Dismiss
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              </div>
+              </motion.div>
             )}
             {publishStatus !== "idle" && publishMessage && (
-              <div
-                className={`p-4 border-[1.5px] rounded-2xl font-bold flex items-center justify-between gap-4 shadow-sm ${
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ type: "tween", duration: 0.2 }}
+                className={`py-2 px-3.5 border-2 rounded-full font-body font-semibold text-xs flex items-center justify-between gap-3 shadow-[1.5px_1.5px_0_#201e1d] self-start max-w-full ${
                   publishStatus === "validating" || publishStatus === "publishing"
                     ? "bg-[#ffe1d0] text-[#c67139] border-[#c67139]"
                     : publishStatus === "success"
-                    ? "bg-[#f0fae1] text-[#3d472b] border-[#8fa073]"
+                    ? "bg-[#f0fae1] text-[#065f46] border-[#065f46]"
                     : "bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]"
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 min-w-0">
                   {publishStatus === "validating" || publishStatus === "publishing" ? (
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
                   ) : publishStatus === "success" ? (
-                    <CheckCircle2 className="w-5 h-5 text-[#3d472b]" />
+                    <CheckCircle2 className="w-4 h-4 text-[#065f46] shrink-0" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-[#b91c1c]" />
+                    <AlertCircle className="w-4 h-4 text-[#b91c1c] shrink-0" />
                   )}
-                  <span className="text-xs sm:text-sm whitespace-pre-line">{publishMessage}</span>
+                  <span className="truncate">{publishMessage}</span>
                 </div>
                 {publishStatus !== "publishing" && publishStatus !== "validating" && (
                   <button
                     type="button"
                     onClick={() => setPublishStatus("idle")}
-                    className="text-xs font-bold underline hover:opacity-80 cursor-pointer shrink-0"
+                    className="p-0.5 rounded-full hover:bg-black/10 transition-colors cursor-pointer shrink-0"
+                    title="Dismiss notification"
                   >
-                    Dismiss
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
-              </div>
+              </motion.div>
             )}
-          </>
+          </AnimatePresence>
         }
       >
         {mode === "setup" ? (
