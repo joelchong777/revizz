@@ -213,7 +213,7 @@ export default function IngestionSetupWizard({
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.success) {
-        setArchiveToast(`Archived ${paperId}.json to staging/archive/`);
+        setArchiveToast(`Archived ${paperId}.json`);
         setTimeout(() => setArchiveToast(null), 4000);
         await fetchStagedPapers(showArchived);
       } else {
@@ -221,6 +221,29 @@ export default function IngestionSetupWizard({
       }
     } catch (err: any) {
       alert(`Archive error: ${err?.message || "Network error"}`);
+    } finally {
+      setArchivingPaperId(null);
+    }
+  };
+
+  const handleUnarchivePaper = async (paperId: string) => {
+    setArchivingPaperId(paperId);
+    try {
+      const res = await fetch("/api/ingest/staged-paper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unarchive", id: paperId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
+        setArchiveToast(`Restored ${paperId}.json to active staging`);
+        setTimeout(() => setArchiveToast(null), 4000);
+        await fetchStagedPapers(showArchived);
+      } else {
+        alert(`Failed to restore paper: ${data?.error || `HTTP ${res.status}`}`);
+      }
+    } catch (err: any) {
+      alert(`Restore error: ${err?.message || "Network error"}`);
     } finally {
       setArchivingPaperId(null);
     }
@@ -1368,7 +1391,25 @@ export default function IngestionSetupWizard({
                           )}
                         </button>
 
-                        {!paperItem.is_archived && (
+                        {paperItem.is_archived ? (
+                          <button
+                            type="button"
+                            disabled={isLoadingThis || isArchivingThis}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnarchivePaper(paperItem.id);
+                            }}
+                            className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#d1fae5] text-[#645c50] hover:text-[#065f46] shadow-[2px_2px_0_#201e1d] hover:border-[#065f46] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                            title={`Restore ${paperItem.id}.json from archive`}
+                            aria-label={`Restore ${paperItem.id}.json`}
+                          >
+                            {isArchivingThis ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-[#065f46]" />
+                            ) : (
+                              <RotateCcw className="w-4 h-4" />
+                            )}
+                          </button>
+                        ) : (
                           <button
                             type="button"
                             disabled={isLoadingThis || isArchivingThis}
@@ -1377,7 +1418,7 @@ export default function IngestionSetupWizard({
                               setPaperToArchive(paperItem);
                             }}
                             className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#fee2e2] text-[#645c50] hover:text-[#b91c1c] shadow-[2px_2px_0_#201e1d] hover:border-[#b91c1c] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer disabled:opacity-50 shrink-0"
-                            title={`Archive ${paperItem.id}.json to staging/archive/`}
+                            title={`Archive ${paperItem.id}.json`}
                             aria-label={`Archive ${paperItem.id}.json`}
                           >
                             {isArchivingThis ? (
@@ -1701,12 +1742,12 @@ export default function IngestionSetupWizard({
                 {paperToArchive.subject?.name || paperToArchive.subject?.code || "Cambridge Paper"}
               </p>
               <p className="text-[#645c50] font-mono text-[11px]">
-                {paperToArchive.questionsCount ?? 0} Questions · Moving to <span className="font-bold text-[#201e1d]">staging/archive/</span>
+                {paperToArchive.questionsCount ?? 0} Questions · Moving to <span className="font-bold text-[#201e1d]">archive</span>
               </p>
             </div>
 
             <p className="text-xs text-[#645c50]">
-              Archiving moves this paper to the archive folder so it won't appear in the active staging list. You can view or restore it later using the &ldquo;Show Archived&rdquo; toggle.
+              Archiving moves this paper to archive so it won&apos;t appear in the active staging list. You can view or restore it later using the &ldquo;Show Archived&rdquo; toggle.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-2 border-t-2 border-[#201e1d]/20">

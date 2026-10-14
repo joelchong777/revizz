@@ -390,7 +390,7 @@ export default function IngestionHeader({
               </span>
               {archiveState === "archived" ? (
                 <span className="text-xs font-bold text-[#065f46] flex items-center gap-1 font-mono">
-                  ✓ Archived to staging/archive/
+                  ✓ Archived
                 </span>
               ) : (
                 <button
@@ -398,7 +398,7 @@ export default function IngestionHeader({
                   onClick={() => setShowArchiveConfirm(true)}
                   disabled={archiveState === "archiving"}
                   className="px-2.5 py-1 rounded-full bg-[#065f46] text-[#f9f4ed] hover:bg-[#044e39] text-xs font-adminHeading font-bold transition-all cursor-pointer shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 flex items-center gap-1.5"
-                  title="Archive local staged JSON file to staging/archive/"
+                  title="Archive staged paper"
                 >
                   {archiveState === "archiving" ? (
                     <>
@@ -408,7 +408,7 @@ export default function IngestionHeader({
                   ) : (
                     <>
                       <Archive className="w-3.5 h-3.5" />
-                      <span>Archive Staged JSON File</span>
+                      <span>Archive Staged Paper</span>
                     </>
                   )}
                 </button>
@@ -441,7 +441,7 @@ export default function IngestionHeader({
                   Archive Staged Paper?
                 </h3>
                 <p className="text-xs text-[#645c50] font-medium">
-                  Safely move the published staged JSON file into <code className="font-mono bg-[#eee7db] px-1 py-0.5 rounded text-[#201e1d]">staging/archive/</code>.
+                  Safely archive the published staged paper so it no longer clutters active staging.
                 </p>
               </div>
             </div>

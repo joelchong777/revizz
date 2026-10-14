@@ -10,6 +10,15 @@ if (typeof (globalThis as any).WebSocket === 'undefined') {
   (globalThis as any).WebSocket = class MockWebSocket {};
 }
 
+export interface StagedPaperStates {
+  archived: string[]; // array of paper cleanIds
+  deleted: string[];  // array of paper cleanIds
+}
+
+const STORAGE_BUCKET = 'question-diagrams';
+const PAPER_STATES_PATH = 'staged_metadata/paper_states.json';
+const STAGED_PAPERS_DIR = 'staged_papers';
+
 function getSupabaseClient(): SupabaseClient {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dmvahcaxixvhgxidmkqs.supabase.co';
@@ -19,6 +28,106 @@ function getSupabaseClient(): SupabaseClient {
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtdmFoY2F4aXh2aGd4aWRta3FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTc4NzQsImV4cCI6MjEwNzAzMzg3NH0.qeqa5hQ84xnIOljKmu7SUhcko53qM1gO_dCmYvjnf-4';
 
   return createClient(supabaseUrl, supabaseKey);
+}
+
+export async function fetchPersistentPaperStates(): Promise<StagedPaperStates> {
+  try {
+    const supabase = getSupabaseClient();
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(PAPER_STATES_PATH);
+
+    const res = await fetch(`${publicUrl}?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
+
+    if (!res.ok) {
+      return { archived: [], deleted: [] };
+    }
+
+    const text = await res.text();
+    const parsed = JSON.parse(text);
+    return {
+      archived: Array.isArray(parsed?.archived)
+        ? parsed.archived.filter((id: any) => typeof id === 'string' && id.trim())
+        : [],
+      deleted: Array.isArray(parsed?.deleted)
+        ? parsed.deleted.filter((id: any) => typeof id === 'string' && id.trim())
+        : [],
+    };
+  } catch (err: any) {
+    console.warn('[Staged Paper Route] Failed to fetch persistent paper states, fallback to empty:', err?.message);
+    return { archived: [], deleted: [] };
+  }
+}
+
+export async function savePersistentPaperStates(states: StagedPaperStates): Promise<boolean> {
+  try {
+    const supabase = getSupabaseClient();
+    const deletedList = Array.from(new Set(states.deleted || [])).filter(Boolean);
+    const deletedSet = new Set(deletedList);
+    const archivedList = Array.from(new Set(states.archived || []))
+      .filter(Boolean)
+      .filter((id) => !deletedSet.has(id));
+
+    const cleanStates: StagedPaperStates = {
+      archived: archivedList,
+      deleted: deletedList,
+    };
+
+    const payload = JSON.stringify(cleanStates, null, 2);
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(PAPER_STATES_PATH, payload, {
+        contentType: 'application/json',
+        upsert: true,
+        cacheControl: '0',
+      });
+
+    if (error) {
+      console.warn('[Staged Paper Route] Failed to save persistent paper states:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.warn('[Staged Paper Route] Exception saving persistent paper states:', err?.message);
+    return false;
+  }
+}
+
+async function checkPaperExists(
+  cleanId: string,
+  stagingDir: string,
+  archiveDir: string
+): Promise<{ exists: boolean; isLocallyActive: boolean; isLocallyArchived: boolean; isRemote: boolean }> {
+  const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
+  const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
+
+  const isLocallyActive = fs.existsSync(activeFilePath);
+  const isLocallyArchived = fs.existsSync(archiveFilePath);
+
+  if (isLocallyActive || isLocallyArchived) {
+    return { exists: true, isLocallyActive, isLocallyArchived, isRemote: false };
+  }
+
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .list(STAGED_PAPERS_DIR, { search: `${cleanId}.json` });
+
+    if (!error && Array.isArray(data) && data.some((f) => f.name === `${cleanId}.json`)) {
+      return { exists: true, isLocallyActive: false, isLocallyArchived: false, isRemote: true };
+    }
+  } catch (err: any) {
+    console.warn('[Staged Paper Route] Error checking remote paper existence:', err?.message);
+  }
+
+  return { exists: false, isLocallyActive: false, isLocallyArchived: false, isRemote: false };
 }
 
 interface PublishedPaperRow {
@@ -118,10 +227,10 @@ async function fetchPublishedPapersMap(): Promise<Map<string, PublishedPaperRow>
  * 
  * Query parameters:
  * - `id` (optional): Clean ID or filename of the staged paper (e.g. `0455_s24_12` or `0455_s24_12.json`).
- *   If provided: Reads `staging/${cleanId}.json` (or `staging/archive/${cleanId}.json`),
+ *   If provided: Reads `staging/${cleanId}.json` (or `staging/archive/${cleanId}.json`, or Supabase Storage),
  *   validates with `validateStagingPaper`, and returns `{ success: true, paper, is_published, published_exam_paper_id, is_archived }`.
- * - `include_archived` (optional): If 'true' or '1', also includes papers located in `staging/archive/`.
- *   If omitted or false: Lists all active `.json` files in `staging/` and returns `{ success: true, papers: [...], stagedPapers: [...] }`.
+ * - `include_archived` (optional): If 'true' or '1', also includes archived papers.
+ *   If omitted or false: Lists all active papers and returns `{ success: true, papers: [...], stagedPapers: [...] }`.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -133,6 +242,10 @@ export async function GET(request: NextRequest) {
 
     const stagingDir = path.resolve(process.cwd(), 'staging');
     const archiveDir = path.join(stagingDir, 'archive');
+
+    const paperStates = await fetchPersistentPaperStates();
+    const deletedSet = new Set(paperStates.deleted);
+    const archivedSet = new Set(paperStates.archived);
 
     // Scenario 1: Specific paper requested by ID
     if (rawId) {
@@ -153,29 +266,61 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      let filePath = path.join(stagingDir, `${cleanId}.json`);
-      let isArchived = false;
+      if (deletedSet.has(cleanId)) {
+        return NextResponse.json(
+          { success: false, error: `Staged paper "${cleanId}" not found in staging directory.` },
+          { status: 404 }
+        );
+      }
 
-      if (!fs.existsSync(filePath)) {
-        const archivedPath = path.join(archiveDir, `${cleanId}.json`);
-        if (fs.existsSync(archivedPath)) {
-          filePath = archivedPath;
-          isArchived = true;
-        } else {
+      const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
+      const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
+      let fileContent: string | null = null;
+      let isArchived = archivedSet.has(cleanId);
+      let foundLocally = false;
+
+      if (fs.existsSync(activeFilePath)) {
+        try {
+          fileContent = fs.readFileSync(activeFilePath, 'utf8');
+          foundLocally = true;
+        } catch (readErr: any) {
           return NextResponse.json(
-            { success: false, error: `Staged paper "${cleanId}" not found in staging directory.` },
-            { status: 404 }
+            { success: false, error: `Failed to read file for "${cleanId}": ${readErr?.message}` },
+            { status: 500 }
+          );
+        }
+      } else if (fs.existsSync(archiveFilePath)) {
+        try {
+          fileContent = fs.readFileSync(archiveFilePath, 'utf8');
+          isArchived = true;
+          foundLocally = true;
+        } catch (readErr: any) {
+          return NextResponse.json(
+            { success: false, error: `Failed to read archive file for "${cleanId}": ${readErr?.message}` },
+            { status: 500 }
           );
         }
       }
 
-      let fileContent: string;
-      try {
-        fileContent = fs.readFileSync(filePath, 'utf8');
-      } catch (readErr: any) {
+      if (!foundLocally) {
+        // Attempt download from Supabase Storage
+        try {
+          const supabase = getSupabaseClient();
+          const { data: blob, error: dlErr } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .download(`${STAGED_PAPERS_DIR}/${cleanId}.json`);
+          if (!dlErr && blob) {
+            fileContent = await blob.text();
+          }
+        } catch (storageErr: any) {
+          console.warn(`[Staged Paper Route] Supabase download error for "${cleanId}":`, storageErr?.message);
+        }
+      }
+
+      if (!fileContent) {
         return NextResponse.json(
-          { success: false, error: `Failed to read file for "${cleanId}": ${readErr?.message}` },
-          { status: 500 }
+          { success: false, error: `Staged paper "${cleanId}" not found in staging directory.` },
+          { status: 404 }
         );
       }
 
@@ -230,46 +375,151 @@ export async function GET(request: NextRequest) {
     }
 
     // Scenario 2: List all available staged JSON papers with rich metadata
-    if (!fs.existsSync(stagingDir)) {
-      return NextResponse.json({ success: true, papers: [], stagedPapers: [] });
+    interface DiscoveredPaper {
+      cleanId: string;
+      filename: string;
+      isLocallyArchived: boolean;
+      localPath?: string;
+      remotePath?: string;
     }
 
-    const entries = fs.readdirSync(stagingDir, { withFileTypes: true });
-    const activeFiles = entries
-      .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.json'))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const discoveredMap = new Map<string, DiscoveredPaper>();
 
-    let archivedFiles: fs.Dirent[] = [];
-    if (includeArchived && fs.existsSync(archiveDir)) {
-      archivedFiles = fs.readdirSync(archiveDir, { withFileTypes: true })
-        .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.json'))
-        .sort((a, b) => a.name.localeCompare(b.name));
+    if (fs.existsSync(stagingDir)) {
+      try {
+        const entries = fs.readdirSync(stagingDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
+            const cleanId = entry.name.replace(/\.json$/i, '');
+            discoveredMap.set(cleanId, {
+              cleanId,
+              filename: entry.name,
+              isLocallyArchived: false,
+              localPath: path.join(stagingDir, entry.name),
+            });
+          }
+        }
+      } catch (fsErr: any) {
+        console.warn('[Staged Paper Route] Failed to read staging directory:', fsErr?.message);
+      }
+    }
+
+    if (fs.existsSync(archiveDir)) {
+      try {
+        const entries = fs.readdirSync(archiveDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
+            const cleanId = entry.name.replace(/\.json$/i, '');
+            if (!discoveredMap.has(cleanId)) {
+              discoveredMap.set(cleanId, {
+                cleanId,
+                filename: entry.name,
+                isLocallyArchived: true,
+                localPath: path.join(archiveDir, entry.name),
+              });
+            }
+          }
+        }
+      } catch (fsErr: any) {
+        console.warn('[Staged Paper Route] Failed to read archive directory:', fsErr?.message);
+      }
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: remoteList, error: remoteErr } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .list(STAGED_PAPERS_DIR);
+
+      if (!remoteErr && Array.isArray(remoteList)) {
+        for (const item of remoteList) {
+          if (item.name && item.name.toLowerCase().endsWith('.json')) {
+            const cleanId = item.name.replace(/\.json$/i, '');
+            if (!discoveredMap.has(cleanId)) {
+              discoveredMap.set(cleanId, {
+                cleanId,
+                filename: item.name,
+                isLocallyArchived: false,
+                remotePath: `${STAGED_PAPERS_DIR}/${item.name}`,
+              });
+            }
+          }
+        }
+      }
+    } catch (storageErr: any) {
+      console.warn('[Staged Paper Route] Supabase storage list warning:', storageErr?.message);
     }
 
     const publishedMap = await fetchPublishedPapersMap();
-
     const papers: string[] = [];
     const stagedPapers: StagedPaperSummary[] = [];
 
-    const fileList: Array<{ entry: fs.Dirent; dir: string; isArchived: boolean }> = [
-      ...activeFiles.map((entry) => ({ entry, dir: stagingDir, isArchived: false })),
-      ...archivedFiles.map((entry) => ({ entry, dir: archiveDir, isArchived: true })),
-    ];
+    const sortedCleanIds = Array.from(discoveredMap.keys()).sort((a, b) => a.localeCompare(b));
 
-    for (const { entry, dir, isArchived } of fileList) {
-      const cleanId = entry.name.replace(/\.json$/i, '');
+    for (const cleanId of sortedCleanIds) {
+      if (deletedSet.has(cleanId)) {
+        continue;
+      }
+
+      const item = discoveredMap.get(cleanId)!;
+      const isArchived = archivedSet.has(cleanId) || item.isLocallyArchived;
+
+      if (!includeArchived && isArchived) {
+        continue;
+      }
+
       papers.push(cleanId);
 
-      const filePath = path.join(dir, entry.name);
+      let fileContent: string | null = null;
       try {
-        const fileContent = fs.readFileSync(filePath, 'utf8');
+        if (item.localPath && fs.existsSync(item.localPath)) {
+          fileContent = fs.readFileSync(item.localPath, 'utf8');
+        } else if (item.remotePath) {
+          const supabase = getSupabaseClient();
+          const { data: blob } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .download(item.remotePath);
+          if (blob) {
+            fileContent = await blob.text();
+          }
+        }
+      } catch (readErr: any) {
+        console.warn(`[Staged Paper Route] Failed reading content for "${cleanId}":`, readErr?.message);
+      }
+
+      if (!fileContent) {
+        const fallbackMeta = parseMetadataFromFilename(item.filename);
+        const lookupKey = makeLookupKey(
+          fallbackMeta.subjectCode,
+          fallbackMeta.series,
+          fallbackMeta.year,
+          fallbackMeta.paperCode
+        );
+        const matchedPaper = publishedMap.get(lookupKey);
+        const isPublished = Boolean(matchedPaper);
+
+        stagedPapers.push({
+          id: cleanId,
+          filename: item.filename,
+          questionsCount: 0,
+          diagramsCount: 0,
+          lifecycle_state: isPublished ? 'published' : 'draft',
+          is_published: isPublished,
+          published_exam_paper_id: matchedPaper?.id || null,
+          is_archived: isArchived,
+          isValid: false,
+        });
+        continue;
+      }
+
+      try {
         const parsedJson = JSON.parse(fileContent);
         const questions = Array.isArray(parsedJson?.questions) ? parsedJson.questions : [];
         const diagramsCount = questions.filter(
           (q: any) => Boolean(q?.diagram?.has_diagram || q?.has_diagram || q?.diagram?.image_url || q?.image_url)
         ).length;
 
-        const fallbackMeta = parseMetadataFromFilename(entry.name);
+        const fallbackMeta = parseMetadataFromFilename(item.filename);
         const subjectCode = parsedJson?.subject?.code || fallbackMeta.subjectCode;
         const series = parsedJson?.paper?.series || fallbackMeta.series;
         const year = parsedJson?.paper?.year ?? fallbackMeta.year;
@@ -286,7 +536,7 @@ export async function GET(request: NextRequest) {
 
         stagedPapers.push({
           id: typeof parsedJson?.id === 'string' && parsedJson.id ? parsedJson.id : cleanId,
-          filename: entry.name,
+          filename: item.filename,
           subject: parsedJson?.subject
             ? {
                 code: parsedJson.subject.code,
@@ -318,7 +568,7 @@ export async function GET(request: NextRequest) {
           isValid: questions.length > 0,
         });
       } catch {
-        const fallbackMeta = parseMetadataFromFilename(entry.name);
+        const fallbackMeta = parseMetadataFromFilename(item.filename);
         const lookupKey = makeLookupKey(
           fallbackMeta.subjectCode,
           fallbackMeta.series,
@@ -330,7 +580,7 @@ export async function GET(request: NextRequest) {
 
         stagedPapers.push({
           id: cleanId,
-          filename: entry.name,
+          filename: item.filename,
           questionsCount: 0,
           diagramsCount: 0,
           lifecycle_state: isPublished ? 'published' : 'draft',
@@ -428,16 +678,11 @@ export async function POST(request: NextRequest) {
       const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
       const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
 
+      const paperStates = await fetchPersistentPaperStates();
+      const existence = await checkPaperExists(cleanId, stagingDir, archiveDir);
+
       if (action === 'archive') {
-        if (!fs.existsSync(activeFilePath)) {
-          if (fs.existsSync(archiveFilePath)) {
-            return NextResponse.json({
-              success: true,
-              action: 'archive',
-              id: cleanId,
-              message: 'Paper is already archived.',
-            });
-          }
+        if (paperStates.deleted.includes(cleanId) || !existence.exists) {
           return NextResponse.json(
             {
               success: false,
@@ -447,12 +692,38 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Create staging/archive if it doesn't exist
-        if (!fs.existsSync(archiveDir)) {
-          fs.mkdirSync(archiveDir, { recursive: true });
+        // Check if already archived
+        if (paperStates.archived.includes(cleanId) || (existence.isLocallyArchived && !existence.isLocallyActive)) {
+          if (!paperStates.archived.includes(cleanId)) {
+            paperStates.archived.push(cleanId);
+            await savePersistentPaperStates(paperStates);
+          }
+          return NextResponse.json({
+            success: true,
+            action: 'archive',
+            id: cleanId,
+            message: 'Paper is already archived.',
+          });
         }
 
-        fs.renameSync(activeFilePath, archiveFilePath);
+        // Attempt local move, catching read-only filesystem errors gracefully
+        try {
+          if (fs.existsSync(activeFilePath)) {
+            if (!fs.existsSync(archiveDir)) {
+              fs.mkdirSync(archiveDir, { recursive: true });
+            }
+            fs.renameSync(activeFilePath, archiveFilePath);
+          }
+        } catch (fsErr: any) {
+          console.warn('[Staged Paper Route] Local filesystem move failed (read-only environment):', fsErr?.message);
+        }
+
+        if (!paperStates.archived.includes(cleanId)) {
+          paperStates.archived.push(cleanId);
+        }
+        paperStates.deleted = paperStates.deleted.filter((id) => id !== cleanId);
+        await savePersistentPaperStates(paperStates);
+
         return NextResponse.json({
           success: true,
           action: 'archive',
@@ -461,15 +732,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (action === 'unarchive') {
-        if (!fs.existsSync(archiveFilePath)) {
-          if (fs.existsSync(activeFilePath)) {
-            return NextResponse.json({
-              success: true,
-              action: 'unarchive',
-              id: cleanId,
-              message: 'Paper is already in active staging.',
-            });
-          }
+        if (paperStates.deleted.includes(cleanId) || !existence.exists) {
           return NextResponse.json(
             {
               success: false,
@@ -479,11 +742,30 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        if (!fs.existsSync(stagingDir)) {
-          fs.mkdirSync(stagingDir, { recursive: true });
+        if (!paperStates.archived.includes(cleanId) && existence.isLocallyActive && !existence.isLocallyArchived) {
+          return NextResponse.json({
+            success: true,
+            action: 'unarchive',
+            id: cleanId,
+            message: 'Paper is already in active staging.',
+          });
         }
 
-        fs.renameSync(archiveFilePath, activeFilePath);
+        // Attempt local move, catching read-only filesystem errors gracefully
+        try {
+          if (fs.existsSync(archiveFilePath)) {
+            if (!fs.existsSync(stagingDir)) {
+              fs.mkdirSync(stagingDir, { recursive: true });
+            }
+            fs.renameSync(archiveFilePath, activeFilePath);
+          }
+        } catch (fsErr: any) {
+          console.warn('[Staged Paper Route] Local filesystem move back failed (read-only environment):', fsErr?.message);
+        }
+
+        paperStates.archived = paperStates.archived.filter((id) => id !== cleanId);
+        await savePersistentPaperStates(paperStates);
+
         return NextResponse.json({
           success: true,
           action: 'unarchive',
@@ -492,19 +774,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (action === 'delete') {
-        let deleted = false;
-
-        if (fs.existsSync(activeFilePath)) {
-          fs.unlinkSync(activeFilePath);
-          deleted = true;
-        }
-
-        if (fs.existsSync(archiveFilePath)) {
-          fs.unlinkSync(archiveFilePath);
-          deleted = true;
-        }
-
-        if (!deleted) {
+        if (paperStates.deleted.includes(cleanId) || !existence.exists) {
           return NextResponse.json(
             {
               success: false,
@@ -513,6 +783,37 @@ export async function POST(request: NextRequest) {
             { status: 404 }
           );
         }
+
+        // Attempt local unlink, catching read-only filesystem errors gracefully
+        try {
+          if (fs.existsSync(activeFilePath)) {
+            fs.unlinkSync(activeFilePath);
+          }
+        } catch (fsErr: any) {
+          console.warn('[Staged Paper Route] Local active file unlink failed:', fsErr?.message);
+        }
+
+        try {
+          if (fs.existsSync(archiveFilePath)) {
+            fs.unlinkSync(archiveFilePath);
+          }
+        } catch (fsErr: any) {
+          console.warn('[Staged Paper Route] Local archive file unlink failed:', fsErr?.message);
+        }
+
+        // Remove from remote storage if present
+        try {
+          const supabase = getSupabaseClient();
+          await supabase.storage.from(STORAGE_BUCKET).remove([`${STAGED_PAPERS_DIR}/${cleanId}.json`]);
+        } catch (storageErr: any) {
+          console.warn('[Staged Paper Route] Storage remove error:', storageErr?.message);
+        }
+
+        if (!paperStates.deleted.includes(cleanId)) {
+          paperStates.deleted.push(cleanId);
+        }
+        paperStates.archived = paperStates.archived.filter((id) => id !== cleanId);
+        await savePersistentPaperStates(paperStates);
 
         return NextResponse.json({
           success: true,
@@ -546,9 +847,6 @@ export async function POST(request: NextRequest) {
 
     const paper = validation.data;
     const stagingDir = path.resolve(process.cwd(), 'staging');
-    if (!fs.existsSync(stagingDir)) {
-      fs.mkdirSync(stagingDir, { recursive: true });
-    }
 
     const cleanSubject = (paper.subject.code || 'paper').replace(/[^a-zA-Z0-9_-]/g, '');
     const cleanSeries = (paper.paper.series || 's').toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
@@ -560,7 +858,42 @@ export async function POST(request: NextRequest) {
 
     const filePath = path.join(stagingDir, `${cleanId}.json`);
     const paperToSave = { ...paper, id: cleanId };
-    fs.writeFileSync(filePath, JSON.stringify(paperToSave, null, 2), 'utf8');
+
+    let savedLocally = false;
+    try {
+      if (!fs.existsSync(stagingDir)) {
+        fs.mkdirSync(stagingDir, { recursive: true });
+      }
+      fs.writeFileSync(filePath, JSON.stringify(paperToSave, null, 2), 'utf8');
+      savedLocally = true;
+    } catch (fsErr: any) {
+      console.warn('[Staged Paper Route] Local filesystem write failed (read-only environment):', fsErr?.message);
+    }
+
+    if (!savedLocally) {
+      const supabase = getSupabaseClient();
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(`${STAGED_PAPERS_DIR}/${cleanId}.json`, JSON.stringify(paperToSave, null, 2), {
+          contentType: 'application/json',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error('[Staged Paper Route] Failed to save paper to Supabase storage:', uploadError);
+        return NextResponse.json(
+          { success: false, error: `Failed to save paper to storage: ${uploadError.message}` },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Resurrect paper if previously deleted
+    const paperStates = await fetchPersistentPaperStates();
+    if (paperStates.deleted.includes(cleanId)) {
+      paperStates.deleted = paperStates.deleted.filter((id) => id !== cleanId);
+      await savePersistentPaperStates(paperStates);
+    }
 
     return NextResponse.json({
       success: true,
@@ -624,22 +957,44 @@ export async function DELETE(request: NextRequest) {
     const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
     const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
 
-    let deleted = false;
-    if (fs.existsSync(activeFilePath)) {
-      fs.unlinkSync(activeFilePath);
-      deleted = true;
-    }
-    if (fs.existsSync(archiveFilePath)) {
-      fs.unlinkSync(archiveFilePath);
-      deleted = true;
-    }
+    const paperStates = await fetchPersistentPaperStates();
+    const existence = await checkPaperExists(cleanId, stagingDir, archiveDir);
 
-    if (!deleted) {
+    if (paperStates.deleted.includes(cleanId) || !existence.exists) {
       return NextResponse.json(
         { success: false, error: `Paper "${cleanId}.json" not found in staging or archive directory.` },
         { status: 404 }
       );
     }
+
+    try {
+      if (fs.existsSync(activeFilePath)) {
+        fs.unlinkSync(activeFilePath);
+      }
+    } catch (fsErr: any) {
+      console.warn('[Staged Paper Route] Local active file unlink failed:', fsErr?.message);
+    }
+
+    try {
+      if (fs.existsSync(archiveFilePath)) {
+        fs.unlinkSync(archiveFilePath);
+      }
+    } catch (fsErr: any) {
+      console.warn('[Staged Paper Route] Local archive file unlink failed:', fsErr?.message);
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      await supabase.storage.from(STORAGE_BUCKET).remove([`${STAGED_PAPERS_DIR}/${cleanId}.json`]);
+    } catch (storageErr: any) {
+      console.warn('[Staged Paper Route] Storage remove error:', storageErr?.message);
+    }
+
+    if (!paperStates.deleted.includes(cleanId)) {
+      paperStates.deleted.push(cleanId);
+    }
+    paperStates.archived = paperStates.archived.filter((id) => id !== cleanId);
+    await savePersistentPaperStates(paperStates);
 
     return NextResponse.json({
       success: true,

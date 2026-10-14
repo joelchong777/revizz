@@ -22,7 +22,12 @@
 import fs from 'fs';
 import path from 'path';
 import { NextRequest } from 'next/server';
-import { GET, POST } from '../app/api/ingest/staged-paper/route';
+import {
+  GET,
+  POST,
+  fetchPersistentPaperStates,
+  savePersistentPaperStates,
+} from '../app/api/ingest/staged-paper/route';
 import { supabase } from '../lib/supabaseClient';
 
 // Test counters
@@ -317,6 +322,194 @@ async function runVerification() {
       'POST archive on non-existent paper returns HTTP 404',
       `Expected status 404, received ${notFoundArchiveRes.status}`
     );
+
+    // -------------------------------------------------------------
+    // SECTION 3: Serverless Read-Only Filesystem Simulation & Supabase Storage Persistence
+    // -------------------------------------------------------------
+    console.log('\n--- Section 3: Read-Only Filesystem Simulation & Supabase Storage Persistence ---');
+
+    const readOnlyPaperId = 'test_readonly_sim';
+    const readOnlyActiveFile = path.join(stagingDir, `${readOnlyPaperId}.json`);
+    const readOnlySampleData = {
+      id: readOnlyPaperId,
+      lifecycle_state: 'draft',
+      subject: { code: '0455', name: 'Economics', icon: 'trending-up' },
+      paper: { series: 's', paper_code: '99', year: 2029 },
+      syllabus_topics: [{ name: 'Test Topic', order_index: 1 }],
+      questions: [
+        {
+          question_number: 1,
+          cambridge_source_ref: '0455/99/S/29 Q1',
+          topic_name: 'Test Topic',
+          stem_markdown: 'What is opportunity cost under read-only simulation?',
+          options: [
+            { label: 'A', content_markdown: 'Option A', is_correct: true },
+            { label: 'B', content_markdown: 'Option B', is_correct: false },
+            { label: 'C', content_markdown: 'Option C', is_correct: false },
+            { label: 'D', content_markdown: 'Option D', is_correct: false },
+          ],
+          explanation_markdown: 'Test explanation for read-only simulation',
+          status: 'active',
+        },
+      ],
+    };
+
+    // 3.1 Write initial test file locally
+    fs.writeFileSync(readOnlyActiveFile, JSON.stringify(readOnlySampleData, null, 2), 'utf8');
+    assert(fs.existsSync(readOnlyActiveFile), 'Created test_readonly_sim.json');
+
+    // 3.2 Mock fs.mkdirSync and fs.renameSync to simulate Vercel read-only filesystem (/var/task)
+    const origMkdirSync = fs.mkdirSync;
+    const origRenameSync = fs.renameSync;
+    const roSimulation = { errorThrown: false };
+
+    // Simulate error: ENOENT: no such file or directory, mkdir '/var/task/staging/archive'
+    fs.mkdirSync = ((dirPath: any, options: any) => {
+      roSimulation.errorThrown = true;
+      const err = new Error("ENOENT: no such file or directory, mkdir '/var/task/staging/archive'");
+      (err as any).code = 'ENOENT';
+      throw err;
+    }) as any;
+
+    fs.renameSync = ((oldPath: any, newPath: any) => {
+      roSimulation.errorThrown = true;
+      const err = new Error("EROFS: read-only file system, rename");
+      (err as any).code = 'EROFS';
+      throw err;
+    }) as any;
+
+    try {
+      // Call archive on test_readonly_sim
+      const roArchiveReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'archive', id: readOnlyPaperId }),
+      });
+      const roArchiveRes = await POST(roArchiveReq);
+
+      assert(roArchiveRes.status === 200, 'POST archive under read-only filesystem returns HTTP 200 (not 500 ENOENT)');
+      const roArchiveData = await roArchiveRes.json();
+      assert(roArchiveData.success === true, 'Archive response returns success: true under read-only error');
+      assert(roSimulation.errorThrown === true, 'Verified that read-only filesystem error was thrown and caught cleanly');
+
+      // Verify persistent state in Supabase Storage
+      const statesAfterArchive = await fetchPersistentPaperStates();
+      assert(
+        statesAfterArchive.archived.includes(readOnlyPaperId),
+        'Paper is recorded in Supabase Storage paper_states.archived'
+      );
+
+      // Verify GET listing with include_archived=false excludes it
+      const roListReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper');
+      const roListRes = await GET(roListReq);
+      const roListData = await roListRes.json();
+      const inDefaultList = roListData.stagedPapers.some((p: any) => p.id === readOnlyPaperId);
+      assert(!inDefaultList, 'Default GET list excludes read-only archived paper');
+
+      // Verify GET listing with include_archived=true includes it with is_archived: true
+      const roListArchivedReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper?include_archived=true');
+      const roListArchivedRes = await GET(roListArchivedReq);
+      const roListArchivedData = await roListArchivedRes.json();
+      const archivedItem = roListArchivedData.stagedPapers.find((p: any) => p.id === readOnlyPaperId);
+      assert(Boolean(archivedItem), 'GET with ?include_archived=true finds the archived paper');
+      assert(archivedItem?.is_archived === true, 'Archived paper has is_archived === true in summary');
+
+      // Verify single paper GET returns is_archived === true
+      const roSingleReq = new NextRequest(`http://localhost:3000/api/ingest/staged-paper?id=${readOnlyPaperId}`);
+      const roSingleRes = await GET(roSingleReq);
+      assert(roSingleRes.status === 200, 'Single paper GET returns HTTP 200');
+      const roSingleData = await roSingleRes.json();
+      assert(roSingleData.is_archived === true, 'Single paper GET returns is_archived === true');
+
+      // Call unarchive on test_readonly_sim (still with read-only simulation)
+      const roUnarchiveReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unarchive', id: readOnlyPaperId }),
+      });
+      const roUnarchiveRes = await POST(roUnarchiveReq);
+      assert(roUnarchiveRes.status === 200, 'POST unarchive under read-only filesystem returns HTTP 200');
+      const roUnarchiveData = await roUnarchiveRes.json();
+      assert(roUnarchiveData.success === true, 'Unarchive response returns success: true under read-only error');
+
+      // Verify persistent state in Supabase Storage has removed it
+      const statesAfterUnarchive = await fetchPersistentPaperStates();
+      assert(
+        !statesAfterUnarchive.archived.includes(readOnlyPaperId),
+        'Paper is removed from Supabase Storage paper_states.archived'
+      );
+
+      // Verify default GET listing now includes it again
+      const roListRestoredReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper');
+      const roListRestoredRes = await GET(roListRestoredReq);
+      const roListRestoredData = await roListRestoredRes.json();
+      const restoredItem = roListRestoredData.stagedPapers.find((p: any) => p.id === readOnlyPaperId);
+      assert(Boolean(restoredItem), 'Restored paper now appears in default GET list');
+      assert(restoredItem?.is_archived === false, 'Restored paper has is_archived === false');
+
+      // 3.3 Test Direct Save under read-only filesystem (fallback to Supabase Storage staged_papers/)
+      const origWriteFileSync = fs.writeFileSync;
+      fs.writeFileSync = ((_filePath: any, _content: any, _options: any) => {
+        const err = new Error("EROFS: read-only file system, write");
+        (err as any).code = 'EROFS';
+        throw err;
+      }) as any;
+
+      const remoteSavePaperId = 'test_readonly_remote_save';
+      const remoteSavePaperData = {
+        ...readOnlySampleData,
+        id: remoteSavePaperId,
+      };
+
+      try {
+        const saveReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paper: remoteSavePaperData, id: remoteSavePaperId }),
+        });
+        const saveRes = await POST(saveReq);
+        assert(
+          saveRes.status === 200,
+          'Direct save under read-only filesystem falls back to Supabase Storage with HTTP 200'
+        );
+        const saveData = await saveRes.json();
+        assert(saveData.success === true, 'Direct save response has success === true');
+
+        // Verify that GET finds the paper saved in Supabase Storage
+        const getRemoteReq = new NextRequest(`http://localhost:3000/api/ingest/staged-paper?id=${remoteSavePaperId}`);
+        const getRemoteRes = await GET(getRemoteReq);
+        assert(getRemoteRes.status === 200, 'GET can retrieve paper saved in Supabase Storage');
+        const getRemoteData = await getRemoteRes.json();
+        assert(getRemoteData.paper?.id === remoteSavePaperId, 'Retrieved paper matches remote saved id');
+      } finally {
+        fs.writeFileSync = origWriteFileSync;
+        try {
+          await supabase.storage.from('question-diagrams').remove([`staged_papers/${remoteSavePaperId}.json`]);
+        } catch {
+          // ignore
+        }
+      }
+    } finally {
+      // Restore original fs functions
+      fs.mkdirSync = origMkdirSync;
+      fs.renameSync = origRenameSync;
+
+      // Clean up read-only local file
+      if (fs.existsSync(readOnlyActiveFile)) {
+        fs.unlinkSync(readOnlyActiveFile);
+        console.log(`🧹 Cleaned up temporary read-only test file: ${readOnlyActiveFile}`);
+      }
+
+      // Ensure Supabase Storage paper_states does not leave test residues
+      try {
+        const cleanStates = await fetchPersistentPaperStates();
+        cleanStates.archived = cleanStates.archived.filter((id) => id !== readOnlyPaperId && id !== tempPaperId);
+        cleanStates.deleted = cleanStates.deleted.filter((id) => id !== readOnlyPaperId && id !== tempPaperId);
+        await savePersistentPaperStates(cleanStates);
+      } catch (err: any) {
+        console.warn('Could not clean test ids from Supabase storage states:', err?.message);
+      }
+    }
   } finally {
     // -------------------------------------------------------------
     // Cleanup temporary files
