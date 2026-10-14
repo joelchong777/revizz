@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuestions, useTopics, Question } from '@/lib/questions';
+import { fetchSubjectsFromDb } from '@/lib/subjects';
 
 export interface AdminToolsProps {
   initialView?: 'assign' | 'bank' | 'importer';
@@ -140,7 +141,20 @@ export default function AdminTools({
   // Homework Assigner State (2c)
   const [aiPrompt, setAiPrompt] = useState('Build a homework round on weakest subtopics');
   const [selectedClass, setSelectedClass] = useState('No cohorts registered');
-  const [subject, setSubject] = useState('Economics 0455');
+  const [subject, setSubject] = useState('No subjects registered');
+
+  useEffect(() => {
+    let mounted = true;
+    fetchSubjectsFromDb().then((subjects) => {
+      if (!mounted) return;
+      if (subjects && subjects.length > 0) {
+        setSubject(`${subjects[0].name} ${subjects[0].code}`);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const [topics, setTopics] = useState<string[]>([]);
   const [roundLength, setRoundLength] = useState<number | 'Custom'>(8);
   const [timerMode, setTimerMode] = useState<'Chill' | 'Exam'>('Exam');
@@ -594,8 +608,7 @@ interface QuestionBankItem {
               </button>
             </div>
             <p className="text-xs text-[#645c50] leading-snug">
-              Picked from the bank items 10 Economics missed most. The 1 new item stays in content review and
-              can&apos;t go live until approved.
+              Questions selected from question bank for this assignment.
             </p>
 
             {assignQs.length === 0 ? (
@@ -696,9 +709,6 @@ interface QuestionBankItem {
                 className="w-full pl-9 pr-3.5 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
               />
             </div>
-            <span className="px-3 py-1.5 rounded-full bg-[#201e1d] text-[#f9f4ed] text-xs font-bold">
-              Economics 0455 ✕
-            </span>
             <BankFilterDropdown
               label="Paper"
               value={bankPaperFilter}

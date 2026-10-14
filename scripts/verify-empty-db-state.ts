@@ -23,6 +23,7 @@
  *    - "10B Physics"
  *    - "Ms. A. Okafor"
  *    - "Mr. C. Tan"
+ *    - "Economics 0455 ✕"
  *    have been completely stripped.
  * 3. Empty state UI signs/banners are rendered when datasets are empty.
  */
@@ -229,6 +230,7 @@ function runBannedStringsStaticAudit() {
     { label: '10B Physics', pattern: /10B Physics/i },
     { label: 'Ms. A. Okafor', pattern: /Ms\.\s*A\.\s*Okafor/i },
     { label: 'Mr. C. Tan', pattern: /Mr\.\s*C\.\s*Tan/i },
+    { label: 'Economics 0455 ✕', pattern: /Economics 0455\s*[✕xX]/i },
   ];
 
   for (const relPath of targetFiles) {
@@ -318,15 +320,15 @@ function runEmptyStateUiAudit() {
     },
     {
       file: 'components/portal/AdminTools.tsx',
-      feature: 'Admin Tools Empty Question / Assignment State',
+      feature: 'Admin Tools Empty Question / Assignment State & No Hardcoded Subject Pill',
       validate: (code: string) =>
-        code.includes('assignQs.length === 0') ||
-        code.includes('questions.length === 0') ||
-        code.includes('filteredQuestions.length === 0') ||
-        code.includes('No questions') ||
-        code.includes('No questions available') ||
-        code.includes('No questions assigned') ||
-        !code.includes('Why will scarcity always exist?'),
+        !code.includes('Economics 0455 ✕') &&
+        (code.includes('assignQs.length === 0') ||
+          code.includes('questions.length === 0') ||
+          code.includes('filteredQuestions.length === 0') ||
+          code.includes('No questions') ||
+          code.includes('No questions available') ||
+          code.includes('No questions assigned')),
     },
     {
       file: 'components/portal/AdminCMS.tsx',
