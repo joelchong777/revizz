@@ -1,5 +1,6 @@
 import { TestPaperConfig, CompiledExamQuestion } from '@/types/testCompiler';
-import { Question } from '@/lib/questions';
+import { Question, CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 
 const DRAFT_KEY_PREFIX = 'revizz_test_draft_';
 
@@ -44,17 +45,18 @@ export function listTestDrafts(): TestPaperConfig[] {
 
 export function buildCompiledQuestions(
   questionIds: string[],
-  questionPool: Question[] = []
+  pool?: Question[]
 ): CompiledExamQuestion[] {
-  if (!questionPool || questionPool.length === 0 || !questionIds || questionIds.length === 0) {
+  if (!questionIds || questionIds.length === 0) {
     return [];
   }
 
+  const primaryPool = pool && pool.length > 0 ? pool : [];
   const compiled: CompiledExamQuestion[] = [];
   let questionNumber = 1;
 
   for (const id of questionIds) {
-    const q = questionPool.find((item) => item.id === id);
+    const q = primaryPool.find((item) => item.id === id) || CAMBRIDGE_QUESTIONS.find((item) => item.id === id);
     if (q) {
       const labels: ('A' | 'B' | 'C' | 'D')[] = ['A', 'B', 'C', 'D'];
       const compiledOptions = (q.options || []).map((opt, idx) => ({
@@ -63,11 +65,14 @@ export function buildCompiledQuestions(
         isCorrect: opt.id === q.correct_option_id,
       }));
 
+      const rawImageUrl = q.image_url || q.diagram?.image_url;
+      const resolvedImageUrl = rawImageUrl ? (resolveDiagramUrl(rawImageUrl) || rawImageUrl) : null;
+
       compiled.push({
         questionNumber: questionNumber++,
         id: q.id,
         stemMarkdown: q.stem_markdown || '',
-        imageUrl: q.image_url,
+        imageUrl: resolvedImageUrl,
         options: compiledOptions,
         citation: q.citation,
         topic: q.topic,
@@ -86,37 +91,43 @@ export function autoSelectQuestions(
     difficulty?: string;
     questionPool?: Question[];
   },
-  questionPoolParam: Question[] = []
+  pool?: Question[]
 ): string[] {
-  const sourcePool = options.questionPool ?? questionPoolParam ?? [];
+  const sourcePool =
+    (pool && pool.length > 0)
+      ? pool
+      : (options.questionPool && options.questionPool.length > 0)
+      ? options.questionPool
+      : CAMBRIDGE_QUESTIONS;
+
   if (!sourcePool || sourcePool.length === 0) {
     return [];
   }
 
-  let pool = [...sourcePool];
+  let filtered = [...sourcePool];
   
   if (options.topicIds && options.topicIds.length > 0) {
-    pool = pool.filter((q) => options.topicIds?.includes(q.topic_id || ''));
+    filtered = filtered.filter((q) => options.topicIds?.includes(q.topic_id || ''));
   }
 
-  if (pool.length === 0) {
+  if (filtered.length === 0) {
     return [];
   }
   
   // shuffle
-  for (let i = pool.length - 1; i > 0; i--) {
+  for (let i = filtered.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
   }
 
-  return pool.slice(0, options.count).map((q) => q.id);
+  return filtered.slice(0, options.count).map((q) => q.id);
 }
 
 export function generateTestPaper(
   config: TestPaperConfig,
-  questionPool: Question[] = []
+  questionPool?: Question[]
 ): GeneratedTestPaper {
-  if (!questionPool || questionPool.length === 0 || !config.questionIds || config.questionIds.length === 0) {
+  if (!config.questionIds || config.questionIds.length === 0) {
     return {
       config: {
         ...config,
@@ -127,11 +138,15 @@ export function generateTestPaper(
     };
   }
 
-  const compiledQuestions = buildCompiledQuestions(config.questionIds, questionPool);
+  const compiledQuestions = config.compiledQuestions && config.compiledQuestions.length > 0
+    ? config.compiledQuestions
+    : buildCompiledQuestions(config.questionIds, questionPool);
+
   return {
     config: {
       ...config,
       totalMarks: compiledQuestions.length,
+      compiledQuestions,
     },
     questions: compiledQuestions,
     totalQuestions: compiledQuestions.length,

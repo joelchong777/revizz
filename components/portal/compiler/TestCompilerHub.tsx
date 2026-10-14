@@ -27,7 +27,7 @@ import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { useQuestions, useTopics, Question, resolveDiagramUrl } from '@/lib/questions';
 import { CompilerDiagramPreview } from './CompilerDiagramPreview';
-import { saveTestDraft, listTestDrafts, autoSelectQuestions } from '@/lib/testCompiler';
+import { saveTestDraft, listTestDrafts, autoSelectQuestions, buildCompiledQuestions } from '@/lib/testCompiler';
 import {
   SelectionFilter,
   SortOption,
@@ -195,6 +195,7 @@ export default function TestCompilerHub() {
   };
 
   const generateConfig = (): TestPaperConfig => {
+    const compiled = buildCompiledQuestions(selectedQuestionIds, questions);
     return {
       id: Math.random().toString(36).substring(7),
       title: testTitle,
@@ -210,6 +211,7 @@ export default function TestCompilerHub() {
       includeBubbleSheet: includeBubbleSheet,
       includeMarkScheme: includeMarkScheme,
       questionIds: selectedQuestionIds,
+      compiledQuestions: compiled,
       createdAt: new Date().toISOString(),
     };
   };

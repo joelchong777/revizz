@@ -14,6 +14,7 @@ export interface TestPaperConfig {
   includeMarkScheme: boolean;
   instructionsText?: string;
   questionIds: string[];
+  compiledQuestions?: CompiledExamQuestion[];
   createdAt: string;
 }
 
