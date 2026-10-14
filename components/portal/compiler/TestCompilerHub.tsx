@@ -385,11 +385,10 @@ export default function TestCompilerHub() {
 
                   {q.image_url && (
                     <div className="mb-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={resolveDiagramUrl(q.image_url) || q.image_url}
-                        alt="Question diagram"
-                        className="max-h-32 rounded-lg border-[1.5px] border-[#dcd3c4] object-contain bg-white p-1"
+                      <CompilerDiagramPreview
+                        imageUrl={q.image_url}
+                        citation={q.citation || q.id}
+                        altText={q.citation ? `Diagram for ${q.citation}` : 'Question diagram'}
                       />
                     </div>
                   )}

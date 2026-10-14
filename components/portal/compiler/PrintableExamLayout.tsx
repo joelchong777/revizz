@@ -5,6 +5,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { TestPaperConfig, CompiledExamQuestion } from '@/types/testCompiler';
 import { Code128Barcode } from '@/lib/barcode';
+import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 
 interface Props {
   config: TestPaperConfig;
@@ -153,7 +154,12 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
               </div>
               {q.imageUrl && (
                 <div className="mb-4">
-                  <img src={q.imageUrl} alt={`Question ${q.questionNumber}`} className="max-w-full h-auto max-h-[300px] object-contain" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolveDiagramUrl(q.imageUrl) || q.imageUrl}
+                    alt={`Question ${q.questionNumber}`}
+                    className="max-w-full h-auto max-h-[300px] object-contain"
+                  />
                 </div>
               )}
               <div className="grid grid-cols-1 gap-2">
