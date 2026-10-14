@@ -51,7 +51,7 @@ export default function TeacherAnalytics({
 }: TeacherAnalyticsProps) {
   const [currentView, setCurrentView] = useState<'roster' | 'mastery'>(initialView);
   const [selectedStudent, setSelectedStudent] = useState<RosterStudent | null>(null);
-  const [selectedClass, setSelectedClass] = useState('10B Physics');
+  const [selectedClass, setSelectedClass] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [agentNoticeDismissed, setAgentNoticeDismissed] = useState(false);
 
@@ -61,7 +61,8 @@ export default function TeacherAnalytics({
 
   // Mastery heatmap data - empty until dynamic student rounds are recorded
   const [heatRows, setHeatRows] = useState<HeatRow[]>([]);
-  const chapters = ['Motion', 'Thermal', 'Waves', 'Electricity', 'Nuclear', 'Space'];
+  const cohorts: string[] = [];
+  const chapters: string[] = [];
   const [mostMissedQuestions, setMostMissedQuestions] = useState<
     Array<{ id: string; stem: string; first: string; second: string }>
   >([]);
@@ -171,14 +172,14 @@ export default function TeacherAnalytics({
     }
   }, [selectedStudent]);
 
-  const studentChapters = [
-    { n: 'Motion, forces & energy', w: selectedStudent?.acc ? `${selectedStudent.acc}%` : '—', tier: selectedStudent?.acc && selectedStudent.acc >= 80 ? '👑 Master' : selectedStudent?.acc && selectedStudent.acc >= 50 ? '⚡ Proficient' : '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: selectedStudent?.acc ? getHeatBg(selectedStudent.acc) : '#dcd3c4', pct: selectedStudent?.acc || 0 },
-    { n: 'Thermal physics', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4', pct: 0 },
-    { n: 'Waves', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4', pct: 0 },
-    { n: 'Electricity & magnetism', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4', pct: 0 },
-    { n: 'Nuclear physics', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4', pct: 0 },
-    { n: 'Space physics', w: '—', tier: '🌱 Not started', tagCls: 'bg-[#eee7db] text-[#474238]', bar: '#dcd3c4', pct: 0 },
-  ];
+  const studentChapters: Array<{
+    n: string;
+    w: string;
+    tier: string;
+    tagCls: string;
+    bar: string;
+    pct: number;
+  }> = [];
 
   /* ==========================================================
      VIEW: TOPIC MASTERY ANALYTICS (Mockup 2d)
@@ -198,7 +199,7 @@ export default function TeacherAnalytics({
               </button>
             </div>
             <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-1">
-              Physics 0625 · Year 10
+              Subject Mastery Analytics
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -369,22 +370,28 @@ export default function TeacherAnalytics({
       {/* Class Switcher & Search Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-          {['10A Physics', '10B Physics', '11A Chemistry', '11C Economics'].map((clsName) => {
-            const isSelected = selectedClass === clsName;
-            return (
-              <button
-                key={clsName}
-                onClick={() => setSelectedClass(clsName)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                  isSelected
-                    ? 'bg-[#201e1d] text-[#f9f4ed]'
-                    : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-                }`}
-              >
-                {clsName}
-              </button>
-            );
-          })}
+          {cohorts.length === 0 ? (
+            <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#eee7db] text-[#645c50] border border-[#dcd3c4]">
+              No cohorts registered
+            </span>
+          ) : (
+            cohorts.map((clsName) => {
+              const isSelected = selectedClass === clsName;
+              return (
+                <button
+                  key={clsName}
+                  onClick={() => setSelectedClass(clsName)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                    isSelected
+                      ? 'bg-[#201e1d] text-[#f9f4ed]'
+                      : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
+                  }`}
+                >
+                  {clsName}
+                </button>
+              );
+            })
+          )}
           <button
             onClick={() => setCurrentView('mastery')}
             className="px-3.5 py-1.5 rounded-full text-xs font-bold text-[#c67139] hover:underline whitespace-nowrap ml-2"
@@ -648,32 +655,38 @@ export default function TeacherAnalytics({
                   <h3 className="font-heading text-base font-black text-[#201e1d]">
                     Syllabus Chapter Mastery
                   </h3>
-                  <span className="text-xs font-bold text-[#645c50]">Cambridge 0625</span>
+                  <span className="text-xs font-bold text-[#645c50]">Syllabus Topics</span>
                 </div>
                 <div className="flex flex-col gap-2.5">
-                  {studentChapters.map((ch, idx) => (
-                    <div key={idx} className="flex flex-col gap-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[#201e1d] truncate max-w-[240px]" title={ch.n}>
-                          {ch.n}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#474238]">{ch.w}</span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap border border-[#201e1d]/10 ${ch.tagCls}`}
-                          >
-                            {ch.tier}
+                  {studentChapters.length === 0 ? (
+                    <p className="text-xs font-medium text-[#645c50] py-2">
+                      No syllabus topics or mastery data recorded yet.
+                    </p>
+                  ) : (
+                    studentChapters.map((ch, idx) => (
+                      <div key={idx} className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-[#201e1d] truncate max-w-[240px]" title={ch.n}>
+                            {ch.n}
                           </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-[#474238]">{ch.w}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap border border-[#201e1d]/10 ${ch.tagCls}`}
+                            >
+                              {ch.tier}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-2.5 rounded-full bg-[#eee7db] border border-[#201e1d]/20 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{ width: `${ch.pct}%`, backgroundColor: ch.bar }}
+                          />
                         </div>
                       </div>
-                      <div className="h-2.5 rounded-full bg-[#eee7db] border border-[#201e1d]/20 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{ width: `${ch.pct}%`, backgroundColor: ch.bar }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
 

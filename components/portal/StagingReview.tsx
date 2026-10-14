@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QuestionCard from '@/components/QuestionCard';
-import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
 import { normalizeStagingPayload, PublishReceipt } from '@/lib/ingestion/useIngestionStore';
 
 interface StagedQuestion {
@@ -47,34 +46,13 @@ const DEFAULT_PAPER_DATA: StagedPaperMetadata = {
     paper_code: '12',
     year: 2024,
   },
-  syllabus_topics: CAMBRIDGE_TOPICS.map((t) => ({
-    name: t.name,
-    order_index: t.orderIndex,
-  })),
+  syllabus_topics: [],
 };
-
-const initialStagedQuestions: StagedQuestion[] = CAMBRIDGE_QUESTIONS.map((q, idx) => ({
-  id: q.id || `0455-s24-12-q${String(idx + 1).padStart(2, '0')}`,
-  stem_markdown: q.stem_markdown,
-  options: q.options.map((opt) => ({
-    id: opt.id,
-    text_markdown: opt.text_markdown,
-  })),
-  correct_option_id: q.correct_option_id,
-  explanation_markdown: (q as any).explanation_markdown || '',
-  citation: q.citation || `Cambridge IGCSE Economics 0455/12 May/June 2024 Q${idx + 1}`,
-  topic_id: q.topic_id || (q.topic ? q.topic.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'general'),
-  topic: q.topic || 'General',
-  has_diagram: Boolean(q.has_diagram),
-  image_url: q.image_url,
-  diagram: (q as any).diagram || (q.image_url ? { has_diagram: Boolean(q.has_diagram), image_url: q.image_url } : undefined),
-  status: (q.has_diagram ? 'review' : 'complete') as 'complete' | 'review',
-}));
 
 export default function StagingReview() {
   const [paperData, setPaperData] = useState<StagedPaperMetadata>(DEFAULT_PAPER_DATA);
   const [selectedQuestionIdx, setSelectedQuestionIdx] = useState(0);
-  const [stagedQuestions, setStagedQuestions] = useState<StagedQuestion[]>(initialStagedQuestions);
+  const [stagedQuestions, setStagedQuestions] = useState<StagedQuestion[]>([]);
   const [publishMessage, setPublishMessage] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishReceipt, setPublishReceipt] = useState<PublishReceipt | null>(null);
@@ -334,8 +312,43 @@ export default function StagingReview() {
     }
   };
 
-  if (!activeQuestion) {
-    return null;
+  if (!activeQuestion || stagedQuestions.length === 0) {
+    return (
+      <div className="flex flex-col space-y-6">
+        <input
+          ref={jsonInputRef}
+          type="file"
+          accept=".json,application/json,text/json"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleLoadJsonFile(file);
+            e.target.value = '';
+          }}
+        />
+        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-4 rounded-[28px] p-12 text-center flex flex-col items-center justify-center space-y-4">
+          <div className="text-6xl">📥</div>
+          <h2 className="text-2xl font-black text-[#201e1d] font-heading">No Staged Questions</h2>
+          <p className="text-sm font-bold text-[#645c50] max-w-md">
+            No questions currently staged for review. Upload a past paper PDF in Ingestion Studio to stage questions.
+          </p>
+          <div className="flex flex-wrap gap-3 pt-2 justify-center">
+            <button
+              onClick={() => jsonInputRef.current?.click()}
+              className="bg-[#ffe600] text-[#201e1d] border-2 border-[#201e1d] font-black px-5 py-2.5 rounded-full shadow-offset-2 hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] transition-all text-sm"
+            >
+              📂 Load Staging JSON
+            </button>
+            <a
+              href="/admin?tab=ingestion"
+              className="bg-white text-[#201e1d] border-2 border-[#201e1d] font-black px-5 py-2.5 rounded-full shadow-offset-2 hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] transition-all text-sm"
+            >
+              🚀 Go to Ingestion Studio
+            </a>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

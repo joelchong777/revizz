@@ -19,7 +19,7 @@ import {
   Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
+import { useQuestions, useTopics, Question } from '@/lib/questions';
 
 export interface AdminToolsProps {
   initialView?: 'assign' | 'bank' | 'importer';
@@ -133,17 +133,15 @@ export default function AdminTools({
   initialView = 'assign',
   onOpenEditor 
 }: AdminToolsProps) {
+  const { questions: dbQuestions } = useQuestions();
+  const { topics: dbTopics } = useTopics();
   const [activeSubTab, setActiveSubTab] = useState<'assign' | 'bank' | 'importer'>(initialView);
 
   // Homework Assigner State (2c)
-  const [aiPrompt, setAiPrompt] = useState('Build 10 Economics a homework round on their weakest Allocation of Resources subtopics');
-  const [selectedClass, setSelectedClass] = useState('10 Economics · 26');
-  const [subject, setSubject] = useState('📈 Economics 0455');
-  const [topics, setTopics] = useState<string[]>([
-    'The basic economic problem',
-    'The allocation of resources',
-    'Microeconomic decision makers',
-  ]);
+  const [aiPrompt, setAiPrompt] = useState('Build a homework round on weakest subtopics');
+  const [selectedClass, setSelectedClass] = useState('No cohorts registered');
+  const [subject, setSubject] = useState('Economics 0455');
+  const [topics, setTopics] = useState<string[]>([]);
   const [roundLength, setRoundLength] = useState<number | 'Custom'>(8);
   const [timerMode, setTimerMode] = useState<'Chill' | 'Exam'>('Exam');
   const [opensDate, setOpensDate] = useState('Mon 12 Oct · 08:00');
@@ -154,43 +152,15 @@ export default function AdminTools({
   const [scheduledSuccess, setScheduledSuccess] = useState(false);
 
   // Assigned Questions Dataset
-  const assignQs = [
-    {
-      id: CAMBRIDGE_QUESTIONS[0]?.id || '0455-s24-12-q01',
-      stem: CAMBRIDGE_QUESTIONS[0]?.stem_markdown || 'Why will scarcity always exist?',
-      topic: CAMBRIDGE_QUESTIONS[0]?.topic || 'The basic economic problem',
-      acc: '78%',
+  const assignQs = useMemo(() => {
+    return dbQuestions.map((q) => ({
+      id: q.id,
+      stem: q.stem_markdown,
+      topic: q.topic || 'General',
+      acc: '—',
       agent: false,
-    },
-    {
-      id: CAMBRIDGE_QUESTIONS[1]?.id || '0455-s24-12-q02',
-      stem: CAMBRIDGE_QUESTIONS[1]?.stem_markdown || 'A student decides to take up a two-year apprenticeship...',
-      topic: CAMBRIDGE_QUESTIONS[1]?.topic || 'The basic economic problem',
-      acc: '41%',
-      agent: false,
-    },
-    {
-      id: CAMBRIDGE_QUESTIONS[2]?.id || '0455-s24-12-q03',
-      stem: CAMBRIDGE_QUESTIONS[2]?.stem_markdown || 'The diagram shows a country’s production possibility curve (PPC)...',
-      topic: CAMBRIDGE_QUESTIONS[2]?.topic || 'The basic economic problem',
-      acc: '38%',
-      agent: false,
-    },
-    {
-      id: CAMBRIDGE_QUESTIONS[3]?.id || '0455-s24-12-q04',
-      stem: CAMBRIDGE_QUESTIONS[3]?.stem_markdown || 'What is not a macroeconomic topic?',
-      topic: CAMBRIDGE_QUESTIONS[3]?.topic || 'The allocation of resources',
-      acc: 'new',
-      agent: true,
-    },
-    {
-      id: CAMBRIDGE_QUESTIONS[4]?.id || '0455-s24-12-q05',
-      stem: CAMBRIDGE_QUESTIONS[4]?.stem_markdown || 'What is likely to cause an extension in demand for a firm’s fruit drink?',
-      topic: CAMBRIDGE_QUESTIONS[4]?.topic || 'The allocation of resources',
-      acc: '52%',
-      agent: false,
-    },
-  ];
+    }));
+  }, [dbQuestions]);
 
   // Question Bank State (2f)
   const [bankSearch, setBankSearch] = useState('');
@@ -201,25 +171,33 @@ export default function AdminTools({
   const [bankDifficultyFilter, setBankDifficultyFilter] = useState<string>('All');
   const [bankPage, setBankPage] = useState(1);
 
-  const paperOptions = useMemo(() => [
-    { value: 'All', label: 'All' },
-    { value: '0455/12 M/J/24', label: '0455/12 M/J/24' },
-  ], []);
+  const paperOptions = useMemo(() => {
+    const papers = Array.from(new Set(dbQuestions.map((q) => q.citation?.split(' ')[0]).filter(Boolean)));
+    if (papers.length === 0) {
+      return [{ value: 'None', label: 'None' }];
+    }
+    return [
+      { value: 'All', label: 'All' },
+      ...papers.map((p) => ({ value: p as string, label: p as string })),
+    ];
+  }, [dbQuestions]);
 
   const sessionOptions = useMemo(() => [
-    { value: 'All', label: 'All' },
-    { value: 'May/June 2024', label: 'May/June 2024' },
-    { value: 'Feb/March 2024', label: 'Feb/March 2024' },
-    { value: 'Oct/Nov 2024', label: 'Oct/Nov 2024' },
+    { value: 'None', label: 'None' },
   ], []);
 
-  const topicOptions = useMemo(() => [
-    { value: 'All', label: 'All' },
-    ...CAMBRIDGE_TOPICS.map((t) => ({
-      value: t.name,
-      label: `${t.orderIndex}. ${t.name}`,
-    })),
-  ], []);
+  const topicOptions = useMemo(() => {
+    if (dbTopics.length === 0) {
+      return [{ value: 'None', label: 'None' }];
+    }
+    return [
+      { value: 'All', label: 'All' },
+      ...dbTopics.map((t) => ({
+        value: t.name,
+        label: `${t.orderIndex}. ${t.name}`,
+      })),
+    ];
+  }, [dbTopics]);
 
   const difficultyOptions = useMemo(() => [
     { value: 'All', label: 'All' },
@@ -236,59 +214,39 @@ export default function AdminTools({
     { value: 'Flagged', label: 'Flagged' },
   ], []);
 
-  const questionBankItems = useMemo(() => {
-    return CAMBRIDGE_QUESTIONS.map((q, idx) => {
+interface QuestionBankItem {
+  id: string;
+  stem: string;
+  cite: string;
+  topic: string;
+  paper: string;
+  session: string;
+  diff: 'Easy' | 'Medium' | 'Hard';
+  acc: string;
+  st: 'Live' | 'Agent draft' | 'Needs review' | 'Flagged';
+  stCls: string;
+  upd: string;
+}
+
+  const questionBankItems = useMemo((): QuestionBankItem[] => {
+    return dbQuestions.map((q, idx): QuestionBankItem => {
       const qNum = idx + 1;
-      let st: 'Live' | 'Agent draft' | 'Needs review' | 'Flagged' = 'Live';
-      let stCls = 'bg-[#ccdbb2] text-[#272e1b]';
+      const st: 'Live' | 'Agent draft' | 'Needs review' | 'Flagged' = 'Live';
+      const stCls = 'bg-[#ccdbb2] text-[#272e1b]';
 
-      if (qNum === 20 || qNum === 27) {
-        st = 'Agent draft';
-        stCls = 'bg-[#ffe1d0] text-[#8c491a]';
-      } else if (qNum === 10 || qNum === 14) {
-        st = 'Needs review';
-        stCls = 'bg-[#eee7db] text-[#474238]';
-      } else if (qNum === 3 || qNum === 6) {
-        st = 'Flagged';
-        stCls = 'bg-[#ffe1d0] text-[#643312]';
-      }
+      const diff: 'Easy' | 'Medium' | 'Hard' = 'Medium';
+      const acc = '—';
+      const upd = 'Live';
 
-      const difficulties: Array<'Easy' | 'Medium' | 'Hard'> = [
-        'Easy', 'Easy', 'Medium', 'Easy', 'Medium', 'Hard', 'Medium', 'Hard', 'Medium', 'Medium',
-        'Easy', 'Hard', 'Easy', 'Medium', 'Easy', 'Medium', 'Hard', 'Medium', 'Hard', 'Medium',
-        'Easy', 'Medium', 'Easy', 'Hard', 'Medium', 'Easy', 'Hard', 'Hard', 'Medium', 'Hard'
-      ];
-      const accuracies = [
-        '86%', '74%', '58%', '81%', '69%', '44%', '62%', '49%', '57%', '51%',
-        '83%', '46%', '79%', '53%', '77%', '65%', '48%', '61%', '43%', '—',
-        '82%', '67%', '76%', '55%', '63%', '88%', '—', '47%', '59%', '52%'
-      ];
-      const updateDates = [
-        '2 Oct', '2 Oct', '7 Oct', '28 Sep', '28 Sep', 'Today', 'Today', '19 Sep', '2 Oct', '7 Oct',
-        '28 Sep', '19 Sep', '2 Oct', '28 Sep', 'Today', '2 Oct', '19 Sep', '28 Sep', 'Today', 'Today',
-        '2 Oct', '28 Sep', '2 Oct', '19 Sep', '28 Sep', '2 Oct', 'Today', '19 Sep', '28 Sep', '2 Oct'
-      ];
-
-      const diff = difficulties[idx] || 'Medium';
-      const acc = accuracies[idx] || '65%';
-      const upd = updateDates[idx] || '2 Oct';
-
-      const cite = q.citation
-        ? q.citation
-            .replace('Cambridge IGCSE Economics ', '')
-            .replace('May/June ', 'M/J/')
-            .replace('October/November ', 'O/N/')
-            .replace('Feb/March ', 'F/M/')
-        : `0455/12 M/J/24 Q${qNum}`;
-
-      const paper = '0455/12 M/J/24';
-      const session = 'May/June 2024';
+      const cite = q.citation || `Q${qNum}`;
+      const paper = q.citation?.split(' ')[0] || 'None';
+      const session = 'None';
 
       return {
         id: q.id,
         stem: q.stem_markdown,
         cite,
-        topic: q.topic || 'Economics',
+        topic: q.topic || 'General',
         paper,
         session,
         diff,
@@ -298,7 +256,7 @@ export default function AdminTools({
         upd,
       };
     });
-  }, []);
+  }, [dbQuestions]);
 
   const filteredBankItems = useMemo(() => {
     return questionBankItems.filter((q) => {
@@ -640,36 +598,48 @@ export default function AdminTools({
               can&apos;t go live until approved.
             </p>
 
-            <div className="flex flex-col gap-2 divide-y divide-[#eee7db]">
-              {assignQs.map((q, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => onOpenEditor?.(q.id)}
-                  className="pt-2 flex items-start gap-2 text-xs hover:bg-[#eee7db]/50 p-1.5 rounded-xl transition-colors cursor-pointer"
-                >
-                  <div className="flex-1 min-w-0">
-                    <span className="font-mono text-[10px] font-bold text-[#645c50] block">
-                      {q.id} · {q.topic}
-                    </span>
-                    <span className="font-semibold text-[#201e1d] line-clamp-2 leading-tight">
-                      {q.stem}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    {q.agent && (
-                      <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-bold">
-                        Agent · new
-                      </span>
-                    )}
-                    <span className="font-black text-[#201e1d]">{q.acc}</span>
-                  </div>
+            {assignQs.length === 0 ? (
+              <div className="py-8 px-4 text-center flex flex-col items-center justify-center gap-2">
+                <span className="text-2xl">📋</span>
+                <span className="font-heading font-black text-sm text-[#201e1d]">No Questions Available to Assign</span>
+                <span className="text-xs text-[#645c50] max-w-xs">
+                  No questions available to assign. Ingest and publish papers in App Admin.
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col gap-2 divide-y divide-[#eee7db]">
+                  {assignQs.map((q, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => onOpenEditor?.(q.id)}
+                      className="pt-2 flex items-start gap-2 text-xs hover:bg-[#eee7db]/50 p-1.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className="font-mono text-[10px] font-bold text-[#645c50] block">
+                          {q.id} · {q.topic}
+                        </span>
+                        <span className="font-semibold text-[#201e1d] line-clamp-2 leading-tight">
+                          {q.stem}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {q.agent && (
+                          <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-bold">
+                            Agent · new
+                          </span>
+                        )}
+                        <span className="font-black text-[#201e1d]">{q.acc}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="pt-2 text-xs text-[#645c50] font-medium border-t border-[#dcd3c4]">
-              + 3 more questions · estimated 12 min round
-            </div>
+                <div className="pt-2 text-xs text-[#645c50] font-medium border-t border-[#dcd3c4]">
+                  {assignQs.length} questions available
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -825,7 +795,15 @@ export default function AdminTools({
                 </div>
 
                 <div className="max-h-[580px] overflow-y-auto divide-y divide-[#eee7db] pr-1">
-                  {paginatedBankItems.length === 0 ? (
+                  {questionBankItems.length === 0 ? (
+                    <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
+                      <span className="text-3xl">🗄️</span>
+                      <span className="font-heading font-black text-base text-[#201e1d]">Question Bank is Empty</span>
+                      <span className="text-xs text-[#645c50] max-w-sm">
+                        There are no questions in the repository yet. Ingest and publish exam papers in Ingestion Studio to build your question bank.
+                      </span>
+                    </div>
+                  ) : paginatedBankItems.length === 0 ? (
                     <div className="py-8 text-center text-xs font-bold text-[#645c50]">
                       No questions match the selected filters.
                     </div>

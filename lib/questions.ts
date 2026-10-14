@@ -1,4 +1,6 @@
 import type { Question } from '../hooks/useQuizGame';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from './supabaseClient';
 export type { Question };
 
 export interface SyllabusTopic {
@@ -473,17 +475,29 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
   }
 ];
 
-export function getAllQuestions(): Question[] {
-  return CAMBRIDGE_QUESTIONS;
+let _cachedQuestions: Question[] = [];
+
+export function setCachedQuestions(questions: Question[]): void {
+  _cachedQuestions = questions;
 }
 
-export function getQuestionsForTopic(topicId: string): Question[] {
-  return CAMBRIDGE_QUESTIONS.filter(q => q.topic_id === topicId);
+export function getCachedQuestions(): Question[] {
+  return _cachedQuestions;
 }
 
-export function getQuestionsByIds(ids: string[]): Question[] {
+export function getAllQuestions(pool?: Question[]): Question[] {
+  return pool ?? _cachedQuestions;
+}
+
+export function getQuestionsForTopic(topicId: string, pool?: Question[]): Question[] {
+  const source = pool ?? _cachedQuestions;
+  return source.filter((q) => q.topic_id === topicId);
+}
+
+export function getQuestionsByIds(ids: string[], pool?: Question[]): Question[] {
   const set = new Set(ids);
-  return CAMBRIDGE_QUESTIONS.filter(q => set.has(q.id));
+  const source = pool ?? _cachedQuestions;
+  return source.filter((q) => set.has(q.id));
 }
 
 /**
@@ -498,4 +512,267 @@ export function shuffleQuestions(questions: Question[]): Question[] {
   }
   return shuffled;
 }
+
+export interface FetchQuestionsFilters {
+  subjectId?: string;
+  topicId?: string;
+  questionIds?: string[];
+  paperId?: string;
+}
+
+export function mapDbQuestionToQuestion(row: any): Question {
+  const sortedOptions = (row.question_options || [])
+    .slice()
+    .sort((a: any, b: any) => (a.label || '').localeCompare(b.label || ''));
+
+  const options = sortedOptions.map((opt: any) => ({
+    id: opt.id,
+    text_markdown: opt.content_markdown || '',
+    label: opt.label,
+    distractor_reasoning: opt.distractor_reasoning || undefined,
+  }));
+
+  const correctOption = sortedOptions.find((opt: any) => opt.is_correct);
+  const correct_option_id = correctOption ? correctOption.id : (sortedOptions[0]?.id ?? '');
+
+  const topicName = row.topics?.name || undefined;
+  const paper = row.papers;
+  let citation = row.cambridge_source_ref;
+  if (!citation && paper) {
+    const parts = [
+      paper.series,
+      paper.year,
+      paper.paper_code ? `Paper ${paper.paper_code}` : null,
+      row.question_number ? `Q${row.question_number}` : null,
+    ].filter(Boolean);
+    citation = parts.join(' ');
+  }
+
+  const diagramMeta = row.diagram_metadata;
+  const imageUrl = row.image_url || diagramMeta?.image_url || undefined;
+  const hasDiagram = Boolean(imageUrl || diagramMeta?.has_diagram);
+
+  return {
+    id: row.id,
+    stem_markdown: row.stem_markdown || '',
+    options,
+    correct_option_id,
+    citation: citation || undefined,
+    topic: topicName,
+    topic_id: row.topic_id || undefined,
+    has_diagram: hasDiagram,
+    image_url: imageUrl,
+    diagram: diagramMeta || (hasDiagram ? { has_diagram: true, image_url: imageUrl } : undefined),
+    explanation_markdown: row.explanation_markdown || undefined,
+  };
+}
+
+/**
+ * Fetches real questions with options, topics, and papers from Supabase.
+ * Returns an empty array if database contains 0 questions or on error.
+ */
+export async function fetchQuestionsFromDb(filters?: FetchQuestionsFilters): Promise<Question[]> {
+  try {
+    if (filters?.questionIds && filters.questionIds.length === 0) {
+      return [];
+    }
+
+    let query = supabase
+      .from('questions')
+      .select(`
+        id,
+        subject_id,
+        paper_id,
+        topic_id,
+        question_number,
+        stem_markdown,
+        image_url,
+        explanation_markdown,
+        cambridge_source_ref,
+        active,
+        diagram_metadata,
+        topics (
+          id,
+          name,
+          order_index
+        ),
+        papers (
+          id,
+          series,
+          paper_code,
+          year
+        ),
+        question_options (
+          id,
+          label,
+          content_markdown,
+          is_correct,
+          distractor_reasoning
+        )
+      `);
+
+    if (filters?.subjectId) {
+      query = query.eq('subject_id', filters.subjectId);
+    }
+    if (filters?.topicId) {
+      query = query.eq('topic_id', filters.topicId);
+    }
+    if (filters?.paperId) {
+      query = query.eq('paper_id', filters.paperId);
+    }
+    if (filters?.questionIds && filters.questionIds.length > 0) {
+      query = query.in('id', filters.questionIds);
+    }
+
+    query = query.order('question_number', { ascending: true });
+
+    const { data, error } = await query;
+    if (error || !data) {
+      if (error) {
+        console.warn('Failed to fetch questions from Supabase:', error.message);
+      }
+      return [];
+    }
+
+    const mapped = data.map(mapDbQuestionToQuestion);
+
+    // Update in-memory runtime cache when fetching subject/all
+    if (!filters || (!filters.topicId && !filters.questionIds && !filters.paperId)) {
+      _cachedQuestions = mapped;
+    }
+
+    return mapped;
+  } catch (err) {
+    console.warn('Failed to fetch questions from Supabase:', err);
+    return [];
+  }
+}
+
+/**
+ * Fetches syllabus topics from Supabase.
+ * Returns an empty array if database contains 0 topics or on error.
+ */
+export async function fetchTopicsFromDb(subjectId?: string): Promise<SyllabusTopic[]> {
+  try {
+    let query = supabase
+      .from('topics')
+      .select('id, name, order_index, subject_id')
+      .order('order_index', { ascending: true });
+
+    if (subjectId) {
+      query = query.eq('subject_id', subjectId);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) {
+      if (error) {
+        console.warn('Failed to fetch topics from Supabase:', error.message);
+      }
+      return [];
+    }
+
+    return data.map((t: any) => ({
+      id: t.id,
+      name: t.name,
+      orderIndex: t.order_index ?? 0,
+      subjectId: t.subject_id ?? undefined,
+    }));
+  } catch (err) {
+    console.warn('Failed to fetch topics from Supabase:', err);
+    return [];
+  }
+}
+
+export interface UseQuestionsResult {
+  questions: Question[];
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<Question[]>;
+}
+
+/**
+ * Dynamic React hook to load questions from Supabase for a given subject.
+ * Returns empty array [] if database contains 0 questions.
+ */
+export function useQuestions(subjectId?: string): UseQuestionsResult {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchQuestionsFromDb(subjectId ? { subjectId } : undefined);
+      setQuestions(data);
+      return data;
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      setError(e);
+      setQuestions([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [subjectId]);
+
+  useEffect(() => {
+    let active = true;
+    load().then(() => {
+      if (!active) return;
+    });
+    return () => {
+      active = false;
+    };
+  }, [load]);
+
+  return { questions, loading, error, refetch: load };
+}
+
+export interface UseTopicsResult {
+  topics: SyllabusTopic[];
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<SyllabusTopic[]>;
+}
+
+/**
+ * Dynamic React hook to load topics from Supabase for a given subject.
+ * Returns empty array [] if database contains 0 topics.
+ */
+export function useTopics(subjectId?: string): UseTopicsResult {
+  const [topics, setTopics] = useState<SyllabusTopic[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchTopicsFromDb(subjectId);
+      setTopics(data);
+      return data;
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      setError(e);
+      setTopics([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [subjectId]);
+
+  useEffect(() => {
+    let active = true;
+    load().then(() => {
+      if (!active) return;
+    });
+    return () => {
+      active = false;
+    };
+  }, [load]);
+
+  return { topics, loading, error, refetch: load };
+}
+
 

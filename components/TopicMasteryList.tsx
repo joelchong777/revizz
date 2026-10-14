@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  CAMBRIDGE_TOPICS,
-  CAMBRIDGE_QUESTIONS,
   SyllabusTopic,
+  Question,
 } from '@/lib/questions';
 import {
   calculateMasteryPercentage,
@@ -17,6 +16,8 @@ import { cn } from '@/lib/utils';
 interface TopicMasteryListProps {
   subject?: string;
   onPracticeTopic: (topicId: string, topicName: string) => void;
+  questions?: Question[];
+  topics?: SyllabusTopic[];
 }
 
 interface ChapterMastery {
@@ -32,6 +33,8 @@ interface ChapterMastery {
 export function TopicMasteryList({
   subject = 'Economics 0455',
   onPracticeTopic,
+  questions,
+  topics,
 }: TopicMasteryListProps) {
   const [firstTryIds, setFirstTryIds] = useState<string[]>([]);
 
@@ -46,6 +49,21 @@ export function TopicMasteryList({
       unsubscribe();
     };
   }, []);
+
+  const effectiveTopics = topics !== undefined ? topics : [];
+  const effectiveQuestions = questions !== undefined ? questions : [];
+
+  if (effectiveTopics.length === 0 || effectiveQuestions.length === 0) {
+    return (
+      <div className="w-full p-6 rounded-[24px] bg-surface border-2 border-text shadow-offset-4 text-center space-y-2 select-none">
+        <div className="text-3xl">📚</div>
+        <h3 className="font-heading text-lg font-black text-text">No Topics Available</h3>
+        <p className="text-xs font-semibold text-neutral-600 max-w-sm mx-auto">
+          Syllabus topics and mastery data will populate once exam questions are published.
+        </p>
+      </div>
+    );
+  }
 
   const masteredSet = new Set(firstTryIds);
 
@@ -71,8 +89,8 @@ export function TopicMasteryList({
     };
   };
 
-  const chapters: ChapterMastery[] = CAMBRIDGE_TOPICS.map((topic) => {
-    const topicQuestions = CAMBRIDGE_QUESTIONS.filter(
+  const chapters: ChapterMastery[] = effectiveTopics.map((topic) => {
+    const topicQuestions = effectiveQuestions.filter(
       (q) => q.topic_id === topic.id
     );
     const totalQuestions = topicQuestions.length;
@@ -96,8 +114,8 @@ export function TopicMasteryList({
     };
   });
 
-  const totalQuestionsAll = CAMBRIDGE_QUESTIONS.length;
-  const totalMasteredAll = CAMBRIDGE_QUESTIONS.filter((q) =>
+  const totalQuestionsAll = effectiveQuestions.length;
+  const totalMasteredAll = effectiveQuestions.filter((q) =>
     masteredSet.has(q.id)
   ).length;
   const overallPercentage = calculateMasteryPercentage(

@@ -25,7 +25,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
-import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
+import { useQuestions, useTopics, Question } from '@/lib/questions';
 import { saveTestDraft, listTestDrafts, autoSelectQuestions } from '@/lib/testCompiler';
 import {
   SelectionFilter,
@@ -39,6 +39,9 @@ import {
 import { TestPaperConfig } from '@/types/testCompiler';
 
 export default function TestCompilerHub() {
+  const { questions, loading: loadingQuestions } = useQuestions();
+  const { topics, loading: loadingTopics } = useTopics();
+
   // --- Left Column / Filter State ---
   const [search, setSearch] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState<string>('all');
@@ -52,7 +55,7 @@ export default function TestCompilerHub() {
   // --- Right Column (Test Config) State ---
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
   const [testTitle, setTestTitle] = useState('Term 1 Mock Assessment - Economics');
-  const [schoolName, setSchoolName] = useState('Frontier International Academy');
+  const [schoolName, setSchoolName] = useState('School Assessment');
   const [dateString, setDateString] = useState('October 2026');
   const [durationMinutes, setDurationMinutes] = useState(45);
   const [testCode, setTestCode] = useState('REV-0455-M26-001');
@@ -76,11 +79,11 @@ export default function TestCompilerHub() {
 
   // --- Derived State & Series Extraction ---
   const availableSeries = useMemo(() => {
-    return getAvailableSeries(CAMBRIDGE_QUESTIONS);
-  }, []);
+    return getAvailableSeries(questions);
+  }, [questions]);
 
   const filteredQuestions = useMemo(() => {
-    return filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
+    return filterAndSortQuestions(questions, {
       search,
       topicId: selectedTopicId,
       series: selectedSeries,
@@ -92,6 +95,7 @@ export default function TestCompilerHub() {
       sortBy,
     });
   }, [
+    questions,
     search,
     selectedTopicId,
     selectedSeries,
@@ -143,9 +147,9 @@ export default function TestCompilerHub() {
 
   const selectedQuestions = useMemo(() => {
     return selectedQuestionIds
-      .map((id) => CAMBRIDGE_QUESTIONS.find((q) => q.id === id))
-      .filter(Boolean) as typeof CAMBRIDGE_QUESTIONS;
-  }, [selectedQuestionIds]);
+      .map((id) => questions.find((q) => q.id === id))
+      .filter(Boolean) as Question[];
+  }, [selectedQuestionIds, questions]);
 
   const estimatedTime = selectedQuestionIds.length * 1.5;
 
@@ -223,10 +227,13 @@ export default function TestCompilerHub() {
   };
 
   const handleAutoCompile = () => {
-    const ids = autoSelectQuestions({
-      count: autoCount,
-      topicIds: autoTopicId === 'all' ? undefined : [autoTopicId],
-    });
+    const ids = autoSelectQuestions(
+      {
+        count: autoCount,
+        topicIds: autoTopicId === 'all' ? undefined : [autoTopicId],
+      },
+      questions
+    );
     setSelectedQuestionIds((prev) => {
       const newIds = [...prev];
       ids.forEach((id) => {
@@ -288,7 +295,7 @@ export default function TestCompilerHub() {
             <div className="flex items-center gap-2.5 flex-wrap">
               <h2 className="font-heading font-black text-[#201e1d] text-base">Question Bank</h2>
               <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
-                {filteredQuestions.length} of {CAMBRIDGE_QUESTIONS.length} questions
+                {filteredQuestions.length} of {questions.length} questions
               </span>
               {activeFilterCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
@@ -410,7 +417,15 @@ export default function TestCompilerHub() {
                 </div>
               );
             })}
-            {filteredQuestions.length === 0 && (
+            {questions.length === 0 ? (
+              <div className="text-center py-16 px-4 bg-[#f9f4ed] rounded-3xl border-2 border-dashed border-[#dcd3c4] text-[#645c50] flex flex-col items-center justify-center gap-3">
+                <div className="text-3xl">📝</div>
+                <span className="font-heading font-black text-base text-[#201e1d]">Question Bank is empty</span>
+                <span className="font-medium text-xs max-w-sm">
+                  Question Bank is empty. Ingest exam papers in App Admin to assemble tests.
+                </span>
+              </div>
+            ) : filteredQuestions.length === 0 ? (
               <div className="text-center py-16 px-4 bg-[#f9f4ed] rounded-3xl border-2 border-dashed border-[#dcd3c4] text-[#645c50] flex flex-col items-center justify-center gap-3">
                 <span className="font-bold text-sm">No questions match your filters.</span>
                 {activeFilterCount > 0 && (
@@ -424,7 +439,7 @@ export default function TestCompilerHub() {
                   </button>
                 )}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -518,7 +533,7 @@ export default function TestCompilerHub() {
                       className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all truncate"
                     >
                       <option value="all">All Topics</option>
-                      {CAMBRIDGE_TOPICS.map((t) => (
+                      {topics.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
                         </option>
@@ -572,12 +587,12 @@ export default function TestCompilerHub() {
                 >
                   {(
                     [
-                      { id: 'all', label: 'All', count: CAMBRIDGE_QUESTIONS.length },
+                      { id: 'all', label: 'All', count: questions.length },
                       { id: 'selected', label: 'Selected', count: selectedQuestionIds.length },
                       {
                         id: 'unselected',
                         label: 'Unselected',
-                        count: Math.max(0, CAMBRIDGE_QUESTIONS.length - selectedQuestionIds.length),
+                        count: Math.max(0, questions.length - selectedQuestionIds.length),
                       },
                     ] as const
                   ).map((opt) => {
@@ -823,7 +838,12 @@ export default function TestCompilerHub() {
 
             {/* Selected Questions List */}
             <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2 py-2">
-              {selectedQuestions.length === 0 ? (
+              {questions.length === 0 ? (
+                <div className="text-center py-8 text-[#645c50] text-xs font-medium flex flex-col items-center justify-center gap-1.5 h-full">
+                  <span className="font-bold text-[#201e1d]">Question Bank is empty.</span>
+                  <span>Ingest exam papers in App Admin to assemble tests.</span>
+                </div>
+              ) : selectedQuestions.length === 0 ? (
                 <div className="text-center py-8 text-[#645c50] text-xs font-medium flex flex-col items-center justify-center gap-1.5 h-full">
                   <span>No questions selected yet. Add some from the bank.</span>
                 </div>
@@ -941,7 +961,7 @@ export default function TestCompilerHub() {
                 className="px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-sm font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
               >
                 <option value="all">All Topics (Mixed)</option>
-                {CAMBRIDGE_TOPICS.map((t) => (
+                {topics.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
                   </option>

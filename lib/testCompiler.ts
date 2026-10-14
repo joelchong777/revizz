@@ -1,7 +1,13 @@
 import { TestPaperConfig, CompiledExamQuestion } from '@/types/testCompiler';
-import { CAMBRIDGE_QUESTIONS, Question } from '@/lib/questions';
+import { Question } from '@/lib/questions';
 
 const DRAFT_KEY_PREFIX = 'revizz_test_draft_';
+
+export interface GeneratedTestPaper {
+  config: TestPaperConfig;
+  questions: CompiledExamQuestion[];
+  totalQuestions: number;
+}
 
 export function saveTestDraft(config: TestPaperConfig): void {
   if (typeof window === 'undefined') return;
@@ -36,15 +42,22 @@ export function listTestDrafts(): TestPaperConfig[] {
   return drafts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export function buildCompiledQuestions(questionIds: string[]): CompiledExamQuestion[] {
+export function buildCompiledQuestions(
+  questionIds: string[],
+  questionPool: Question[] = []
+): CompiledExamQuestion[] {
+  if (!questionPool || questionPool.length === 0 || !questionIds || questionIds.length === 0) {
+    return [];
+  }
+
   const compiled: CompiledExamQuestion[] = [];
   let questionNumber = 1;
 
   for (const id of questionIds) {
-    const q = CAMBRIDGE_QUESTIONS.find((item) => item.id === id);
+    const q = questionPool.find((item) => item.id === id);
     if (q) {
       const labels: ('A' | 'B' | 'C' | 'D')[] = ['A', 'B', 'C', 'D'];
-      const compiledOptions = q.options.map((opt, idx) => ({
+      const compiledOptions = (q.options || []).map((opt, idx) => ({
         label: labels[idx] || 'A',
         textMarkdown: opt.text_markdown,
         isCorrect: opt.id === q.correct_option_id,
@@ -58,7 +71,7 @@ export function buildCompiledQuestions(questionIds: string[]): CompiledExamQuest
         options: compiledOptions,
         citation: q.citation,
         topic: q.topic,
-        explanationMarkdown: null, // As `explanation_markdown` wasn't in Question type, leaving null for now.
+        explanationMarkdown: q.explanation_markdown || null,
       });
     }
   }
@@ -66,11 +79,28 @@ export function buildCompiledQuestions(questionIds: string[]): CompiledExamQuest
   return compiled;
 }
 
-export function autoSelectQuestions(options: { count: number; topicIds?: string[]; difficulty?: string }): string[] {
-  let pool = [...CAMBRIDGE_QUESTIONS];
+export function autoSelectQuestions(
+  options: {
+    count: number;
+    topicIds?: string[];
+    difficulty?: string;
+    questionPool?: Question[];
+  },
+  questionPoolParam: Question[] = []
+): string[] {
+  const sourcePool = options.questionPool ?? questionPoolParam ?? [];
+  if (!sourcePool || sourcePool.length === 0) {
+    return [];
+  }
+
+  let pool = [...sourcePool];
   
   if (options.topicIds && options.topicIds.length > 0) {
     pool = pool.filter((q) => options.topicIds?.includes(q.topic_id || ''));
+  }
+
+  if (pool.length === 0) {
+    return [];
   }
   
   // shuffle
@@ -81,3 +111,30 @@ export function autoSelectQuestions(options: { count: number; topicIds?: string[
 
   return pool.slice(0, options.count).map((q) => q.id);
 }
+
+export function generateTestPaper(
+  config: TestPaperConfig,
+  questionPool: Question[] = []
+): GeneratedTestPaper {
+  if (!questionPool || questionPool.length === 0 || !config.questionIds || config.questionIds.length === 0) {
+    return {
+      config: {
+        ...config,
+        totalMarks: 0,
+      },
+      questions: [],
+      totalQuestions: 0,
+    };
+  }
+
+  const compiledQuestions = buildCompiledQuestions(config.questionIds, questionPool);
+  return {
+    config: {
+      ...config,
+      totalMarks: compiledQuestions.length,
+    },
+    questions: compiledQuestions,
+    totalQuestions: compiledQuestions.length,
+  };
+}
+

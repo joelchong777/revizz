@@ -7,20 +7,7 @@ export interface DbSubject {
   icon?: string | null;
 }
 
-export const FALLBACK_SUBJECTS: DbSubject[] = [
-  {
-    id: '9d8a0a9e-b790-4b7d-9871-82f85b379b44',
-    code: '0455',
-    name: 'Economics',
-    icon: 'trending-up',
-  },
-  {
-    id: '91144c2d-7feb-4d26-9614-0dda61e96c8d',
-    code: '0625',
-    name: 'Physics',
-    icon: 'atom',
-  },
-];
+export const FALLBACK_SUBJECTS: DbSubject[] = [];
 
 export function getSubjectEmoji(subject: {
   code?: string;
@@ -53,16 +40,18 @@ export async function fetchSubjectsFromDb(): Promise<DbSubject[]> {
       .select('id, code, name, icon')
       .order('name');
 
-    if (error || !data || data.length === 0) {
-      if (error) {
-        console.warn('Failed to fetch subjects from Supabase, using fallback:', error.message);
-      }
-      return FALLBACK_SUBJECTS;
+    if (error) {
+      console.warn('Failed to fetch subjects from Supabase:', error.message);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
     }
 
     return data as DbSubject[];
   } catch (err) {
-    console.warn('Error fetching subjects from Supabase, using fallback:', err);
-    return FALLBACK_SUBJECTS;
+    console.warn('Error fetching subjects from Supabase:', err);
+    return [];
   }
 }

@@ -587,7 +587,7 @@ function PortalContent() {
                   School & Licence Management 🏫
                 </h1>
                 <p className="text-sm font-medium text-[#645c50] mt-1">
-                  Frontier International Academy · Institutional subscription and educator team seats.
+                  Manage institutional subscription, educator team seats, and student cohorts.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -601,66 +601,45 @@ function PortalContent() {
               </div>
             </div>
 
-            {/* School Licence Card */}
-            <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-6 shadow-offset-4 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-[1.5px] border-[#dcd3c4] pb-4">
-                <div>
-                  <span className="text-xs font-bold tracking-wider uppercase text-[#c67139]">Active Institutional Plan</span>
-                  <h2 className="text-xl font-black text-[#201e1d] font-heading mt-1">Revizz Enterprise Campus</h2>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-xs font-bold text-[#272e1b] self-start sm:self-auto">
-                  ● Active until June 30, 2027
-                </span>
+            {/* School Licence Card - Empty State */}
+            <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-8 sm:p-12 shadow-offset-4 text-center space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#eee7db] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
+                🏫
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                <div className="p-4 rounded-2xl bg-[#eee7db] border-[1.5px] border-[#dcd3c4]">
-                  <span className="text-xs font-bold text-[#645c50]">Allocated Seats</span>
-                  <div className="text-2xl font-black text-[#201e1d] mt-1 font-heading">250 / 300</div>
-                  <span className="text-[11px] text-[#645c50]">50 licenses remaining</span>
-                </div>
-                <div className="p-4 rounded-2xl bg-[#eee7db] border-[1.5px] border-[#dcd3c4]">
-                  <span className="text-xs font-bold text-[#645c50]">Active Classes</span>
-                  <div className="text-2xl font-black text-[#201e1d] mt-1 font-heading">12 Cohorts</div>
-                  <span className="text-[11px] text-[#645c50]">IGCSE Physics & Economics</span>
-                </div>
-                <div className="p-4 rounded-2xl bg-[#eee7db] border-[1.5px] border-[#dcd3c4]">
-                  <span className="text-xs font-bold text-[#645c50]">Teacher Seats</span>
-                  <div className="text-2xl font-black text-[#201e1d] mt-1 font-heading">8 Instructors</div>
-                  <span className="text-[11px] text-[#645c50]">Unlimited staff access</span>
-                </div>
+              <div className="space-y-2">
+                <span className="text-xs font-bold tracking-wider uppercase text-[#c67139]">Institutional License</span>
+                <h2 className="text-2xl font-black text-[#201e1d] font-heading">
+                  No School Licence Configured
+                </h2>
+                <p className="text-sm font-medium text-[#645c50] max-w-lg mx-auto">
+                  Your organization has not yet configured institutional license seats or registered cohorts.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-wrap gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={() => alert('Contacting Revizz Institutional Sales...')}
+                  className="px-6 py-3 rounded-full bg-[#ffe1d0] text-[#201e1d] font-black text-sm border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5"
+                >
+                  Configure Enterprise License 🚀
+                </button>
               </div>
             </div>
 
             {/* Cohort Breakdown */}
             <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-6 shadow-offset-4 space-y-4">
-              <h3 className="font-heading text-lg font-black text-[#201e1d]">Registered Cohorts</h3>
-              <div className="divide-y divide-[#eee7db]">
-                {[
-                  { name: '10A Physics (Cambridge 0625)', teacher: 'Mr. D. Patel', students: 28, sync: 'Active' },
-                  { name: '10B Physics (Cambridge 0625)', teacher: 'Ms. A. Okafor', students: 26, sync: 'Active' },
-                  { name: '11A Physics (Cambridge 0625)', teacher: 'Ms. A. Okafor', students: 24, sync: 'Active' },
-                  { name: '10 Economics (Cambridge 0455)', teacher: 'Mr. C. Tan', students: 22, sync: 'Active' },
-                ].map((c, i) => (
-                  <div key={i} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
-                    <div>
-                      <div className="font-bold text-[#201e1d]">{c.name}</div>
-                      <div className="text-xs text-[#645c50]">Teacher: {c.teacher} · {c.students} students</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#f0fae1] text-[#272e1b] text-xs font-bold border border-[#8fa073]">
-                        {c.sync}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveNav('assign')}
-                        className="px-3 py-1 text-xs font-bold rounded-full bg-[#f9f4ed] border border-[#201e1d] hover:bg-[#ffe1d0] transition-colors"
-                      >
-                        Assign
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between">
+                <h3 className="font-heading text-lg font-black text-[#201e1d]">Registered Cohorts</h3>
+                <span className="text-xs font-bold text-[#645c50]">0 Cohorts</span>
+              </div>
+              <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-2 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5]">
+                <div className="text-3xl">👥</div>
+                <div className="font-heading text-sm font-black text-[#201e1d]">
+                  No cohorts registered
+                </div>
+                <p className="text-xs font-medium text-[#645c50] max-w-xs">
+                  Create classes and invite educators or students to begin tracking institutional progress.
+                </p>
               </div>
             </div>
           </div>
@@ -769,8 +748,8 @@ function PortalContent() {
             {/* Telemetry Status */}
             <div className="flex items-center gap-2 pl-4 border-l border-[#201e1d]/15 text-xs font-mono text-[#645c50]">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Active Cohort: 10B Physics
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Active Cohort: None Registered
               </span>
               <span>·</span>
               <span className="px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">

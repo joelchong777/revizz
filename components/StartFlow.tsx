@@ -6,7 +6,7 @@ import { QuizRoundConfig } from '../hooks/useQuizGame';
 import { getReviewPileCount, subscribeMasteryChanges, getFirstTryCorrectIds } from '@/lib/mastery';
 import { playPop } from '@/lib/audio';
 import { TopicMasteryList } from './TopicMasteryList';
-import { CAMBRIDGE_TOPICS, CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import { SyllabusTopic, Question } from '@/lib/questions';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { fetchSubjectsFromDb, getSubjectEmoji, DbSubject, FALLBACK_SUBJECTS } from '@/lib/subjects';
@@ -15,9 +15,17 @@ interface StartFlowProps {
   onStart: (config: QuizRoundConfig) => void;
   onStartReview: () => void;
   onPracticeTopic: (topicId: string, topicName: string) => void;
+  questions?: Question[];
+  topics?: SyllabusTopic[];
 }
 
-export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlowProps) {
+export function StartFlow({
+  onStart,
+  onStartReview,
+  onPracticeTopic,
+  questions,
+  topics,
+}: StartFlowProps) {
   const { userProfile } = useAuth();
   const [subjects, setSubjects] = useState<DbSubject[]>(FALLBACK_SUBJECTS);
   const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>('0455');
@@ -53,6 +61,9 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
     };
   }, [isDropdownOpen]);
 
+  const effectiveTopics = topics || [];
+  const effectiveQuestions = questions || [];
+
   useEffect(() => {
     const updateStats = () => {
       setReviewCount(getReviewPileCount());
@@ -61,9 +72,9 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
       let proficient = 0;
       let novice = 0;
 
-      CAMBRIDGE_TOPICS.forEach((topic) => {
-        const qCount = CAMBRIDGE_QUESTIONS.filter((q) => q.topic_id === topic.id).length;
-        const mCount = CAMBRIDGE_QUESTIONS.filter(
+      effectiveTopics.forEach((topic) => {
+        const qCount = effectiveQuestions.filter((q) => q.topic_id === topic.id).length;
+        const mCount = effectiveQuestions.filter(
           (q) => q.topic_id === topic.id && masteredSet.has(q.id)
         ).length;
         const pct = qCount > 0 ? Math.round((mCount / qCount) * 100) : 0;
@@ -142,8 +153,12 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
   const currentSubject =
     subjects.find((s) => s.code === selectedSubjectCode) ||
     subjects.find((s) => s.code === '0455') ||
-    subjects[0] ||
-    FALLBACK_SUBJECTS[0];
+    subjects[0] || {
+      id: '',
+      code: '',
+      name: 'No Subject',
+      icon: null,
+    };
   const firstName = userProfile?.display_name ? userProfile.display_name.split(' ')[0] : 'Alex';
 
   const handleStart = () => {
@@ -205,7 +220,12 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
         <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
           Subject
         </h2>
-        <div ref={dropdownRef} className="relative w-full">
+        {subjects.length === 0 ? (
+          <div className="border-2 border-text bg-neutral-100 rounded-[20px] shadow-offset-3 p-3.5 px-4 text-center">
+            <span className="text-xs font-bold text-neutral-600">No subjects available</span>
+          </div>
+        ) : (
+          <div ref={dropdownRef} className="relative w-full">
           {/* Dropdown Trigger */}
           <button
             type="button"
@@ -283,10 +303,6 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
             </div>
           )}
         </div>
-        {currentSubject.code !== '0455' && (
-          <p className="text-xs text-neutral-700 font-semibold m-0">
-            Preview bank: rounds use Cambridge Economics 0455 questions for every subject.
-          </p>
         )}
       </div>
 
@@ -458,17 +474,23 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
           <span className="font-heading text-[17px] text-text leading-tight truncate">
             Topic mastery · {currentSubject.name}
           </span>
-          <span className="flex gap-1.5 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-xs text-text">
-              👑 {tierCounts.master} Master
+          {effectiveTopics.length === 0 ? (
+            <span className="text-xs font-semibold text-neutral-600">
+              No topics available
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-accent-300 border-[1.5px] border-text font-bold text-xs text-text">
-              ⚡ {tierCounts.proficient} Proficient
+          ) : (
+            <span className="flex gap-1.5 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-xs text-text">
+                👑 {tierCounts.master} Master
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-accent-300 border-[1.5px] border-text font-bold text-xs text-text">
+                ⚡ {tierCounts.proficient} Proficient
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-neutral-200 border-[1.5px] border-text font-bold text-xs text-text">
+                🌱 {tierCounts.novice} Novice
+              </span>
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-neutral-200 border-[1.5px] border-text font-bold text-xs text-text">
-              🌱 {tierCounts.novice} Novice
-            </span>
-          </span>
+          )}
         </span>
         <svg
           width="20"
@@ -538,6 +560,8 @@ export function StartFlow({ onStart, onStartReview, onPracticeTopic }: StartFlow
                 setIsMasteryOpen(false);
                 onPracticeTopic(topicId, topicName);
               }}
+              questions={effectiveQuestions}
+              topics={effectiveTopics}
             />
           </div>
         </div>

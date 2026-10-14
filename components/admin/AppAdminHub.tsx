@@ -6,7 +6,7 @@ import IngestionHub from '@/components/portal/IngestionHub';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
-import { CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import { useQuestions } from '@/lib/questions';
 import type { StagingQuestion } from '@/types/ingestion';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
 import {
@@ -35,23 +35,25 @@ export default function AppAdminHub({
   selectedQuestionId,
   onSelectQuestionId,
 }: AppAdminHubProps) {
+  const { questions } = useQuestions();
+
   // Diagnostics interactive state
   const [selectedDiagQuestionIdx, setSelectedDiagQuestionIdx] = useState(0);
   const [testEquationInput, setTestEquationInput] = useState('\\text{Opportunity Cost} = \\frac{\\Delta \\text{Return}}{\\Delta \\text{Sacrifice}}');
   const [testCurrencyInput, setTestCurrencyInput] = useState('Price increased from $50 to $120, yielding revenue $R = P \\times Q$.');
 
-  // Convert Cambridge Questions to StagingQuestion for diagnostic pipeline inspection
+  // Convert Questions to StagingQuestion for diagnostic pipeline inspection
   const diagnosticQuestions: StagingQuestion[] = useMemo(() => {
-    return CAMBRIDGE_QUESTIONS.slice(0, 10).map((q, idx) => ({
+    return questions.slice(0, 10).map((q, idx) => ({
       question_number: idx + 1,
-      cambridge_source_ref: q.id || `0455-s24-12-q${String(idx + 1).padStart(2, '0')}`,
-      topic_name: q.topic || 'Economics',
+      cambridge_source_ref: q.id || `q-${String(idx + 1).padStart(2, '0')}`,
+      topic_name: q.topic || 'General',
       stem_markdown: q.stem_markdown,
       diagram: q.has_diagram
         ? {
             has_diagram: true,
             image_url: q.image_url,
-            alt_description: 'Economics diagram illustration',
+            alt_description: 'Diagram illustration',
           }
         : undefined,
       options: q.options.map((opt, optIdx) => ({
@@ -59,12 +61,12 @@ export default function AppAdminHub({
         content_markdown: opt.text_markdown,
         is_correct: opt.id === q.correct_option_id,
       })),
-      explanation_markdown: q.explanation_markdown || 'Cambridge mark scheme answer explanation.',
+      explanation_markdown: q.explanation_markdown || 'Mark scheme answer explanation.',
       status: 'active',
       page_number: Math.floor(idx / 3) + 2,
       validation_status: 'valid',
     }));
-  }, []);
+  }, [questions]);
 
   const activeDiagQuestion = diagnosticQuestions[selectedDiagQuestionIdx] || diagnosticQuestions[0];
 
@@ -246,23 +248,37 @@ export default function AppAdminHub({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#474238]">Inspect Question:</span>
-                <select
-                  value={selectedDiagQuestionIdx}
-                  onChange={(e) => setSelectedDiagQuestionIdx(Number(e.target.value))}
-                  className="px-3 py-1.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-bold text-xs text-[#201e1d] focus:outline-none cursor-pointer"
-                >
-                  {diagnosticQuestions.map((q, idx) => (
-                    <option key={idx} value={idx}>
-                      Q{q.question_number}: {q.cambridge_source_ref || `Question ${q.question_number}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {diagnosticQuestions.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#474238]">Inspect Question:</span>
+                  <select
+                    value={selectedDiagQuestionIdx}
+                    onChange={(e) => setSelectedDiagQuestionIdx(Number(e.target.value))}
+                    className="px-3 py-1.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-bold text-xs text-[#201e1d] focus:outline-none cursor-pointer"
+                  >
+                    {diagnosticQuestions.map((q, idx) => (
+                      <option key={idx} value={idx}>
+                        Q{q.question_number}: {q.cambridge_source_ref || `Question ${q.question_number}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
-            <IngestionDiagnostics question={activeDiagQuestion} />
+            {diagnosticQuestions.length === 0 || !activeDiagQuestion ? (
+              <div className="py-12 px-4 text-center flex flex-col items-center justify-center space-y-2 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5]">
+                <div className="text-3xl">🔬</div>
+                <div className="font-heading text-sm font-black text-[#201e1d]">
+                  No Questions Available for Diagnostics
+                </div>
+                <p className="text-xs font-medium text-[#645c50] max-w-sm">
+                  Upload an exam paper PDF in Ingestion Studio to stage questions and run AST verification diagnostics.
+                </p>
+              </div>
+            ) : (
+              <IngestionDiagnostics question={activeDiagQuestion} />
+            )}
           </div>
         </div>
       );
@@ -277,7 +293,7 @@ export default function AppAdminHub({
                   GLOBAL REPOSITORY
                 </span>
                 <span className="text-xs font-mono font-bold text-[#645c50]">
-                  {CAMBRIDGE_QUESTIONS.length} Questions Live & Verified
+                  {questions.length} Questions Live & Verified
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
@@ -334,7 +350,7 @@ export default function AppAdminHub({
                   Editor
                 </span>
                 <span className="text-xs font-bold text-[#645c50]">
-                  Question ID: {selectedQuestionId || CAMBRIDGE_QUESTIONS[0]?.id || '0455-s24-12-q01'}
+                  Question ID: {selectedQuestionId || (questions[0]?.id) || 'None'}
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
@@ -386,10 +402,10 @@ export default function AppAdminHub({
                 <BookOpen className="w-4 h-4 text-[#201e1d]" />
               </div>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                40/40 Live
+                {questions.length} Live
               </div>
               <p className="text-[11px] font-bold text-emerald-700">
-                100% Mark Scheme Audited
+                {questions.length > 0 ? '100% Mark Scheme Audited' : '0 Questions Live. Start by uploading an exam paper in Ingestion Studio.'}
               </p>
             </div>
 
@@ -400,10 +416,10 @@ export default function AppAdminHub({
                 <Layers className="w-4 h-4 text-[#201e1d]" />
               </div>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                1 Ready
+                0 Ready
               </div>
-              <p className="text-[11px] font-bold text-amber-700">
-                0625 Physics Nov 2024
+              <p className="text-[11px] font-bold text-[#645c50]">
+                None Staged
               </p>
             </div>
 
@@ -428,10 +444,10 @@ export default function AppAdminHub({
                 <Building2 className="w-4 h-4 text-[#8c491a]" />
               </div>
               <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d] truncate">
-                Frontier International
+                0 Active Licences
               </div>
               <p className="text-[11px] font-bold text-[#645c50]">
-                Enterprise Licence · 4 Cohorts
+                No cohorts registered
               </p>
             </div>
           </div>
@@ -525,10 +541,10 @@ export default function AppAdminHub({
                 Licensed Seats
               </span>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                250 / 500
+                0 / 0
               </div>
-              <p className="text-xs font-bold text-emerald-700">
-                50% capacity utilized
+              <p className="text-xs font-bold text-[#645c50]">
+                No licences allocated
               </p>
             </div>
 
@@ -537,10 +553,10 @@ export default function AppAdminHub({
                 Active Cohorts
               </span>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                4 Classes
+                0 Classes
               </div>
               <p className="text-xs font-bold text-[#645c50]">
-                Physics & Economics
+                No cohorts registered
               </p>
             </div>
 
@@ -549,43 +565,29 @@ export default function AppAdminHub({
                 Licence Expiry
               </span>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                Aug 2027
+                —
               </div>
-              <p className="text-xs font-bold text-emerald-700">
-                Active · Auto-renews
+              <p className="text-xs font-bold text-[#645c50]">
+                No active plan
               </p>
             </div>
           </div>
 
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-            <h3 className="font-heading font-black text-lg text-[#201e1d]">
-              Institutional Cohorts
-            </h3>
-            <div className="divide-y divide-[#eee7db]">
-              {[
-                { name: '10A Physics (Cambridge 0625)', teacher: 'Mr. D. Patel', students: 28, sync: 'Active' },
-                { name: '10B Physics (Cambridge 0625)', teacher: 'Ms. A. Okafor', students: 26, sync: 'Active' },
-                { name: '11A Physics (Cambridge 0625)', teacher: 'Ms. A. Okafor', students: 24, sync: 'Active' },
-                { name: '10 Economics (Cambridge 0455)', teacher: 'Mr. C. Tan', students: 22, sync: 'Active' },
-              ].map((c, i) => (
-                <div key={i} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
-                  <div>
-                    <div className="font-bold text-[#201e1d]">{c.name}</div>
-                    <div className="text-xs text-[#645c50]">Teacher: {c.teacher} · {c.students} students</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] text-[#201e1d] text-xs font-bold border border-[#201e1d]">
-                      {c.sync}
-                    </span>
-                    <Link
-                      href="/portal?tab=assign"
-                      className="px-3 py-1 text-xs font-bold rounded-full bg-[#f9f4ed] border border-[#201e1d] hover:bg-[#ffe1d0] transition-colors shadow-offset-2"
-                    >
-                      Classroom View →
-                    </Link>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-black text-lg text-[#201e1d]">
+                Institutional Cohorts
+              </h3>
+              <span className="text-xs font-bold text-[#645c50]">0 Cohorts</span>
+            </div>
+            <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-2 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5]">
+              <div className="text-3xl">👥</div>
+              <div className="font-heading text-sm font-black text-[#201e1d]">
+                No cohorts registered
+              </div>
+              <p className="text-xs font-medium text-[#645c50] max-w-xs">
+                No active cohorts found. Classes and educator teams will appear here once registered.
+              </p>
             </div>
           </div>
         </div>

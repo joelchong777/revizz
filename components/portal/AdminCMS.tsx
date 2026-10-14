@@ -16,7 +16,7 @@ import {
   Plus
 } from 'lucide-react';
 import StagingReview from './StagingReview';
-import { CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import { useQuestions, Question } from '@/lib/questions';
 
 export interface AdminCMSProps {
   initialView?: 'editor' | 'flagged' | 'staged';
@@ -25,90 +25,90 @@ export interface AdminCMSProps {
 
 export default function AdminCMS({
   initialView = 'editor',
-  questionId = CAMBRIDGE_QUESTIONS[0]?.id || '0455-s24-12-q01',
+  questionId,
 }: AdminCMSProps) {
+  const { questions, loading: loadingQuestions } = useQuestions();
   const [activeTab, setActiveTab] = useState<'editor' | 'flagged' | 'staged'>(initialView);
+  const [isAuthoringNew, setIsAuthoringNew] = useState(false);
 
-  const defaultQuestion = CAMBRIDGE_QUESTIONS.find(q => q.id === questionId) || CAMBRIDGE_QUESTIONS[0];
+  const defaultQuestion = questions.find((q) => q.id === questionId) || questions[0];
 
   // Question Editor state (2g)
-  const [paper, setPaper] = useState('0455/12');
-  const [session, setSession] = useState('M/J/24');
+  const [paper, setPaper] = useState('0455');
+  const [session, setSession] = useState('');
   const [qNumber, setQNumber] = useState('1');
   const [difficulty, setDifficulty] = useState('Medium');
-  const [topic, setTopic] = useState(defaultQuestion?.topic || 'The basic economic problem');
-  const [formula, setFormula] = useState('\\text{Scarcity} = \\text{Unlimited Wants} > \\text{Finite Resources}');
-  const [stem, setStem] = useState(defaultQuestion?.stem_markdown || 'Why will scarcity always exist?');
+  const [topic, setTopic] = useState('General');
+  const [formula, setFormula] = useState('');
+  const [stem, setStem] = useState('');
 
   const [options, setOptions] = useState([
     {
       letter: 'A',
-      text: defaultQuestion?.options[0]?.text_markdown || 'There are high costs of production.',
-      reason: 'Costs influence market price, but scarcity exists regardless because economic resources are finite.',
-      isCorrect: false,
+      text: '',
+      reason: 'Correct answer',
+      isCorrect: true,
     },
     {
       letter: 'B',
-      text: defaultQuestion?.options[1]?.text_markdown || 'There are low levels of education.',
-      reason: 'Education affects worker productivity, but improving education does not eliminate unlimited wants.',
+      text: '',
+      reason: '',
       isCorrect: false,
     },
     {
       letter: 'C',
-      text: defaultQuestion?.options[2]?.text_markdown || 'There are unlimited resources.',
-      reason: 'Incorrect premise: economic resources are finite; if resources were unlimited, scarcity would not exist.',
+      text: '',
+      reason: '',
       isCorrect: false,
     },
     {
       letter: 'D',
-      text: defaultQuestion?.options[3]?.text_markdown || 'There are unlimited wants.',
-      reason: 'Correct answer',
-      isCorrect: true,
+      text: '',
+      reason: '',
+      isCorrect: false,
     },
   ]);
 
-  const [explanationSteps, setExplanationSteps] = useState([
-    'Scarcity arises because finite economic resources are insufficient to satisfy infinite human wants.',
-    'Human wants are boundless and continually expand as living standards and societies evolve.',
-    'Therefore, scarcity will permanently exist because there are unlimited wants.',
-  ]);
+  const [explanationSteps, setExplanationSteps] = useState<string[]>([]);
 
-  const [selectedPreviewOption, setSelectedPreviewOption] = useState<string>('D');
+  const [selectedPreviewOption, setSelectedPreviewOption] = useState<string>('A');
   const [publishSuccess, setPublishSuccess] = useState(false);
 
   React.useEffect(() => {
-    const q = CAMBRIDGE_QUESTIONS.find(q => q.id === questionId) || CAMBRIDGE_QUESTIONS[0];
+    const q = questions.find((item) => item.id === questionId) || questions[0];
     if (q) {
-      setTopic(q.topic || 'The basic economic problem');
-      setStem(q.stem_markdown || 'Why will scarcity always exist?');
+      setTopic(q.topic || 'General');
+      setStem(q.stem_markdown || '');
       setOptions([
         {
           letter: 'A',
-          text: q.options[0]?.text_markdown || 'Option A',
-          reason: q.options[0]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          text: q.options[0]?.text_markdown || '',
+          reason: q.options[0]?.id === q.correct_option_id ? 'Correct answer' : '',
           isCorrect: q.options[0]?.id === q.correct_option_id,
         },
         {
           letter: 'B',
-          text: q.options[1]?.text_markdown || 'Option B',
-          reason: q.options[1]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          text: q.options[1]?.text_markdown || '',
+          reason: q.options[1]?.id === q.correct_option_id ? 'Correct answer' : '',
           isCorrect: q.options[1]?.id === q.correct_option_id,
         },
         {
           letter: 'C',
-          text: q.options[2]?.text_markdown || 'Option C',
-          reason: q.options[2]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          text: q.options[2]?.text_markdown || '',
+          reason: q.options[2]?.id === q.correct_option_id ? 'Correct answer' : '',
           isCorrect: q.options[2]?.id === q.correct_option_id,
         },
         {
           letter: 'D',
-          text: q.options[3]?.text_markdown || 'Option D',
-          reason: q.options[3]?.id === q.correct_option_id ? 'Correct answer' : 'Distractor reason',
+          text: q.options[3]?.text_markdown || '',
+          reason: q.options[3]?.id === q.correct_option_id ? 'Correct answer' : '',
           isCorrect: q.options[3]?.id === q.correct_option_id,
         },
       ]);
+      const correctIdx = q.options.findIndex((opt) => opt.id === q.correct_option_id);
+      setSelectedPreviewOption(['A', 'B', 'C', 'D'][correctIdx] || 'A');
     }
-  }, [questionId]);
+  }, [questionId, questions]);
 
   // Flagged questions state (2h)
   const [selectedFlag, setSelectedFlag] = useState<string | null>(null);
@@ -199,17 +199,56 @@ export default function AdminCMS({
           MODE 1: VISUAL QUESTION EDITOR (Mockup 2g)
           ======================================================== */}
       {activeTab === 'editor' && (
-        <div className="flex flex-col gap-5">
-          {/* Editor Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-bold text-[#645c50]">
-                Question bank / {questionId}
-              </span>
-              <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                The basic economic problem · Scarcity
-              </h2>
+        questions.length === 0 && !isAuthoringNew ? (
+          <div className="rounded-[28px] bg-[#f9f4ed] border-2 border-[#201e1d] p-8 sm:p-12 shadow-[4px_4px_0_0_#201e1d] text-center space-y-4 max-w-lg mx-auto my-6">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center text-3xl shadow-[2px_2px_0_0_#201e1d]">
+              ✍️
             </div>
+            <h2 className="font-heading text-xl font-black text-[#201e1d]">No questions in the database yet</h2>
+            <p className="text-xs font-semibold text-[#645c50] leading-relaxed">
+              No questions in the database yet. Ingest an exam paper or click New Question to author one.
+            </p>
+            <div className="pt-2 flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAuthoringNew(true);
+                  setStem('');
+                  setPaper('0455');
+                  setSession('');
+                  setQNumber('1');
+                  setTopic('General');
+                  setOptions([
+                    { letter: 'A', text: '', reason: 'Correct answer', isCorrect: true },
+                    { letter: 'B', text: '', reason: '', isCorrect: false },
+                    { letter: 'C', text: '', reason: '', isCorrect: false },
+                    { letter: 'D', text: '', reason: '', isCorrect: false },
+                  ]);
+                }}
+                className="px-5 py-2.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b8c99d] active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                + New Question
+              </button>
+              <a
+                href="/admin?tab=ingestion"
+                className="px-5 py-2.5 rounded-full bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 transition-all inline-flex items-center cursor-pointer"
+              >
+                Ingest Exam Paper →
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {/* Editor Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-bold text-[#645c50]">
+                  Question bank / {defaultQuestion?.id || 'New Question'}
+                </span>
+                <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
+                  {defaultQuestion?.topic || 'Question Editor'}
+                </h2>
+              </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-3 py-1 rounded-full bg-[#f0fae1] text-[#272e1b] border border-[#8fa073]/40 text-xs font-bold">
@@ -464,6 +503,7 @@ export default function AdminCMS({
             </div>
           </div>
         </div>
+        )
       )}
 
       {/* ========================================================
