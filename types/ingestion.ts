@@ -127,6 +127,23 @@ export const StagingPaperSchema = z.object({
 export type StagingPaper = z.infer<typeof StagingPaperSchema>;
 
 /**
+ * Summary representation of a staged paper in staging/ directory.
+ */
+export interface StagedPaperSummary {
+  id: string;
+  filename: string;
+  subject?: { code?: string; name?: string; icon?: string };
+  paper?: { year?: number; series?: string; paper_code?: string };
+  questionsCount?: number;
+  diagramsCount?: number;
+  lifecycle_state?: string;
+  is_published?: boolean;
+  published_exam_paper_id?: string | null;
+  is_archived?: boolean;
+  isValid?: boolean;
+}
+
+/**
  * Validation options for staging paper verification.
  */
 export interface ValidatePaperOptions {

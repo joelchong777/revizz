@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import type { StagingPaper, PaperLifecycleState } from "@/types/ingestion";
 import {
   UploadCloud,
@@ -14,6 +15,7 @@ import {
   BookmarkCheck,
   Edit2,
   Settings,
+  Archive,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -24,6 +26,7 @@ export interface IngestionHeaderProps {
   onPublish: () => void;
   publishStatus: "idle" | "validating" | "publishing" | "success" | "error";
   publishMessage?: string;
+  onArchiveStagedPaper?: (paperId: string) => Promise<{ success: boolean; error?: string }>;
 
   // Setup mode controls
   onReturnToStudio?: () => void;
@@ -72,16 +75,47 @@ export default function IngestionHeader({
   onSwitchPaper,
   onSaveDraft,
   isDraftSaved = false,
+  onArchiveStagedPaper,
 }: IngestionHeaderProps) {
   const [justSaved, setJustSaved] = useState(false);
+  const [archiveState, setArchiveState] = useState<'idle' | 'archiving' | 'archived' | 'error'>('idle');
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+
+  const performArchive = async () => {
+    if (!paper?.id) return;
+    setShowArchiveConfirm(false);
+    setArchiveState('archiving');
+    setArchiveError(null);
+    try {
+      if (onArchiveStagedPaper) {
+        const res = await onArchiveStagedPaper(paper.id);
+        if (!res.success) throw new Error(res.error || 'Failed to archive staged paper');
+      } else {
+        const res = await fetch('/api/ingest/staged-paper', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'archive', id: paper.id }),
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok || !result.success) {
+          throw new Error(result.error || `Archive failed with status ${res.status}`);
+        }
+      }
+      setArchiveState('archived');
+    } catch (err: any) {
+      setArchiveState('error');
+      setArchiveError(err?.message || 'Error archiving paper');
+    }
+  };
 
   // Determine effective mode: explicit mode takes priority, otherwise check paper existence
   const currentMode =
     mode ?? (paper && paper.questions && paper.questions.length > 0 ? "workspace" : "setup");
 
-  // Calculate paper validation counters
+  // Calculate paper validation counters defensively
   const { totalCount, validCount, reviewCount } = useMemo(() => {
-    if (!paper || !paper.questions || paper.questions.length === 0) {
+    if (!paper || !paper.questions || !Array.isArray(paper.questions) || paper.questions.length === 0) {
       return { totalCount: 0, validCount: 0, reviewCount: 0 };
     }
 
@@ -89,18 +123,18 @@ export default function IngestionHeader({
     let valid = 0;
 
     for (const q of paper.questions) {
-      if (q.status === "withdrawn") continue;
+      if (!q || q.status === "withdrawn") continue;
       let isQValid = true;
-      if (!q.stem_markdown || q.stem_markdown.trim().length === 0) {
+      if (!q.stem_markdown || typeof q.stem_markdown !== "string" || q.stem_markdown.trim().length === 0) {
         isQValid = false;
       } else if (!Array.isArray(q.options) || q.options.length !== 4) {
         isQValid = false;
       } else {
-        const correctCount = q.options.filter((opt) => opt.is_correct).length;
+        const correctCount = q.options.filter((opt) => opt && opt.is_correct).length;
         if (correctCount !== 1) {
           isQValid = false;
         } else {
-          const blankOpt = q.options.some((opt) => !(opt.content_markdown || "").trim());
+          const blankOpt = q.options.some((opt) => !opt || !(opt.content_markdown || "").trim());
           if (blankOpt) isQValid = false;
         }
       }
@@ -118,11 +152,11 @@ export default function IngestionHeader({
 
   const isPublishing = publishStatus === "publishing" || publishStatus === "validating";
 
-  // Subject label formatting
-  const subjectCode = paper?.subject?.code || "Cambridge";
+  // Defensive Subject & Paper metadata formatting
+  const subjectCode = paper?.subject?.code || (paper?.id ? paper.id.split("_")[0] : "Cambridge");
   const subjectName = paper?.subject?.name || "Exam Paper";
   const subjectIcon = paper?.subject?.icon || "📝";
-  const paperCode = paper?.paper?.paper_code || "MCQ";
+  const paperCode = paper?.paper?.paper_code || (paper?.id ? paper.id.split("_")[2] : "MCQ");
 
   // Formatted series and year: e.g. "Summer 2024"
   const seriesMap: Record<string, string> = {
@@ -156,190 +190,301 @@ export default function IngestionHeader({
   // Paper identity badge, live counters, workspace tools, Neobrutalist Upsert CTA
   // -------------------------------------------------------------
   return (
-    <header className="w-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0_#201e1d] flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 font-body">
-      {/* Left Section: Subject & Paper Code Badge + Validation Indicators */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3.5 flex-wrap">
-        {/* Paper Identity Badge */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 bg-white border-[1.5px] border-[#201e1d] rounded-full px-3.5 py-1.5 shadow-[2px_2px_0_#201e1d]">
-            <span className="text-base select-none">{subjectIcon}</span>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#201e1d]">
-              <span className="font-heading font-black text-sm">
-                {subjectCode} / {paperCode}
-              </span>
-              <span className="text-[#82796a]">·</span>
-              <span className="text-[#201e1d] font-bold">{subjectName}</span>
-              <span className="text-[#645c50] font-semibold">
-                {seriesName} {fullYear}
-              </span>
+    <>
+      <header className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0_#201e1d] flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 font-body">
+        {/* Left Section: Subject & Paper Code Badge + Validation Indicators */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3.5 flex-wrap">
+          {/* Paper Identity Badge */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 bg-white border-2 border-[#201e1d] rounded-full px-3.5 py-1.5 shadow-[2px_2px_0_#201e1d]">
+              <span className="text-base select-none">{subjectIcon}</span>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#201e1d]">
+                <span className="font-adminHeading font-bold text-sm text-[#201e1d]">
+                  {subjectCode} / {paperCode}
+                </span>
+                <span className="text-[#82796a]">·</span>
+                <span className="text-[#201e1d] font-bold">{subjectName}</span>
+                <span className="text-[#645c50] font-mono text-[11px] font-semibold">
+                  {seriesName} {fullYear}
+                </span>
+              </div>
+
+              {onOpenSettings && (
+                <button
+                  type="button"
+                  onClick={onOpenSettings}
+                  title="Edit paper subject, year, series, and code metadata"
+                  className="ml-1 p-1 rounded-full text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer active:translate-y-0.5"
+                  aria-label="Edit metadata"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {onOpenSettings && (
-              <button
-                type="button"
-                onClick={onOpenSettings}
-                title="Edit paper subject, year, series, and code metadata"
-                className="ml-1 p-1 rounded-full text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer"
-                aria-label="Edit metadata"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-              </button>
+            {/* Total Questions Badge */}
+            <span className="px-3 py-1 rounded-full bg-white border-2 border-[#201e1d] text-[#201e1d] text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]">
+              {totalCount} Questions
+            </span>
+
+            {/* Validation Counters */}
+            {totalCount > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="px-2.5 py-1 rounded-full bg-[#d1fae5] border-2 border-[#201e1d] text-[#065f46] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d]"
+                  title={`${validCount} questions pass all validation checks`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#065f46]" />
+                  <span>{validCount}/{totalCount} Valid ✓</span>
+                </span>
+
+                {reviewCount > 0 && (
+                  <span
+                    className="px-2.5 py-1 rounded-full bg-[#fef3c7] border-2 border-[#201e1d] text-[#92400e] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d]"
+                    title={`${reviewCount} questions require curator review`}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#92400e]" />
+                    <span>{reviewCount} Review ⚠</span>
+                  </span>
+                )}
+              </div>
             )}
           </div>
+        </div>
 
-          {/* Total Questions Badge */}
-          <span className="px-3 py-1 rounded-full bg-white border-[1.5px] border-[#201e1d] text-[#201e1d] text-xs font-black shadow-[1.5px_1.5px_0_#201e1d]">
-            {totalCount} Questions
-          </span>
+        {/* Right Section: Workspace Controls & Primary Upsert CTA */}
+        <div className="flex items-center gap-2 sm:gap-2.5 self-end xl:self-auto flex-wrap">
+          {/* Switch Paper / Upload New */}
+          {onSwitchPaper && (
+            <button
+              type="button"
+              onClick={onSwitchPaper}
+              className="px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
+              title="Switch paper or upload a new PDF"
+            >
+              <FileUp className="w-3.5 h-3.5 text-[#201e1d]" />
+              <span className="hidden sm:inline">Switch Paper / Upload New</span>
+              <span className="sm:hidden">New Paper</span>
+            </button>
+          )}
 
-          {/* Validation Counters */}
-          {totalCount > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span
-                className="px-2.5 py-1 rounded-full bg-[#f0fae1] border-[1.5px] border-[#201e1d] text-[#3d472b] text-xs font-black flex items-center gap-1 shadow-[1.5px_1.5px_0_#201e1d]"
-                title={`${validCount} questions pass all validation checks`}
+          {/* Undo / Redo Controls */}
+          {onUndo && onRedo && (
+            <div className="flex items-center border-2 border-[#201e1d] rounded-full bg-white overflow-hidden shadow-[2px_2px_0_#201e1d]">
+              <button
+                type="button"
+                onClick={onUndo}
+                disabled={!canUndo}
+                aria-label="Undo edit"
+                title="Undo question edit (Ctrl+Z)"
+                className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed border-r-2 border-[#201e1d] text-[#201e1d] transition-colors cursor-pointer active:translate-y-0.5"
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#56633f]" />
-                <span>{validCount}/{totalCount} Valid ✓</span>
-              </span>
+                <Undo2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={onRedo}
+                disabled={!canRedo}
+                aria-label="Redo edit"
+                title="Redo question edit (Ctrl+Y)"
+                className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] transition-colors cursor-pointer active:translate-y-0.5"
+              >
+                <Redo2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
-              {reviewCount > 0 && (
-                <span
-                  className="px-2.5 py-1 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-[#c67139] text-xs font-black flex items-center gap-1 shadow-[1.5px_1.5px_0_#201e1d]"
-                  title={`${reviewCount} questions require curator review`}
+          {/* Split View (PDF) Toggle */}
+          {onTogglePdfViewer && (
+            <button
+              type="button"
+              onClick={onTogglePdfViewer}
+              className={`px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+                showPdfViewer
+                  ? "bg-[#ffe1d0] text-[#c67139]"
+                  : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
+              }`}
+              title={showPdfViewer ? "Hide PDF Source Pane" : "Show Dual-Pane PDF Source"}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{showPdfViewer ? "Hide PDF" : "Split View (PDF)"}</span>
+            </button>
+          )}
+
+          {/* Save Draft Action with Multi-Keyframe Tween Defense */}
+          {onSaveDraft && (
+            <motion.button
+              type="button"
+              onClick={handleSaveDraft}
+              animate={justSaved ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+              transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className={`px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+                justSaved || isDraftSaved
+                  ? "bg-[#d1fae5] text-[#065f46]"
+                  : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
+              }`}
+              title="Save draft to local browser storage"
+            >
+              <BookmarkCheck className={`w-3.5 h-3.5 ${justSaved || isDraftSaved ? "text-[#065f46]" : "text-[#56633f]"}`} />
+              <span>{justSaved ? "Draft Saved ✓" : "Save Draft"}</span>
+            </motion.button>
+          )}
+
+          {/* Paper Settings Button */}
+          {onOpenSettings && (
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="p-2 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
+              title="Paper metadata and syllabus topics"
+              aria-label="Paper settings"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Primary CTA: Neobrutalist Upsert to Supabase Button */}
+          <motion.button
+            type="button"
+            onClick={onPublish}
+            disabled={isPublishing || !paper || totalCount === 0}
+            whileHover={!isPublishing && paper && totalCount > 0 ? { scale: 1.01 } : undefined}
+            whileTap={!isPublishing && paper && totalCount > 0 ? { scale: 0.98 } : undefined}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            title={
+              reviewCount > 0
+                ? `${reviewCount} questions require curator review before upsert`
+                : "Upsert all verified questions to Supabase"
+            }
+            className={`px-5 py-2.5 rounded-full border-2 border-[#201e1d] font-adminHeading font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+              publishStatus === "success"
+                ? "bg-[#065f46] text-[#f9f4ed]"
+                : "bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d]"
+            }`}
+          >
+            {isPublishing ? (
+              <Loader2 className="w-4 h-4 animate-spin text-[#f9f4ed]" />
+            ) : publishStatus === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-[#f9f4ed]" />
+            ) : (
+              <UploadCloud className="w-4 h-4 text-[#f9f4ed]" />
+            )}
+            <span>
+              {publishStatus === "publishing"
+                ? "Upserting..."
+                : publishStatus === "validating"
+                ? "Validating..."
+                : publishStatus === "success"
+                ? "Upserted to Supabase! ✓"
+                : "Upsert to Supabase"}
+            </span>
+          </motion.button>
+
+          {/* Post-publish Archive Staged JSON File Action */}
+          {publishStatus === "success" && paper && (
+            <div className="flex items-center gap-2 bg-[#d1fae5] border-2 border-[#201e1d] rounded-full px-3 py-1.5 shadow-[2px_2px_0_#201e1d]">
+              <span className="text-xs font-bold text-[#065f46] hidden sm:inline">
+                Paper is live in Supabase!
+              </span>
+              {archiveState === "archived" ? (
+                <span className="text-xs font-bold text-[#065f46] flex items-center gap-1 font-mono">
+                  ✓ Archived to staging/archive/
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowArchiveConfirm(true)}
+                  disabled={archiveState === "archiving"}
+                  className="px-2.5 py-1 rounded-full bg-[#065f46] text-[#f9f4ed] hover:bg-[#044e39] text-xs font-adminHeading font-bold transition-all cursor-pointer shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 flex items-center gap-1.5"
+                  title="Archive local staged JSON file to staging/archive/"
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 text-[#c67139]" />
-                  <span>{reviewCount} Review ⚠</span>
+                  {archiveState === "archiving" ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Archiving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="w-3.5 h-3.5" />
+                      <span>Archive Staged JSON File</span>
+                    </>
+                  )}
+                </button>
+              )}
+              {archiveError && (
+                <span className="text-xs font-bold text-red-600" title={archiveError}>
+                  ⚠️ Error
                 </span>
               )}
             </div>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Right Section: Workspace Controls & Primary Upsert CTA */}
-      <div className="flex items-center gap-2 sm:gap-2.5 self-end xl:self-auto flex-wrap">
-        {/* Switch Paper / Upload New */}
-        {onSwitchPaper && (
-          <button
-            type="button"
-            onClick={onSwitchPaper}
-            className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
-            title="Switch paper or upload a new PDF"
-          >
-            <FileUp className="w-3.5 h-3.5 text-[#201e1d]" />
-            <span className="hidden sm:inline">Switch Paper / Upload New</span>
-            <span className="sm:hidden">New Paper</span>
-          </button>
-        )}
-
-        {/* Undo / Redo Controls */}
-        {onUndo && onRedo && (
-          <div className="flex items-center border-[1.5px] border-[#201e1d] rounded-full bg-white overflow-hidden shadow-[2px_2px_0_#201e1d]">
-            <button
-              type="button"
-              onClick={onUndo}
-              disabled={!canUndo}
-              aria-label="Undo edit"
-              title="Undo question edit (Ctrl+Z)"
-              className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed border-r border-[#201e1d] text-[#201e1d] transition-colors cursor-pointer"
-            >
-              <Undo2 className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={onRedo}
-              disabled={!canRedo}
-              aria-label="Redo edit"
-              title="Redo question edit (Ctrl+Y)"
-              className="px-2.5 py-1.5 hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] transition-colors cursor-pointer"
-            >
-              <Redo2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {/* Split View (PDF) Toggle */}
-        {onTogglePdfViewer && (
-          <button
-            type="button"
-            onClick={onTogglePdfViewer}
-            className={`px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
-              showPdfViewer
-                ? "bg-[#ffe1d0] text-[#c67139]"
-                : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
-            }`}
-            title={showPdfViewer ? "Hide PDF Source Pane" : "Show Dual-Pane PDF Source"}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>{showPdfViewer ? "Hide PDF" : "Split View (PDF)"}</span>
-          </button>
-        )}
-
-        {/* Save Draft Action */}
-        {onSaveDraft && (
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className={`px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
-              justSaved || isDraftSaved
-                ? "bg-[#f0fae1] text-[#3d472b]"
-                : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
-            }`}
-            title="Save draft to local browser storage"
-          >
-            <BookmarkCheck className="w-3.5 h-3.5 text-[#56633f]" />
-            <span>{justSaved ? "Draft Saved ✓" : "Save Draft"}</span>
-          </button>
-        )}
-
-        {/* Paper Settings Button */}
-        {onOpenSettings && (
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="p-2 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] text-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
-            title="Paper metadata and syllabus topics"
-            aria-label="Paper settings"
-          >
-            <Settings className="w-3.5 h-3.5" />
-          </button>
-        )}
-
-        {/* Primary CTA: Neobrutalist Upsert to Supabase Button */}
-        <button
-          type="button"
-          onClick={onPublish}
-          disabled={isPublishing || !paper || totalCount === 0}
-          title={
-            reviewCount > 0
-              ? `${reviewCount} questions require curator review before upsert`
-              : "Upsert all verified questions to Supabase"
-          }
-          className={`px-5 py-2.5 rounded-full border-[1.5px] border-[#201e1d] font-heading font-black text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-            publishStatus === "success"
-              ? "bg-[#728157] text-[#f9f4ed]"
-              : "bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d]"
-          }`}
+      {/* Defensive Archive Confirmation Dialog (§13 Resilience) */}
+      {showArchiveConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="archive-dialog-title"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
         >
-          {isPublishing ? (
-            <Loader2 className="w-4 h-4 animate-spin text-[#f9f4ed]" />
-          ) : publishStatus === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-[#f9f4ed]" />
-          ) : (
-            <UploadCloud className="w-4 h-4 text-[#f9f4ed]" />
-          )}
-          <span>
-            {publishStatus === "publishing"
-              ? "Upserting..."
-              : publishStatus === "validating"
-              ? "Validating..."
-              : publishStatus === "success"
-              ? "Upserted to Supabase! ✓"
-              : "Upsert to Supabase"}
-          </span>
-        </button>
-      </div>
-    </header>
+          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-6 max-w-md w-full shadow-[4px_4px_0_#201e1d] flex flex-col gap-4 font-body animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#d1fae5] border-2 border-[#201e1d] text-[#065f46] flex items-center justify-center shrink-0 shadow-[2px_2px_0_#201e1d]">
+                <Archive className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="archive-dialog-title" className="font-adminHeading text-base font-bold text-[#201e1d]">
+                  Archive Staged Paper?
+                </h3>
+                <p className="text-xs text-[#645c50] font-medium">
+                  Safely move the published staged JSON file into <code className="font-mono bg-[#eee7db] px-1 py-0.5 rounded text-[#201e1d]">staging/archive/</code>.
+                </p>
+              </div>
+            </div>
+
+            {/* Defensive Paper Preview Card */}
+            <div className="p-3 bg-white border-2 border-[#201e1d] rounded-xl flex items-center justify-between text-xs font-mono shadow-[2px_2px_0_#201e1d]">
+              <div className="flex items-center gap-2 truncate">
+                <span>{subjectIcon}</span>
+                <span className="font-bold text-[#201e1d]">
+                  {subjectCode}/{paperCode}
+                </span>
+                <span className="text-[#82796a] truncate">
+                  {subjectName}
+                </span>
+              </div>
+              <span className="px-2 py-0.5 bg-[#d1fae5] text-[#065f46] border border-[#065f46]/40 rounded-full text-[10px] font-bold shrink-0">
+                {totalCount} Questions
+              </span>
+            </div>
+
+            <p className="text-[11px] text-[#645c50] font-medium leading-relaxed">
+              Archiving prevents this paper from showing up as an uncurated draft while keeping a clean history on disk.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#dcd3c4]">
+              <button
+                type="button"
+                onClick={() => setShowArchiveConfirm(false)}
+                className="px-4 py-2 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] transition-colors cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={performArchive}
+                className="px-4 py-2 rounded-full border-2 border-[#201e1d] bg-[#065f46] hover:bg-[#044e39] text-white text-xs font-adminHeading font-bold transition-colors cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
+              >
+                Confirm Archive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

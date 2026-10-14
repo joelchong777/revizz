@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useIngestionStore, PublishReceipt } from "@/lib/ingestion/useIngestionStore";
 import {
   CheckCircle2,
@@ -16,6 +16,7 @@ import {
   Layers,
   BookOpen,
   Check,
+  Archive,
 } from "lucide-react";
 
 export interface IngestionPipelineModalProps {
@@ -52,7 +53,30 @@ export default function IngestionPipelineModal({
     setIsPipelineModalOpen,
     setPipelineStep,
     publishToSupabase,
+    archiveStagedPaper,
   } = useIngestionStore();
+
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [archiveSuccess, setArchiveSuccess] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+
+  const handleArchivePaper = async () => {
+    const paperId = lastPublishReceipt?.paper_id || paper?.id;
+    if (!paperId) return;
+    setIsArchiving(true);
+    setArchiveError(null);
+    try {
+      const res = await archiveStagedPaper(paperId);
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to archive staged JSON paper.');
+      }
+      setArchiveSuccess('Archived to staging/archive/');
+    } catch (err: any) {
+      setArchiveError(err?.message || 'Error archiving paper');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   const open = isOpen !== undefined ? isOpen : isPipelineModalOpen;
   if (!open) return null;
@@ -276,18 +300,57 @@ export default function IngestionPipelineModal({
         {/* STAGE 3: SUCCESSFUL RECEIPT */}
         {pipelineStep === "success" && (
           <div className="flex flex-col gap-5">
-            {/* Success Banner */}
-            <div className="bg-emerald-50 border-2 border-emerald-500 rounded-2xl p-4 shadow-[4px_4px_0_#10b981] flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-xs">
-                <Check className="w-6 h-6 stroke-[3]" />
+            {/* Success Banner with Archive Action */}
+            <div className="bg-emerald-50 border-2 border-emerald-500 rounded-2xl p-4 sm:p-5 shadow-[4px_4px_0_#10b981] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-xs">
+                  <Check className="w-6 h-6 stroke-[3]" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-sm sm:text-base font-black text-emerald-950">
+                    Paper Successfully Upserted to Supabase!
+                  </h3>
+                  <p className="text-xs text-emerald-800 font-medium">
+                    All relational entities are live and queryable in the Cambridge Question Bank.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-heading text-sm sm:text-base font-black text-emerald-950">
-                  Paper Successfully Upserted to Supabase!
-                </h3>
-                <p className="text-xs text-emerald-800 font-medium">
-                  All relational entities are live and queryable in the Cambridge Question Bank.
-                </p>
+
+              {/* Helpful Post-Publish Action */}
+              <div className="flex items-center gap-2 self-stretch sm:self-auto justify-between sm:justify-end border-t sm:border-t-0 border-emerald-200 pt-2 sm:pt-0 shrink-0">
+                <span className="text-xs font-black text-emerald-950 hidden md:inline">
+                  Paper is live in Supabase!
+                </span>
+                {archiveSuccess ? (
+                  <span className="px-3 py-1.5 bg-emerald-100 border border-emerald-400 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-1">
+                    ✓ {archiveSuccess}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleArchivePaper}
+                    disabled={isArchiving}
+                    className="px-3.5 py-2 bg-[#728157] hover:bg-[#5e6b47] text-white rounded-xl text-xs font-heading font-black shadow-xs active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    title="Archive local staged JSON file to staging/archive/"
+                  >
+                    {isArchiving ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Archiving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="w-3.5 h-3.5" />
+                        <span>Archive Staged JSON File</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                {archiveError && (
+                  <span className="text-xs font-bold text-red-600">
+                    ⚠️ {archiveError}
+                  </span>
+                )}
               </div>
             </div>
 

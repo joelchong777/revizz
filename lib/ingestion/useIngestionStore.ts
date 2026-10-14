@@ -99,7 +99,8 @@ export interface IngestionActions {
   updateQuestion: (idx: number, updated: StagingQuestion) => void;
   setCorrectOption: (label: 'A' | 'B' | 'C' | 'D') => void;
   toggleStatus: (idx: number) => void;
-  publishToSupabase: () => Promise<{ success: boolean; data?: any; error?: string }>;
+  publishToSupabase: () => Promise<{ success: boolean; data?: PublishReceipt; receipt?: PublishReceipt; error?: string }>;
+  archiveStagedPaper: (paperId: string) => Promise<{ success: boolean; error?: string }>;
   saveDraftToLocalStorage: (storageKey?: string) => boolean;
   loadDraftFromLocalStorage: (storageKey?: string) => boolean;
   clearDraft: (storageKey?: string) => void;
@@ -905,7 +906,7 @@ const actions: IngestionActions = {
     });
   },
 
-  async publishToSupabase(): Promise<{ success: boolean; data?: any; error?: string }> {
+  async publishToSupabase(): Promise<{ success: boolean; data?: any; receipt?: any; error?: string }> {
     const currentPaper = getState().paper;
     if (!currentPaper) {
       const err = 'No paper loaded to publish.';
@@ -974,7 +975,7 @@ const actions: IngestionActions = {
         pipelineStep: 'success',
       });
 
-      return { success: true, data: receipt };
+      return { success: true, data: receipt, receipt };
     } catch (err: any) {
       const errorMsg = err.message || 'Unknown network error during publish.';
       setState({
@@ -983,6 +984,33 @@ const actions: IngestionActions = {
         pipelineStep: 'error',
       });
       return { success: false, error: errorMsg };
+    }
+  },
+
+  async archiveStagedPaper(paperId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await fetch('/api/ingest/staged-paper', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'archive', id: paperId }),
+      });
+
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.success) {
+        return {
+          success: false,
+          error: result.error || `Archive failed with status ${res.status}`,
+        };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err?.message || 'Network error while archiving staged paper.',
+      };
     }
   },
 

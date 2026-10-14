@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import type { StagingPaper } from "@/types/ingestion";
 import {
   Sparkles,
@@ -20,8 +21,10 @@ import {
   Copy,
   Check,
   RotateCw,
+  RotateCcw,
   FileCode,
   Terminal,
+  Archive,
 } from "lucide-react";
 
 export interface SubjectPreset {
@@ -37,6 +40,9 @@ export interface StagedPaperSummary {
   paper?: { year?: number; series?: string; paper_code?: string };
   questionsCount?: number;
   lifecycle_state?: string;
+  is_published?: boolean;
+  published_exam_paper_id?: string | null;
+  is_archived?: boolean;
 }
 
 export const CAMBRIDGE_SUBJECT_PRESETS: SubjectPreset[] = [
@@ -140,6 +146,12 @@ export default function IngestionSetupWizard({
   const [isLoadingStaged, setIsLoadingStaged] = useState<boolean>(true);
   const [loadingPaperId, setLoadingPaperId] = useState<string | null>(null);
   const [stagedFetchError, setStagedFetchError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "drafts" | "published">("all");
+  const [showArchived, setShowArchived] = useState<boolean>(false);
+  const [archivingPaperId, setArchivingPaperId] = useState<string | null>(null);
+  const [archiveToast, setArchiveToast] = useState<string | null>(null);
+  const [paperToArchive, setPaperToArchive] = useState<StagedPaperSummary | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
   // Dragging state for Agent JSON Dropzone & reading progress
   const [isDraggingJson, setIsDraggingJson] = useState<boolean>(false);
@@ -166,11 +178,15 @@ export default function IngestionSetupWizard({
   const [copiedCommand, setCopiedCommand] = useState<boolean>(false);
   const [copiedPrompt, setCopiedPrompt] = useState<boolean>(false);
 
-  const fetchStagedPapers = useCallback(async () => {
+  const fetchStagedPapers = useCallback(async (includeArchived?: boolean | unknown) => {
+    const shouldInclude = typeof includeArchived === 'boolean' ? includeArchived : showArchived;
     setIsLoadingStaged(true);
     setStagedFetchError(null);
     try {
-      const res = await fetch("/api/ingest/staged-paper");
+      const url = shouldInclude
+        ? "/api/ingest/staged-paper?include_archived=true"
+        : "/api/ingest/staged-paper";
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.stagedPapers)) {
@@ -181,11 +197,49 @@ export default function IngestionSetupWizard({
     } finally {
       setIsLoadingStaged(false);
     }
-  }, []);
+  }, [showArchived]);
 
   useEffect(() => {
     fetchStagedPapers();
   }, [fetchStagedPapers]);
+
+  const handleArchivePaper = async (paperId: string) => {
+    setArchivingPaperId(paperId);
+    try {
+      const res = await fetch("/api/ingest/staged-paper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "archive", id: paperId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
+        setArchiveToast(`Archived ${paperId}.json to staging/archive/`);
+        setTimeout(() => setArchiveToast(null), 4000);
+        await fetchStagedPapers(showArchived);
+      } else {
+        alert(`Failed to archive paper: ${data?.error || `HTTP ${res.status}`}`);
+      }
+    } catch (err: any) {
+      alert(`Archive error: ${err?.message || "Network error"}`);
+    } finally {
+      setArchivingPaperId(null);
+    }
+  };
+
+  const confirmArchivePaper = async () => {
+    if (!paperToArchive?.id) return;
+    const paperId = paperToArchive.id;
+    setPaperToArchive(null);
+    await handleArchivePaper(paperId);
+  };
+
+  const confirmResetAll = () => {
+    setShowResetConfirm(false);
+    setQpFile(null);
+    setMsFile(null);
+    if (onResetAll) onResetAll();
+    else if (onDiscardDraft) onDiscardDraft();
+  };
 
   const handleLoadStagedPaper = async (summary: StagedPaperSummary) => {
     setLoadingPaperId(summary.id);
@@ -311,6 +365,22 @@ export default function IngestionSetupWizard({
     setUploadError(`Invalid file type "${file.name}". Please drop a Cambridge .pdf or .json paper.`);
   };
 
+  const basePapers = useMemo(() => {
+    return showArchived ? stagedPapers : stagedPapers.filter((p) => !p.is_archived);
+  }, [stagedPapers, showArchived]);
+
+  const totalCount = basePapers.length;
+  const draftCount = useMemo(() => basePapers.filter((p) => !p.is_published).length, [basePapers]);
+  const publishedCount = useMemo(() => basePapers.filter((p) => Boolean(p.is_published)).length, [basePapers]);
+
+  const filteredPapers = useMemo(() => {
+    return basePapers.filter((paper) => {
+      if (statusFilter === "drafts") return !paper.is_published;
+      if (statusFilter === "published") return Boolean(paper.is_published);
+      return true;
+    });
+  }, [basePapers, statusFilter]);
+
   return (
     <div
       className={`w-full flex flex-col gap-6 font-body ${className}`}
@@ -385,7 +455,7 @@ export default function IngestionSetupWizard({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#dcd3c4] pb-5">
         <div>
           <div className="flex items-center gap-2 flex-wrap mb-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ffe1d0] border border-[#c67139] text-[#c67139] rounded-full text-xs font-bold">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ffe1d0] border-2 border-[#201e1d] text-[#c67139] rounded-full text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Cambridge Multimodal Ingestion Pipeline</span>
             </div>
@@ -393,10 +463,10 @@ export default function IngestionSetupWizard({
             {/* Informative chip when active paper session exists */}
             {activePaper && (
               <div
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-[#3d472b] rounded-full text-xs font-bold shadow-xs"
-                title={`Active paper in memory: ${activePaper.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#d1fae5] border-2 border-[#201e1d] text-[#065f46] rounded-full text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]"
+                title={`Active paper in memory: ${activePaper.id || "paper"}`}
               >
-                <span className="w-2 h-2 rounded-full bg-[#56633f] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#065f46] animate-pulse" />
                 <span>
                   Session in progress: {activePaper.subject?.code || activePaper.paper?.paper_code || "Paper"} ({activePaper.paper?.year || "Active"})
                 </span>
@@ -404,8 +474,8 @@ export default function IngestionSetupWizard({
             )}
           </div>
 
-          <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">
-            Digitize & Upsert Past Exam Papers
+          <h2 className="font-adminHeading text-2xl sm:text-3xl font-bold text-[#201e1d]">
+            Digitize &amp; Upsert Past Exam Papers
           </h2>
           <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-1 max-w-2xl">
             Upload your Cambridge Question Paper (QP) PDF or load an Antigravity agent offline extraction to curate questions and push to production.
@@ -418,7 +488,7 @@ export default function IngestionSetupWizard({
             <button
               type="button"
               onClick={onReturnToWorkspace}
-              className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5"
+              className="px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Current Paper</span>
@@ -428,13 +498,8 @@ export default function IngestionSetupWizard({
           {(hasSavedDraft || activePaper) && (onResetAll || onDiscardDraft) && (
             <button
               type="button"
-              onClick={() => {
-                setQpFile(null);
-                setMsFile(null);
-                if (onResetAll) onResetAll();
-                else if (onDiscardDraft) onDiscardDraft();
-              }}
-              className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#b91c1c]/40 bg-[#fee2e2]/60 hover:bg-[#fee2e2] text-xs font-bold text-[#b91c1c] flex items-center gap-1.5 transition-colors cursor-pointer active:translate-y-0.5 shadow-xs"
+              onClick={() => setShowResetConfirm(true)}
+              className="px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] bg-[#fee2e2]/60 hover:bg-[#fee2e2] text-xs font-bold text-[#b91c1c] flex items-center gap-1.5 transition-colors cursor-pointer active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_#201e1d]"
               title="Clear all leftover draft data and start fresh in 1 click"
             >
               <Trash2 className="w-3.5 h-3.5 text-[#b91c1c]" />
@@ -445,13 +510,16 @@ export default function IngestionSetupWizard({
       </div>
 
       {/* Neobrutalist Dual-Workflow Tab Toggle */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 bg-[#f0eade] border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_#201e1d]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 bg-[#f0eade] border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_#201e1d]">
         <div className="flex items-center gap-2 w-full">
           {/* Tab 1: AI Cloud Pipeline */}
-          <button
+          <motion.button
             type="button"
             onClick={() => setWorkflowTab("cloud")}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-heading font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-adminHeading font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               workflowTab === "cloud"
                 ? "bg-[#c67139] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] -translate-y-0.5"
                 : "bg-transparent text-[#645c50] hover:text-[#201e1d] hover:bg-black/5"
@@ -459,13 +527,16 @@ export default function IngestionSetupWizard({
           >
             <Sparkles className="w-4 h-4" />
             <span>AI Cloud Pipeline</span>
-          </button>
+          </motion.button>
 
           {/* Tab 2: Antigravity Agent Workflow */}
-          <button
+          <motion.button
             type="button"
             onClick={() => setWorkflowTab("agent")}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-heading font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-adminHeading font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               workflowTab === "agent"
                 ? "bg-[#201e1d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#c67139] -translate-y-0.5"
                 : "bg-transparent text-[#645c50] hover:text-[#201e1d] hover:bg-black/5"
@@ -474,26 +545,30 @@ export default function IngestionSetupWizard({
             <Bot className="w-4 h-4 text-[#ffe1d0]" />
             <span>Antigravity Agent Workflow</span>
             {stagedPapers.length > 0 && (
-              <span className="px-2 py-0.5 text-[10px] font-mono font-black bg-[#ffe1d0] text-[#201e1d] rounded-full border border-[#201e1d]">
+              <motion.span
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ type: "tween", duration: 0.35, ease: "easeOut" }}
+                className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#ffe1d0] text-[#201e1d] rounded-full border border-[#201e1d]"
+              >
                 {stagedPapers.length}
-              </span>
+              </motion.span>
             )}
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Saved Draft Alert Banner if local draft exists */}
       {hasSavedDraft && (
-        <div className="p-4 bg-[#f0fae1] border-[1.5px] border-[#8fa073] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-body shadow-xs">
+        <div className="p-4 bg-[#d1fae5] border-2 border-[#201e1d] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-body shadow-[2px_2px_0_#201e1d]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#728157] text-[#f9f4ed] flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-[#065f46] text-[#f9f4ed] border border-[#201e1d] flex items-center justify-center shrink-0 shadow-xs">
               <Clock className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-black text-[#201e1d]">
+              <h4 className="text-xs sm:text-sm font-adminHeading font-bold text-[#201e1d]">
                 Saved Paper Draft Found in Browser
               </h4>
-              <p className="text-xs text-[#56633f] font-medium">
+              <p className="text-xs text-[#065f46] font-medium">
                 You have an uncompleted draft saved locally. Would you like to resume your session?
               </p>
             </div>
@@ -503,7 +578,7 @@ export default function IngestionSetupWizard({
               <button
                 type="button"
                 onClick={onResumeDraft}
-                className="px-3.5 py-1.5 rounded-full bg-[#728157] text-[#f9f4ed] text-xs font-bold hover:bg-[#56633f] active:translate-y-0.5 transition-all cursor-pointer shadow-xs"
+                className="px-3.5 py-1.5 rounded-full bg-[#065f46] text-[#f9f4ed] text-xs font-bold hover:bg-[#044e39] active:translate-y-0.5 active:shadow-none border-2 border-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
               >
                 Resume Draft
               </button>
@@ -511,13 +586,8 @@ export default function IngestionSetupWizard({
             {(onResetAll || onDiscardDraft) && (
               <button
                 type="button"
-                onClick={() => {
-                  setQpFile(null);
-                  setMsFile(null);
-                  if (onResetAll) onResetAll();
-                  else if (onDiscardDraft) onDiscardDraft();
-                }}
-                className="px-3 py-1.5 rounded-full border border-[#b91c1c] text-xs font-bold text-[#b91c1c] bg-[#fee2e2]/40 hover:bg-[#fee2e2] active:translate-y-0.5 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                onClick={() => setShowResetConfirm(true)}
+                className="px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold text-[#b91c1c] bg-[#fee2e2]/40 hover:bg-[#fee2e2] active:translate-y-0.5 active:shadow-none transition-colors cursor-pointer flex items-center gap-1 shadow-[2px_2px_0_#201e1d]"
                 title="Discard leftover browser draft in 1 click"
               >
                 <Trash2 className="w-3.5 h-3.5 text-[#b91c1c]" />
@@ -530,7 +600,7 @@ export default function IngestionSetupWizard({
 
       {/* Extraction Error Alert */}
       {extractionError && (
-        <div className="p-4 bg-[#fee2e2] border-[1.5px] border-[#b91c1c] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm font-bold text-[#b91c1c] shadow-xs">
+        <div className="p-4 bg-[#fee2e2] border-2 border-[#b91c1c] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm font-bold text-[#b91c1c] shadow-[2px_2px_0_#b91c1c]">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span className="whitespace-pre-line">{extractionError}</span>
@@ -539,9 +609,9 @@ export default function IngestionSetupWizard({
             <button
               type="button"
               onClick={onResumeExtraction}
-              className="px-3.5 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] border border-[#201e1d] hover:bg-[#b2622d] font-heading font-black text-xs active:translate-y-0.5 shadow-xs transition-colors shrink-0 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] border-2 border-[#201e1d] hover:bg-[#b2622d] font-adminHeading font-bold text-xs active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_#201e1d] transition-colors shrink-0 cursor-pointer"
             >
-              Resume Extraction (from Q{Math.max(...activePaper.questions.map((q) => q.question_number || 0)) + 1})
+              Resume Extraction (from Q{Math.max(0, ...activePaper.questions.map((q) => q?.question_number || 0)) + 1})
             </button>
           )}
         </div>
@@ -570,12 +640,12 @@ export default function IngestionSetupWizard({
       {workflowTab === "cloud" ? (
         <>
           {/* Step 1: Cambridge Paper Metadata Selectors */}
-      <div className="bg-white/80 border-[1.5px] border-[#dcd3c4] rounded-2xl p-5 flex flex-col gap-3.5 shadow-xs">
+      <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-5 flex flex-col gap-3.5 shadow-[2px_2px_0_#201e1d]">
         <div className="flex items-center gap-2">
           <span className="w-5 h-5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-black flex items-center justify-center shadow-xs">
             1
           </span>
-          <h3 className="font-heading text-sm font-black text-[#201e1d]">
+          <h3 className="font-adminHeading text-sm font-bold text-[#201e1d]">
             Select Cambridge Paper Metadata
           </h3>
         </div>
@@ -587,7 +657,7 @@ export default function IngestionSetupWizard({
             <select
               value={selectedSubjectCode}
               onChange={(e) => setSelectedSubjectCode(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors"
+              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] focus:border-[#c67139] shadow-[1px_1px_0_#201e1d] outline-none cursor-pointer transition-colors"
             >
               <option value="">Select subject (or auto-infer from PDF)...</option>
               {CAMBRIDGE_SUBJECT_PRESETS.map((s) => (
@@ -605,7 +675,7 @@ export default function IngestionSetupWizard({
             <select
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors"
+              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] focus:border-[#c67139] shadow-[1px_1px_0_#201e1d] outline-none cursor-pointer transition-colors"
             >
               {[2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018].map((y) => (
                 <option key={y} value={y}>
@@ -621,7 +691,7 @@ export default function IngestionSetupWizard({
             <select
               value={series}
               onChange={(e) => setSeries(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors"
+              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] focus:border-[#c67139] shadow-[1px_1px_0_#201e1d] outline-none cursor-pointer transition-colors"
             >
               <option value="s">May / June (Summer - &apos;s&apos;)</option>
               <option value="w">Oct / Nov (Winter - &apos;w&apos;)</option>
@@ -635,7 +705,7 @@ export default function IngestionSetupWizard({
             <select
               value={paperCode}
               onChange={(e) => setPaperCode(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors"
+              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] focus:border-[#c67139] shadow-[1px_1px_0_#201e1d] outline-none cursor-pointer transition-colors"
             >
               <option value="11">Paper 11</option>
               <option value="12">Paper 12 (Standard)</option>
@@ -655,26 +725,26 @@ export default function IngestionSetupWizard({
               placeholder="Subject Code (e.g. 0654)"
               value={customSubjectCode}
               onChange={(e) => setCustomSubjectCode(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus:border-[#c67139]"
+              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] outline-none focus:border-[#c67139]"
             />
             <input
               type="text"
               placeholder="Subject Name (e.g. Co-ordinated Sciences)"
               value={customSubjectName}
               onChange={(e) => setCustomSubjectName(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus:border-[#c67139]"
+              className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] outline-none focus:border-[#c67139]"
             />
           </div>
         )}
       </div>
 
       {/* Fast-Track JSON Past Paper Card / Dropzone */}
-      <div className="bg-[#fff7f0] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_#201e1d] flex flex-col gap-3">
+      <div className="bg-[#fff7f0] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[2px_2px_0_#201e1d] flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-xl">⚡</span>
             <div>
-              <h3 className="font-heading text-sm sm:text-base font-black text-[#201e1d]">
+              <h3 className="font-adminHeading text-sm sm:text-base font-bold text-[#201e1d]">
                 Have a Pre-staged Cambridge JSON Paper?
               </h3>
               <p className="text-xs text-[#645c50] font-medium">
@@ -682,17 +752,19 @@ export default function IngestionSetupWizard({
               </p>
             </div>
           </div>
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               setUploadError(null);
               jsonInputRef.current?.click();
             }}
-            className="px-4 py-2 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white text-xs font-heading font-black shadow-[2px_2px_0_#201e1d] border-2 border-[#201e1d] active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white text-xs font-adminHeading font-bold shadow-[2px_2px_0_#201e1d] border-2 border-[#201e1d] active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Upload className="w-4 h-4" />
             <span>Upload JSON Past Paper</span>
-          </button>
+          </motion.button>
         </div>
 
         {/* Dropzone for JSON file */}
@@ -722,13 +794,13 @@ export default function IngestionSetupWizard({
           className={`p-4 border-2 border-dashed rounded-xl flex items-center justify-center text-center gap-3 cursor-pointer transition-all ${
             isDraggingJson
               ? "bg-[#ffe1d0] border-[#c67139] shadow-sm scale-[1.01]"
-              : "bg-white/80 border-[#dcd3c4] hover:bg-white hover:border-[#c67139]"
+              : "bg-white/80 border-[#201e1d] hover:bg-white hover:border-[#c67139]"
           }`}
         >
           <FileCode className="w-5 h-5 text-[#c67139] shrink-0" />
           <span className="text-xs font-bold text-[#645c50]">
             Drag &amp; drop your Cambridge JSON file here (e.g.{" "}
-            <span className="font-mono text-[#c67139] font-black">0455_s24_12.json</span>) or click to browse
+            <span className="font-mono text-[#c67139] font-bold">0455_s24_12.json</span>) or click to browse
           </span>
         </div>
       </div>
@@ -736,10 +808,10 @@ export default function IngestionSetupWizard({
       {/* Step 2: Dual PDF Dropzones (QP & MS) */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-black flex items-center justify-center shadow-xs">
+          <span className="w-6 h-6 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-adminHeading font-bold flex items-center justify-center shadow-[1px_1px_0_#201e1d]">
             2
           </span>
-          <h3 className="font-heading text-sm font-black text-[#201e1d]">
+          <h3 className="font-adminHeading text-sm font-bold text-[#201e1d]">
             Upload Scanned Exam Paper PDFs
           </h3>
         </div>
@@ -767,33 +839,33 @@ export default function IngestionSetupWizard({
             onClick={() => qpInputRef.current?.click()}
             className={`p-6 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center gap-3 cursor-pointer transition-all ${
               qpFile
-                ? "bg-[#f0fae1] border-[#728157] shadow-xs"
+                ? "bg-[#d1fae5] border-[#059669] shadow-[2px_2px_0_#201e1d]"
                 : isDraggingQp
                 ? "bg-[#ffe1d0]/50 border-[#c67139] shadow-sm"
-                : "bg-white/80 border-[#c0b6a5] hover:bg-white hover:border-[#82796a]"
+                : "bg-white/90 border-[#201e1d] hover:bg-white hover:border-[#c67139] shadow-[2px_2px_0_#201e1d]"
             }`}
           >
             <div
-              className={`w-12 h-12 rounded-2xl border-[1.5px] flex items-center justify-center text-xl transition-colors pointer-events-none ${
+              className={`w-12 h-12 rounded-2xl border-2 border-[#201e1d] flex items-center justify-center text-xl transition-colors pointer-events-none ${
                 qpFile
-                  ? "bg-[#728157] text-[#f9f4ed] border-[#728157] shadow-xs"
-                  : "bg-[#eee7db] text-[#201e1d] border-[#dcd3c4]"
+                  ? "bg-[#059669] text-[#f9f4ed] shadow-[1px_1px_0_#201e1d]"
+                  : "bg-[#eee7db] text-[#201e1d]"
               }`}
             >
               {qpFile ? <FileText className="w-5 h-5" /> : "📄"}
             </div>
             <div className="pointer-events-none">
               <div className="flex items-center justify-center gap-1.5">
-                <h4 className="font-heading text-sm font-black text-[#201e1d]">
+                <h4 className="font-adminHeading text-sm font-bold text-[#201e1d]">
                   Question Paper (QP) PDF
                 </h4>
-                <span className="px-2 py-0.5 bg-[#ffe1d0] text-[#c67139] border border-[#c67139]/40 text-[10px] font-black rounded-md">
+                <span className="px-2 py-0.5 bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-mono font-bold rounded-md">
                   Required
                 </span>
               </div>
               <p className="text-xs font-medium text-[#645c50] mt-1">
                 {qpFile ? (
-                  <span className="text-[#3d472b] font-bold">
+                  <span className="text-[#065f46] font-mono font-bold">
                     {qpFile.name} ({(qpFile.size / 1024 / 1024).toFixed(1)} MB)
                   </span>
                 ) : (
@@ -808,7 +880,7 @@ export default function IngestionSetupWizard({
                   e.stopPropagation();
                   setQpFile(null);
                 }}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#b91c1c] hover:opacity-80 transition-opacity mt-1 cursor-pointer pointer-events-auto"
+                className="inline-flex items-center gap-1 text-xs font-adminHeading font-bold text-[#b91c1c] hover:bg-[#fee2e2] px-2.5 py-1 rounded-lg border-2 border-[#b91c1c] shadow-[1px_1px_0_#b91c1c] active:translate-y-0.5 transition-all mt-1 cursor-pointer pointer-events-auto"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Remove file</span>
@@ -838,33 +910,33 @@ export default function IngestionSetupWizard({
             onClick={() => msInputRef.current?.click()}
             className={`p-6 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center gap-3 cursor-pointer transition-all ${
               msFile
-                ? "bg-[#f0fae1] border-[#728157] shadow-xs"
+                ? "bg-[#d1fae5] border-[#059669] shadow-[2px_2px_0_#201e1d]"
                 : isDraggingMs
                 ? "bg-[#ffe1d0]/50 border-[#c67139] shadow-sm"
-                : "bg-white/80 border-[#c0b6a5] hover:bg-white hover:border-[#82796a]"
+                : "bg-white/90 border-[#201e1d] hover:bg-white hover:border-[#c67139] shadow-[2px_2px_0_#201e1d]"
             }`}
           >
             <div
-              className={`w-12 h-12 rounded-2xl border-[1.5px] flex items-center justify-center text-xl transition-colors pointer-events-none ${
+              className={`w-12 h-12 rounded-2xl border-2 border-[#201e1d] flex items-center justify-center text-xl transition-colors pointer-events-none ${
                 msFile
-                  ? "bg-[#728157] text-[#f9f4ed] border-[#728157] shadow-xs"
-                  : "bg-[#eee7db] text-[#201e1d] border-[#dcd3c4]"
+                  ? "bg-[#059669] text-[#f9f4ed] shadow-[1px_1px_0_#201e1d]"
+                  : "bg-[#eee7db] text-[#201e1d]"
               }`}
             >
               {msFile ? <FileText className="w-5 h-5" /> : "🎯"}
             </div>
             <div className="pointer-events-none">
               <div className="flex items-center justify-center gap-1.5">
-                <h4 className="font-heading text-sm font-black text-[#201e1d]">
+                <h4 className="font-adminHeading text-sm font-bold text-[#201e1d]">
                   Mark Scheme (MS) PDF
                 </h4>
-                <span className="px-2 py-0.5 bg-[#eee7db] text-[#645c50] border border-[#dcd3c4] text-[10px] font-black rounded-md">
+                <span className="px-2 py-0.5 bg-[#fef3c7] text-[#92400e] border border-[#d97706]/40 text-[10px] font-mono font-bold rounded-md">
                   Recommended
                 </span>
               </div>
               <p className="text-xs font-medium text-[#645c50] mt-1">
                 {msFile ? (
-                  <span className="text-[#3d472b] font-bold">
+                  <span className="text-[#065f46] font-mono font-bold">
                     {msFile.name} ({(msFile.size / 1024 / 1024).toFixed(1)} MB)
                   </span>
                 ) : (
@@ -879,7 +951,7 @@ export default function IngestionSetupWizard({
                   e.stopPropagation();
                   setMsFile(null);
                 }}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#b91c1c] hover:opacity-80 transition-opacity mt-1 cursor-pointer pointer-events-auto"
+                className="inline-flex items-center gap-1 text-xs font-adminHeading font-bold text-[#b91c1c] hover:bg-[#fee2e2] px-2.5 py-1 rounded-lg border-2 border-[#b91c1c] shadow-[1px_1px_0_#b91c1c] active:translate-y-0.5 transition-all mt-1 cursor-pointer pointer-events-auto"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Remove file</span>
@@ -891,18 +963,18 @@ export default function IngestionSetupWizard({
         {/* Payload Size Diagnostic Indicator */}
         {totalPayloadBytes > 0 && (
           <div
-            className={`p-3.5 rounded-xl border-[1.5px] flex items-center justify-between gap-3 text-xs font-bold transition-all ${
+            className={`p-3.5 rounded-xl border-2 flex items-center justify-between gap-3 text-xs font-bold transition-all shadow-[2px_2px_0_#201e1d] ${
               isPayloadLarge
                 ? "bg-[#fee2e2] border-[#b91c1c] text-[#b91c1c]"
                 : totalPayloadMb > 3.5
                 ? "bg-[#fef3c7] border-[#d97706] text-[#92400e]"
-                : "bg-[#f0fae1] border-[#728157] text-[#3d472b]"
+                : "bg-[#d1fae5] border-[#059669] text-[#065f46]"
             }`}
           >
             <div className="flex items-center gap-2">
               <span className="text-base">{isPayloadLarge ? "⚠️" : "📦"}</span>
               <div>
-                <span>Combined PDF Size: {totalPayloadMb.toFixed(1)} MB</span>
+                <span className="font-mono">Combined PDF Size: {totalPayloadMb.toFixed(1)} MB</span>
                 {isPayloadLarge ? (
                   <p className="text-[11px] font-semibold text-[#b91c1c] mt-0.5">
                     Exceeds Vercel's 4.5 MB serverless limit. Please provide a Gemini API Key in Step 3 for direct browser extraction (supports up to 20 MB).
@@ -912,13 +984,13 @@ export default function IngestionSetupWizard({
                     Approaching Vercel's 4.5 MB limit. If network error occurs, supply a Gemini API Key in Step 3 for direct extraction.
                   </p>
                 ) : (
-                  <p className="text-[11px] font-semibold text-[#56633f] mt-0.5">
+                  <p className="text-[11px] font-semibold text-[#065f46] mt-0.5">
                     Well within serverless payload limits.
                   </p>
                 )}
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-white/70 border border-current shrink-0">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-white/90 border border-current shrink-0">
               {isPayloadLarge ? "Direct Mode Required" : "Standard OK"}
             </span>
           </div>
@@ -926,17 +998,17 @@ export default function IngestionSetupWizard({
       </div>
 
       {/* Step 3: Gemini Vision API & Extraction Configuration */}
-      <div className="bg-white/80 border-[1.5px] border-[#dcd3c4] rounded-2xl p-5 flex flex-col gap-3.5 shadow-xs">
+      <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-5 flex flex-col gap-3.5 shadow-[2px_2px_0_#201e1d]">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-black flex items-center justify-center shadow-xs">
+            <span className="w-6 h-6 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-adminHeading font-bold flex items-center justify-center shadow-[1px_1px_0_#201e1d]">
               3
             </span>
-            <h3 className="font-heading text-sm font-black text-[#201e1d]">
-              Gemini Vision & Batch Configuration
+            <h3 className="font-adminHeading text-sm font-bold text-[#201e1d]">
+              Gemini Vision &amp; Batch Configuration
             </h3>
           </div>
-          <span className="text-[11px] font-semibold text-[#82796a]">
+          <span className="text-[11px] font-mono font-bold text-[#645c50]">
             {isPayloadLarge ? "API Key Required (> 4.5 MB)" : "Optional client override"}
           </span>
         </div>
@@ -946,7 +1018,7 @@ export default function IngestionSetupWizard({
           <div className="md:col-span-2 flex flex-col gap-1.5">
             <label
               htmlFor="gemini-api-key-input"
-              className="text-xs font-bold text-[#645c50] flex items-center gap-1.5"
+              className="text-xs font-adminHeading font-bold text-[#201e1d] flex items-center gap-1.5"
             >
               <KeyRound className="w-3.5 h-3.5 text-[#c67139]" />
               <span>Gemini API Key {isPayloadLarge ? "(Required for > 4.5 MB PDF)" : "(Optional if set in .env.local)"}</span>
@@ -958,10 +1030,10 @@ export default function IngestionSetupWizard({
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder={isPayloadLarge ? "Required: Paste AIzaSy... key to bypass 4.5 MB limit" : "Paste AIzaSy... key (optional - leave blank to use server .env.local)"}
-                className={`w-full pl-3.5 pr-11 py-2.5 text-xs sm:text-sm font-mono rounded-xl border-[1.5px] bg-[#f9f4ed] text-[#201e1d] placeholder:text-[#82796a] outline-none transition-all ${
+                className={`w-full pl-3.5 pr-11 py-2.5 text-xs sm:text-sm font-mono rounded-xl border-2 bg-[#f9f4ed] text-[#201e1d] placeholder:text-[#82796a] outline-none transition-all ${
                   isPayloadLarge && !apiKey.trim()
                     ? "border-[#b91c1c] ring-1 ring-[#b91c1c]"
-                    : "border-[#dcd3c4] focus:border-[#c67139]"
+                    : "border-[#201e1d] focus:border-[#c67139]"
                 }`}
                 autoComplete="off"
                 spellCheck={false}
@@ -980,26 +1052,26 @@ export default function IngestionSetupWizard({
                 )}
               </button>
             </div>
-            <p className="text-[11px] text-[#82796a]">
+            <p className="text-[11px] text-[#645c50] font-medium">
               Direct client extraction via API key bypasses all Vercel payload and timeout limits (supports up to 20 MB).
             </p>
           </div>
 
           {/* Batch Size Selector */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-[#645c50] flex items-center gap-1.5">
+            <label className="text-xs font-adminHeading font-bold text-[#201e1d] flex items-center gap-1.5">
               <span>Batch Size (Questions / Batch)</span>
             </label>
             <select
               value={batchSize}
               onChange={(e) => setBatchSize(Number(e.target.value))}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors"
+              className="w-full px-3 py-2.5 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] text-xs font-mono font-bold text-[#201e1d] focus:border-[#c67139] outline-none cursor-pointer transition-colors shadow-[1px_1px_0_#201e1d]"
             >
-              <option value={5}>5 Questions (Recommended - Fast & Stable)</option>
+              <option value={5}>5 Questions (Recommended - Fast &amp; Stable)</option>
               <option value={10}>10 Questions (Standard Batch)</option>
               <option value={2}>2 Questions (Ultra-Safe / High-Detail)</option>
             </select>
-            <p className="text-[11px] text-[#82796a]">
+            <p className="text-[11px] text-[#645c50] font-medium">
               Smaller batches stream progress faster and prevent proxy timeout drops.
             </p>
           </div>
@@ -1007,12 +1079,12 @@ export default function IngestionSetupWizard({
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#dcd3c4] pt-5">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t-2 border-[#201e1d] pt-5">
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => jsonInputRef.current?.click()}
-            className="px-4 py-2 rounded-full border-[1.5px] border-[#dcd3c4] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5"
+            className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
           >
             <Upload className="w-3.5 h-3.5 text-[#201e1d]" />
             <span>Upload Pre-staged JSON</span>
@@ -1029,15 +1101,17 @@ export default function IngestionSetupWizard({
                 paperCode,
               })
             }
-            className="px-4 py-2 rounded-full border-[1.5px] border-[#dcd3c4] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#645c50] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5"
+            className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#645c50] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Start Blank Paper</span>
           </button>
         </div>
 
-        <button
+        <motion.button
           type="button"
+          whileHover={canExtract && !isExtracting ? { scale: 1.02 } : undefined}
+          whileTap={canExtract && !isExtracting ? { scale: 0.98 } : undefined}
           disabled={!canExtract}
           onClick={() => {
             if (qpFile) {
@@ -1055,7 +1129,7 @@ export default function IngestionSetupWizard({
               });
             }
           }}
-          className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading font-black text-xs sm:text-sm hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#c67139] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[3px_3px_0_#201e1d] font-adminHeading font-bold text-xs sm:text-sm hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isExtracting ? (
             <>
@@ -1069,25 +1143,25 @@ export default function IngestionSetupWizard({
               <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
             </>
           )}
-        </button>
+        </motion.button>
       </div>
         </>
       ) : (
         /* Workflow 2: Antigravity Agent Workflow View */
         <div className="flex flex-col gap-6" data-testid="antigravity-agent-workflow">
           {/* Section 1: Auto-Detected Staged Papers */}
-          <div className="bg-white/90 border-2 border-[#201e1d] rounded-2xl p-5 shadow-[3px_3px_0_#201e1d] flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-2 flex-wrap border-b border-[#dcd3c4] pb-3">
+          <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-5 shadow-[3px_3px_0_#201e1d] flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap border-b-2 border-[#201e1d]/20 pb-3">
               <div className="flex items-center gap-2.5">
-                <span className="w-6 h-6 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-black flex items-center justify-center shadow-xs">
+                <span className="w-6 h-6 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-adminHeading font-bold flex items-center justify-center shadow-[1px_1px_0_#201e1d]">
                   1
                 </span>
                 <div>
-                  <h3 className="font-heading text-base font-black text-[#201e1d] flex items-center gap-2">
+                  <h3 className="font-adminHeading text-base font-bold text-[#201e1d] flex items-center gap-2">
                     <span>Auto-Detected Staged Papers</span>
                     {stagedPapers.length > 0 && (
                       <span className="px-2 py-0.5 text-xs font-mono font-bold bg-[#ffe1d0] text-[#c67139] border border-[#c67139] rounded-full">
-                        {stagedPapers.length} in staging/
+                        {totalCount} in staging/
                       </span>
                     )}
                   </h3>
@@ -1099,9 +1173,9 @@ export default function IngestionSetupWizard({
 
               <button
                 type="button"
-                onClick={fetchStagedPapers}
+                onClick={() => fetchStagedPapers()}
                 disabled={isLoadingStaged}
-                className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5 disabled:opacity-50"
+                className="px-3.5 py-1.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50"
                 title="Scan staging folder for new papers"
               >
                 <RotateCw className={`w-3.5 h-3.5 ${isLoadingStaged ? "animate-spin" : ""}`} />
@@ -1109,14 +1183,94 @@ export default function IngestionSetupWizard({
               </button>
             </div>
 
+            {/* Archive Toast Notification */}
+            {archiveToast && (
+              <div
+                role="status"
+                className="p-3 bg-[#d1fae5] border-2 border-[#059669] text-[#065f46] rounded-xl flex items-center justify-between gap-3 shadow-[2px_2px_0_#059669] font-bold text-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#059669] shrink-0" />
+                  <span>{archiveToast}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setArchiveToast(null)}
+                  className="text-xs font-bold underline hover:opacity-80 cursor-pointer shrink-0"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {/* Status Filter Tabs & Show Archived Toggle */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 p-1 bg-[#eee7db] rounded-xl border-2 border-[#201e1d]">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("all")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-adminHeading font-bold transition-all cursor-pointer ${
+                    statusFilter === "all"
+                      ? "bg-[#201e1d] text-[#f9f4ed] shadow-[1px_1px_0_#201e1d]"
+                      : "text-[#645c50] hover:text-[#201e1d]"
+                  }`}
+                >
+                  All ({totalCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("drafts")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-adminHeading font-bold transition-all cursor-pointer ${
+                    statusFilter === "drafts"
+                      ? "bg-[#201e1d] text-[#f9f4ed] shadow-[1px_1px_0_#201e1d]"
+                      : "text-[#645c50] hover:text-[#201e1d]"
+                  }`}
+                >
+                  Drafts / Uncurated ({draftCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("published")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-adminHeading font-bold transition-all cursor-pointer ${
+                    statusFilter === "published"
+                      ? "bg-[#201e1d] text-[#f9f4ed] shadow-[1px_1px_0_#201e1d]"
+                      : "text-[#645c50] hover:text-[#201e1d]"
+                  }`}
+                >
+                  Published to Live ({publishedCount})
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !showArchived;
+                  setShowArchived(next);
+                  fetchStagedPapers(next);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-adminHeading font-bold border-2 transition-all cursor-pointer flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+                  showArchived
+                    ? "bg-[#201e1d] text-[#f9f4ed] border-[#201e1d]"
+                    : "bg-[#f9f4ed] text-[#645c50] border-[#201e1d] hover:bg-[#eee7db] hover:text-[#201e1d]"
+                }`}
+                title={showArchived ? "Hide archived papers" : "Show archived papers"}
+              >
+                <Archive className="w-3.5 h-3.5" />
+                <span>Show Archived</span>
+                {showArchived && (
+                  <span className="w-2 h-2 rounded-full bg-[#c67139]" />
+                )}
+              </button>
+            </div>
+
             {/* Staged Fetch Error Alert */}
             {stagedFetchError && (
-              <div className="p-3 bg-[#fee2e2] border border-[#b91c1c] rounded-xl text-xs font-bold text-[#b91c1c] flex items-center justify-between gap-2">
+              <div className="p-3 bg-[#fee2e2] border-2 border-[#b91c1c] rounded-xl text-xs font-bold text-[#b91c1c] flex items-center justify-between gap-2 shadow-[2px_2px_0_#b91c1c]">
                 <span>{stagedFetchError}</span>
                 <button
                   type="button"
-                  onClick={fetchStagedPapers}
-                  className="underline hover:opacity-80 cursor-pointer"
+                  onClick={() => fetchStagedPapers()}
+                  className="underline hover:opacity-80 cursor-pointer font-bold"
                 >
                   Retry
                 </button>
@@ -1127,11 +1281,11 @@ export default function IngestionSetupWizard({
             {isLoadingStaged ? (
               <div className="p-8 flex flex-col items-center justify-center gap-2 text-center text-[#645c50]">
                 <Loader2 className="w-6 h-6 animate-spin text-[#c67139]" />
-                <span className="text-xs font-bold">Scanning staging directory for Cambridge JSON papers...</span>
+                <span className="text-xs font-adminHeading font-bold">Scanning staging directory for Cambridge JSON papers...</span>
               </div>
-            ) : stagedPapers.length > 0 ? (
+            ) : filteredPapers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {stagedPapers.map((paperItem) => {
+                {filteredPapers.map((paperItem) => {
                   const subjectCode = paperItem.subject?.code || paperItem.id.split("_")[0] || "Paper";
                   const subjectName = paperItem.subject?.name || "Cambridge Paper";
                   const paperCode = paperItem.paper?.paper_code || paperItem.id.split("_")[2] || "12";
@@ -1140,6 +1294,7 @@ export default function IngestionSetupWizard({
                   const seriesYearText = `${seriesName} ${yearStr}`.trim();
                   const qCount = paperItem.questionsCount ?? 0;
                   const isLoadingThis = loadingPaperId === paperItem.id;
+                  const isArchivingThis = archivingPaperId === paperItem.id;
 
                   return (
                     <div
@@ -1148,22 +1303,22 @@ export default function IngestionSetupWizard({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] text-[#c67139] flex items-center justify-center text-lg shrink-0 shadow-xs">
+                          <div className="w-10 h-10 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] text-[#c67139] flex items-center justify-center text-lg shrink-0 shadow-[1px_1px_0_#201e1d]">
                             {paperItem.subject?.icon && paperItem.subject.icon !== "trending-up"
                               ? paperItem.subject.icon
                               : "📄"}
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className="font-heading text-sm font-black text-[#201e1d]">
+                              <h4 className="font-adminHeading text-sm font-bold text-[#201e1d]">
                                 {subjectCode}/{paperCode}
                               </h4>
                               <span className="text-[#82796a] text-xs font-bold">·</span>
-                              <span className="text-xs font-bold text-[#645c50]">
+                              <span className="text-xs font-adminHeading font-bold text-[#645c50]">
                                 {subjectName}
                               </span>
                             </div>
-                            <p className="text-xs font-semibold text-[#82796a] mt-0.5">
+                            <p className="text-xs font-mono font-bold text-[#645c50] mt-0.5">
                               {seriesYearText ? `${seriesYearText} · ` : ""}{qCount} Questions
                             </p>
                             <p className="text-[10px] font-mono text-[#82796a] mt-0.5 truncate max-w-[240px]">
@@ -1172,43 +1327,93 @@ export default function IngestionSetupWizard({
                           </div>
                         </div>
 
-                        <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md uppercase bg-[#f0fae1] text-[#3d472b] border border-[#728157]/40 shrink-0">
-                          {paperItem.lifecycle_state || "ready"}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                          {paperItem.is_archived && (
+                            <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md uppercase bg-[#fee2e2] text-[#991b1b] border-2 border-[#b91c1c] shrink-0">
+                              ARCHIVED
+                            </span>
+                          )}
+                          {paperItem.is_published ? (
+                            <span className="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-md uppercase bg-[#d1fae5] text-[#065f46] border-2 border-[#059669] flex items-center gap-1 shrink-0">
+                              <Check className="w-3 h-3 text-[#059669]" />
+                              <span>✓ PUBLISHED</span>
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 text-[10px] font-mono font-bold rounded-md uppercase bg-[#fef3c7] text-[#92400e] border-2 border-[#d97706] shrink-0">
+                              DRAFT
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <button
-                        type="button"
-                        disabled={isLoadingThis}
-                        onClick={() => handleLoadStagedPaper(paperItem)}
-                        className="w-full py-2.5 px-4 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none font-heading font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        {isLoadingThis ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Loading Paper into Studio...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Load into Studio</span>
-                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                          </>
+                      <div className="flex items-center gap-2 mt-auto">
+                        <button
+                          type="button"
+                          disabled={isLoadingThis || isArchivingThis}
+                          onClick={() => handleLoadStagedPaper(paperItem)}
+                          className="flex-1 py-2.5 px-4 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none font-adminHeading font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          {isLoadingThis ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Loading Paper into Studio...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>
+                                {paperItem.is_published ? "Re-inspect Published Paper" : "Load into Studio"}
+                              </span>
+                              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                            </>
+                          )}
+                        </button>
+
+                        {!paperItem.is_archived && (
+                          <button
+                            type="button"
+                            disabled={isLoadingThis || isArchivingThis}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPaperToArchive(paperItem);
+                            }}
+                            className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#fee2e2] text-[#645c50] hover:text-[#b91c1c] shadow-[2px_2px_0_#201e1d] hover:border-[#b91c1c] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                            title={`Archive ${paperItem.id}.json to staging/archive/`}
+                            aria-label={`Archive ${paperItem.id}.json`}
+                          >
+                            {isArchivingThis ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-[#b91c1c]" />
+                            ) : (
+                              <Archive className="w-4 h-4" />
+                            )}
+                          </button>
                         )}
-                      </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="p-6 bg-[#f9f4ed] border-2 border-dashed border-[#c0b6a5] rounded-2xl flex flex-col items-center justify-center text-center gap-2">
+              <div className="p-6 bg-[#f9f4ed] border-2 border-dashed border-[#201e1d]/30 rounded-2xl flex flex-col items-center justify-center text-center gap-2">
                 <div className="w-10 h-10 rounded-xl bg-[#eee7db] text-[#645c50] flex items-center justify-center text-xl">
-                  📁
+                  {stagedPapers.length > 0 ? "🔍" : "📁"}
                 </div>
-                <h4 className="font-heading text-sm font-black text-[#201e1d]">
-                  No Pre-staged Papers in staging/
+                <h4 className="font-adminHeading text-sm font-bold text-[#201e1d]">
+                  {stagedPapers.length > 0
+                    ? statusFilter === "published"
+                      ? "No Published Papers Found"
+                      : statusFilter === "drafts"
+                      ? "No Draft Papers Found"
+                      : "No Matching Staged Papers"
+                    : "No Pre-staged Papers in staging/"}
                 </h4>
                 <p className="text-xs text-[#645c50] max-w-md font-medium">
-                  Run the Antigravity agent CLI or chat command below to extract a paper offline, or drop a JSON file into the dropzone.
+                  {stagedPapers.length > 0
+                    ? statusFilter === "published"
+                      ? "Curate and publish a staged paper from the drafts tab to see it here."
+                      : statusFilter === "drafts"
+                      ? "All staged papers have been published or archived."
+                      : "No papers matched your selected filter criteria."
+                    : "Run the Antigravity agent CLI or chat command below to extract a paper offline, or drop a JSON file into the dropzone."}
                 </p>
               </div>
             )}
@@ -1217,10 +1422,10 @@ export default function IngestionSetupWizard({
           {/* Section 2: Agent JSON Dropzone */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-black flex items-center justify-center shadow-xs">
+              <span className="w-6 h-6 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-adminHeading font-bold flex items-center justify-center shadow-[1px_1px_0_#201e1d]">
                 2
               </span>
-              <h3 className="font-heading text-sm font-black text-[#201e1d]">
+              <h3 className="font-adminHeading text-sm font-bold text-[#201e1d]">
                 Agent JSON Dropzone
               </h3>
             </div>
@@ -1237,7 +1442,7 @@ export default function IngestionSetupWizard({
                 <button
                   type="button"
                   onClick={() => setUploadError(null)}
-                  className="text-xs font-black underline hover:opacity-80 cursor-pointer shrink-0"
+                  className="text-xs font-bold underline hover:opacity-80 cursor-pointer shrink-0"
                 >
                   Dismiss
                 </button>
@@ -1274,7 +1479,7 @@ export default function IngestionSetupWizard({
                   ? "bg-[#ffe1d0] border-[#c67139] shadow-md scale-[1.01]"
                   : uploadError
                   ? "bg-[#fee2e2]/30 border-[#b91c1c] shadow-[2px_2px_0_#b91c1c]"
-                  : "bg-white/90 border-[#201e1d] hover:bg-[#fff7f0] hover:border-[#c67139] shadow-[2px_2px_0_#201e1d]"
+                  : "bg-white border-[#201e1d] hover:bg-[#fff7f0] hover:border-[#c67139] shadow-[2px_2px_0_#201e1d]"
               }`}
             >
               {isReading ? (
@@ -1283,11 +1488,11 @@ export default function IngestionSetupWizard({
                     <Loader2 className="w-7 h-7 animate-spin text-[#f9f4ed]" />
                   </div>
                   <div className="pointer-events-none">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-xs font-black uppercase mb-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-xs font-mono font-bold uppercase mb-1">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       <span>Reading JSON File...</span>
                     </div>
-                    <h4 className="font-heading text-base font-black text-[#201e1d]">
+                    <h4 className="font-adminHeading text-base font-bold text-[#201e1d]">
                       {localReadingFile ? `Parsing ${localReadingFile}` : "Parsing Antigravity Paper..."}
                     </h4>
                     <p className="text-xs font-medium text-[#645c50] mt-1">
@@ -1301,7 +1506,7 @@ export default function IngestionSetupWizard({
                     <Upload className="w-7 h-7" />
                   </div>
                   <div className="pointer-events-none">
-                    <h4 className="font-heading text-base font-black text-[#201e1d]">
+                    <h4 className="font-adminHeading text-base font-bold text-[#201e1d]">
                       Drop Antigravity Agent JSON File Here
                     </h4>
                     <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-1 max-w-lg">
@@ -1310,7 +1515,7 @@ export default function IngestionSetupWizard({
                   </div>
                   <button
                     type="button"
-                    className="mt-1 px-4 py-2 rounded-full bg-[#201e1d] text-[#f9f4ed] text-xs font-heading font-black hover:bg-[#3d3835] active:translate-y-0.5 transition-all shadow-[2px_2px_0_#c67139] cursor-pointer pointer-events-none"
+                    className="mt-1 px-4 py-2 rounded-xl bg-[#201e1d] text-[#f9f4ed] text-xs font-adminHeading font-bold hover:bg-[#3d3835] active:translate-y-0.5 transition-all shadow-[2px_2px_0_#c67139] border-2 border-[#201e1d] cursor-pointer pointer-events-none"
                   >
                     Browse JSON File
                   </button>
@@ -1321,13 +1526,13 @@ export default function IngestionSetupWizard({
 
           {/* Section 3: Antigravity Agent Guide / Cheatsheet Card */}
           <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-5 shadow-[3px_3px_0_#201e1d] flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-2 flex-wrap border-b border-[#dcd3c4] pb-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap border-b-2 border-[#201e1d]/20 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#201e1d] text-[#ffe1d0] flex items-center justify-center shadow-xs">
+                <div className="w-8 h-8 rounded-xl bg-[#201e1d] text-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center shadow-[1px_1px_0_#201e1d]">
                   <Bot className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-heading text-sm sm:text-base font-black text-[#201e1d]">
+                  <h3 className="font-adminHeading text-sm sm:text-base font-bold text-[#201e1d]">
                     Antigravity Autonomous Ingestion Agent
                   </h3>
                   <p className="text-[11px] font-medium text-[#645c50]">
@@ -1342,7 +1547,7 @@ export default function IngestionSetupWizard({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {/* Terminal Command */}
-              <div className="p-4 bg-[#201e1d] text-[#f9f4ed] rounded-xl border border-[#201e1d] flex flex-col justify-between gap-3 shadow-xs">
+              <div className="p-4 bg-[#201e1d] text-[#f9f4ed] rounded-xl border-2 border-[#201e1d] flex flex-col justify-between gap-3 shadow-[2px_2px_0_#201e1d]">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-[#ffe1d0] flex items-center gap-1.5">
                     <Terminal className="w-3.5 h-3.5" />
@@ -1371,9 +1576,9 @@ export default function IngestionSetupWizard({
               </div>
 
               {/* Chat Prompt */}
-              <div className="p-4 bg-[#f0fae1] text-[#201e1d] rounded-xl border-2 border-[#8fa073] flex flex-col justify-between gap-3 shadow-xs">
+              <div className="p-4 bg-[#f0fae1] text-[#201e1d] rounded-xl border-2 border-[#8fa073] flex flex-col justify-between gap-3 shadow-[2px_2px_0_#201e1d]">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#3d472b] flex items-center gap-1.5">
+                  <span className="text-xs font-adminHeading font-bold text-[#3d472b] flex items-center gap-1.5">
                     <Bot className="w-3.5 h-3.5 text-[#56633f]" />
                     In-Chat Agent Instruction
                   </span>
@@ -1385,7 +1590,7 @@ export default function IngestionSetupWizard({
                         "prompt"
                       )
                     }
-                    className="px-2.5 py-1 bg-[#8fa073]/20 hover:bg-[#8fa073]/30 text-[#3d472b] rounded-md text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 bg-[#8fa073]/20 hover:bg-[#8fa073]/30 text-[#3d472b] rounded-md text-[10px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     {copiedPrompt ? <Check className="w-3 h-3 text-[#3d472b]" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedPrompt ? "Copied" : "Copy"}</span>
@@ -1401,16 +1606,16 @@ export default function IngestionSetupWizard({
             </div>
 
             {/* Explanatory Features Banner */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-[#dcd3c4]">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#645c50]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t-2 border-[#201e1d]/10">
+              <div className="flex items-center gap-2 text-xs font-medium text-[#645c50]">
                 <span className="text-base">📐</span>
                 <span>Validates KaTeX math &amp; escapes \$ currency</span>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#645c50]">
+              <div className="flex items-center gap-2 text-xs font-medium text-[#645c50]">
                 <span className="text-base">🖼️</span>
                 <span>Crops 300 DPI diagrams to staging/slices</span>
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#645c50]">
+              <div className="flex items-center gap-2 text-xs font-medium text-[#645c50]">
                 <span className="text-base">⚡</span>
                 <span>Bypasses browser limits and timeouts</span>
               </div>
@@ -1418,12 +1623,12 @@ export default function IngestionSetupWizard({
           </div>
 
           {/* Bottom Action Bar for Agent Workflow */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#dcd3c4] pt-5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t-2 border-[#201e1d] pt-5">
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => jsonInputRef.current?.click()}
-                className="px-4 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5"
+                className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
               >
                 <Upload className="w-3.5 h-3.5 text-[#201e1d]" />
                 <span>Upload Pre-staged JSON</span>
@@ -1440,7 +1645,7 @@ export default function IngestionSetupWizard({
                     paperCode,
                   })
                 }
-                className="px-4 py-2 rounded-full border-[1.5px] border-[#dcd3c4] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#645c50] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5"
+                className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#645c50] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Start Blank Paper</span>
@@ -1451,12 +1656,133 @@ export default function IngestionSetupWizard({
               type="button"
               onClick={fetchStagedPapers}
               disabled={isLoadingStaged}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#eee7db] hover:bg-[#e4dcce] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading font-black text-xs text-[#201e1d] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#eee7db] hover:bg-[#e4dcce] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-adminHeading font-bold text-xs text-[#201e1d] flex items-center justify-center gap-2 transition-all cursor-pointer active:translate-y-0.5 active:shadow-none disabled:opacity-50"
             >
               <RotateCw className={`w-3.5 h-3.5 ${isLoadingStaged ? "animate-spin" : ""}`} />
               <span>Refresh Staged Papers</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Archive Staged Paper Defensive Confirmation Modal */}
+      {paperToArchive && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="archive-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+          onClick={() => setPaperToArchive(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-6 max-w-md w-full shadow-[6px_6px_0_#201e1d] flex flex-col gap-4 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#b91c1c] flex items-center justify-center font-bold text-lg shrink-0 shadow-[1px_1px_0_#201e1d]">
+                <Archive className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="archive-dialog-title" className="font-adminHeading text-base font-bold text-[#201e1d]">
+                  Archive Staged Paper?
+                </h3>
+                <p className="text-xs text-[#645c50] font-mono">
+                  {paperToArchive.id || "paper"}.json
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-white border-2 border-[#201e1d] rounded-xl text-xs space-y-1">
+              <p className="font-adminHeading font-bold text-[#201e1d]">
+                {paperToArchive.subject?.name || paperToArchive.subject?.code || "Cambridge Paper"}
+              </p>
+              <p className="text-[#645c50] font-mono text-[11px]">
+                {paperToArchive.questionsCount ?? 0} Questions · Moving to <span className="font-bold text-[#201e1d]">staging/archive/</span>
+              </p>
+            </div>
+
+            <p className="text-xs text-[#645c50]">
+              Archiving moves this paper to the archive folder so it won't appear in the active staging list. You can view or restore it later using the &ldquo;Show Archived&rdquo; toggle.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t-2 border-[#201e1d]/20">
+              <button
+                type="button"
+                onClick={() => setPaperToArchive(null)}
+                className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmArchivePaper}
+                className="px-4 py-2 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-adminHeading font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex items-center gap-1.5"
+              >
+                <Archive className="w-4 h-4" />
+                <span>Archive Paper</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Reset All Defensive Confirmation Modal */}
+      {showResetConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reset-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+          onClick={() => setShowResetConfirm(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-6 max-w-md w-full shadow-[6px_6px_0_#201e1d] flex flex-col gap-4 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#b91c1c] flex items-center justify-center font-bold text-lg shrink-0 shadow-[1px_1px_0_#201e1d]">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="reset-dialog-title" className="font-adminHeading text-base font-bold text-[#201e1d]">
+                  Reset Ingestion Studio?
+                </h3>
+                <p className="text-xs text-[#645c50]">
+                  Clear staged uploads and draft state
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#645c50]">
+              Are you sure you want to clear your current selection, uploaded PDFs, and any uncommitted staging state? This cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t-2 border-[#201e1d]/20">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
+              >
+                Keep Working
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetAll}
+                className="px-4 py-2 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-adminHeading font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Yes, Reset All</span>
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>
