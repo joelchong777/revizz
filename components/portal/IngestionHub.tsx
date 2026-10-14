@@ -50,6 +50,7 @@ export default function IngestionHub() {
     setCorrectOption,
     publishToSupabase,
     archiveStagedPaper,
+    deleteStagedPaper,
     setIsSettingsModalOpen,
     setPublishStatus,
     setPublishMessage,
@@ -329,6 +330,7 @@ export default function IngestionHub() {
               onSaveDraft={() => saveDraftToLocalStorage()}
               onReturnToStudio={() => setIsSetupOpen(false)}
               onArchiveStagedPaper={archiveStagedPaper}
+              onDeleteStagedPaper={deleteStagedPaper}
             />
           ) : null
         }

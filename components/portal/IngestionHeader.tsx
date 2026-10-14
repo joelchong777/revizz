@@ -16,6 +16,7 @@ import {
   Edit2,
   Settings,
   Archive,
+  Trash2,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -27,6 +28,7 @@ export interface IngestionHeaderProps {
   publishStatus: "idle" | "validating" | "publishing" | "success" | "error";
   publishMessage?: string;
   onArchiveStagedPaper?: (paperId: string) => Promise<{ success: boolean; error?: string }>;
+  onDeleteStagedPaper?: (paperId: string) => Promise<{ success: boolean; error?: string }>;
 
   // Setup mode controls
   onReturnToStudio?: () => void;
@@ -76,11 +78,15 @@ export default function IngestionHeader({
   onSaveDraft,
   isDraftSaved = false,
   onArchiveStagedPaper,
+  onDeleteStagedPaper,
 }: IngestionHeaderProps) {
   const [justSaved, setJustSaved] = useState(false);
   const [archiveState, setArchiveState] = useState<'idle' | 'archiving' | 'archived' | 'error'>('idle');
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [deleteState, setDeleteState] = useState<'idle' | 'deleting' | 'deleted' | 'error'>('idle');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const performArchive = async () => {
     if (!paper?.id) return;
@@ -106,6 +112,36 @@ export default function IngestionHeader({
     } catch (err: any) {
       setArchiveState('error');
       setArchiveError(err?.message || 'Error archiving paper');
+    }
+  };
+
+  const performDelete = async () => {
+    if (!paper?.id) return;
+    setShowDeleteConfirm(false);
+    setDeleteState('deleting');
+    setDeleteError(null);
+    try {
+      if (onDeleteStagedPaper) {
+        const res = await onDeleteStagedPaper(paper.id);
+        if (!res.success) throw new Error(res.error || 'Failed to delete staged paper');
+      } else {
+        const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paper.id)}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: paper.id }),
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok || !result.success) {
+          throw new Error(result.error || `Delete failed with status ${res.status}`);
+        }
+      }
+      setDeleteState('deleted');
+      if (onSwitchPaper) {
+        onSwitchPaper();
+      }
+    } catch (err: any) {
+      setDeleteState('error');
+      setDeleteError(err?.message || 'Error deleting paper');
     }
   };
 
@@ -345,6 +381,24 @@ export default function IngestionHeader({
             </button>
           )}
 
+          {/* Delete Staged Paper Action */}
+          {paper && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleteState === "deleting"}
+              className="p-2 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#fee2e2] text-[#645c50] hover:text-[#b91c1c] hover:border-[#b91c1c] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50"
+              title="Delete paper permanently from staging"
+              aria-label="Delete staged paper"
+            >
+              {deleteState === "deleting" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#b91c1c]" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+
           {/* Primary CTA: Neobrutalist Upsert to Supabase Button */}
           <motion.button
             type="button"
@@ -480,6 +534,84 @@ export default function IngestionHeader({
                 className="px-4 py-2 rounded-full border-2 border-[#201e1d] bg-[#065f46] hover:bg-[#044e39] text-white text-xs font-adminHeading font-bold transition-colors cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
               >
                 Confirm Archive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Defensive Delete Confirmation Dialog (§13 Resilience) */}
+      {showDeleteConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="header-delete-dialog-title"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-6 max-w-md w-full shadow-[4px_4px_0_#201e1d] flex flex-col gap-4 font-body animate-in fade-in zoom-in-95 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#b91c1c] flex items-center justify-center shrink-0 shadow-[2px_2px_0_#201e1d]">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="header-delete-dialog-title" className="font-adminHeading text-base font-bold text-[#201e1d]">
+                  Delete Staged Paper?
+                </h3>
+                <p className="text-xs text-[#645c50] font-mono">
+                  {paper?.id || "paper"}.json
+                </p>
+              </div>
+            </div>
+
+            {/* Defensive Paper Preview Card */}
+            <div className="p-3 bg-white border-2 border-[#201e1d] rounded-xl flex items-center justify-between text-xs font-mono shadow-[2px_2px_0_#201e1d]">
+              <div className="flex items-center gap-2 truncate">
+                <span>{subjectIcon}</span>
+                <span className="font-bold text-[#201e1d]">
+                  {subjectCode}/{paperCode}
+                </span>
+                <span className="text-[#82796a] truncate">
+                  {subjectName}
+                </span>
+              </div>
+              <span className="px-2 py-0.5 bg-[#fef3c7] text-[#92400e] border border-[#d97706]/40 rounded-full text-[10px] font-bold shrink-0">
+                {totalCount} Questions
+              </span>
+            </div>
+
+            <p className="text-xs text-[#b91c1c] font-medium leading-relaxed">
+              This will permanently delete this paper from your local staging environment. This action cannot be undone.
+            </p>
+
+            {deleteError && (
+              <p className="text-xs text-[#b91c1c] bg-[#fee2e2] p-2 rounded-lg border border-[#b91c1c]">
+                {deleteError}
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#dcd3c4]">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] transition-colors cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteState === "deleting"}
+                onClick={performDelete}
+                className="px-4 py-2 rounded-full border-2 border-[#201e1d] bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-adminHeading font-bold transition-colors cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {deleteState === "deleting" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                <span>Delete Permanently</span>
               </button>
             </div>
           </div>

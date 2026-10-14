@@ -20,7 +20,9 @@ import {
   Dna,
   BookOpen,
   Check,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import { playPop, playChime, playBuzzer } from '@/lib/audio';
 
@@ -93,6 +95,8 @@ export default function StagedPapersQueue({
   const [isDragging, setIsDragging] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isExportingId, setIsExportingId] = useState<string | null>(null);
+  const [paperToDelete, setPaperToDelete] = useState<StagedPaperItem | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -135,6 +139,48 @@ export default function StagedPapersQueue({
   useEffect(() => {
     fetchPapers();
   }, [fetchPapers]);
+
+  // Handle Delete Staged Paper
+  const handleDeletePaper = async (paperId: string) => {
+    setIsDeletingId(paperId);
+    try {
+      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: paperId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
+        playChime();
+        setUploadMessage({
+          type: 'success',
+          text: `Permanently deleted ${paperId}.json from staging.`,
+        });
+        await fetchPapers();
+      } else {
+        playBuzzer();
+        setUploadMessage({
+          type: 'error',
+          text: `Failed to delete paper: ${data?.error || `HTTP ${res.status}`}`,
+        });
+      }
+    } catch (err: any) {
+      playBuzzer();
+      setUploadMessage({
+        type: 'error',
+        text: `Delete error: ${err?.message || 'Network error'}`,
+      });
+    } finally {
+      setIsDeletingId(null);
+    }
+  };
+
+  const confirmDeletePaper = async () => {
+    if (!paperToDelete?.id) return;
+    const targetId = paperToDelete.id;
+    setPaperToDelete(null);
+    await handleDeletePaper(targetId);
+  };
 
   // Handle Export JSON
   const handleExportJSON = async (e: React.MouseEvent, paperId: string) => {
@@ -552,12 +598,12 @@ export default function StagedPapersQueue({
                     <ArrowRight className="w-3.5 h-3.5 ml-auto opacity-80" />
                   </button>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-2">
                     {/* Open in Full Studio */}
                     <button
                       type="button"
                       onClick={(e) => handleOpenStudio(e, paper.id)}
-                      className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-[#f4ebe1] text-[#201e1d] border-2 border-[#201e1d] font-bold text-[11px] shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate"
+                      className="flex-1 py-1.5 px-2.5 rounded-xl bg-white hover:bg-[#f4ebe1] text-[#201e1d] border-2 border-[#201e1d] font-bold text-[11px] shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer truncate"
                       title="Open in Cambridge Ingestion Studio"
                     >
                       <ExternalLink className="w-3.5 h-3.5 text-[#c67139] shrink-0" />
@@ -569,17 +615,116 @@ export default function StagedPapersQueue({
                       type="button"
                       onClick={(e) => handleExportJSON(e, paper.id)}
                       disabled={isExportingId === paper.id}
-                      className="py-1.5 px-2.5 rounded-xl bg-[#eee7db] hover:bg-[#e2d9ca] text-[#201e1d] border-2 border-[#201e1d] font-bold text-[11px] shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 truncate"
+                      className="flex-1 py-1.5 px-2.5 rounded-xl bg-[#eee7db] hover:bg-[#e2d9ca] text-[#201e1d] border-2 border-[#201e1d] font-bold text-[11px] shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 truncate"
                       title="Export clean Cambridge JSON format"
                     >
                       <Download className={`w-3.5 h-3.5 ${isExportingId === paper.id ? 'animate-bounce' : ''}`} />
                       <span className="truncate">Export JSON</span>
+                    </button>
+
+                    {/* Delete Staged Paper */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPaperToDelete(paper);
+                      }}
+                      disabled={isDeletingId === paper.id}
+                      className="p-1.5 px-2.5 rounded-xl bg-white hover:bg-[#fee2e2] text-[#645c50] hover:text-[#b91c1c] border-2 border-[#201e1d] hover:border-[#b91c1c] shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 shrink-0"
+                      title={`Delete ${paper.id}.json permanently`}
+                      aria-label={`Delete ${paper.id}.json`}
+                    >
+                      {isDeletingId === paper.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#b91c1c]" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Defensive Delete Confirmation Dialog */}
+      {paperToDelete && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="queue-delete-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+          onClick={() => setPaperToDelete(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-6 max-w-md w-full shadow-[6px_6px_0_#201e1d] flex flex-col gap-4 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#b91c1c] flex items-center justify-center font-bold text-lg shrink-0 shadow-[1px_1px_0_#201e1d]">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="queue-delete-dialog-title" className="font-heading font-black text-base text-[#201e1d]">
+                  Delete Paper from Staging?
+                </h3>
+                <p className="text-xs text-[#645c50] font-mono">
+                  {paperToDelete.id || 'paper'}.json
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-white border-2 border-[#201e1d] rounded-xl text-xs space-y-1.5 shadow-[2px_2px_0_#201e1d]">
+              <div className="flex items-center justify-between">
+                <p className="font-heading font-bold text-[#201e1d]">
+                  {paperToDelete.subject?.name || paperToDelete.subject?.code || 'Cambridge Paper'}
+                </p>
+                <span className="font-mono font-bold text-[11px] px-2 py-0.5 rounded-md border border-[#201e1d] bg-[#f9f4ed]">
+                  {paperToDelete.paper?.paper_code || paperToDelete.id.split('_')[2] || 'Paper'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[#645c50] font-mono text-[11px]">
+                <span>{paperToDelete.questionsCount ?? 0} Questions</span>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                    paperToDelete.lifecycle_state === 'published'
+                      ? 'bg-[#d1fae5] text-[#065f46] border-[#059669]'
+                      : 'bg-[#fef3c7] text-[#92400e] border-[#d97706]'
+                  }`}
+                >
+                  {paperToDelete.lifecycle_state === 'published' ? 'PUBLISHED' : 'DRAFT'}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#b91c1c] font-medium leading-relaxed">
+              This will permanently delete this paper from your local staging environment. This action cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t-2 border-[#201e1d]/20">
+              <button
+                type="button"
+                onClick={() => setPaperToDelete(null)}
+                className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-heading font-bold text-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingId === paperToDelete.id}
+                onClick={confirmDeletePaper}
+                className="px-4 py-2 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-heading font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeletingId === paperToDelete.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                <span>Delete Permanently</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

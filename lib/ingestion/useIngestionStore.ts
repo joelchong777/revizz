@@ -101,6 +101,7 @@ export interface IngestionActions {
   toggleStatus: (idx: number) => void;
   publishToSupabase: () => Promise<{ success: boolean; data?: PublishReceipt; receipt?: PublishReceipt; error?: string }>;
   archiveStagedPaper: (paperId: string) => Promise<{ success: boolean; error?: string }>;
+  deleteStagedPaper: (paperId: string) => Promise<{ success: boolean; error?: string }>;
   saveDraftToLocalStorage: (storageKey?: string) => boolean;
   loadDraftFromLocalStorage: (storageKey?: string) => boolean;
   clearDraft: (storageKey?: string) => void;
@@ -1010,6 +1011,51 @@ const actions: IngestionActions = {
       return {
         success: false,
         error: err?.message || 'Network error while archiving staged paper.',
+      };
+    }
+  },
+
+  async deleteStagedPaper(paperId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: paperId }),
+      });
+
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.success) {
+        return {
+          success: false,
+          error: result.error || `Delete failed with status ${res.status}`,
+        };
+      }
+
+      // If the deleted paper matches the currently loaded paper in useIngestionStore, reset draft state
+      const currentPaper = getState().paper;
+      const cleanPaperId = paperId.replace(/\.json$/i, '').trim();
+      const currentId = currentPaper?.id?.replace(/\.json$/i, '').trim();
+      const derivedId = currentPaper
+        ? `${currentPaper.subject?.code}_${currentPaper.paper?.series}${String(currentPaper.paper?.year).slice(-2)}_${currentPaper.paper?.paper_code}`
+        : null;
+
+      if (
+        currentPaper &&
+        (currentId === cleanPaperId ||
+          derivedId === cleanPaperId ||
+          (currentPaper.source_qp_filename && currentPaper.source_qp_filename.includes(cleanPaperId)))
+      ) {
+        actions.resetStore();
+        actions.clearDraft();
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err?.message || 'Network error while deleting staged paper.',
       };
     }
   },

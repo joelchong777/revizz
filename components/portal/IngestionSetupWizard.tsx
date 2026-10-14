@@ -151,6 +151,8 @@ export default function IngestionSetupWizard({
   const [archivingPaperId, setArchivingPaperId] = useState<string | null>(null);
   const [archiveToast, setArchiveToast] = useState<string | null>(null);
   const [paperToArchive, setPaperToArchive] = useState<StagedPaperSummary | null>(null);
+  const [paperToDelete, setPaperToDelete] = useState<StagedPaperSummary | null>(null);
+  const [isDeletingPaperId, setIsDeletingPaperId] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
   // Dragging state for Agent JSON Dropzone & reading progress
@@ -254,6 +256,54 @@ export default function IngestionSetupWizard({
     const paperId = paperToArchive.id;
     setPaperToArchive(null);
     await handleArchivePaper(paperId);
+  };
+
+  const handleDeletePaper = async (paperId: string, isArchived?: boolean) => {
+    setIsDeletingPaperId(paperId);
+    try {
+      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: paperId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
+        setArchiveToast(
+          `Permanently deleted ${paperId}.json from ${isArchived ? "archives" : "staging"}`
+        );
+        setTimeout(() => setArchiveToast(null), 4000);
+        await fetchStagedPapers(showArchived);
+
+        const cleanPaperId = paperId.replace(/\.json$/i, "").trim();
+        const activeId = activePaper?.id?.replace(/\.json$/i, "").trim();
+        const activeDerivedId = activePaper
+          ? `${activePaper.subject?.code}_${activePaper.paper?.series}${String(activePaper.paper?.year).slice(-2)}_${activePaper.paper?.paper_code}`
+          : null;
+
+        if (
+          activePaper &&
+          (activeId === cleanPaperId ||
+            activeDerivedId === cleanPaperId ||
+            (activePaper.source_qp_filename && activePaper.source_qp_filename.includes(cleanPaperId)))
+        ) {
+          if (onResetAll) onResetAll();
+          else if (onDiscardDraft) onDiscardDraft();
+        }
+      } else {
+        alert(`Failed to delete paper: ${data?.error || `HTTP ${res.status}`}`);
+      }
+    } catch (err: any) {
+      alert(`Delete error: ${err?.message || "Network error"}`);
+    } finally {
+      setIsDeletingPaperId(null);
+    }
+  };
+
+  const confirmDeletePaper = async () => {
+    if (!paperToDelete?.id) return;
+    const target = paperToDelete;
+    setPaperToDelete(null);
+    await handleDeletePaper(target.id, target.is_archived);
   };
 
   const confirmResetAll = () => {
@@ -1318,6 +1368,7 @@ export default function IngestionSetupWizard({
                   const qCount = paperItem.questionsCount ?? 0;
                   const isLoadingThis = loadingPaperId === paperItem.id;
                   const isArchivingThis = archivingPaperId === paperItem.id;
+                  const isDeletingThis = isDeletingPaperId === paperItem.id;
 
                   return (
                     <div
@@ -1372,7 +1423,7 @@ export default function IngestionSetupWizard({
                       <div className="flex items-center gap-2 mt-auto">
                         <button
                           type="button"
-                          disabled={isLoadingThis || isArchivingThis}
+                          disabled={isLoadingThis || isArchivingThis || isDeletingThis}
                           onClick={() => handleLoadStagedPaper(paperItem)}
                           className="flex-1 py-2.5 px-4 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none font-adminHeading font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                         >
@@ -1394,7 +1445,7 @@ export default function IngestionSetupWizard({
                         {paperItem.is_archived ? (
                           <button
                             type="button"
-                            disabled={isLoadingThis || isArchivingThis}
+                            disabled={isLoadingThis || isArchivingThis || isDeletingThis}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleUnarchivePaper(paperItem.id);
@@ -1412,7 +1463,7 @@ export default function IngestionSetupWizard({
                         ) : (
                           <button
                             type="button"
-                            disabled={isLoadingThis || isArchivingThis}
+                            disabled={isLoadingThis || isArchivingThis || isDeletingThis}
                             onClick={(e) => {
                               e.stopPropagation();
                               setPaperToArchive(paperItem);
@@ -1428,6 +1479,24 @@ export default function IngestionSetupWizard({
                             )}
                           </button>
                         )}
+
+                        <button
+                          type="button"
+                          disabled={isLoadingThis || isArchivingThis || isDeletingThis}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPaperToDelete(paperItem);
+                          }}
+                          className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#fee2e2] text-[#645c50] hover:text-[#b91c1c] shadow-[2px_2px_0_#201e1d] hover:border-[#b91c1c] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                          title={`Delete ${paperItem.id}.json permanently`}
+                          aria-label={`Delete ${paperItem.id}.json`}
+                        >
+                          {isDeletingThis ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-[#b91c1c]" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
                       </div>
                     </div>
                   );
@@ -1765,6 +1834,92 @@ export default function IngestionSetupWizard({
               >
                 <Archive className="w-4 h-4" />
                 <span>Archive Paper</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Staged / Archived Paper Defensive Confirmation Modal */}
+      {paperToDelete && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+          onClick={() => setPaperToDelete(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-6 max-w-md w-full shadow-[6px_6px_0_#201e1d] flex flex-col gap-4 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#b91c1c] flex items-center justify-center font-bold text-lg shrink-0 shadow-[1px_1px_0_#201e1d]">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="delete-dialog-title" className="font-adminHeading text-base font-bold text-[#201e1d]">
+                  {paperToDelete.is_archived ? "Delete Paper from Archives?" : "Delete Paper from Staging?"}
+                </h3>
+                <p className="text-xs text-[#645c50] font-mono">
+                  {paperToDelete.id || "paper"}.json
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-white border-2 border-[#201e1d] rounded-xl text-xs space-y-1.5 shadow-[2px_2px_0_#201e1d]">
+              <div className="flex items-center justify-between">
+                <p className="font-adminHeading font-bold text-[#201e1d]">
+                  {paperToDelete.subject?.name || paperToDelete.subject?.code || "Cambridge Paper"}
+                </p>
+                <span className="font-mono font-bold text-[11px] px-2 py-0.5 rounded-md border border-[#201e1d] bg-[#f9f4ed]">
+                  {paperToDelete.paper?.paper_code || paperToDelete.id.split("_")[2] || "Paper"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[#645c50] font-mono text-[11px]">
+                <span>{paperToDelete.questionsCount ?? 0} Questions</span>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                    paperToDelete.is_archived
+                      ? "bg-[#fee2e2] text-[#991b1b] border-[#b91c1c]"
+                      : paperToDelete.is_published
+                      ? "bg-[#d1fae5] text-[#065f46] border-[#059669]"
+                      : "bg-[#fef3c7] text-[#92400e] border-[#d97706]"
+                  }`}
+                >
+                  {paperToDelete.is_archived ? "ARCHIVED" : paperToDelete.is_published ? "PUBLISHED" : "DRAFT"}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#b91c1c] font-medium leading-relaxed">
+              This will permanently delete this paper from your local staging environment. This action cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t-2 border-[#201e1d]/20">
+              <button
+                type="button"
+                onClick={() => setPaperToDelete(null)}
+                className="px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-adminHeading font-bold text-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingPaperId === paperToDelete.id}
+                onClick={confirmDeletePaper}
+                className="px-4 py-2 rounded-xl bg-[#b91c1c] hover:bg-[#991b1b] text-white text-xs font-adminHeading font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeletingPaperId === paperToDelete.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                <span>Delete Permanently</span>
               </button>
             </div>
           </motion.div>
