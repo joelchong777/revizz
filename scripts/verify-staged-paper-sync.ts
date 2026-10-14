@@ -22,12 +22,11 @@
 import fs from 'fs';
 import path from 'path';
 import { NextRequest } from 'next/server';
+import { GET, POST } from '../app/api/ingest/staged-paper/route';
 import {
-  GET,
-  POST,
   fetchPersistentPaperStates,
   savePersistentPaperStates,
-} from '../app/api/ingest/staged-paper/route';
+} from '../lib/ingestion/stagedPaperStorage';
 import { supabase } from '../lib/supabaseClient';
 
 // Test counters
