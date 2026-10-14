@@ -23,6 +23,7 @@ export interface AppAdminNavProps {
   isOpen?: boolean;
   onClose?: () => void;
   userDisplayName?: string;
+  flaggedCount?: number;
 }
 
 export default function AppAdminNav({
@@ -32,6 +33,7 @@ export default function AppAdminNav({
   isOpen = false,
   onClose,
   userDisplayName = 'Administrator',
+  flaggedCount = 0,
 }: AppAdminNavProps) {
   const handleNavClick = (tabKey: string) => {
     if (onSelectTab) {
@@ -242,9 +244,11 @@ export default function AppAdminNav({
                 {!compact && (
                   <>
                     <span className="flex-1 min-w-0 truncate">Flagged Questions</span>
-                    <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
-                      8
-                    </span>
+                    {flaggedCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
+                        {flaggedCount}
+                      </span>
+                    )}
                   </>
                 )}
               </button>

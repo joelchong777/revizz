@@ -29,6 +29,7 @@ export interface AdminNavProps {
   onClose?: () => void;
   userDisplayName?: string;
   isAdmin?: boolean;
+  flaggedCount?: number;
 }
 
 export default function AdminNav({
@@ -43,6 +44,7 @@ export default function AdminNav({
   onClose,
   userDisplayName,
   isAdmin = false,
+  flaggedCount = 0,
 }: AdminNavProps) {
   const isTeacher = true;
   const agentLine = '3 tasks need approval';
@@ -305,9 +307,11 @@ export default function AdminNav({
               {!compact && (
                 <>
                   <span className="flex-1 min-w-0 truncate">Flagged questions</span>
-                  <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
-                    8
-                  </span>
+                  {flaggedCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
+                      {flaggedCount}
+                    </span>
+                  )}
                 </>
               )}
             </button>
