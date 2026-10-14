@@ -183,12 +183,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(FileText, 'ingestion')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Ingestion Studio</span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-bold border border-[#201e1d]/20 shrink-0 whitespace-nowrap">
-                      1 staged
-                    </span>
-                  </>
+                  <span className="flex-1 min-w-0 truncate">Ingestion Studio</span>
                 )}
               </button>
 
