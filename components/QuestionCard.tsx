@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { Question } from '../hooks/useQuizGame';
+import { Question, resolveDiagramUrl } from '@/lib/questions';
 import { cn } from '@/lib/utils';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 
@@ -58,7 +58,8 @@ export function QuestionCard({
   }, []);
 
   const rawDiagramUrl = question.image_url || question.diagram?.image_url;
-  const diagramUrl = question.has_diagram === false ? undefined : rawDiagramUrl;
+  const resolvedUrl = resolveDiagramUrl(rawDiagramUrl);
+  const diagramUrl = question.has_diagram === false ? undefined : resolvedUrl;
   const altDescription =
     question.diagram?.alt_description ||
     (status === 'unanswered' ? 'Question diagram' : question.citation) ||

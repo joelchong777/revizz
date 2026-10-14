@@ -25,7 +25,8 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
-import { useQuestions, useTopics, Question } from '@/lib/questions';
+import { useQuestions, useTopics, Question, resolveDiagramUrl } from '@/lib/questions';
+import { CompilerDiagramPreview } from './CompilerDiagramPreview';
 import { saveTestDraft, listTestDrafts, autoSelectQuestions } from '@/lib/testCompiler';
 import {
   SelectionFilter,
@@ -386,7 +387,7 @@ export default function TestCompilerHub() {
                     <div className="mb-4">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={q.image_url}
+                        src={resolveDiagramUrl(q.image_url) || q.image_url}
                         alt="Question diagram"
                         className="max-h-32 rounded-lg border-[1.5px] border-[#dcd3c4] object-contain bg-white p-1"
                       />

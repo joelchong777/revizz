@@ -1,6 +1,8 @@
 import type { Question } from '../hooks/useQuizGame';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
+import { resolveDiagramUrl } from './resolveDiagramUrl';
+export { resolveDiagramUrl };
 export type { Question };
 
 export interface SyllabusTopic {
@@ -549,7 +551,8 @@ export function mapDbQuestionToQuestion(row: any): Question {
   }
 
   const diagramMeta = row.diagram_metadata;
-  const imageUrl = row.image_url || diagramMeta?.image_url || undefined;
+  const rawImageUrl = row.image_url || diagramMeta?.image_url || undefined;
+  const imageUrl = resolveDiagramUrl(rawImageUrl);
   const hasDiagram = Boolean(imageUrl || diagramMeta?.has_diagram);
 
   return {
@@ -562,7 +565,9 @@ export function mapDbQuestionToQuestion(row: any): Question {
     topic_id: row.topic_id || undefined,
     has_diagram: hasDiagram,
     image_url: imageUrl,
-    diagram: diagramMeta || (hasDiagram ? { has_diagram: true, image_url: imageUrl } : undefined),
+    diagram: diagramMeta
+      ? { ...diagramMeta, image_url: imageUrl || diagramMeta.image_url }
+      : (hasDiagram ? { has_diagram: true, image_url: imageUrl } : undefined),
     explanation_markdown: row.explanation_markdown || undefined,
   };
 }
