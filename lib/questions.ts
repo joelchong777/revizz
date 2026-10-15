@@ -502,6 +502,84 @@ export function getQuestionsByIds(ids: string[], pool?: Question[]): Question[] 
   return source.filter((q) => set.has(q.id));
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Permanently deletes questions from Supabase by their IDs.
+ * Calls /api/questions/delete with a fallback to direct Supabase client call.
+ * Prunes the internal _cachedQuestions array to maintain runtime consistency.
+ */
+export async function deleteQuestionsFromDb(
+  questionIds: string[]
+): Promise<{ success: boolean; count: number; error?: string }> {
+  if (!questionIds || questionIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const idsSet = new Set(questionIds);
+
+  // 1. Attempt API route deletion via fetch
+  try {
+    const response = await fetch('/api/questions/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ questionIds }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        // Synchronize runtime cache
+        _cachedQuestions = _cachedQuestions.filter((q) => !idsSet.has(q.id));
+        return {
+          success: true,
+          count: typeof data.count === 'number' ? data.count : questionIds.length,
+        };
+      } else {
+        throw new Error(data.error || 'API deletion reported failure');
+      }
+    } else {
+      const errData = await response.json().catch(() => null);
+      throw new Error(errData?.error || `API returned status ${response.status}`);
+    }
+  } catch (apiError: any) {
+    // 2. Fallback: Direct Supabase client deletion
+    try {
+      const uuidIds = questionIds.filter((id) => UUID_REGEX.test(id));
+      if (uuidIds.length > 0) {
+        const { error } = await supabase
+          .from('questions')
+          .delete()
+          .in('id', uuidIds);
+
+        if (error) {
+          return {
+            success: false,
+            count: 0,
+            error: error.message || 'Direct Supabase deletion failed',
+          };
+        }
+      }
+
+      // Synchronize runtime cache
+      _cachedQuestions = _cachedQuestions.filter((q) => !idsSet.has(q.id));
+      return {
+        success: true,
+        count: questionIds.length,
+      };
+    } catch (fallbackError: any) {
+      return {
+        success: false,
+        count: 0,
+        error: fallbackError?.message || apiError?.message || 'Deletion failed',
+      };
+    }
+  }
+}
+
 /**
  * Shuffles an array of questions using the Fisher-Yates algorithm.
  * Returns a new shuffled array without mutating the original.

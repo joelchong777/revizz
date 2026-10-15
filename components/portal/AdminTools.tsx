@@ -21,7 +21,14 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuestions, useTopics, Question, CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
+import { 
+  useQuestions, 
+  useTopics, 
+  deleteQuestionsFromDb, 
+  Question, 
+  CAMBRIDGE_QUESTIONS, 
+  CAMBRIDGE_TOPICS 
+} from '@/lib/questions';
 import { fetchSubjectsFromDb } from '@/lib/subjects';
 
 export type BankItemStatus = 'Live' | 'Agent draft' | 'Needs review' | 'Flagged';
@@ -204,7 +211,7 @@ export default function AdminTools({
   initialView = 'assign',
   onOpenEditor 
 }: AdminToolsProps) {
-  const { questions: dbQuestions } = useQuestions();
+  const { questions: dbQuestions, refetch: refetchQuestions } = useQuestions();
   const { topics: dbTopics } = useTopics();
   const [activeSubTab, setActiveSubTab] = useState<'assign' | 'bank' | 'importer'>(initialView);
 
@@ -272,6 +279,7 @@ export default function AdminTools({
     isOpen: boolean;
     type: 'delete' | 'status' | 'topic';
     payload?: string;
+    singleId?: string;
   }
 
   const [confirmationModal, setConfirmationModal] = useState<ConfirmationModalState>({
@@ -504,31 +512,92 @@ export default function AdminTools({
     return bankQuestions.filter((q) => selectedIds.has(q.id));
   }, [bankQuestions, selectedIds]);
 
-  const handleOpenConfirmModal = (type: 'delete' | 'status' | 'topic', payload?: string) => {
+  const modalCount =
+    confirmationModal.type === 'delete' && confirmationModal.singleId
+      ? 1
+      : selectedIds.size;
+
+  const modalPreviewItems = useMemo(() => {
+    if (confirmationModal.type === 'delete' && confirmationModal.singleId) {
+      return bankQuestions.filter((q) => q.id === confirmationModal.singleId);
+    }
+    return selectedItemsPreview;
+  }, [confirmationModal, bankQuestions, selectedItemsPreview]);
+
+  const handleOpenConfirmModal = (type: 'delete' | 'status' | 'topic', payload?: string, singleId?: string) => {
     setConfirmationModal({
       isOpen: true,
       type,
       payload,
+      singleId,
+    });
+  };
+
+  const handleOpenDeleteSingle = (id: string) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'delete',
+      singleId: id,
+      payload: id,
     });
   };
 
   const handleConfirmMassAction = () => {
-    const count = selectedIds.size;
+    const idsToDelete =
+      confirmationModal.type === 'delete' && confirmationModal.singleId
+        ? [confirmationModal.singleId]
+        : Array.from(selectedIds);
+
+    const count = confirmationModal.type === 'delete' ? idsToDelete.length : selectedIds.size;
     if (count === 0) {
       setConfirmationModal({ isOpen: false, type: 'delete' });
       return;
     }
 
     if (confirmationModal.type === 'delete') {
+      const idsSet = new Set(idsToDelete);
+
+      // Optimistically update bankQuestions (filtering out deleted IDs) and clamp bankPage
       setBankQuestions((prev) => {
-        const updated = prev.filter((q) => !selectedIds.has(q.id));
+        const updated = prev.filter((q) => !idsSet.has(q.id));
         const newMaxPage = Math.max(1, Math.ceil(updated.length / pageSize));
         setBankPage((p) => Math.min(p, newMaxPage));
         return updated;
       });
-      setSelectedIds(new Set());
+
+      // Clear selectedIds and close confirmation modal
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        idsToDelete.forEach((id) => next.delete(id));
+        return next;
+      });
       setConfirmationModal({ isOpen: false, type: 'delete' });
-      showNotification(`Deleted ${count} question${count === 1 ? '' : 's'} from question bank`);
+
+      // Feedback notification
+      showNotification(`Deleted ${count} question${count === 1 ? '' : 's'} from Question Bank & Supabase`);
+
+      // Asynchronously delete from Supabase and sync
+      (async () => {
+        try {
+          const res = await deleteQuestionsFromDb(idsToDelete);
+          if (!res.success) {
+            showNotification(`Failed to delete question(s) from Supabase: ${res.error || 'Unknown error'}`);
+            const reloaded = await refetchQuestions();
+            if (reloaded && reloaded.length > 0) {
+              setBankQuestions(createInitialBankItems(reloaded));
+            }
+          } else {
+            // On successful deletion, call refetchQuestions() in the background to ensure dbQuestions is in sync
+            refetchQuestions();
+          }
+        } catch (err: any) {
+          showNotification(`Failed to delete question(s) from Supabase: ${err?.message || 'Unknown error'}`);
+          const reloaded = await refetchQuestions();
+          if (reloaded && reloaded.length > 0) {
+            setBankQuestions(createInitialBankItems(reloaded));
+          }
+        }
+      })();
     } else if (confirmationModal.type === 'status') {
       const newStatus = confirmationModal.payload as BankItemStatus;
       setBankQuestions((prev) =>
@@ -1048,9 +1117,9 @@ export default function AdminTools({
           {/* Bank Table */}
           <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[880px]">
+              <div className="min-w-[920px]">
                 {/* Table Header with Master Checkbox */}
-                <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_120px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
+                <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
                   <div className="flex items-center justify-center">
                     <input
                       type="checkbox"
@@ -1069,6 +1138,7 @@ export default function AdminTools({
                   <span>1st try</span>
                   <span>Status</span>
                   <span>Updated</span>
+                  <span className="text-center">Action</span>
                 </div>
 
                 {/* Selection helper banner */}
@@ -1125,7 +1195,7 @@ export default function AdminTools({
                         <div
                           key={item.id}
                           onClick={() => onOpenEditor?.(item.id)}
-                          className={`grid grid-cols-[38px_120px_2.4fr_1.1fr_1.2fr_0.7fr_0.6fr_0.9fr_0.6fr] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-colors px-1 ${
+                          className={`grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-colors px-1 ${
                             isSelected
                               ? 'bg-[#ffe1d0]/50 border-l-4 border-[#c67139]'
                               : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
@@ -1168,6 +1238,23 @@ export default function AdminTools({
                             </span>
                           </span>
                           <span className="text-[#645c50]">{item.upd}</span>
+                          <div
+                            className="flex items-center justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenDeleteSingle(item.id);
+                              }}
+                              aria-label={`Delete question ${item.id}`}
+                              title={`Delete question ${item.id}`}
+                              className="p-1.5 rounded-lg border border-transparent hover:border-[#e0533c]/40 hover:bg-[#fde8e8] text-[#8c8275] hover:text-[#e0533c] transition-all cursor-pointer active:translate-y-0.5"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       );
                     })
@@ -1404,7 +1491,7 @@ export default function AdminTools({
                     <div className="flex-1 min-w-0">
                       <h3 id="confirm-modal-title" className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
                         {confirmationModal.type === 'delete' &&
-                          `Delete ${selectedIds.size} Question${selectedIds.size === 1 ? '' : 's'}?`}
+                          `Delete ${modalCount} Question${modalCount === 1 ? '' : 's'}?`}
                         {confirmationModal.type === 'status' &&
                           `Change Status for ${selectedIds.size} Question${selectedIds.size === 1 ? '' : 's'}?`}
                         {confirmationModal.type === 'topic' &&
@@ -1412,7 +1499,7 @@ export default function AdminTools({
                       </h3>
                       <p id="confirm-modal-desc" className="text-xs sm:text-sm text-[#645c50] mt-1 font-medium leading-snug">
                         {confirmationModal.type === 'delete' &&
-                          `This will permanently remove ${selectedIds.size} selected question${selectedIds.size === 1 ? '' : 's'} from the active question bank. This action cannot be undone.`}
+                          `This will permanently remove ${modalCount} selected question${modalCount === 1 ? '' : 's'} from the active question bank and Supabase. This action cannot be undone.`}
                         {confirmationModal.type === 'status' &&
                           `This will update the status of ${selectedIds.size} selected question${selectedIds.size === 1 ? '' : 's'} to "${confirmationModal.payload}".`}
                         {confirmationModal.type === 'topic' &&
@@ -1424,10 +1511,10 @@ export default function AdminTools({
                   {/* Selected Items Preview */}
                   <div className="flex flex-col gap-1.5 flex-1 min-h-0">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
-                      Affected Questions ({selectedIds.size})
+                      Affected Questions ({modalCount})
                     </span>
                     <div className="max-h-48 overflow-y-auto rounded-2xl border border-[#dcd3c4] bg-[#eee7db]/50 p-2.5 divide-y divide-[#dcd3c4]">
-                      {selectedItemsPreview.map((item) => (
+                      {modalPreviewItems.map((item) => (
                         <div
                           key={item.id}
                           className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2.5 text-xs"
@@ -1461,7 +1548,7 @@ export default function AdminTools({
                       }`}
                     >
                       {confirmationModal.type === 'delete'
-                        ? `Confirm Delete (${selectedIds.size})`
+                        ? `Confirm Delete (${modalCount})`
                         : `Confirm Update (${selectedIds.size})`}
                     </button>
                   </div>
