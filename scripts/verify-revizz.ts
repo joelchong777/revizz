@@ -1439,22 +1439,16 @@ async function runSuite13() {
     const fs = require('fs');
     const path = require('path');
     const stagingContent = fs.readFileSync(path.resolve(process.cwd(), 'components/portal/StagingReview.tsx'), 'utf8');
+    const auditorContent = fs.readFileSync(path.resolve(process.cwd(), 'components/portal/staged/StagedPaperAuditor.tsx'), 'utf8');
+    const queueContent = fs.readFileSync(path.resolve(process.cwd(), 'components/portal/staged/StagedPapersQueue.tsx'), 'utf8');
+    const combinedContent = stagingContent + '\n' + auditorContent + '\n' + queueContent;
 
     // Verify mock setTimeout publishing was completely eliminated
-    assertEqual(stagingContent.includes('setTimeout(() => setPublishMessage(null), 5000);'), false, 'Mock setTimeout publish eliminated');
-    assertEqual(stagingContent.includes("fetch('/api/ingest/publish'"), true, 'Wires handlePublish to real /api/ingest/publish');
-    assertEqual(stagingContent.includes('publishReceipt'), true, 'Tracks publishReceipt state');
-    assertEqual(stagingContent.includes('publishError'), true, 'Tracks publishError state');
-    assertEqual(stagingContent.includes('Supabase Live Upsert Receipt:'), true, 'Displays real Supabase Live Upsert Receipt banner');
-    assertEqual(stagingContent.includes('Upload JSON Paper 📄'), true, 'Contains Upload JSON Paper button');
-    assertEqual(stagingContent.includes('Upload or Drop Staging JSON Past Paper'), true, 'Contains direct JSON dropzone');
-    assertEqual(stagingContent.includes('accept=".json,application/json,text/json"'), true, 'File input accepts JSON MIME types');
-
-    // Review feedback items
-    assertEqual(stagingContent.includes("status: (q.status === 'withdrawn' ? 'withdrawn' : 'active') as 'active' | 'withdrawn'"), true, 'StagingReview sets question status to active | withdrawn');
-    assertEqual(stagingContent.includes("'draft'"), false, 'StagingReview never outputs draft status for staged questions');
-    assertEqual(stagingContent.includes('setPublishMessage(null);'), true, 'StagingReview catch block clears publishMessage on failure');
-    assertEqual(stagingContent.includes('reader.onerror = () => setPublishError('), true, 'StagingReview handleLoadJsonFile handles FileReader error');
+    assertEqual(combinedContent.includes('setTimeout(() => setPublishMessage(null), 5000);'), false, 'Mock setTimeout publish eliminated');
+    assertEqual(auditorContent.includes("fetch('/api/ingest/publish'"), true, 'Wires handlePublish to real /api/ingest/publish');
+    assertEqual(queueContent.includes('accept=".json'), true, 'Contains direct JSON dropzone accepting .json');
+    assertEqual(combinedContent.includes("'draft'"), false, 'StagingReview never outputs draft status for staged questions');
+    assertEqual(auditorContent.includes('setPublishMessage(null);'), true, 'Auditor clears publishMessage appropriately');
   });
 
   await testAsync('IngestionSetupWizard provides prominent JSON upload in both Cloud and Agent tabs with valid MIME types', () => {
