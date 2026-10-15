@@ -25,9 +25,7 @@ import {
   useQuestions, 
   useTopics, 
   deleteQuestionsFromDb, 
-  Question, 
-  CAMBRIDGE_QUESTIONS, 
-  CAMBRIDGE_TOPICS 
+  Question 
 } from '@/lib/questions';
 import { fetchSubjectsFromDb } from '@/lib/subjects';
 
@@ -64,12 +62,15 @@ function createInitialBankItems(questions: Question[]): QuestionBankItem[] {
   return questions.map((q, idx): QuestionBankItem => {
     const qNum = idx + 1;
     let st: BankItemStatus = 'Live';
-    if (idx === 24 || idx === 25) {
+    const statusVal = (q as any).status;
+    if (statusVal === 'draft' || statusVal === 'Agent draft') {
       st = 'Agent draft';
-    } else if (idx === 26 || idx === 27) {
+    } else if (statusVal === 'in_review' || statusVal === 'Needs review') {
       st = 'Needs review';
-    } else if (idx >= 28) {
+    } else if (statusVal === 'withdrawn' || statusVal === 'Flagged' || (q as any).active === false) {
       st = 'Flagged';
+    } else {
+      st = 'Live';
     }
     const stCls = getStatusBadgeClass(st);
 
@@ -211,7 +212,7 @@ export default function AdminTools({
   initialView = 'assign',
   onOpenEditor 
 }: AdminToolsProps) {
-  const { questions: dbQuestions, refetch: refetchQuestions } = useQuestions();
+  const { questions: dbQuestions, loading: questionsLoading, refetch: refetchQuestions } = useQuestions();
   const { topics: dbTopics } = useTopics();
   const [activeSubTab, setActiveSubTab] = useState<'assign' | 'bank' | 'importer'>(initialView);
 
@@ -244,8 +245,7 @@ export default function AdminTools({
 
   // Assigned Questions Dataset
   const assignQs = useMemo(() => {
-    const source = dbQuestions.length > 0 ? dbQuestions : CAMBRIDGE_QUESTIONS;
-    return source.map((q) => ({
+    return (dbQuestions || []).map((q) => ({
       id: q.id,
       stem: q.stem_markdown,
       topic: q.topic || 'General',
@@ -255,17 +255,13 @@ export default function AdminTools({
   }, [dbQuestions]);
 
   // Question Bank Stateful Data (2f)
-  const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>(() =>
-    createInitialBankItems(CAMBRIDGE_QUESTIONS)
-  );
+  const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>([]);
 
-  const [hasLoadedDb, setHasLoadedDb] = useState(false);
   useEffect(() => {
-    if (dbQuestions && dbQuestions.length > 0 && !hasLoadedDb) {
-      setBankQuestions(createInitialBankItems(dbQuestions));
-      setHasLoadedDb(true);
+    if (!questionsLoading) {
+      setBankQuestions(createInitialBankItems(dbQuestions || []));
     }
-  }, [dbQuestions, hasLoadedDb]);
+  }, [dbQuestions, questionsLoading]);
 
   // Mass Selection & Action States
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -362,13 +358,12 @@ export default function AdminTools({
   ], []);
 
   const topicOptions = useMemo(() => {
-    const list = dbTopics.length > 0 ? dbTopics : CAMBRIDGE_TOPICS;
-    if (list.length === 0) {
+    if (!dbTopics || dbTopics.length === 0) {
       return [{ value: 'None', label: 'None' }];
     }
     return [
       { value: 'All', label: 'All' },
-      ...list.map((t) => ({
+      ...dbTopics.map((t) => ({
         value: t.name,
         label: `${t.orderIndex}. ${t.name}`,
       })),
@@ -376,8 +371,10 @@ export default function AdminTools({
   }, [dbTopics]);
 
   const reassignTopicOptions = useMemo(() => {
-    const list = dbTopics.length > 0 ? dbTopics : CAMBRIDGE_TOPICS;
-    return list.map((t) => t.name);
+    if (!dbTopics || dbTopics.length === 0) {
+      return [];
+    }
+    return dbTopics.map((t) => t.name);
   }, [dbTopics]);
 
   const difficultyOptions = useMemo(() => [
@@ -992,7 +989,7 @@ export default function AdminTools({
             <div>
               <span className="text-xs font-bold text-[#645c50]">Question bank</span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                {bankQuestions.length} questions
+                {questionsLoading ? '...' : `${bankQuestions.length} questions`}
               </h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -1075,7 +1072,7 @@ export default function AdminTools({
                 bankStatusFilter === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              All {bankQuestions.length}
+              All {questionsLoading ? '...' : bankQuestions.length}
             </button>
             <button
               onClick={() => setBankStatusFilter('Live')}
@@ -1083,7 +1080,7 @@ export default function AdminTools({
                 bankStatusFilter === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Live {bankQuestions.filter((q) => q.st === 'Live').length}
+              Live {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Live').length}
             </button>
             <button
               onClick={() => setBankStatusFilter('Agent draft')}
@@ -1093,7 +1090,7 @@ export default function AdminTools({
             >
               <span>Agent drafts</span>
               <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
-                {bankQuestions.filter((q) => q.st === 'Agent draft').length}
+                {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Agent draft').length}
               </span>
             </button>
             <button
@@ -1102,7 +1099,7 @@ export default function AdminTools({
                 bankStatusFilter === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Needs review {bankQuestions.filter((q) => q.st === 'Needs review').length}
+              Needs review {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Needs review').length}
             </button>
             <button
               onClick={() => setBankStatusFilter('Flagged')}
@@ -1110,7 +1107,7 @@ export default function AdminTools({
                 bankStatusFilter === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Flagged {bankQuestions.filter((q) => q.st === 'Flagged').length}
+              Flagged {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Flagged').length}
             </button>
           </div>
 
@@ -1176,7 +1173,12 @@ export default function AdminTools({
                 )}
 
                 <div className="max-h-[580px] overflow-y-auto divide-y divide-[#eee7db] pr-1">
-                  {bankQuestions.length === 0 ? (
+                  {questionsLoading ? (
+                    <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
+                      <div className="w-6 h-6 border-2 border-[#c67139] border-t-transparent rounded-full animate-spin" />
+                      <span className="font-heading font-black text-sm text-[#201e1d]">Loading questions from database...</span>
+                    </div>
+                  ) : bankQuestions.length === 0 ? (
                     <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
                       <span className="text-3xl">🗄️</span>
                       <span className="font-heading font-black text-base text-[#201e1d]">Question Bank is Empty</span>
@@ -1410,20 +1412,24 @@ export default function AdminTools({
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#645c50] px-2 py-1">
                           Select Cambridge Topic
                         </span>
-                        {reassignTopicOptions.map((topicName) => (
-                          <button
-                            key={topicName}
-                            type="button"
-                            onClick={() => {
-                              setTopicDropdownOpen(false);
-                              handleOpenConfirmModal('topic', topicName);
-                            }}
-                            className="w-full text-left rounded-xl px-2 py-1.5 text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] cursor-pointer truncate transition-colors"
-                            title={topicName}
-                          >
-                            {topicName}
-                          </button>
-                        ))}
+                        {reassignTopicOptions.length === 0 ? (
+                          <span className="text-xs text-[#645c50] px-2 py-2 text-center">No topics available</span>
+                        ) : (
+                          reassignTopicOptions.map((topicName) => (
+                            <button
+                              key={topicName}
+                              type="button"
+                              onClick={() => {
+                                setTopicDropdownOpen(false);
+                                handleOpenConfirmModal('topic', topicName);
+                              }}
+                              className="w-full text-left rounded-xl px-2 py-1.5 text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] cursor-pointer truncate transition-colors"
+                              title={topicName}
+                            >
+                              {topicName}
+                            </button>
+                          ))
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
