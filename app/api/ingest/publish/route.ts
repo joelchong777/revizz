@@ -49,6 +49,7 @@ export interface PublishReceipt {
   topics_count: number;
   questions_count: number;
   options_count: number;
+  is_new_insert?: boolean;
 }
 
 /**
@@ -243,6 +244,17 @@ export async function POST(request: NextRequest) {
 
     // 3. Upsert Paper
     stage = 'upsert_paper';
+    const { data: existingPaper } = await supabase
+      .from('papers')
+      .select('id')
+      .eq('subject_id', subjectId)
+      .eq('series', paper.paper.series)
+      .eq('paper_code', paper.paper.paper_code)
+      .eq('year', paper.paper.year)
+      .maybeSingle();
+
+    const isNewInsert = !existingPaper;
+
     const { data: paperData, error: paperError } = await supabase
       .from('papers')
       .upsert(
@@ -453,6 +465,7 @@ export async function POST(request: NextRequest) {
       topics_count: topicMap.size,
       questions_count: targetQuestions.length,
       options_count: optionsPayload.length,
+      is_new_insert: isNewInsert,
     };
 
     return NextResponse.json(receipt);

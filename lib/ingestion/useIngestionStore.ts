@@ -21,6 +21,7 @@ export interface PublishReceipt {
   topics_count: number;
   questions_count: number;
   options_count: number;
+  is_new_insert?: boolean;
   error?: string;
   timestamp?: string;
 }
@@ -975,6 +976,7 @@ const actions: IngestionActions = {
         topics_count: result.topics_count ?? (currentPaper.syllabus_topics?.length || 1),
         questions_count: result.questions_count ?? currentPaper.questions.length,
         options_count: result.options_count ?? (currentPaper.questions.length * 4),
+        is_new_insert: result.is_new_insert !== undefined ? Boolean(result.is_new_insert) : true,
         timestamp: new Date().toISOString(),
       };
 
