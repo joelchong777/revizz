@@ -56,10 +56,7 @@ export default function IngestionHub() {
     setIsSettingsModalOpen,
     setPublishStatus,
     setPublishMessage,
-    saveDraftToLocalStorage,
-    loadDraftFromLocalStorage,
     clearDraft,
-    hasDraft,
     setShowPdfViewer,
     setActivePdfPage,
     startExtraction,
@@ -74,22 +71,7 @@ export default function IngestionHub() {
 
   // Local switch to toggle setup wizard screen even when paper is active
   const [isSetupOpen, setIsSetupOpen] = useState(false);
-  const [hasSavedDraftState, setHasSavedDraftState] = useState(false);
   const [isReadingFile, setIsReadingFile] = useState(false);
-
-  // Keep hasSavedDraftState reactive to paper changes and setup toggles
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setHasSavedDraftState(hasDraft());
-    }
-  }, [hasDraft, isSetupOpen, paper]);
-
-  // Persist draft to localStorage whenever paper data changes
-  useEffect(() => {
-    if (paper) {
-      saveDraftToLocalStorage();
-    }
-  }, [paper, saveDraftToLocalStorage]);
 
   const questions = paper?.questions || [];
   const currentQuestion: StagingQuestion | null =
@@ -251,7 +233,6 @@ export default function IngestionHub() {
   const handleResetAll = () => {
     clearDraft();
     resetStore();
-    setHasSavedDraftState(false);
     setIsSetupOpen(true);
   };
 
@@ -329,7 +310,6 @@ export default function IngestionHub() {
               canUndo={canUndo}
               canRedo={canRedo}
               onSwitchPaper={() => setIsSetupOpen(true)}
-              onSaveDraft={() => saveDraftToLocalStorage()}
               onReturnToStudio={() => setIsSetupOpen(false)}
               onArchiveStagedPaper={archiveStagedPaper}
               onDeleteStagedPaper={deleteStagedPaper}
@@ -460,16 +440,31 @@ export default function IngestionHub() {
                   )}
                   <span className="truncate">{publishMessage}</span>
                 </div>
-                {publishStatus !== "publishing" && publishStatus !== "validating" && (
-                  <button
-                    type="button"
-                    onClick={() => setPublishStatus("idle")}
-                    className="p-0.5 rounded-full hover:bg-black/10 transition-colors cursor-pointer shrink-0"
-                    title="Dismiss notification"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {publishStatus === "success" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          window.location.href = "/admin?tab=bank";
+                        }
+                      }}
+                      className="px-3 py-1 rounded-full bg-[#065f46] hover:bg-[#044e39] text-[#f9f4ed] border border-[#201e1d] font-adminHeading font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <span>View in Question Bank →</span>
+                    </button>
+                  )}
+                  {publishStatus !== "publishing" && publishStatus !== "validating" && (
+                    <button
+                      type="button"
+                      onClick={() => setPublishStatus("idle")}
+                      className="p-0.5 rounded-full hover:bg-black/10 transition-colors cursor-pointer shrink-0"
+                      title="Dismiss notification"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -500,20 +495,7 @@ export default function IngestionHub() {
               }
             }}
             onStartBlank={handleStartBlank}
-            onResumeDraft={() => {
-              const ok = loadDraftFromLocalStorage();
-              if (ok) {
-                setIsSetupOpen(false);
-                setPublishStatus("success");
-                setPublishMessage("Browser draft restored successfully.");
-              } else {
-                setPublishStatus("error");
-                setPublishMessage("Could not restore draft from localStorage (validation failed).");
-              }
-            }}
-            onDiscardDraft={handleResetAll}
             onResetAll={handleResetAll}
-            hasSavedDraft={hasSavedDraftState}
             isExtracting={isExtracting}
             extractionError={extractionError}
             activePaper={paper}

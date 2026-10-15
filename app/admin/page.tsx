@@ -11,7 +11,6 @@ import { useQuestions } from '@/lib/questions';
 
 const TAB_TITLES: Record<string, string> = {
   ingestion: 'Ingestion Studio',
-  staged: 'Staged Papers',
   diagnostics: 'Diagnostics Lab',
   bank: 'Question Bank',
   flagged: 'Flagged Reports',
@@ -59,9 +58,7 @@ function AdminContent() {
       const normalized = tab.toLowerCase();
       if (normalized === 'importer') {
         setActiveTab('ingestion');
-      } else if (normalized === 'staging' || normalized === 'staged-papers') {
-        setActiveTab('staged');
-      } else if (['ingestion', 'staged', 'diagnostics', 'bank', 'flagged', 'editor', 'system', 'school'].includes(normalized)) {
+      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'system', 'school'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }
@@ -196,7 +193,7 @@ function AdminContent() {
                 Revizz App Administration Console
               </h1>
               <p className="text-[#645c50] font-medium text-xs sm:text-sm leading-relaxed">
-                Platform operations dashboard for exam paper OCR ingestion, staging quality gates, and database synchronization. Teachers managing classes should use the Teacher Portal.
+                Platform operations dashboard for exam paper OCR ingestion, diagnostics verification, and database synchronization. Teachers managing classes should use the Teacher Portal.
               </p>
             </div>
           </div>
@@ -476,7 +473,7 @@ function AdminContent() {
             <div className="mb-6 p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
               <div className="flex items-center gap-2">
                 <span className="text-base">🛠️</span>
-                <span>Demo Admin Mode · Full interactive access to Ingestion Studio, KaTeX diagnostics, and Staged review</span>
+                <span>Demo Admin Mode · Full interactive access to Ingestion Studio, KaTeX diagnostics, and Question Bank</span>
               </div>
               <div className="flex items-center gap-2">
                 <button

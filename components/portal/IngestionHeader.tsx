@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileUp,
-  BookmarkCheck,
   Edit2,
   Settings,
   Archive,
@@ -56,8 +55,6 @@ export interface IngestionHeaderProps {
 
   // Workflow actions
   onSwitchPaper?: () => void;
-  onSaveDraft?: () => void;
-  isDraftSaved?: boolean;
 
   // Backwards compatibility props (optional)
   onUploadJson?: (file: File) => void;
@@ -121,7 +118,7 @@ export default function IngestionHeader({
   publishMessage: _publishMessage,
   onReturnToStudio: _onReturnToStudio,
   hasActivePaper: _hasActivePaper,
-  lifecycleState: _lifecycleState = "draft",
+  lifecycleState: _lifecycleState = "review",
   showPdfViewer = true,
   onTogglePdfViewer,
   onUndo,
@@ -129,14 +126,11 @@ export default function IngestionHeader({
   canUndo = false,
   canRedo = false,
   onSwitchPaper,
-  onSaveDraft,
-  isDraftSaved = false,
   onArchiveStagedPaper,
   onDeleteStagedPaper,
   onOpenPayloads,
   onOpenAudit,
 }: IngestionHeaderProps) {
-  const [justSaved, setJustSaved] = useState(false);
   const [archiveState, setArchiveState] = useState<"idle" | "archiving" | "archived" | "error">("idle");
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
@@ -275,14 +269,6 @@ export default function IngestionHeader({
   const seriesName = seriesMap[seriesKey] || (seriesKey ? seriesKey.toUpperCase() : "");
   const fullYear = paper?.paper?.year ? String(paper.paper.year) : "";
 
-  // Handle local save draft trigger with feedback
-  const handleSaveDraft = () => {
-    if (onSaveDraft) {
-      onSaveDraft();
-      setJustSaved(true);
-      setTimeout(() => setJustSaved(false), 2200);
-    }
-  };
 
   // -------------------------------------------------------------
   // MODE: SETUP (Wizard / Setup Mode)
@@ -386,30 +372,6 @@ export default function IngestionHeader({
             </button>
           )}
 
-          {/* Save Draft Action with Multi-Keyframe Tween Defense (§12) */}
-          {onSaveDraft && (
-            <motion.button
-              type="button"
-              onClick={handleSaveDraft}
-              animate={justSaved ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-              transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
-                justSaved || isDraftSaved
-                  ? "bg-[#d1fae5] text-[#065f46]"
-                  : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
-              }`}
-              title="Save draft to local browser storage"
-            >
-              <BookmarkCheck
-                className={`w-3.5 h-3.5 ${
-                  justSaved || isDraftSaved ? "text-[#065f46]" : "text-[#56633f]"
-                }`}
-              />
-              <span>{justSaved ? "Saved ✓" : "Save Draft"}</span>
-            </motion.button>
-          )}
 
           {/* Switch Paper / Upload New */}
           {onSwitchPaper && (

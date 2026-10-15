@@ -190,7 +190,7 @@ const initialRawState: IngestionState = {
   activePdfPage: 1,
 
   showPdfViewer: true,
-  lifecycleState: 'draft',
+  lifecycleState: 'review',
 
   lastPublishReceipt: null,
   isPipelineModalOpen: false,
@@ -203,6 +203,16 @@ const initialRawState: IngestionState = {
 
 // Internal mutable state holder
 let state: IngestionState = { ...initialRawState };
+
+// Zero-draft contract: purge any legacy browser draft key from localStorage on initialization
+if (typeof window !== 'undefined') {
+  try {
+    window.localStorage.removeItem(LOCAL_STORAGE_KEY);
+  } catch {
+    // Ignore storage errors in restricted contexts
+  }
+}
+
 const listeners = new Set<() => void>();
 
 // Undo / Redo history stacks
@@ -1063,135 +1073,39 @@ const actions: IngestionActions = {
   },
 
   saveDraftToLocalStorage(storageKey: string = LOCAL_STORAGE_KEY): boolean {
-    if (typeof window === 'undefined') return false;
-    try {
-      const current = getState();
-      if (!current.paper) return false;
-
-      // Refuse to save papers with 0 questions
-      if (!Array.isArray(current.paper.questions) || current.paper.questions.length === 0) {
-        return false;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(storageKey || LOCAL_STORAGE_KEY);
+      } catch {
+        // Safe no-op
       }
-
-      // Refuse to save published papers, purge any leftover draft
-      if (current.lifecycleState === 'published' || current.paper.lifecycle_state === 'published') {
-        window.localStorage.removeItem(storageKey);
-        return false;
-      }
-
-      const payload = {
-        paper: current.paper,
-        selectedIdx: current.selectedIdx,
-        statusFilter: current.statusFilter,
-        lifecycleState: current.lifecycleState,
-        showPdfViewer: current.showPdfViewer,
-        activePdfPage: current.activePdfPage,
-        totalPdfPages: current.totalPdfPages,
-        timestamp: Date.now(),
-      };
-      window.localStorage.setItem(storageKey, JSON.stringify(payload));
-      return true;
-    } catch (err) {
-      console.error('Failed to save draft to localStorage:', err);
-      return false;
     }
+    return false;
   },
 
-  loadDraftFromLocalStorage(storageKey: string = LOCAL_STORAGE_KEY): boolean {
-    if (typeof window === 'undefined') return false;
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (!raw) return false;
-      const parsed = JSON.parse(raw);
-      const candidatePaper = normalizeStagingPayload(parsed);
-      if (!candidatePaper) return false;
-
-      const validation = validateStagingPaper(candidatePaper, { allowPartialBatch: true });
-      if (!validation.success) {
-        console.warn('Draft failed validation:', validation.errors);
-        return false;
-      }
-
-      undoStack = [];
-      redoStack = [];
-
-      setState({
-        paper: validation.data || candidatePaper,
-        selectedIdx: typeof parsed?.selectedIdx === 'number' ? parsed.selectedIdx : 0,
-        statusFilter: parsed?.statusFilter || 'all',
-        lifecycleState: parsed?.lifecycleState || 'review',
-        showPdfViewer: typeof parsed?.showPdfViewer === 'boolean' ? parsed.showPdfViewer : true,
-        activePdfPage: typeof parsed?.activePdfPage === 'number' ? parsed.activePdfPage : 1,
-        totalPdfPages: typeof parsed?.totalPdfPages === 'number' ? parsed.totalPdfPages : 1,
-        publishStatus: 'idle',
-        publishMessage: 'Draft restored from local storage.',
-      });
-      return true;
-    } catch (err) {
-      console.error('Failed to load draft from localStorage:', err);
-      return false;
-    }
+  loadDraftFromLocalStorage(_storageKey: string = LOCAL_STORAGE_KEY): boolean {
+    return false;
   },
 
   clearDraft(storageKey: string = LOCAL_STORAGE_KEY): void {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.removeItem(storageKey);
-    } catch (err) {
-      console.error('Failed to clear draft from localStorage:', err);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(storageKey || LOCAL_STORAGE_KEY);
+      } catch (err) {
+        console.error('Failed to clear draft from localStorage:', err);
+      }
     }
   },
 
   hasDraft(storageKey: string = LOCAL_STORAGE_KEY): boolean {
-    if (typeof window === 'undefined') return false;
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (!raw) return false;
-
-      let parsed: any;
+    if (typeof window !== 'undefined') {
       try {
-        parsed = JSON.parse(raw);
+        localStorage.removeItem(storageKey || LOCAL_STORAGE_KEY);
       } catch {
-        window.localStorage.removeItem(storageKey);
-        return false;
+        // Safe no-op
       }
-
-      if (!parsed || typeof parsed !== 'object') {
-        window.localStorage.removeItem(storageKey);
-        return false;
-      }
-
-      const candidatePaper =
-        parsed.paper && Array.isArray(parsed.paper.questions)
-          ? parsed.paper
-          : Array.isArray(parsed.questions)
-            ? parsed
-            : (parsed.paper || parsed);
-      if (!candidatePaper || typeof candidatePaper !== 'object') {
-        window.localStorage.removeItem(storageKey);
-        return false;
-      }
-
-      if (!Array.isArray(candidatePaper.questions) || candidatePaper.questions.length === 0) {
-        window.localStorage.removeItem(storageKey);
-        return false;
-      }
-
-      if (candidatePaper.lifecycle_state === 'published' || parsed.lifecycleState === 'published') {
-        window.localStorage.removeItem(storageKey);
-        return false;
-      }
-
-      const validation = validateStagingPaper(candidatePaper, { allowPartialBatch: true });
-      if (!validation.success) {
-        window.localStorage.removeItem(storageKey);
-        return false;
-      }
-
-      return true;
-    } catch {
-      return false;
     }
+    return false;
   },
 
   setPaper(paper: StagingPaper | null): void {
@@ -1352,7 +1266,7 @@ const actions: IngestionActions = {
       setState({
         isExtracting: false,
         error: `Combined PDF size (${totalMb} MB) exceeds Vercel's 4.5 MB serverless limit. Please provide a Gemini API Key in the setup wizard for direct client extraction (up to 20 MB supported), or compress your PDFs.`,
-        lifecycleState: 'draft',
+        lifecycleState: 'review',
       });
       return;
     }
@@ -1469,7 +1383,6 @@ const actions: IngestionActions = {
                     batchCount: existingCount,
                   },
                 });
-                actions.saveDraftToLocalStorage();
                 return;
               }
 
@@ -1525,7 +1438,6 @@ const actions: IngestionActions = {
             },
           });
         }
-        actions.saveDraftToLocalStorage();
         return;
       }
 
@@ -1622,7 +1534,6 @@ const actions: IngestionActions = {
                   batchCount: existingCount,
                 },
               });
-              actions.saveDraftToLocalStorage();
               return;
             }
 
@@ -1652,7 +1563,6 @@ const actions: IngestionActions = {
                   batchCount: payload.total_questions || payload.questions?.length || 0,
                 },
               });
-              actions.saveDraftToLocalStorage();
             }
           } catch (parseErr: any) {
             if (parseErr.message && !parseErr.message.includes('JSON')) {
@@ -1674,13 +1584,12 @@ const actions: IngestionActions = {
             batchCount: getState().paper?.questions?.length || 0,
           },
         });
-        actions.saveDraftToLocalStorage();
       }
     } catch (err: any) {
       if (err.name === 'AbortError') {
         setState({
           isExtracting: false,
-          lifecycleState: getState().paper?.questions?.length ? 'review' : 'draft',
+          lifecycleState: 'review',
           publishMessage: 'Extraction cancelled by user.',
         });
       } else {
@@ -1701,7 +1610,6 @@ const actions: IngestionActions = {
               batchCount: existingCount,
             },
           });
-          actions.saveDraftToLocalStorage();
           return;
         }
 
@@ -1721,9 +1629,8 @@ const actions: IngestionActions = {
         setState({
           isExtracting: false,
           error: friendlyError,
-          lifecycleState: getState().paper?.questions?.length ? 'review' : 'draft',
+          lifecycleState: 'review',
         });
-        actions.saveDraftToLocalStorage();
       }
     }
   },
@@ -1763,7 +1670,7 @@ const actions: IngestionActions = {
     }
     setState({
       isExtracting: false,
-      lifecycleState: getState().paper?.questions?.length ? 'review' : 'draft',
+      lifecycleState: 'review',
       publishMessage: 'Extraction cancelled.',
     });
   },

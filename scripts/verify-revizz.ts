@@ -52,6 +52,7 @@ import {
 } from '../lib/compilerFilters';
 import { normalizeGeminiModel, toBase64, isTransientCapacityError } from '../lib/ingestion/geminiExtractor';
 import { normalizeStagingPayload, ingestionStore, LOCAL_STORAGE_KEY } from '../lib/ingestion/useIngestionStore';
+import { validateStagingPaper } from '../types/ingestion';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -950,48 +951,127 @@ test('QuestionCard Protection: QuestionCard wraps stem and options in MarkdownEr
 });
 
 // -----------------------------------------------------------------------------
-// [Suite 10] Antigravity Dedicated Agent Workflow & Staged Paper Route
+// [Suite 10] Simplified Direct JSON Pipeline, Zero-Draft Contract & Supabase Bank
 // -----------------------------------------------------------------------------
-console.log('\n\x1b[1m\x1b[34m[Suite 10] Antigravity Dedicated Agent Workflow & Staged Paper Route\x1b[0m');
+console.log('\n\x1b[1m\x1b[34m[Suite 10] Simplified Direct JSON Pipeline, Zero-Draft Contract & Supabase Bank\x1b[0m');
 
-test('Staged Paper API Contract: Route returns both papers and rich stagedPapers metadata', () => {
-  const fs = require('fs');
-  const path = require('path');
-  const routePath = path.resolve(process.cwd(), 'app/api/ingest/staged-paper/route.ts');
-  assertEqual(fs.existsSync(routePath), true, 'staged-paper route exists');
-
-  const content = fs.readFileSync(routePath, 'utf8');
-  assertEqual(content.includes('stagedPapers'), true, 'Route returns stagedPapers metadata array');
-  assertEqual(content.includes('papers'), true, 'Route preserves backward compatible papers array');
-  assertEqual(content.includes('questionsCount'), true, 'stagedPapers includes questionsCount property');
-});
-
-test('Setup Wizard Dual-Workflow: IngestionSetupWizard has both Cloud and Agent workflows', () => {
+test('Direct JSON Upload Pipeline: IngestionSetupWizard provides Direct JSON upload and dropzone', () => {
   const fs = require('fs');
   const path = require('path');
   const wizardPath = path.resolve(process.cwd(), 'components/portal/IngestionSetupWizard.tsx');
   assertEqual(fs.existsSync(wizardPath), true, 'IngestionSetupWizard.tsx exists');
 
   const content = fs.readFileSync(wizardPath, 'utf8');
-  assertEqual(content.includes('AI Cloud Pipeline'), true, 'Provides Workflow 1: AI Cloud Pipeline');
-  assertEqual(content.includes('Antigravity Agent Workflow'), true, 'Provides Workflow 2: Antigravity Agent Workflow');
-  assertEqual(content.includes('Auto-Detected Staged Papers'), true, 'Renders Auto-Detected Staged Papers section');
-  assertEqual(content.includes('Agent JSON Dropzone'), true, 'Renders Agent JSON Dropzone section');
-  assertEqual(content.includes('Antigravity Autonomous Ingestion Agent'), true, 'Renders Antigravity Agent guide cheatsheet');
-  assertEqual(content.includes('npm run ingest -- --qp'), true, 'Contains CLI terminal cheatsheet command');
-  assertEqual(content.includes('Ingest paper <qp_file> and <ms_file>'), true, 'Contains agent in-chat instruction prompt');
+  assertEqual(content.includes('Upload JSON Past Paper'), true, 'Provides direct Upload JSON Past Paper button');
+  assertEqual(content.includes('Agent JSON Dropzone'), true, 'Provides dedicated Agent JSON Dropzone');
+  assertEqual(content.includes('Drop Antigravity Agent JSON File Here'), true, 'Provides Agent JSON drop target text');
+  assertEqual(content.includes('accept=".json,application/json,text/json"'), true, 'Accepts valid JSON file types');
+  assertEqual(content.includes('onUploadJson'), true, 'Wires upload handler to onUploadJson callback');
 });
 
-test('Ingestion Skill Documentation: SKILL.md documents dedicated agent ingestion workflow', () => {
+test('Direct JSON Upload Pipeline: validateStagingPaper validates Cambridge JSON with allowPartialBatch', () => {
   const fs = require('fs');
   const path = require('path');
-  const skillPath = path.resolve(process.cwd(), '.agent/skills/revizz-ingestion-studio/SKILL.md');
-  assertEqual(fs.existsSync(skillPath), true, 'revizz-ingestion-studio SKILL.md exists');
+  const filePath = path.resolve(process.cwd(), 'staging/0455_s24_12.json');
+  assertEqual(fs.existsSync(filePath), true, 'staging/0455_s24_12.json exists');
 
-  const content = fs.readFileSync(skillPath, 'utf8');
-  assertEqual(content.includes('Dedicated Antigravity Agent Ingestion Command & Workflow'), true, 'SKILL.md has Dedicated Antigravity Agent section');
-  assertEqual(content.includes('npm run ingest -- --qp <path-to-qp.pdf> --ms <path-to-ms.pdf>'), true, 'SKILL.md documents terminal CLI command');
-  assertEqual(content.includes('Ingest paper <path-to-qp.pdf> and <path-to-ms.pdf>'), true, 'SKILL.md documents chat prompt');
+  const rawPaper = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  const validation = validateStagingPaper(rawPaper, { allowPartialBatch: true });
+  assertEqual(validation.success, true, 'validateStagingPaper passes Cambridge JSON with allowPartialBatch');
+  assert(Boolean(validation.data), 'Validated paper data is defined');
+  assertEqual(validation.data?.questions.length, 30, 'Validated paper contains 30 questions');
+  assertEqual(validation.data?.subject.code, '0455', 'Validated paper subject code is 0455');
+
+  // Verify allowPartialBatch accepts partial question subsets
+  const partialPaper = {
+    ...rawPaper,
+    questions: rawPaper.questions.slice(0, 3),
+  };
+  const partialValidation = validateStagingPaper(partialPaper, { allowPartialBatch: true });
+  assertEqual(partialValidation.success, true, 'allowPartialBatch accepts partial batch (3 questions)');
+  assertEqual(partialValidation.data?.questions.length, 3, 'Partial batch preserved exactly 3 questions');
+});
+
+test('Zero-Draft Contract: useIngestionStore does NOT write drafts to localStorage and clearDraft removes key', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const validPaper = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'staging/0455_s24_12.json'), 'utf8'));
+
+  // Ensure storage key is the canonical revizz_ingestion_draft
+  assertEqual(LOCAL_STORAGE_KEY, 'revizz_ingestion_draft', 'Storage key matches revizz_ingestion_draft');
+
+  // Clear mock storage and set paper in review state
+  mockStorage.clear();
+  ingestionStore.setState({
+    paper: validPaper,
+    lifecycleState: 'review',
+  });
+
+  // Zero-draft contract: saveDraftToLocalStorage must return false and refuse to write
+  const saveResult = ingestionStore.saveDraftToLocalStorage();
+  assertEqual(saveResult, false, 'saveDraftToLocalStorage returns false under Zero-Draft Contract');
+  assertEqual(mockStorage.getItem('revizz_ingestion_draft'), null, 'revizz_ingestion_draft is NOT written to localStorage');
+
+  // Seed storage with legacy draft and test hasDraft() purges it
+  mockStorage.setItem('revizz_ingestion_draft', JSON.stringify({ draft: true, paper: validPaper }));
+  assert(Boolean(mockStorage.getItem('revizz_ingestion_draft')), 'Draft seeded in localStorage');
+  const hasDraftResult = ingestionStore.hasDraft();
+  assertEqual(hasDraftResult, false, 'hasDraft returns false under Zero-Draft Contract');
+  assertEqual(mockStorage.getItem('revizz_ingestion_draft'), null, 'hasDraft purges revizz_ingestion_draft from localStorage');
+
+  // Seed storage again and verify clearDraft removes 'revizz_ingestion_draft'
+  mockStorage.setItem('revizz_ingestion_draft', 'legacy_draft_content');
+  ingestionStore.clearDraft();
+  assertEqual(mockStorage.getItem('revizz_ingestion_draft'), null, 'clearDraft removes revizz_ingestion_draft');
+});
+
+test('Zero-Draft Contract: IngestionHeader does not contain a "Save Draft" button', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const headerPath = path.resolve(process.cwd(), 'components/portal/IngestionHeader.tsx');
+  assertEqual(fs.existsSync(headerPath), true, 'IngestionHeader.tsx exists');
+
+  const content = fs.readFileSync(headerPath, 'utf8');
+  assertEqual(content.includes('Save Draft'), false, 'IngestionHeader does not contain "Save Draft" button');
+  assertEqual(content.includes('handleSaveDraft'), false, 'IngestionHeader does not contain handleSaveDraft');
+});
+
+test('Staged Papers Nav Teardown: AppAdminNav.tsx and AppAdminHub.tsx do not contain staged navigation or tab', () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  // AppAdminNav.tsx
+  const navPath = path.resolve(process.cwd(), 'components/admin/AppAdminNav.tsx');
+  assertEqual(fs.existsSync(navPath), true, 'AppAdminNav.tsx exists');
+  const navContent = fs.readFileSync(navPath, 'utf8');
+  assertEqual(navContent.includes("handleNavClick('staged')"), false, 'AppAdminNav does not have handleNavClick(staged)');
+  assertEqual(navContent.includes("navItemClass('staged')"), false, 'AppAdminNav does not have navItemClass(staged)');
+  assertEqual(navContent.includes('title="Staged Papers"'), false, 'AppAdminNav does not render Staged Papers button');
+
+  // AppAdminHub.tsx
+  const hubPath = path.resolve(process.cwd(), 'components/admin/AppAdminHub.tsx');
+  assertEqual(fs.existsSync(hubPath), true, 'AppAdminHub.tsx exists');
+  const hubContent = fs.readFileSync(hubPath, 'utf8');
+  assertEqual(hubContent.includes("case 'staged':"), false, 'AppAdminHub does not have case staged tab');
+  assertEqual(hubContent.includes('<StagingReview'), false, 'AppAdminHub does not render StagingReview component');
+  assertEqual(hubContent.includes('Staged Papers Queue'), false, 'AppAdminHub does not render Staged Papers Queue heading');
+});
+
+test('Live Question Bank Integration: AdminTools.tsx imports supabase from @/lib/supabaseClient and handles live questions & filters', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const toolsPath = path.resolve(process.cwd(), 'components/portal/AdminTools.tsx');
+  assertEqual(fs.existsSync(toolsPath), true, 'AdminTools.tsx exists');
+
+  const content = fs.readFileSync(toolsPath, 'utf8');
+  assertEqual(content.includes("import { supabase } from '@/lib/supabaseClient';"), true, 'AdminTools imports supabase from @/lib/supabaseClient');
+  assertEqual(content.includes('useQuestions'), true, 'AdminTools uses useQuestions hook for live Supabase sync');
+  assertEqual(content.includes('dbQuestions'), true, 'AdminTools receives live dbQuestions pool');
+  assertEqual(content.includes('bankSearch'), true, 'AdminTools manages bankSearch state');
+  assertEqual(content.includes('bankStatusFilter'), true, 'AdminTools manages bankStatusFilter dynamic filter');
+  assertEqual(content.includes('bankPaperFilter'), true, 'AdminTools manages bankPaperFilter dynamic filter');
+  assertEqual(content.includes('bankTopicFilter'), true, 'AdminTools manages bankTopicFilter dynamic filter');
+  assertEqual(content.includes('bankDifficultyFilter'), true, 'AdminTools manages bankDifficultyFilter dynamic filter');
 });
 
 // -----------------------------------------------------------------------------
@@ -1539,7 +1619,7 @@ async function runSuite13() {
     assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Published wrapper draft is purged from storage');
   });
 
-  test('hasDraft() returns true when a valid staging paper with questions is stored', () => {
+  test('hasDraft() adheres to Zero-Draft Contract by purging storage and returning false', () => {
     const fs = require('fs');
     const path = require('path');
     const validPaper = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'staging/0455_s24_12.json'), 'utf8'));
@@ -1554,14 +1634,16 @@ async function runSuite13() {
         timestamp: Date.now(),
       })
     );
-    assertEqual(ingestionStore.hasDraft(), true, 'hasDraft returns true for valid wrapped draft with questions');
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false for valid wrapped draft with questions (Zero-Draft Contract)');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Wrapped draft is purged from localStorage');
 
     // Direct paper format
     mockStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(validPaper));
-    assertEqual(ingestionStore.hasDraft(), true, 'hasDraft returns true for direct valid staging paper');
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false for direct valid staging paper (Zero-Draft Contract)');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Direct paper draft is purged from localStorage');
   });
 
-  test('saveDraftToLocalStorage refuses to save 0 questions or published papers', () => {
+  test('saveDraftToLocalStorage refuses to persist drafts under Zero-Draft Contract', () => {
     const fs = require('fs');
     const path = require('path');
     const validPaper = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'staging/0455_s24_12.json'), 'utf8'));
@@ -1598,13 +1680,14 @@ async function runSuite13() {
     assertEqual(ingestionStore.saveDraftToLocalStorage(), false, 'saveDraftToLocalStorage returns false when lifecycleState is published');
     assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Existing storage item is purged on saving published lifecycleState');
 
-    // Test 6e: Successfully saves valid draft with questions in review state
+    // Test 6e: Refuses to save valid paper and purges existing draft (Zero-Draft Contract)
+    mockStorage.setItem(LOCAL_STORAGE_KEY, 'stale_pre_existing_draft');
     ingestionStore.setState({
       paper: validPaper,
       lifecycleState: 'review',
     });
-    assertEqual(ingestionStore.saveDraftToLocalStorage(), true, 'saveDraftToLocalStorage succeeds for valid uncompleted paper');
-    assert(Boolean(mockStorage.getItem(LOCAL_STORAGE_KEY)), 'Draft is now present in localStorage');
+    assertEqual(ingestionStore.saveDraftToLocalStorage(), false, 'saveDraftToLocalStorage returns false under Zero-Draft Contract');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Draft is purged and never written to localStorage');
   });
 
   test('clearDraft clears the storage key', () => {

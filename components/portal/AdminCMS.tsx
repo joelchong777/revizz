@@ -15,11 +15,10 @@ import {
   FileCheck,
   Plus
 } from 'lucide-react';
-import StagingReview from './StagingReview';
 import { useQuestions, Question } from '@/lib/questions';
 
 export interface AdminCMSProps {
-  initialView?: 'editor' | 'flagged' | 'staged';
+  initialView?: 'editor' | 'flagged';
   questionId?: string;
 }
 
@@ -28,7 +27,7 @@ export default function AdminCMS({
   questionId,
 }: AdminCMSProps) {
   const { questions, loading: loadingQuestions } = useQuestions();
-  const [activeTab, setActiveTab] = useState<'editor' | 'flagged' | 'staged'>(initialView);
+  const [activeTab, setActiveTab] = useState<'editor' | 'flagged'>(initialView);
   const [isAuthoringNew, setIsAuthoringNew] = useState(false);
 
   const defaultQuestion = questions.find((q) => q.id === questionId) || questions[0];
@@ -183,16 +182,7 @@ export default function AdminCMS({
             {flaggedItems.length}
           </span>
         </button>
-        <button
-          onClick={() => setActiveTab('staged')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-            activeTab === 'staged'
-              ? 'bg-[#201e1d] text-[#f9f4ed]'
-              : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-          }`}
-        >
-          📑 Staged Paper Review
-        </button>
+
       </div>
 
       {/* ========================================================
@@ -543,14 +533,6 @@ export default function AdminCMS({
         </div>
       )}
 
-      {/* ========================================================
-          MODE 3: STAGED PAPER REVIEW
-          ======================================================== */}
-      {activeTab === 'staged' && (
-        <div className="p-2">
-          <StagingReview />
-        </div>
-      )}
     </div>
   );
 }

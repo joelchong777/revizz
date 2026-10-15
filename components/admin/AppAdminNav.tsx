@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import {
   FileText,
-  Layers,
   Sparkles,
   BookOpen,
   Flag,
@@ -188,18 +187,6 @@ export default function AppAdminNav({
                 {renderIcon(FileText, 'ingestion')}
                 {!compact && (
                   <span className="flex-1 min-w-0 truncate">Ingestion Studio</span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleNavClick('staged')}
-                className={navItemClass('staged')}
-                title="Staged Papers"
-              >
-                {renderIcon(Layers, 'staged')}
-                {!compact && (
-                  <span className="flex-1 min-w-0 truncate">Staged Papers</span>
                 )}
               </button>
 

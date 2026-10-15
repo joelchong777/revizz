@@ -4,7 +4,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import IngestionHub from '@/components/portal/IngestionHub';
 import AdminCMS from '@/components/portal/AdminCMS';
-import StagingReview from '@/components/portal/StagingReview';
 import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
 import { useQuestions } from '@/lib/questions';
@@ -85,79 +84,49 @@ export default function AppAdminHub({
     onSelectTab('editor');
   };
 
+  const renderIngestion = () => (
+    <div className="space-y-4">
+      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
+              INGESTION ENGINE v2.4
+            </span>
+            <span className="text-xs font-mono font-bold text-[#645c50]">
+              Dual-PDF OCR & Gemini 1.5 Pro Multimodal Pipeline
+            </span>
+          </div>
+          <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
+            Cambridge Ingestion Studio
+          </h1>
+          <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
+            Upload Question Papers & Mark Schemes, parse diagram bounding crops, and publish validated items directly to the database.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => onSelectTab('diagnostics')}
+            className="px-3 py-2 rounded-xl bg-[#ebddc5] border-2 border-[#201e1d] font-bold text-xs hover:bg-[#ffe1d0] transition-colors shadow-offset-2 active:translate-y-0.5"
+          >
+            KaTeX Diagnostics
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelectTab('bank')}
+            className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-colors shadow-offset-2 active:translate-y-0.5"
+          >
+            Question Bank →
+          </button>
+        </div>
+      </div>
+      <IngestionHub />
+    </div>
+  );
+
   switch (activeTab) {
     case 'ingestion':
-      return (
-        <div className="space-y-4">
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
-                  INGESTION ENGINE v2.4
-                </span>
-                <span className="text-xs font-mono font-bold text-[#645c50]">
-                  Dual-PDF OCR & Gemini 1.5 Pro Multimodal Pipeline
-                </span>
-              </div>
-              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
-                Cambridge Ingestion Studio
-              </h1>
-              <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
-                Upload Question Papers & Mark Schemes, parse diagram bounding crops, and stage validated items for publishing.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => onSelectTab('diagnostics')}
-                className="px-3 py-2 rounded-xl bg-[#ebddc5] border-2 border-[#201e1d] font-bold text-xs hover:bg-[#ffe1d0] transition-colors shadow-offset-2 active:translate-y-0.5"
-              >
-                KaTeX Diagnostics
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectTab('staged')}
-                className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-colors shadow-offset-2 active:translate-y-0.5"
-              >
-                Staged Papers →
-              </button>
-            </div>
-          </div>
-          <IngestionHub />
-        </div>
-      );
-
-    case 'staged':
-      return (
-        <div className="space-y-6">
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
-                  QUALITY GATE · STAGING
-                </span>
-                <span className="text-xs font-mono font-bold text-[#645c50]">
-                  Pre-Publishing Review & Mark Scheme Alignment
-                </span>
-              </div>
-              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
-                Staged Papers Queue
-              </h1>
-              <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
-                Audit extracted papers and diagram bindings before committing them to the global live question pool.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onSelectTab('ingestion')}
-              className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-colors shadow-offset-2 active:translate-y-0.5 self-start sm:self-auto"
-            >
-              + Ingest New Paper
-            </button>
-          </div>
-          <StagingReview onOpenFullStudio={(paperId) => onSelectTab(`ingestion`)} />
-        </div>
-      );
+      return renderIngestion();
 
     case 'diagnostics':
       return (
@@ -468,17 +437,17 @@ export default function AppAdminHub({
               )}
             </div>
 
-            {/* Card 2: Staged Papers */}
+            {/* Card 2: Publish Pipeline */}
             <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
               <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Staged Papers</span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">Publish Pipeline</span>
                 <Layers className="w-4 h-4 text-[#201e1d]" />
               </div>
               <div className="text-3xl font-black font-heading text-[#201e1d]">
-                0 Ready
+                Direct DB
               </div>
-              <p className="text-[11px] font-bold text-[#645c50]">
-                None Staged
+              <p className="text-[11px] font-bold text-emerald-700">
+                Instant Publishing Active
               </p>
             </div>
 
@@ -582,14 +551,14 @@ export default function AppAdminHub({
 
               <button
                 type="button"
-                onClick={() => onSelectTab('staged')}
+                onClick={() => onSelectTab('bank')}
                 className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1.5 cursor-pointer active:translate-y-0.5 group"
               >
                 <div className="flex items-center justify-between">
                   <div className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139] transition-colors">
-                    Review Staged Paper
+                    Explore Question Bank
                   </div>
-                  <span className="text-sm">📋</span>
+                  <span className="text-sm">📚</span>
                 </div>
                 <div className="text-xs font-medium text-[#645c50]">
                   Audit question stems, mark schemes, and diagram crops
@@ -679,10 +648,6 @@ export default function AppAdminHub({
       );
 
     default:
-      return (
-        <div className="space-y-4">
-          <IngestionHub />
-        </div>
-      );
+      return renderIngestion();
   }
 }

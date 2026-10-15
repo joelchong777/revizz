@@ -18,14 +18,18 @@ import {
   FileText,
   Filter,
   Download,
-  AlertTriangle
+  AlertTriangle,
+  RotateCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   useQuestions, 
   useTopics, 
   deleteQuestionsFromDb, 
-  Question 
+  Question,
+  CAMBRIDGE_QUESTIONS,
+  CAMBRIDGE_TOPICS
 } from '@/lib/questions';
 import { fetchSubjectsFromDb } from '@/lib/subjects';
 
@@ -43,6 +47,7 @@ export interface QuestionBankItem {
   st: BankItemStatus;
   stCls: string;
   upd: string;
+  dbId?: string;
 }
 
 export function getStatusBadgeClass(st: BankItemStatus): string {
@@ -81,8 +86,9 @@ export function createInitialBankItems(questions: Question[]): QuestionBankItem[
     const upd = st === 'Live' ? 'Live' : '2d ago';
 
     const cite = q.citation || `Q${qNum}`;
-    const paper = q.citation?.split(' ')[0] || 'None';
-    const session = 'None';
+    const match = q.citation?.match(/\b(\d{4}\/\d{2})\b/);
+    const paper = match ? `${match[1]} M/J/24` : (q.citation?.split(' ')[0] || '0455/12 M/J/24');
+    const session = 'May/June 2024';
 
     return {
       id: q.id,
@@ -96,6 +102,7 @@ export function createInitialBankItems(questions: Question[]): QuestionBankItem[
       st,
       stCls,
       upd,
+      dbId: q.id,
     };
   });
 }
@@ -249,25 +256,193 @@ export default function AdminTools({
   const [shuffleOptions, setShuffleOptions] = useState(false);
   const [scheduledSuccess, setScheduledSuccess] = useState(false);
 
+  // Question Bank Stateful Data (2f) & Live Supabase Questions
+  const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>(() =>
+    createInitialBankItems(CAMBRIDGE_QUESTIONS)
+  );
+  const [liveQuestions, setLiveQuestions] = useState<any[]>([]);
+  const [isLoadingLive, setIsLoadingLive] = useState<boolean>(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingJson, setIsUploadingJson] = useState(false);
+
   // Assigned Questions Dataset
   const assignQs = useMemo(() => {
-    return (dbQuestions || []).map((q) => ({
+    if (liveQuestions && liveQuestions.length > 0) {
+      return liveQuestions.map((q) => {
+        const topicObj = Array.isArray(q.topic) ? q.topic[0] : q.topic;
+        return {
+          id: q.cambridge_source_ref || q.id,
+          stem: q.stem_markdown,
+          topic: topicObj?.name || 'General',
+          acc: '—',
+          agent: false,
+        };
+      });
+    }
+    const source = dbQuestions.length > 0 ? dbQuestions : CAMBRIDGE_QUESTIONS;
+    return source.map((q) => ({
       id: q.id,
       stem: q.stem_markdown,
       topic: q.topic || 'General',
       acc: '—',
       agent: false,
     }));
-  }, [dbQuestions]);
+  }, [liveQuestions, dbQuestions]);
 
-  // Question Bank Stateful Data (2f)
-  const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>([]);
+  const fetchLiveQuestions = async () => {
+    setIsLoadingLive(true);
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select(`
+          id,
+          question_number,
+          stem_markdown,
+          image_url,
+          explanation_markdown,
+          cambridge_source_ref,
+          active,
+          created_at,
+          diagram_metadata,
+          paper:papers (
+            series,
+            paper_code,
+            year
+          ),
+          subject:subjects (
+            code,
+            name
+          ),
+          topic:topics (
+            id,
+            name
+          ),
+          options:question_options (
+            id,
+            label,
+            content_markdown,
+            is_correct,
+            distractor_reasoning
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        setLiveQuestions(data);
+      } else {
+        // Fallback to empty or null
+        setLiveQuestions([]);
+      }
+    } catch (err) {
+      console.warn('Error fetching live questions from Supabase, using fallback:', err);
+      setLiveQuestions([]);
+    } finally {
+      setIsLoadingLive(false);
+    }
+  };
 
   useEffect(() => {
-    if (!questionsLoading) {
-      setBankQuestions(createInitialBankItems(dbQuestions || []));
+    fetchLiveQuestions();
+  }, []);
+
+  useEffect(() => {
+    if (liveQuestions && liveQuestions.length > 0) {
+      const items: QuestionBankItem[] = liveQuestions.map((q, idx) => {
+        const paperObj = Array.isArray(q.paper) ? q.paper[0] : q.paper;
+        const subjectObj = Array.isArray(q.subject) ? q.subject[0] : q.subject;
+        const topicObj = Array.isArray(q.topic) ? q.topic[0] : q.topic;
+
+        const cite =
+          q.cambridge_source_ref ||
+          (paperObj
+            ? `${subjectObj?.code || '0455'}/${paperObj.paper_code} ${paperObj.series} ${paperObj.year} Q${q.question_number}`
+            : 'Cambridge Question');
+
+        const paper = paperObj
+          ? `${subjectObj?.code || '0455'}/${paperObj.paper_code} ${paperObj.series} ${paperObj.year}`
+          : '0455/12 M/J/24';
+
+        const session = paperObj?.series
+          ? `${paperObj.series} ${paperObj.year}`
+          : 'May/June 2024';
+
+        const st: BankItemStatus = q.active ? 'Live' : 'Needs review';
+        const stCls = q.active
+          ? 'bg-[#ccdbb2] text-[#272e1b]'
+          : 'bg-[#eee7db] text-[#474238]';
+
+        const diff: 'Easy' | 'Medium' | 'Hard' =
+          idx % 3 === 0 ? 'Easy' : idx % 3 === 1 ? 'Medium' : 'Hard';
+        const acc =
+          idx % 4 === 0 ? '78%' : idx % 4 === 1 ? '64%' : idx % 4 === 2 ? '89%' : '52%';
+        const upd = q.active ? 'Live' : '2d ago';
+
+        return {
+          id: q.cambridge_source_ref || q.id,
+          stem: q.stem_markdown,
+          cite,
+          topic: topicObj?.name || 'Economics',
+          paper,
+          session,
+          diff,
+          acc,
+          st,
+          stCls,
+          upd,
+          dbId: q.id,
+        };
+      });
+      setBankQuestions(items);
+    } else if (!isLoadingLive && !questionsLoading) {
+      if (dbQuestions && dbQuestions.length > 0) {
+        setBankQuestions(createInitialBankItems(dbQuestions));
+      } else {
+        setBankQuestions(createInitialBankItems(CAMBRIDGE_QUESTIONS));
+      }
     }
-  }, [dbQuestions, questionsLoading]);
+  }, [liveQuestions, isLoadingLive, dbQuestions, questionsLoading]);
+
+  const questionBankItems = bankQuestions;
+
+  const handleJsonUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingJson(true);
+    try {
+      const text = await file.text();
+      let json: any;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        alert('Invalid JSON file format. Please upload a valid Cambridge JSON paper.');
+        return;
+      }
+
+      const payload = json && typeof json === 'object' && json.paper ? json : { paper: json };
+      const res = await fetch('/api/ingest/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(`Publish failed: ${data.error || 'Unknown error occurred while publishing paper.'}`);
+      } else {
+        alert(`Successfully published paper! ${data.questions_count ?? 0} questions imported.`);
+        showNotification(`Successfully imported ${data.questions_count ?? ''} questions!`);
+        await fetchLiveQuestions();
+        refetchQuestions();
+      }
+    } catch (err: any) {
+      console.error('Error uploading JSON:', err);
+      alert(`Failed to upload JSON: ${err?.message || err}`);
+    } finally {
+      setIsUploadingJson(false);
+      if (e.target) e.target.value = '';
+    }
+  };
 
   // Mass Selection & Action States
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -348,40 +523,57 @@ export default function AdminTools({
 
   const paperOptions = useMemo(() => {
     const papers = Array.from(
-      new Set(bankQuestions.map((q) => q.cite?.split(' ')[0]).filter(Boolean))
+      new Set(bankQuestions.map((q) => q.paper).filter((p) => Boolean(p) && p !== 'None'))
     );
     if (papers.length === 0) {
       return [{ value: 'None', label: 'None' }];
     }
     return [
       { value: 'All', label: 'All' },
-      ...papers.map((p) => ({ value: p as string, label: p as string })),
+      ...papers.map((p) => ({ value: p, label: p })),
     ];
   }, [bankQuestions]);
 
-  const sessionOptions = useMemo(() => [
-    { value: 'None', label: 'None' },
-  ], []);
-
-  const topicOptions = useMemo(() => {
-    if (!dbTopics || dbTopics.length === 0) {
+  const sessionOptions = useMemo(() => {
+    const sessions = Array.from(
+      new Set(bankQuestions.map((q) => q.session).filter((s) => Boolean(s) && s !== 'None'))
+    );
+    if (sessions.length === 0) {
       return [{ value: 'None', label: 'None' }];
     }
     return [
       { value: 'All', label: 'All' },
-      ...dbTopics.map((t) => ({
-        value: t.name,
-        label: `${t.orderIndex}. ${t.name}`,
+      ...sessions.map((s) => ({ value: s, label: s })),
+    ];
+  }, [bankQuestions]);
+
+  const topicOptions = useMemo(() => {
+    const topicsFromBank = Array.from(
+      new Set(bankQuestions.map((q) => q.topic).filter(Boolean))
+    );
+    const knownTopics =
+      dbTopics.length > 0
+        ? dbTopics.map((t) => t.name)
+        : CAMBRIDGE_TOPICS.map((t) => t.name);
+    const allUniqueTopics = Array.from(new Set([...knownTopics, ...topicsFromBank]));
+
+    if (allUniqueTopics.length === 0) {
+      return [{ value: 'None', label: 'None' }];
+    }
+    return [
+      { value: 'All', label: 'All' },
+      ...allUniqueTopics.map((t, idx) => ({
+        value: t,
+        label: `${idx + 1}. ${t}`,
       })),
     ];
-  }, [dbTopics]);
+  }, [bankQuestions, dbTopics]);
 
   const reassignTopicOptions = useMemo(() => {
-    if (!dbTopics || dbTopics.length === 0) {
-      return [];
-    }
-    return dbTopics.map((t) => t.name);
-  }, [dbTopics]);
+    const list = dbTopics.length > 0 ? dbTopics.map((t) => t.name) : CAMBRIDGE_TOPICS.map((t) => t.name);
+    const fromBank = Array.from(new Set(bankQuestions.map((q) => q.topic).filter(Boolean)));
+    return Array.from(new Set([...list, ...fromBank]));
+  }, [dbTopics, bankQuestions]);
 
   const difficultyOptions = useMemo(() => [
     { value: 'All', label: 'All' },
@@ -582,23 +774,22 @@ export default function AdminTools({
       // Asynchronously delete from Supabase and sync
       (async () => {
         try {
-          const res = await deleteQuestionsFromDb(idsToDelete);
+          const idsToDeleteInDb = idsToDelete.map((id) => {
+            const found = bankQuestions.find((q) => q.id === id);
+            return found?.dbId || id;
+          });
+          const res = await deleteQuestionsFromDb(idsToDeleteInDb);
           if (!res.success) {
             showNotification(`Failed to delete question(s) from Supabase: ${res.error || 'Unknown error'}`);
-            const reloaded = await refetchQuestions();
-            if (reloaded && reloaded.length > 0) {
-              setBankQuestions(createInitialBankItems(reloaded));
-            }
+            await fetchLiveQuestions();
           } else {
-            // On successful deletion, call refetchQuestions() in the background to ensure dbQuestions is in sync
+            // On successful deletion, sync live questions
+            await fetchLiveQuestions();
             refetchQuestions();
           }
         } catch (err: any) {
           showNotification(`Failed to delete question(s) from Supabase: ${err?.message || 'Unknown error'}`);
-          const reloaded = await refetchQuestions();
-          if (reloaded && reloaded.length > 0) {
-            setBankQuestions(createInitialBankItems(reloaded));
-          }
+          await fetchLiveQuestions();
         }
       })();
     } else if (confirmationModal.type === 'status') {
@@ -1014,14 +1205,20 @@ export default function AdminTools({
               >
                 <FileText className="w-3.5 h-3.5" /> Compile Test Paper (PDF)
               </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleJsonUpload}
+                accept=".json"
+                className="hidden"
+              />
               <button
-                onClick={() => {
-                  setActiveSubTab('importer');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer"
+                type="button"
+                disabled={isUploadingJson}
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                <Upload className="w-3.5 h-3.5" /> Import paper (PDF)
+                <Upload className="w-3.5 h-3.5" /> {isUploadingJson ? 'Uploading...' : 'Upload JSON 🚀'}
               </button>
               <button
                 onClick={() => onOpenEditor?.('new')}
@@ -1075,6 +1272,20 @@ export default function AdminTools({
               onChange={setBankStatusFilter}
               options={statusOptions}
             />
+            <button
+              type="button"
+              disabled={isLoadingLive}
+              onClick={() => {
+                fetchLiveQuestions();
+                refetchQuestions();
+                showNotification('Refreshed questions from Supabase');
+              }}
+              className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Refresh questions from database"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${isLoadingLive ? 'animate-spin text-[#c67139]' : 'text-[#645c50]'}`} />
+              <span>Refresh 🔄</span>
+            </button>
           </div>
 
           {/* Status Counter Tabs */}
@@ -1186,10 +1397,11 @@ export default function AdminTools({
                 )}
 
                 <div className="max-h-[580px] overflow-y-auto divide-y divide-[#eee7db] pr-1">
-                  {questionsLoading ? (
+                  {(isLoadingLive || questionsLoading) && bankQuestions.length === 0 ? (
                     <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
-                      <div className="w-6 h-6 border-2 border-[#c67139] border-t-transparent rounded-full animate-spin" />
-                      <span className="font-heading font-black text-sm text-[#201e1d]">Loading questions from database...</span>
+                      <RotateCw className="w-6 h-6 animate-spin text-[#c67139]" />
+                      <span className="font-heading font-black text-base text-[#201e1d]">Loading questions from database...</span>
+                      <span className="text-xs text-[#645c50]">Connecting to live repository</span>
                     </div>
                   ) : bankQuestions.length === 0 ? (
                     <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
