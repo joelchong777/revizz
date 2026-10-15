@@ -24,6 +24,8 @@ export interface AppAdminNavProps {
   onClose?: () => void;
   userDisplayName?: string;
   flaggedCount?: number;
+  questionCount?: number;
+  questionsLoading?: boolean;
 }
 
 export default function AppAdminNav({
@@ -34,6 +36,8 @@ export default function AppAdminNav({
   onClose,
   userDisplayName = 'Administrator',
   flaggedCount = 0,
+  questionCount,
+  questionsLoading = false,
 }: AppAdminNavProps) {
   const handleNavClick = (tabKey: string) => {
     if (onSelectTab) {
@@ -225,7 +229,16 @@ export default function AppAdminNav({
               >
                 {renderIcon(BookOpen, 'bank')}
                 {!compact && (
-                  <span className="flex-1 min-w-0 truncate">Global Question Bank</span>
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Global Question Bank</span>
+                    {questionsLoading ? (
+                      <span className="w-6 h-4 rounded-full bg-[#f5ead8] border border-[#201e1d]/20 animate-pulse shrink-0" />
+                    ) : questionCount !== undefined ? (
+                      <span className="px-1.5 py-0.5 rounded-md bg-[#f9f4ed] text-[#201e1d] font-mono text-[10px] font-bold border border-[#201e1d]/20 shrink-0">
+                        {questionCount}
+                      </span>
+                    ) : null}
+                  </>
                 )}
               </button>
 

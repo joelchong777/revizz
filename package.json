@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "ingest": "tsx scripts/ingest-paper.ts",
+    "publish:staging": "tsx scripts/publish-staging-papers.ts",
     "test": "tsc scripts/verify-revizz.ts --module commonjs --target es2020 --esModuleInterop --skipLibCheck --moduleResolution node --outDir dist-test && node --experimental-websocket dist-test/scripts/verify-revizz.js"
   },
   "dependencies": {

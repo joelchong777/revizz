@@ -216,6 +216,12 @@ export default function AdminTools({
   const { topics: dbTopics } = useTopics();
   const [activeSubTab, setActiveSubTab] = useState<'assign' | 'bank' | 'importer'>(initialView);
 
+  useEffect(() => {
+    if (initialView) {
+      setActiveSubTab(initialView);
+    }
+  }, [initialView]);
+
   // Homework Assigner State (2c)
   const [aiPrompt, setAiPrompt] = useState('Build a homework round on weakest subtopics');
   const [selectedClass, setSelectedClass] = useState('No cohorts registered');
@@ -989,7 +995,14 @@ export default function AdminTools({
             <div>
               <span className="text-xs font-bold text-[#645c50]">Question bank</span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                {questionsLoading ? '...' : `${bankQuestions.length} questions`}
+                {questionsLoading ? (
+                  <span className="inline-flex items-center gap-2 text-xl text-[#645c50] animate-pulse">
+                    <span className="w-4 h-4 border-2 border-[#c67139] border-t-transparent rounded-full animate-spin" />
+                    Syncing live database...
+                  </span>
+                ) : (
+                  `${bankQuestions.length} questions`
+                )}
               </h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">

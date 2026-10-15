@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import IngestionHub from '@/components/portal/IngestionHub';
 import AdminCMS from '@/components/portal/AdminCMS';
@@ -36,7 +36,7 @@ export default function AppAdminHub({
   selectedQuestionId,
   onSelectQuestionId,
 }: AppAdminHubProps) {
-  const { questions } = useQuestions();
+  const { questions, loading: questionsLoading } = useQuestions();
 
   // Diagnostics interactive state
   const [selectedDiagQuestionIdx, setSelectedDiagQuestionIdx] = useState(0);
@@ -45,11 +45,11 @@ export default function AppAdminHub({
 
   // Convert Questions to StagingQuestion for diagnostic pipeline inspection
   const diagnosticQuestions: StagingQuestion[] = useMemo(() => {
-    return questions.slice(0, 10).map((q, idx) => ({
+    return (questions || []).slice(0, 10).map((q, idx) => ({
       question_number: idx + 1,
       cambridge_source_ref: q.id || `q-${String(idx + 1).padStart(2, '0')}`,
       topic_name: q.topic || 'General',
-      stem_markdown: q.stem_markdown,
+      stem_markdown: q.stem_markdown || '',
       diagram: q.has_diagram
         ? {
             has_diagram: true,
@@ -57,9 +57,9 @@ export default function AppAdminHub({
             alt_description: 'Diagram illustration',
           }
         : undefined,
-      options: q.options.map((opt, optIdx) => ({
+      options: (q.options || []).map((opt, optIdx) => ({
         label: (['A', 'B', 'C', 'D'][optIdx] || 'A') as 'A' | 'B' | 'C' | 'D',
-        content_markdown: opt.text_markdown,
+        content_markdown: opt.text_markdown || '',
         is_correct: opt.id === q.correct_option_id,
       })),
       explanation_markdown: q.explanation_markdown || 'Mark scheme answer explanation.',
@@ -69,7 +69,14 @@ export default function AppAdminHub({
     }));
   }, [questions]);
 
-  const activeDiagQuestion = diagnosticQuestions[selectedDiagQuestionIdx] || diagnosticQuestions[0];
+  // Keep selectedDiagQuestionIdx within bounds if diagnosticQuestions changes
+  useEffect(() => {
+    if (diagnosticQuestions.length > 0 && selectedDiagQuestionIdx >= diagnosticQuestions.length) {
+      setSelectedDiagQuestionIdx(0);
+    }
+  }, [diagnosticQuestions.length, selectedDiagQuestionIdx]);
+
+  const activeDiagQuestion = diagnosticQuestions[selectedDiagQuestionIdx] || diagnosticQuestions[0] || null;
 
   const handleOpenEditor = (questionId: string) => {
     if (onSelectQuestionId) {
@@ -267,7 +274,15 @@ export default function AppAdminHub({
               )}
             </div>
 
-            {diagnosticQuestions.length === 0 || !activeDiagQuestion ? (
+            {questionsLoading ? (
+              <div className="py-12 px-4 text-center flex flex-col items-center justify-center space-y-3 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5] animate-pulse">
+                <div className="w-8 h-8 rounded-full border-2 border-[#201e1d] border-t-transparent animate-spin" />
+                <div className="font-heading text-sm font-black text-[#201e1d]">
+                  Loading Live Questions for AST Diagnostics...
+                </div>
+                <p className="text-xs text-[#645c50]">Fetching active items from Supabase</p>
+              </div>
+            ) : diagnosticQuestions.length === 0 || !activeDiagQuestion ? (
               <div className="py-12 px-4 text-center flex flex-col items-center justify-center space-y-2 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5]">
                 <div className="text-3xl">🔬</div>
                 <div className="font-heading text-sm font-black text-[#201e1d]">
@@ -293,9 +308,17 @@ export default function AppAdminHub({
                 <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
                   GLOBAL REPOSITORY
                 </span>
-                <span className="text-xs font-mono font-bold text-[#645c50]">
-                  {questions.length} Questions Live & Verified
-                </span>
+                {questionsLoading ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#eee7db] text-[#645c50] text-xs font-mono font-bold animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Connecting to live Supabase DB...
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#645c50]">
+                    <span className={`w-1.5 h-1.5 rounded-full ${questions.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-[#8c491a]'}`} />
+                    {questions.length} {questions.length === 1 ? 'Question' : 'Questions'} Live & Verified
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
                 Global Question Bank Intelligence
@@ -307,11 +330,35 @@ export default function AppAdminHub({
             <button
               type="button"
               onClick={() => onSelectTab('ingestion')}
-              className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-colors shadow-offset-2 active:translate-y-0.5 self-start sm:self-auto"
+              className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-colors shadow-offset-2 active:translate-y-0.5 self-start sm:self-auto cursor-pointer"
             >
               + Ingest Questions
             </button>
           </div>
+
+          {!questionsLoading && questions.length === 0 && (
+            <div className="p-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">🗄️</span>
+                <div>
+                  <span className="font-heading font-black text-sm text-[#201e1d] block">
+                    0 Questions Live. Start by uploading an exam paper in Ingestion Studio
+                  </span>
+                  <span className="text-[#645c50] font-medium">
+                    The Supabase question pool is currently empty. Start by uploading an exam paper in Ingestion Studio to parse, verify, and stage questions.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onSelectTab('ingestion')}
+                className="px-3 py-1.5 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-heading font-black text-xs hover:bg-[#ffc6a5] transition-all shadow-offset-2 active:translate-y-0.5 whitespace-nowrap cursor-pointer shrink-0"
+              >
+                + Open Ingestion Studio
+              </button>
+            </div>
+          )}
+
           <AdminTools initialView="bank" onOpenEditor={handleOpenEditor} />
         </div>
       );
@@ -351,7 +398,7 @@ export default function AppAdminHub({
                   Editor
                 </span>
                 <span className="text-xs font-bold text-[#645c50]">
-                  Question ID: {selectedQuestionId || (questions[0]?.id) || 'None'}
+                  Question ID: {selectedQuestionId || (questionsLoading ? 'Loading...' : questions[0]?.id || 'None')}
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
@@ -369,7 +416,7 @@ export default function AppAdminHub({
               ← Back to Bank
             </button>
           </div>
-          <AdminCMS initialView="editor" questionId={selectedQuestionId} />
+          <AdminCMS initialView="editor" questionId={selectedQuestionId || questions[0]?.id} />
         </div>
       );
 
@@ -402,12 +449,23 @@ export default function AppAdminHub({
                 <span className="text-xs font-mono font-bold uppercase tracking-wider">Total Verified Questions</span>
                 <BookOpen className="w-4 h-4 text-[#201e1d]" />
               </div>
-              <div className="text-3xl font-black font-heading text-[#201e1d]">
-                {questions.length} Live
-              </div>
-              <p className="text-[11px] font-bold text-emerald-700">
-                {questions.length > 0 ? '100% Mark Scheme Audited' : '0 Questions Live. Start by uploading an exam paper in Ingestion Studio.'}
-              </p>
+              {questionsLoading ? (
+                <div className="space-y-1 py-1">
+                  <div className="h-8 w-24 bg-[#eee7db] rounded-lg animate-pulse" />
+                  <p className="text-[11px] font-bold text-[#645c50] animate-pulse">
+                    Syncing Supabase DB...
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl font-black font-heading text-[#201e1d]">
+                    {questions.length} Live
+                  </div>
+                  <p className={`text-[11px] font-bold ${questions.length > 0 ? 'text-emerald-700' : 'text-[#8c491a]'}`}>
+                    {questions.length > 0 ? '100% Mark Scheme Audited' : '0 Questions Live. Start by uploading an exam paper in Ingestion Studio.'}
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Card 2: Staged Papers */}
@@ -452,6 +510,32 @@ export default function AppAdminHub({
               </p>
             </div>
           </div>
+
+          {/* 0-State Neobrutalist Telemetry Card */}
+          {!questionsLoading && questions.length === 0 && (
+            <div className="bg-[#fff2eb] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center text-xl shrink-0">
+                  🗄️
+                </div>
+                <div>
+                  <h4 className="font-heading font-black text-sm text-[#201e1d]">
+                    0 Questions Live. Start by uploading an exam paper in Ingestion Studio
+                  </h4>
+                  <p className="text-xs font-medium text-[#645c50]">
+                    The global Cambridge question repository is currently empty. Upload question papers and mark schemes in Ingestion Studio to populate live telemetry.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onSelectTab('ingestion')}
+                className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-all shadow-offset-2 active:translate-y-0.5 whitespace-nowrap cursor-pointer shrink-0"
+              >
+                Launch Ingestion Studio →
+              </button>
+            </div>
+          )}
 
           {/* Quick Action Telemetry Buttons */}
           <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">

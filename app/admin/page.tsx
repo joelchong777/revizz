@@ -7,6 +7,7 @@ import { useAuth, signInWithGoogle } from '@/lib/auth';
 import { Menu, ArrowRight, GraduationCap, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import AppAdminNav from '@/components/admin/AppAdminNav';
 import AppAdminHub from '@/components/admin/AppAdminHub';
+import { useQuestions } from '@/lib/questions';
 
 const TAB_TITLES: Record<string, string> = {
   ingestion: 'Ingestion Studio',
@@ -22,6 +23,7 @@ const TAB_TITLES: Record<string, string> = {
 function AdminContent() {
   const { userProfile, loading } = useAuth();
   const searchParams = useSearchParams();
+  const { questions, loading: questionsLoading } = useQuestions();
 
   const [activeTab, setActiveTab] = useState<string>('ingestion');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -350,6 +352,8 @@ function AdminContent() {
           active={activeTab}
           onSelectTab={handleSelectTab}
           userDisplayName={userProfile?.display_name || (guestMode ? 'Demo App Admin' : 'Administrator')}
+          questionCount={questions.length}
+          questionsLoading={questionsLoading}
         />
       </div>
 
@@ -368,6 +372,8 @@ function AdminContent() {
               isOpen={true}
               onClose={() => setMobileNavOpen(false)}
               userDisplayName={userProfile?.display_name || (guestMode ? 'Demo App Admin' : 'Administrator')}
+              questionCount={questions.length}
+              questionsLoading={questionsLoading}
             />
           </div>
         </div>
@@ -429,8 +435,18 @@ function AdminContent() {
                 Ingestion Engine: v2.4
               </span>
               <span>·</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
-                Supabase DB: Synchronized
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
+                {questionsLoading ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Supabase DB: Syncing...
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Supabase DB: {questions.length} Live {questions.length === 1 ? 'Question' : 'Questions'}
+                  </>
+                )}
               </span>
             </div>
           </div>
