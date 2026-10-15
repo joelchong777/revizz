@@ -58,7 +58,7 @@ export function getStatusBadgeClass(st: BankItemStatus): string {
   }
 }
 
-function createInitialBankItems(questions: Question[]): QuestionBankItem[] {
+export function createInitialBankItems(questions: Question[]): QuestionBankItem[] {
   return questions.map((q, idx): QuestionBankItem => {
     const qNum = idx + 1;
     let st: BankItemStatus = 'Live';
