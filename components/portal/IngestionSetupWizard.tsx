@@ -630,8 +630,8 @@ export default function IngestionSetupWizard({
         </div>
       </div>
 
-      {/* Saved Draft Alert Banner if local draft exists */}
-      {hasSavedDraft && (
+      {/* Saved Draft Alert Banner if local draft exists and no paper is currently active */}
+      {!activePaper && hasSavedDraft && (
         <div className="p-4 bg-[#d1fae5] border-2 border-[#201e1d] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-body shadow-[2px_2px_0_#201e1d]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#065f46] text-[#f9f4ed] border border-[#201e1d] flex items-center justify-center shrink-0 shadow-xs">

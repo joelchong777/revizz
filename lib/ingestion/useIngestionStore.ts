@@ -159,7 +159,7 @@ export interface IngestionStore extends IngestionState, IngestionActions {
   selectedQuestion: StagingQuestion | null;
 }
 
-const LOCAL_STORAGE_KEY = 'revizz_ingestion_draft';
+export const LOCAL_STORAGE_KEY = 'revizz_ingestion_draft';
 
 const initialRawState: IngestionState = {
   paper: null,
@@ -976,6 +976,8 @@ const actions: IngestionActions = {
         pipelineStep: 'success',
       });
 
+      actions.clearDraft();
+
       return { success: true, data: receipt, receipt };
     } catch (err: any) {
       const errorMsg = err.message || 'Unknown network error during publish.';
@@ -1066,6 +1068,17 @@ const actions: IngestionActions = {
       const current = getState();
       if (!current.paper) return false;
 
+      // Refuse to save papers with 0 questions
+      if (!Array.isArray(current.paper.questions) || current.paper.questions.length === 0) {
+        return false;
+      }
+
+      // Refuse to save published papers, purge any leftover draft
+      if (current.lifecycleState === 'published' || current.paper.lifecycle_state === 'published') {
+        window.localStorage.removeItem(storageKey);
+        return false;
+      }
+
       const payload = {
         paper: current.paper,
         selectedIdx: current.selectedIdx,
@@ -1132,7 +1145,50 @@ const actions: IngestionActions = {
   hasDraft(storageKey: string = LOCAL_STORAGE_KEY): boolean {
     if (typeof window === 'undefined') return false;
     try {
-      return Boolean(window.localStorage.getItem(storageKey));
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return false;
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        window.localStorage.removeItem(storageKey);
+        return false;
+      }
+
+      if (!parsed || typeof parsed !== 'object') {
+        window.localStorage.removeItem(storageKey);
+        return false;
+      }
+
+      const candidatePaper =
+        parsed.paper && Array.isArray(parsed.paper.questions)
+          ? parsed.paper
+          : Array.isArray(parsed.questions)
+            ? parsed
+            : (parsed.paper || parsed);
+      if (!candidatePaper || typeof candidatePaper !== 'object') {
+        window.localStorage.removeItem(storageKey);
+        return false;
+      }
+
+      if (!Array.isArray(candidatePaper.questions) || candidatePaper.questions.length === 0) {
+        window.localStorage.removeItem(storageKey);
+        return false;
+      }
+
+      if (candidatePaper.lifecycle_state === 'published' || parsed.lifecycleState === 'published') {
+        window.localStorage.removeItem(storageKey);
+        return false;
+      }
+
+      const validation = validateStagingPaper(candidatePaper, { allowPartialBatch: true });
+      if (!validation.success) {
+        window.localStorage.removeItem(storageKey);
+        return false;
+      }
+
+      return true;
     } catch {
       return false;
     }
@@ -1793,6 +1849,7 @@ export function useIngestionStore<T = IngestionStore>(
  * Direct imperative store access outside of React components.
  */
 export const ingestionStore = {
+  LOCAL_STORAGE_KEY,
   getState,
   setState,
   subscribe,

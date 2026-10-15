@@ -77,12 +77,12 @@ export default function IngestionHub() {
   const [hasSavedDraftState, setHasSavedDraftState] = useState(false);
   const [isReadingFile, setIsReadingFile] = useState(false);
 
-  // Check draft existence on mount without force-loading sample preset!
+  // Keep hasSavedDraftState reactive to paper changes and setup toggles
   useEffect(() => {
     if (typeof window !== "undefined") {
       setHasSavedDraftState(hasDraft());
     }
-  }, [hasDraft]);
+  }, [hasDraft, isSetupOpen, paper]);
 
   // Persist draft to localStorage whenever paper data changes
   useEffect(() => {

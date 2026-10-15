@@ -51,7 +51,7 @@ import {
   countActiveFilters,
 } from '../lib/compilerFilters';
 import { normalizeGeminiModel, toBase64, isTransientCapacityError } from '../lib/ingestion/geminiExtractor';
-import { normalizeStagingPayload, ingestionStore } from '../lib/ingestion/useIngestionStore';
+import { normalizeStagingPayload, ingestionStore, LOCAL_STORAGE_KEY } from '../lib/ingestion/useIngestionStore';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -1435,7 +1435,7 @@ async function runSuite13() {
     assertEqual(hubContent.includes('window.location.href = "/admin?tab=bank";'), true, 'IngestionHub routes "View in Question Bank" to /admin?tab=bank');
   });
 
-  await testAsync('StagingReview replaces mock setTimeout with real Supabase API call, real receipt, and direct JSON upload', () => {
+  await testAsync('StagingReview and Staged quality gate replace mock setTimeout with real Supabase API call, real receipt, and direct JSON upload', () => {
     const fs = require('fs');
     const path = require('path');
     const stagingContent = fs.readFileSync(path.resolve(process.cwd(), 'components/portal/StagingReview.tsx'), 'utf8');
@@ -1460,6 +1460,159 @@ async function runSuite13() {
     assertEqual(wizardContent.includes('Upload JSON Past Paper'), true, 'Upload JSON Past Paper action is prominent');
     assertEqual(wizardContent.includes('Drop Antigravity Agent JSON File Here'), true, 'Agent tab includes prominent JSON dropzone');
     assertEqual(wizardContent.includes('accept=".json,application/json,text/json"'), true, 'Accepts JSON extensions and MIME types');
+  });
+
+  // -----------------------------------------------------------------------------
+  // [Suite 14] Ingestion Draft Persistence & Validation Integrity
+  // -----------------------------------------------------------------------------
+  console.log('\n\x1b[1m\x1b[34m[Suite 14] Ingestion Draft Persistence & Validation Integrity\x1b[0m');
+
+  test('hasDraft() returns false on empty localStorage', () => {
+    mockStorage.clear();
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false when storage is empty');
+  });
+
+  test('hasDraft() returns false and clears storage when corrupted JSON or non-object is stored', () => {
+    // Corrupted / invalid JSON string
+    mockStorage.setItem(LOCAL_STORAGE_KEY, '{ broken json');
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false on malformed JSON');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Corrupted draft is purged from storage');
+
+    // Stored JSON is a string, not an object
+    mockStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify('just a string'));
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false on string draft');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'String draft is purged from storage');
+
+    // Stored JSON is null
+    mockStorage.setItem(LOCAL_STORAGE_KEY, 'null');
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false on null draft');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Null draft is purged from storage');
+
+    // Stored JSON is a number
+    mockStorage.setItem(LOCAL_STORAGE_KEY, '12345');
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false on numeric draft');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Numeric draft is purged from storage');
+  });
+
+  test('hasDraft() returns false and clears storage when paper has 0 questions', () => {
+    // Empty object
+    mockStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({}));
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false on empty object draft');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Empty object draft is purged from storage');
+
+    // Object with paper containing 0 questions
+    mockStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ paper: { questions: [] } }));
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false when questions array is empty');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Empty questions paper is purged from storage');
+
+    // Direct candidate paper with empty questions
+    mockStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ questions: [] }));
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false when root questions array is empty');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Root empty questions draft is purged from storage');
+  });
+
+  test('hasDraft() returns false and clears storage when draft is marked published', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const validPaper = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'staging/0455_s24_12.json'), 'utf8'));
+
+    // Published via candidatePaper.lifecycle_state === 'published'
+    mockStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify({
+        paper: { ...validPaper, lifecycle_state: 'published' },
+        lifecycleState: 'review',
+      })
+    );
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false when paper.lifecycle_state is published');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Published paper is purged from storage');
+
+    // Published via parsed.lifecycleState === 'published'
+    mockStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify({
+        paper: validPaper,
+        lifecycleState: 'published',
+      })
+    );
+    assertEqual(ingestionStore.hasDraft(), false, 'hasDraft returns false when parsed.lifecycleState is published');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Published wrapper draft is purged from storage');
+  });
+
+  test('hasDraft() returns true when a valid staging paper with questions is stored', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const validPaper = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'staging/0455_s24_12.json'), 'utf8'));
+
+    // Wrapped format
+    mockStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify({
+        paper: validPaper,
+        lifecycleState: 'review',
+        selectedIdx: 0,
+        timestamp: Date.now(),
+      })
+    );
+    assertEqual(ingestionStore.hasDraft(), true, 'hasDraft returns true for valid wrapped draft with questions');
+
+    // Direct paper format
+    mockStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(validPaper));
+    assertEqual(ingestionStore.hasDraft(), true, 'hasDraft returns true for direct valid staging paper');
+  });
+
+  test('saveDraftToLocalStorage refuses to save 0 questions or published papers', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const validPaper = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'staging/0455_s24_12.json'), 'utf8'));
+
+    // Test 6a: Refuses to save when paper is null
+    mockStorage.clear();
+    ingestionStore.setState({ paper: null });
+    assertEqual(ingestionStore.saveDraftToLocalStorage(), false, 'saveDraftToLocalStorage returns false when paper is null');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Storage remains empty on null paper');
+
+    // Test 6b: Refuses to save when paper has 0 questions
+    ingestionStore.setState({
+      paper: { ...validPaper, questions: [] },
+      lifecycleState: 'review',
+    });
+    assertEqual(ingestionStore.saveDraftToLocalStorage(), false, 'saveDraftToLocalStorage returns false for 0 questions');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Storage remains empty when paper has 0 questions');
+
+    // Test 6c: Refuses to save when paper.lifecycle_state === 'published' and purges existing draft
+    mockStorage.setItem(LOCAL_STORAGE_KEY, 'stale_pre_existing_draft');
+    ingestionStore.setState({
+      paper: { ...validPaper, lifecycle_state: 'published' },
+      lifecycleState: 'review',
+    });
+    assertEqual(ingestionStore.saveDraftToLocalStorage(), false, 'saveDraftToLocalStorage returns false for published paper');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Existing storage item is purged on saving published paper');
+
+    // Test 6d: Refuses to save when lifecycleState === 'published' and purges existing draft
+    mockStorage.setItem(LOCAL_STORAGE_KEY, 'stale_pre_existing_draft');
+    ingestionStore.setState({
+      paper: { ...validPaper, lifecycle_state: 'review' },
+      lifecycleState: 'published',
+    });
+    assertEqual(ingestionStore.saveDraftToLocalStorage(), false, 'saveDraftToLocalStorage returns false when lifecycleState is published');
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'Existing storage item is purged on saving published lifecycleState');
+
+    // Test 6e: Successfully saves valid draft with questions in review state
+    ingestionStore.setState({
+      paper: validPaper,
+      lifecycleState: 'review',
+    });
+    assertEqual(ingestionStore.saveDraftToLocalStorage(), true, 'saveDraftToLocalStorage succeeds for valid uncompleted paper');
+    assert(Boolean(mockStorage.getItem(LOCAL_STORAGE_KEY)), 'Draft is now present in localStorage');
+  });
+
+  test('clearDraft clears the storage key', () => {
+    mockStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ draft: true }));
+    assert(Boolean(mockStorage.getItem(LOCAL_STORAGE_KEY)), 'Draft exists in storage prior to clearDraft');
+
+    ingestionStore.clearDraft();
+    assertEqual(mockStorage.getItem(LOCAL_STORAGE_KEY), null, 'clearDraft removes the draft item from localStorage');
   });
 
   // Summary Output
