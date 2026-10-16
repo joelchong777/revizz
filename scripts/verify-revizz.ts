@@ -79,6 +79,23 @@ import {
   saveOnlineAssignment,
   listOnlineAssignments,
 } from '../lib/testCompiler';
+import {
+  DEFAULT_BANK_FILTER_STATE,
+  normalizeSeriesToSeasonLabel,
+  parseCambridgePaperMetadata,
+  deriveQuestionStatus,
+  deriveQuestionDifficulty,
+  detectQuestionFeatures,
+  filterBankQuestions,
+  computeBankFacetCounts,
+  getActiveFilterChips,
+  removeActiveFilterChip,
+  countActiveBankFilters,
+  serializeBankFiltersToQuery,
+  parseBankFiltersFromQuery,
+  EnrichedBankQuestion,
+  BankFilterState,
+} from '../lib/portal/bankFilters';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -2240,6 +2257,616 @@ async function runSuite13() {
     assertEqual(hubContent.includes('parseCitationTagPills'), true, 'TestCompilerHub imports/uses parseCitationTagPills');
     assertEqual(hubContent.includes('stripCambridgeIgcse'), true, 'TestCompilerHub imports/uses stripCambridgeIgcse');
     assertEqual(hubContent.includes('Cambridge Cover Page'), false, 'TestCompilerHub does not contain old "Cambridge Cover Page" label');
+  });
+
+  // -----------------------------------------------------------------------------
+  // [Suite 17: Question Bank Advanced Filter Engine & URL Sync]
+  // -----------------------------------------------------------------------------
+  console.log('\n\x1b[1m\x1b[34m[Suite 17: Question Bank Advanced Filter Engine & URL Sync]\x1b[0m');
+
+  test('normalizeSeriesToSeasonLabel normalizes Cambridge series shorthand and full labels', () => {
+    // May/June series (s, m/j, may, june)
+    assertEqual(normalizeSeriesToSeasonLabel('s').code, 's', "Code for 's' should be 's'");
+    assertEqual(normalizeSeriesToSeasonLabel('s').label, 'May/June (s)', "Label for 's' should be 'May/June (s)'");
+    assertEqual(normalizeSeriesToSeasonLabel('m/j').code, 's', "Code for 'm/j' should be 's'");
+    assertEqual(normalizeSeriesToSeasonLabel('May/June').code, 's', "Code for 'May/June' should be 's'");
+    assertEqual(normalizeSeriesToSeasonLabel('june').label, 'May/June (s)', "Label for 'june' should be 'May/June (s)'");
+
+    // Feb/March series (m, f/m, feb, march)
+    assertEqual(normalizeSeriesToSeasonLabel('m').code, 'm', "Code for 'm' should be 'm'");
+    assertEqual(normalizeSeriesToSeasonLabel('m').label, 'Feb/March (m)', "Label for 'm' should be 'Feb/March (m)'");
+    assertEqual(normalizeSeriesToSeasonLabel('f/m').code, 'm', "Code for 'f/m' should be 'm'");
+    assertEqual(normalizeSeriesToSeasonLabel('Feb/March').code, 'm', "Code for 'Feb/March' should be 'm'");
+
+    // Oct/Nov series (w, o/n, oct, nov)
+    assertEqual(normalizeSeriesToSeasonLabel('w').code, 'w', "Code for 'w' should be 'w'");
+    assertEqual(normalizeSeriesToSeasonLabel('w').label, 'Oct/Nov (w)', "Label for 'w' should be 'Oct/Nov (w)'");
+    assertEqual(normalizeSeriesToSeasonLabel('o/n').code, 'w', "Code for 'o/n' should be 'w'");
+    assertEqual(normalizeSeriesToSeasonLabel('Oct/Nov').label, 'Oct/Nov (w)', "Label for 'Oct/Nov' should be 'Oct/Nov (w)'");
+
+    // Null or empty fallback
+    assertEqual(normalizeSeriesToSeasonLabel(null).code, 's', "Null series falls back to 's'");
+    assertEqual(normalizeSeriesToSeasonLabel('').label, 'May/June (s)', "Empty series falls back to 'May/June (s)'");
+  });
+
+  test('parseCambridgePaperMetadata extracts subjectCode, variant, year, and season across citation patterns', () => {
+    // Test case: 0455/12 s 2024 Q15
+    const meta1 = parseCambridgePaperMetadata({ cite: '0455/12 s 2024 Q15' });
+    assertEqual(meta1.subjectCode, '0455', 'Extracts subjectCode 0455');
+    assertEqual(meta1.subjectName, 'Economics', 'Maps subjectCode 0455 to Economics');
+    assertEqual(meta1.variant, '12', 'Extracts variant 12');
+    assertEqual(meta1.seriesCode, 's', 'Extracts seriesCode s');
+    assertEqual(meta1.season, 'May/June (s)', 'Extracts normalized season May/June (s)');
+    assertEqual(meta1.year, '2024', 'Extracts 4-digit year 2024');
+    assertEqual(meta1.paperLabel, '0455/12 s 2024', 'Generates paperLabel 0455/12 s 2024');
+
+    // Test case: 0455/22 m 2023 Q5 (Feb/March via series or f/m citation)
+    const meta2 = parseCambridgePaperMetadata({ cite: '0455/22 m 2023 Q05', series: 'm' });
+    assertEqual(meta2.subjectCode, '0455', 'Extracts subjectCode 0455');
+    assertEqual(meta2.variant, '22', 'Extracts variant 22');
+    assertEqual(meta2.seriesCode, 'm', 'Extracts seriesCode m');
+    assertEqual(meta2.season, 'Feb/March (m)', 'Extracts season Feb/March (m)');
+    assertEqual(meta2.year, '2023', 'Extracts year 2023');
+
+    // Test case: 0455/11 w 2022 Q30 (Oct/Nov via series or o/n citation)
+    const meta3 = parseCambridgePaperMetadata({ cite: '0455/11 w 2022 Q30', series: 'w' });
+    assertEqual(meta3.subjectCode, '0455', 'Extracts subjectCode 0455');
+    assertEqual(meta3.variant, '11', 'Extracts variant 11');
+    assertEqual(meta3.seriesCode, 'w', 'Extracts seriesCode w');
+    assertEqual(meta3.season, 'Oct/Nov (w)', 'Extracts season Oct/Nov (w)');
+    assertEqual(meta3.year, '2022', 'Extracts year 2022');
+
+    // Test case: ID convention 0455-m23-22-q05
+    const meta4 = parseCambridgePaperMetadata({ id: '0455-m23-22-q05' });
+    assertEqual(meta4.subjectCode, '0455', 'Extracts subjectCode 0455 from ID');
+    assertEqual(meta4.variant, '22', 'Extracts variant 22 from ID');
+    assertEqual(meta4.seriesCode, 'm', 'Extracts seriesCode m from ID');
+    assertEqual(meta4.year, '2023', 'Extracts year 2023 from ID shorthand m23');
+
+    // Test case: ID convention 0455-s24-12-q01
+    const meta5 = parseCambridgePaperMetadata({ id: '0455-s24-12-q01' });
+    assertEqual(meta5.subjectCode, '0455', 'Extracts subjectCode 0455 from ID');
+    assertEqual(meta5.variant, '12', 'Extracts variant 12 from ID');
+    assertEqual(meta5.seriesCode, 's', 'Extracts seriesCode s from ID');
+    assertEqual(meta5.year, '2024', 'Extracts year 2024 from ID shorthand s24');
+  });
+
+  test('deriveQuestionStatus evaluates status, diagram_metadata, and active flags', () => {
+    // Explicit Live status
+    assertEqual(deriveQuestionStatus({ status: 'Live' }), 'Live', "Status 'Live' returns 'Live'");
+    assertEqual(deriveQuestionStatus({ status: 'live' }), 'Live', "Status 'live' returns 'Live'");
+
+    // Agent draft status
+    assertEqual(deriveQuestionStatus({ status: 'Agent draft' }), 'Agent draft', "Status 'Agent draft' returns 'Agent draft'");
+    assertEqual(deriveQuestionStatus({ status: 'draft' }), 'Agent draft', "Status 'draft' returns 'Agent draft'");
+
+    // Needs review status
+    assertEqual(deriveQuestionStatus({ status: 'Needs review' }), 'Needs review', "Status 'Needs review' returns 'Needs review'");
+    assertEqual(deriveQuestionStatus({ status: 'in_review' }), 'Needs review', "Status 'in_review' returns 'Needs review'");
+    assertEqual(deriveQuestionStatus({ diagram_metadata: { bank_status: 'Needs review' } }), 'Needs review', 'diagram_metadata.bank_status overrides');
+
+    // Flagged / withdrawn
+    assertEqual(deriveQuestionStatus({ status: 'Flagged' }), 'Flagged', "Status 'Flagged' returns 'Flagged'");
+    assertEqual(deriveQuestionStatus({ status: 'withdrawn' }), 'Flagged', "Status 'withdrawn' returns 'Flagged'");
+
+    // Inactive question defaults to Needs review
+    assertEqual(deriveQuestionStatus({ active: false }), 'Needs review', 'active === false derives Needs review');
+
+    // Default with active true returns Live
+    assertEqual(deriveQuestionStatus({ active: true }), 'Live', 'active === true defaults to Live');
+  });
+
+  test('deriveQuestionDifficulty respects explicit values, diagram metadata, and structural heuristics', () => {
+    // Explicit values
+    assertEqual(deriveQuestionDifficulty({ difficulty: 'Hard' }), 'Hard', 'Explicit difficulty Hard');
+    assertEqual(deriveQuestionDifficulty({ diff: 'Easy' }), 'Easy', 'Explicit diff Easy');
+    assertEqual(deriveQuestionDifficulty({ diagram_metadata: { difficulty: 'Medium' } }), 'Medium', 'diagram_metadata difficulty Medium');
+
+    // Compound heuristic: diagram + math -> Hard
+    assertEqual(
+      deriveQuestionDifficulty({ hasDiagram: true, hasMath: true, stem: 'Short stem' }),
+      'Hard',
+      'Diagram + Math derives Hard'
+    );
+
+    // Compound heuristic: table + math -> Hard
+    assertEqual(
+      deriveQuestionDifficulty({ hasTable: true, hasMath: true, stem: 'Short stem' }),
+      'Hard',
+      'Table + Math derives Hard'
+    );
+
+    // Single structural feature derives Medium
+    assertEqual(deriveQuestionDifficulty({ hasDiagram: true }), 'Medium', 'Diagram alone derives Medium');
+    assertEqual(deriveQuestionDifficulty({ hasTable: true }), 'Medium', 'Table alone derives Medium');
+    assertEqual(deriveQuestionDifficulty({ hasMath: true }), 'Medium', 'Math alone derives Medium');
+
+    // Long stem (>180 chars) derives Medium
+    const longStem = 'This is an exceptionally comprehensive Cambridge economics question stem intended to evaluate macroeconomic principles under conditions of international capital mobility and exchange rate fluctuations.';
+    assert(longStem.length > 180, 'Test fixture stem is over 180 characters');
+    assertEqual(deriveQuestionDifficulty({ stem: longStem }), 'Medium', 'Long stem derives Medium');
+
+    // Default short simple question derives Easy
+    assertEqual(deriveQuestionDifficulty({ stem: 'What is opportunity cost?' }), 'Easy', 'Short plain stem derives Easy');
+  });
+
+  test('detectQuestionFeatures identifies diagrams, markdown tables, and math expressions', () => {
+    // Diagram detection
+    assertEqual(
+      detectQuestionFeatures({ image_url: 'https://cdn.example.com/diag.png' }).hasDiagram,
+      true,
+      'image_url sets hasDiagram true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ diagram_metadata: { has_diagram: true } }).hasDiagram,
+      true,
+      'diagram_metadata.has_diagram sets hasDiagram true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ stem: 'Refer to the diagram ![demand curve](/diagrams/0455.png)' }).hasDiagram,
+      true,
+      'Markdown image in stem sets hasDiagram true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ stem: 'Plain text without images' }).hasDiagram,
+      false,
+      'Plain stem hasDiagram false'
+    );
+
+    // Table detection
+    assertEqual(
+      detectQuestionFeatures({ stem: 'Table of data:\n| Good | Price |\n| Coffee | 5 |' }).hasTable,
+      true,
+      'Markdown table in stem sets hasTable true'
+    );
+    assertEqual(
+      detectQuestionFeatures({
+        stem: 'Select the correct table',
+        options: [{ content_markdown: '| A | 10 |\n| B | 20 |' }],
+      }).hasTable,
+      true,
+      'Markdown table in option sets hasTable true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ stem: 'No table present here' }).hasTable,
+      false,
+      'Stem without pipes hasTable false'
+    );
+
+    // Math detection
+    assertEqual(
+      detectQuestionFeatures({ stem: 'Calculate PED: $\\frac{\\%\\Delta Q}{\\%\\Delta P}$' }).hasMath,
+      true,
+      'KaTeX syntax in stem sets hasMath true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ stem: 'Price increases by 15%' }).hasMath,
+      true,
+      'Percentage symbol sets hasMath true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ stem: 'Total revenue is £250' }).hasMath,
+      true,
+      'Currency symbol sets hasMath true'
+    );
+    assertEqual(
+      detectQuestionFeatures({
+        stem: 'Find x',
+        options: [{ content_markdown: '$x = 100$' }],
+      }).hasMath,
+      true,
+      'Formula in options sets hasMath true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ stem: 'Which of the following describes a public good?' }).hasMath,
+      false,
+      'Qualitative question hasMath false'
+    );
+  });
+
+  // Multi-dimensional Mock Fixture for Filter & Facet Count Tests
+  const mockBankQuestions: EnrichedBankQuestion[] = [
+    {
+      id: 'q1',
+      stem: 'Why will scarcity always exist in economics?',
+      cite: '0455/12 s 2024 Q01',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      paper: '0455/12 s 2024',
+      session: 'May/June 2024',
+      year: '2024',
+      season: 'May/June (s)',
+      seriesCode: 's',
+      variant: '12',
+      topic: 'The basic economic problem',
+      diff: 'Easy',
+      acc: '80%',
+      st: 'Live',
+      stCls: 'bg-[#ccdbb2]',
+      upd: 'Live',
+      hasDiagram: false,
+      hasTable: false,
+      hasMath: false,
+      optionsText: 'limited resources unlimited human wants opportunity cost',
+    },
+    {
+      id: 'q2',
+      stem: 'What causes the demand curve in the diagram to shift right?',
+      cite: '0455/12 s 2024 Q02',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      paper: '0455/12 s 2024',
+      session: 'May/June 2024',
+      year: '2024',
+      season: 'May/June (s)',
+      seriesCode: 's',
+      variant: '12',
+      topic: 'The allocation of resources',
+      diff: 'Medium',
+      acc: '65%',
+      st: 'Needs review',
+      stCls: 'bg-[#ffe1d0]',
+      upd: '2d ago',
+      hasDiagram: true,
+      hasTable: false,
+      hasMath: false,
+      optionsText: 'increase in consumer disposable income',
+    },
+    {
+      id: 'q3',
+      stem: 'The table shows fiscal data. Calculate the budget deficit: | Revenue | Spending |',
+      cite: '0455/22 w 2023 Q10',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      paper: '0455/22 w 2023',
+      session: 'Oct/Nov 2023',
+      year: '2023',
+      season: 'Oct/Nov (w)',
+      seriesCode: 'w',
+      variant: '22',
+      topic: 'Government and the macroeconomy',
+      diff: 'Hard',
+      acc: '50%',
+      st: 'Live',
+      stCls: 'bg-[#ccdbb2]',
+      upd: 'Live',
+      hasDiagram: false,
+      hasTable: true,
+      hasMath: true,
+      optionsText: '$500m deficit $200m surplus tax yields',
+    },
+    {
+      id: 'q4',
+      stem: 'Calculate cell magnification using formula: $M = I / A$',
+      cite: '0610/12 m 2024 Q05',
+      subjectCode: '0610',
+      subjectName: 'Biology',
+      paper: '0610/12 m 2024',
+      session: 'Feb/March 2024',
+      year: '2024',
+      season: 'Feb/March (m)',
+      seriesCode: 'm',
+      variant: '12',
+      topic: 'Cell biology',
+      diff: 'Hard',
+      acc: '45%',
+      st: 'Agent draft',
+      stCls: 'bg-[#f0fae1]',
+      upd: '1d ago',
+      hasDiagram: true,
+      hasTable: false,
+      hasMath: true,
+      optionsText: '400x magnification ocular lens calculation',
+    },
+    {
+      id: 'q5',
+      stem: 'Which commercial bank factor affects lending rates?',
+      cite: '0455/11 s 2023 Q18',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      paper: '0455/11 s 2023',
+      session: 'May/June 2023',
+      year: '2023',
+      season: 'May/June (s)',
+      seriesCode: 's',
+      variant: '11',
+      topic: 'Microeconomic decision makers',
+      diff: 'Easy',
+      acc: '70%',
+      st: 'Flagged',
+      stCls: 'bg-[#fde8e8]',
+      upd: '5d ago',
+      hasDiagram: false,
+      hasTable: false,
+      hasMath: false,
+      optionsText: 'central bank monetary interest rate',
+    },
+  ];
+
+  test('filterBankQuestions filters accurately across all dimensions individually and combined', () => {
+    // 1. Subject filter
+    const subjEcon = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      subject: '0455',
+    });
+    assertEqual(subjEcon.length, 4, "Subject '0455' yields 4 questions");
+    const subjBio = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      subject: '0610',
+    });
+    assertEqual(subjBio.length, 1, "Subject '0610' yields 1 question (q4)");
+    assertEqual(subjBio[0].id, 'q4', 'q4 matches Biology');
+
+    // 2. Year filter
+    const year2024 = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      year: '2024',
+    });
+    assertEqual(year2024.length, 3, 'Year 2024 yields 3 questions (q1, q2, q4)');
+    const year2023 = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      year: '2023',
+    });
+    assertEqual(year2023.length, 2, 'Year 2023 yields 2 questions (q3, q5)');
+
+    // 3. Season filter
+    const seasonW = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      season: 'Oct/Nov (w)',
+    });
+    assertEqual(seasonW.length, 1, 'Season Oct/Nov (w) yields 1 question (q3)');
+    assertEqual(seasonW[0].id, 'q3', 'q3 matches Oct/Nov (w)');
+
+    // 4. Variant filter
+    const variant12 = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      variant: '12',
+    });
+    assertEqual(variant12.length, 3, 'Variant 12 yields 3 questions (q1, q2, q4)');
+
+    // 5. Multi-Topic filter
+    const multiTopics = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      topics: ['The basic economic problem', 'The allocation of resources'],
+    });
+    assertEqual(multiTopics.length, 2, 'Multi-topic filter yields 2 questions (q1, q2)');
+
+    // 6. Multi-Difficulty filter
+    const multiDiff = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      difficulties: ['Medium', 'Hard'],
+    });
+    assertEqual(multiDiff.length, 3, 'Difficulties Medium + Hard yield 3 questions (q2, q3, q4)');
+
+    // 7. Status filter
+    const statusLive = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      status: 'Live',
+    });
+    assertEqual(statusLive.length, 2, 'Status Live yields 2 questions (q1, q3)');
+
+    const statusDraft = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      status: 'Agent draft',
+    });
+    assertEqual(statusDraft.length, 1, 'Status Agent draft yields 1 question (q4)');
+
+    const statusFlagged = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      status: 'Flagged',
+    });
+    assertEqual(statusFlagged.length, 1, 'Status Flagged yields 1 question (q5)');
+
+    // 8. Content Features filter
+    const featDiagram = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      features: ['diagram'],
+    });
+    assertEqual(featDiagram.length, 2, "Features ['diagram'] yields 2 questions (q2, q4)");
+
+    const featTable = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      features: ['table'],
+    });
+    assertEqual(featTable.length, 1, "Features ['table'] yields 1 question (q3)");
+
+    const featCompound = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      features: ['table', 'math'],
+    });
+    assertEqual(featCompound.length, 1, "Features ['table', 'math'] yields 1 question (q3)");
+
+    const featEmpty = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      features: ['diagram', 'table'],
+    });
+    assertEqual(featEmpty.length, 0, "No question has both diagram AND table in fixture");
+
+    // 9. Full-Text Search
+    const searchDeficit = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      search: 'deficit',
+    });
+    assertEqual(searchDeficit.length, 1, "Search 'deficit' matches q3 in stem and options");
+    assertEqual(searchDeficit[0].id, 'q3', 'Matches question q3');
+
+    const searchCite = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      search: '0610',
+    });
+    assertEqual(searchCite.length, 1, "Search '0610' matches citation of q4");
+
+    // 10. Multi-filter drill-down (combined filters)
+    const combined = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      subject: '0455',
+      year: '2024',
+      status: 'Live',
+      difficulty: 'Easy',
+    });
+    assertEqual(combined.length, 1, 'Combined drill-down narrows exactly to 1 question (q1)');
+    assertEqual(combined[0].id, 'q1', 'Target question is q1');
+  });
+
+  test('computeBankFacetCounts computes live facet option counts accurately across all dimensions', () => {
+    const facets = computeBankFacetCounts(mockBankQuestions);
+
+    // Total question count check
+    assertEqual(facets.subjects.find((s) => s.value === 'All')?.count, 5, "Subject 'All' count is 5");
+    assertEqual(facets.years.find((y) => y.value === 'All')?.count, 5, "Year 'All' count is 5");
+    assertEqual(facets.statuses.find((st) => st.value === 'All')?.count, 5, "Status 'All' count is 5");
+
+    // Subject breakdown
+    assertEqual(facets.subjects.find((s) => s.value === '0455')?.count, 4, "Subject 0455 count is 4");
+    assertEqual(facets.subjects.find((s) => s.value === '0610')?.count, 1, "Subject 0610 count is 1");
+
+    // Year breakdown
+    assertEqual(facets.years.find((y) => y.value === '2024')?.count, 3, "Year 2024 count is 3");
+    assertEqual(facets.years.find((y) => y.value === '2023')?.count, 2, "Year 2023 count is 2");
+
+    // Season breakdown
+    assertEqual(facets.seasons.find((s) => s.value === 'May/June (s)')?.count, 3, 'May/June (s) count is 3');
+    assertEqual(facets.seasons.find((s) => s.value === 'Oct/Nov (w)')?.count, 1, 'Oct/Nov (w) count is 1');
+    assertEqual(facets.seasons.find((s) => s.value === 'Feb/March (m)')?.count, 1, 'Feb/March (m) count is 1');
+
+    // Variant breakdown
+    assertEqual(facets.variants.find((v) => v.value === '12')?.count, 3, 'Variant 12 count is 3');
+    assertEqual(facets.variants.find((v) => v.value === '22')?.count, 1, 'Variant 22 count is 1');
+    assertEqual(facets.variants.find((v) => v.value === '11')?.count, 1, 'Variant 11 count is 1');
+
+    // Status breakdown
+    assertEqual(facets.statuses.find((st) => st.value === 'Live')?.count, 2, 'Live status count is 2');
+    assertEqual(facets.statuses.find((st) => st.value === 'Needs review')?.count, 1, 'Needs review count is 1');
+    assertEqual(facets.statuses.find((st) => st.value === 'Agent draft')?.count, 1, 'Agent draft count is 1');
+    assertEqual(facets.statuses.find((st) => st.value === 'Flagged')?.count, 1, 'Flagged count is 1');
+
+    // Difficulty breakdown
+    assertEqual(facets.difficulties.find((d) => d.value === 'Easy')?.count, 2, 'Easy difficulty count is 2');
+    assertEqual(facets.difficulties.find((d) => d.value === 'Medium')?.count, 1, 'Medium difficulty count is 1');
+    assertEqual(facets.difficulties.find((d) => d.value === 'Hard')?.count, 2, 'Hard difficulty count is 2');
+
+    // Feature breakdown
+    assertEqual(facets.features.find((f) => f.value === 'diagram')?.count, 2, 'Diagram feature count is 2');
+    assertEqual(facets.features.find((f) => f.value === 'table')?.count, 1, 'Table feature count is 1');
+    assertEqual(facets.features.find((f) => f.value === 'math')?.count, 2, 'Math feature count is 2');
+  });
+
+  test('getActiveFilterChips, countActiveBankFilters, and removeActiveFilterChip handle active chips cleanly', () => {
+    const complexState: BankFilterState = {
+      ...DEFAULT_BANK_FILTER_STATE,
+      search: 'deficit',
+      subject: '0455',
+      year: '2024',
+      season: 'May/June (s)',
+      topics: ['Topic A', 'Topic B'],
+      difficulties: ['Hard'],
+      status: 'Live',
+      features: ['diagram', 'math'],
+      page: 3,
+    };
+
+    // Chip generation & count
+    const chips = getActiveFilterChips(complexState);
+    assertEqual(countActiveBankFilters(complexState), 10, 'Active filter count matches 10 active chips');
+    assertEqual(chips.length, 10, 'Generated chips array length is 10');
+
+    // Verify chip keys exist
+    assert(chips.some((c) => c.key === 'search' && c.value === 'deficit'), 'Contains search chip');
+    assert(chips.some((c) => c.key === 'subject' && c.value === '0455'), 'Contains subject chip');
+    assert(chips.some((c) => c.key === 'year' && c.value === '2024'), 'Contains year chip');
+    assert(chips.some((c) => c.key === 'topics' && c.value === 'Topic A'), 'Contains Topic A chip');
+    assert(chips.some((c) => c.key === 'topics' && c.value === 'Topic B'), 'Contains Topic B chip');
+    assert(chips.some((c) => c.key === 'features' && c.value === 'diagram'), 'Contains diagram feature chip');
+
+    // Remove single chip (subject)
+    const afterSubjectRemoval = removeActiveFilterChip(complexState, {
+      key: 'subject',
+      label: 'Subject',
+      value: '0455',
+    });
+    assertEqual(afterSubjectRemoval.subject, 'All', "Subject resets to 'All'");
+    assertEqual(afterSubjectRemoval.page, 1, 'Page resets to 1 upon removing filter');
+    assertEqual(afterSubjectRemoval.year, '2024', 'Year remains intact');
+
+    // Remove single item from multi-select topics
+    const afterTopicRemoval = removeActiveFilterChip(complexState, {
+      key: 'topics',
+      label: 'Topic',
+      value: 'Topic A',
+    });
+    assertEqual(JSON.stringify(afterTopicRemoval.topics), JSON.stringify(['Topic B']), 'Topic A removed, Topic B kept');
+
+    // Remove single feature
+    const afterFeatureRemoval = removeActiveFilterChip(complexState, {
+      key: 'features',
+      label: 'Diagram',
+      value: 'diagram',
+    });
+    assertEqual(JSON.stringify(afterFeatureRemoval.features), JSON.stringify(['math']), 'diagram removed, math kept');
+
+    // Remove search chip
+    const afterSearchRemoval = removeActiveFilterChip(complexState, {
+      key: 'search',
+      label: 'Search',
+      value: 'deficit',
+    });
+    assertEqual(afterSearchRemoval.search, '', 'Search query cleared to empty string');
+  });
+
+  test('serializeBankFiltersToQuery and parseBankFiltersFromQuery perform lossless bidirectional round-trip', () => {
+    // 1. Default state produces clean empty query string
+    assertEqual(serializeBankFiltersToQuery(DEFAULT_BANK_FILTER_STATE), '', 'Default state produces empty query');
+
+    // 2. Parsing empty query produces default state values
+    const parsedDefault = parseBankFiltersFromQuery('');
+    assertEqual(parsedDefault.subject, 'All', "Parsed empty subject is 'All'");
+    assertEqual(parsedDefault.year, 'All', "Parsed empty year is 'All'");
+    assertEqual(parsedDefault.status, 'All', "Parsed empty status is 'All'");
+    assertEqual(parsedDefault.page, 1, 'Parsed empty page is 1');
+    assertEqual(parsedDefault.features.length, 0, 'Parsed empty features is []');
+
+    // 3. Rich state bidirectional serialization round-trip
+    const richState: BankFilterState = {
+      search: 'elasticity of demand',
+      subject: '0455',
+      year: '2024',
+      season: 'May/June (s)',
+      variant: '12',
+      paper: '0455/12 s 2024',
+      session: 'May/June 2024',
+      topic: 'All',
+      topics: ['Microeconomics', 'Markets'],
+      difficulty: 'All',
+      difficulties: ['Medium', 'Hard'],
+      status: 'Live',
+      features: ['diagram', 'math'],
+      page: 2,
+    };
+
+    const queryString = serializeBankFiltersToQuery(richState);
+    assert(queryString.includes('q=elasticity+of+demand') || queryString.includes('q=elasticity%20of%20demand'), 'Query contains encoded search');
+    assert(queryString.includes('subject=0455'), 'Query contains subject');
+    assert(queryString.includes('year=2024'), 'Query contains year');
+    assert(queryString.includes('variant=12'), 'Query contains variant');
+    assert(queryString.includes('topics=Microeconomics%2CMarkets') || queryString.includes('topics=Microeconomics,Markets'), 'Query contains comma-separated topics');
+    assert(queryString.includes('diffs=Medium%2CHard') || queryString.includes('diffs=Medium,Hard'), 'Query contains comma-separated diffs');
+    assert(queryString.includes('status=Live'), 'Query contains status');
+    assert(queryString.includes('features=diagram%2Cmath') || queryString.includes('features=diagram,math'), 'Query contains comma-separated features');
+    assert(queryString.includes('page=2'), 'Query contains page=2');
+
+    const parsedRoundTrip = parseBankFiltersFromQuery(queryString);
+    assertEqual(parsedRoundTrip.search, richState.search, 'Round-trip search matches');
+    assertEqual(parsedRoundTrip.subject, richState.subject, 'Round-trip subject matches');
+    assertEqual(parsedRoundTrip.year, richState.year, 'Round-trip year matches');
+    assertEqual(parsedRoundTrip.season, richState.season, 'Round-trip season matches');
+    assertEqual(parsedRoundTrip.variant, richState.variant, 'Round-trip variant matches');
+    assertEqual(parsedRoundTrip.paper, richState.paper, 'Round-trip paper matches');
+    assertEqual(parsedRoundTrip.session, richState.session, 'Round-trip session matches');
+    assertEqual(JSON.stringify(parsedRoundTrip.topics), JSON.stringify(richState.topics), 'Round-trip topics match');
+    assertEqual(JSON.stringify(parsedRoundTrip.difficulties), JSON.stringify(richState.difficulties), 'Round-trip difficulties match');
+    assertEqual(parsedRoundTrip.status, richState.status, 'Round-trip status matches');
+    assertEqual(JSON.stringify(parsedRoundTrip.features), JSON.stringify(richState.features), 'Round-trip features match');
+    assertEqual(parsedRoundTrip.page, richState.page, 'Round-trip page matches');
   });
 
   // Summary Output

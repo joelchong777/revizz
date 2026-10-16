@@ -27,13 +27,40 @@ import {
   useQuestions, 
   useTopics, 
   deleteQuestionsFromDb, 
+  updateQuestionsInDb,
   Question,
   CAMBRIDGE_QUESTIONS,
   CAMBRIDGE_TOPICS
 } from '@/lib/questions';
 import { fetchSubjectsFromDb } from '@/lib/subjects';
+import {
+  BankItemStatus,
+  BankDifficulty,
+  BankContentFeature,
+  EnrichedBankQuestion,
+  BankFilterState,
+  FilterOptionWithCount,
+  ActiveFilterChip,
+  DEFAULT_BANK_FILTER_STATE,
+  parseCambridgePaperMetadata,
+  deriveQuestionStatus,
+  deriveQuestionDifficulty,
+  detectQuestionFeatures,
+  filterBankQuestions,
+  computeBankFacetCounts,
+  getActiveFilterChips,
+  removeActiveFilterChip,
+  countActiveBankFilters,
+  serializeBankFiltersToQuery,
+  parseBankFiltersFromQuery,
+} from '@/lib/portal/bankFilters';
+import {
+  applyMassStatusUpdate,
+  applyMassTopicUpdate,
+} from '@/lib/portal/massActions';
 
-export type BankItemStatus = 'Live' | 'Agent draft' | 'Needs review' | 'Flagged';
+export type { BankItemStatus };
+export const applyMassTopicReassign = applyMassTopicUpdate;
 
 export interface QuestionBankItem {
   id: string;
@@ -48,6 +75,16 @@ export interface QuestionBankItem {
   stCls: string;
   upd: string;
   dbId?: string;
+  subjectCode?: string;
+  subjectName?: string;
+  year?: string;
+  season?: string;
+  seriesCode?: string;
+  variant?: string;
+  hasDiagram?: boolean;
+  hasTable?: boolean;
+  hasMath?: boolean;
+  optionsText?: string;
 }
 
 export function getStatusBadgeClass(st: BankItemStatus): string {
@@ -60,49 +97,81 @@ export function getStatusBadgeClass(st: BankItemStatus): string {
       return 'bg-[#ffe1d0] text-[#c67139]';
     case 'Flagged':
       return 'bg-[#fde8e8] text-[#e0533c]';
+    default:
+      return 'bg-stone-100 text-stone-700';
   }
 }
 
 export function createInitialBankItems(questions: Question[]): QuestionBankItem[] {
   return questions.map((q, idx): QuestionBankItem => {
     const qNum = idx + 1;
-    let st: BankItemStatus = 'Live';
-    const statusVal = (q as any).status;
-    if (statusVal === 'draft' || statusVal === 'Agent draft') {
-      st = 'Agent draft';
-    } else if (statusVal === 'in_review' || statusVal === 'Needs review') {
-      st = 'Needs review';
-    } else if (statusVal === 'withdrawn' || statusVal === 'Flagged' || (q as any).active === false) {
-      st = 'Flagged';
-    } else {
-      st = 'Live';
-    }
+    const cite = q.citation || `Q${qNum}`;
+
+    const features = detectQuestionFeatures({
+      stem_markdown: q.stem_markdown,
+      image_url: q.image_url,
+      diagram_metadata: (q as any).diagram_metadata || q.diagram,
+      diagram: q.diagram,
+      options: q.options?.map((o: any) => ({
+        content_markdown: o.content_markdown || o.text_markdown || o.text || '',
+      })),
+    });
+
+    const meta = parseCambridgePaperMetadata({
+      id: q.id,
+      cite,
+      citation: q.citation,
+    });
+
+    const st = deriveQuestionStatus({
+      status: (q as any).status,
+      active: (q as any).active,
+      diagram_metadata: (q as any).diagram_metadata || q.diagram,
+      diagram: q.diagram,
+    });
     const stCls = getStatusBadgeClass(st);
 
-    const diff: 'Easy' | 'Medium' | 'Hard' =
-      idx % 3 === 0 ? 'Easy' : idx % 3 === 1 ? 'Medium' : 'Hard';
+    const diff = deriveQuestionDifficulty({
+      difficulty: (q as any).difficulty || (q as any).diff,
+      diagram_metadata: (q as any).diagram_metadata || q.diagram,
+      diagram: q.diagram,
+      hasDiagram: features.hasDiagram,
+      hasTable: features.hasTable,
+      hasMath: features.hasMath,
+      stem: q.stem_markdown,
+    });
+
     const acc =
       idx % 4 === 0 ? '78%' : idx % 4 === 1 ? '64%' : idx % 4 === 2 ? '89%' : '52%';
     const upd = st === 'Live' ? 'Live' : '2d ago';
 
-    const cite = q.citation || `Q${qNum}`;
-    const match = q.citation?.match(/\b(\d{4}\/\d{2})\b/);
-    const paper = match ? `${match[1]} M/J/24` : (q.citation?.split(' ')[0] || '0455/12 M/J/24');
-    const session = 'May/June 2024';
+    const optionsText = q.options
+      ?.map((o: any) => o.content_markdown || o.text_markdown || o.text || '')
+      .join(' ');
 
     return {
       id: q.id,
       stem: q.stem_markdown,
       cite,
       topic: q.topic || 'General',
-      paper,
-      session,
+      paper: meta.paperLabel,
+      session: meta.sessionLabel,
       diff,
       acc,
       st,
       stCls,
       upd,
       dbId: q.id,
+      subjectCode: meta.subjectCode,
+      subjectName: meta.subjectName,
+      year: meta.year,
+      season: meta.season,
+      seriesCode: meta.seriesCode,
+      variant: meta.variant,
+      hasDiagram: features.hasDiagram,
+      hasTable: features.hasTable,
+      hasMath: features.hasMath,
+      optionsText,
     };
   });
 }
@@ -112,25 +181,39 @@ export interface AdminToolsProps {
   onOpenEditor?: (questionId: string) => void;
 }
 
-interface BankFilterDropdownProps {
-  label: string;
+export interface BankFilterOption {
   value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-  minWidth?: string;
+  label: string;
+  count?: number;
 }
 
-function BankFilterDropdown({
+export interface BankFilterDropdownProps {
+  label: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  options: BankFilterOption[];
+  minWidth?: string;
+  multiSelect?: boolean;
+  selectedValues?: string[];
+  onMultiChange?: (values: string[]) => void;
+}
+
+export function BankFilterDropdown({
   label,
   value,
   onChange,
   options,
   minWidth = 'min-w-[180px]',
+  multiSelect = false,
+  selectedValues = [],
+  onMultiChange,
 }: BankFilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isActive = value !== 'All';
+  const isMultiActive = multiSelect && selectedValues.length > 0;
+  const isSingleActive = !multiSelect && value !== undefined && value !== 'All' && value !== '';
+  const isActive = isMultiActive || isSingleActive;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,16 +239,41 @@ function BankFilterDropdown({
     };
   }, [isOpen]);
 
-  const displayLabel = isActive ? `${label}: ${value}` : label;
+  let displayLabel = label;
+  if (multiSelect) {
+    if (selectedValues.length === 1) {
+      displayLabel = `${label}: ${selectedValues[0]}`;
+    } else if (selectedValues.length > 1) {
+      displayLabel = `${label} (${selectedValues.length})`;
+    }
+  } else if (isSingleActive) {
+    displayLabel = `${label}: ${value}`;
+  }
+
+  const handleSelectOption = (optValue: string) => {
+    if (multiSelect) {
+      if (optValue === 'All') {
+        onMultiChange?.([]);
+      } else {
+        const next = selectedValues.includes(optValue)
+          ? selectedValues.filter((v) => v !== optValue)
+          : [...selectedValues, optValue];
+        onMultiChange?.(next);
+      }
+    } else {
+      onChange?.(optValue);
+      setIsOpen(false);
+    }
+  };
 
   return (
     <div className="relative inline-block" ref={containerRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`px-3 py-1.5 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1 ${
+        className={`px-3 py-1.5 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
           isActive
-            ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold'
+            ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
             : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
         }`}
         aria-expanded={isOpen}
@@ -187,24 +295,51 @@ function BankFilterDropdown({
             transition={{ duration: 0.15 }}
             className={`absolute top-full mt-1.5 left-0 z-50 bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_#201e1d] rounded-2xl p-1.5 ${minWidth} max-h-60 overflow-y-auto`}
           >
+            {multiSelect && (
+              <div className="px-2 py-1 mb-1 border-b border-[#e8decb] flex items-center justify-between text-[11px] font-bold text-[#645c50]">
+                <span>Select multiple</span>
+                {selectedValues.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => onMultiChange?.([])}
+                    className="text-[#c67139] hover:underline cursor-pointer"
+                  >
+                    Reset to All
+                  </button>
+                )}
+              </div>
+            )}
             {options.map((opt) => {
-              const isSelected = value === opt.value;
+              const isSelected = multiSelect
+                ? opt.value === 'All'
+                  ? selectedValues.length === 0
+                  : selectedValues.includes(opt.value)
+                : value === opt.value;
+
               return (
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
+                  onClick={() => handleSelectOption(opt.value)}
                   className={`w-full text-left rounded-xl px-3 py-1.5 text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] cursor-pointer flex items-center justify-between transition-colors ${
                     isSelected ? 'bg-[#ffe1d0]/70' : ''
                   }`}
                 >
                   <span className="truncate pr-2">{opt.label}</span>
-                  {isSelected && (
-                    <Check className="w-3.5 h-3.5 text-[#c67139] ml-2 shrink-0" />
-                  )}
+                  <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                    {opt.count !== undefined && (
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                          isSelected ? 'bg-[#c67139] text-[#f9f4ed]' : 'bg-[#e8decb] text-[#645c50]'
+                        }`}
+                      >
+                        {opt.count}
+                      </span>
+                    )}
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-[#c67139] shrink-0" />
+                    )}
+                  </div>
                 </button>
               );
             })}
@@ -302,6 +437,8 @@ export default function AdminTools({
           explanation_markdown,
           cambridge_source_ref,
           active,
+          status,
+          difficulty,
           created_at,
           diagram_metadata,
           paper:papers (
@@ -358,24 +495,50 @@ export default function AdminTools({
             ? `${subjectObj?.code || '0455'}/${paperObj.paper_code} ${paperObj.series} ${paperObj.year} Q${q.question_number}`
             : 'Cambridge Question');
 
-        const paper = paperObj
-          ? `${subjectObj?.code || '0455'}/${paperObj.paper_code} ${paperObj.series} ${paperObj.year}`
-          : '0455/12 M/J/24';
+        const features = detectQuestionFeatures({
+          stem_markdown: q.stem_markdown,
+          image_url: q.image_url,
+          diagram_metadata: q.diagram_metadata,
+          options: q.options,
+        });
 
-        const session = paperObj?.series
-          ? `${paperObj.series} ${paperObj.year}`
-          : 'May/June 2024';
+        const meta = parseCambridgePaperMetadata({
+          id: q.id,
+          cite,
+          subjectCode: subjectObj?.code,
+          subjectName: subjectObj?.name,
+          paperCode: paperObj?.paper_code,
+          series: paperObj?.series,
+          year: paperObj?.year,
+        });
 
-        const st: BankItemStatus = q.active ? 'Live' : 'Needs review';
-        const stCls = q.active
-          ? 'bg-[#ccdbb2] text-[#272e1b]'
-          : 'bg-[#eee7db] text-[#474238]';
+        const st = deriveQuestionStatus({
+          status: q.status,
+          active: q.active,
+          diagram_metadata: q.diagram_metadata,
+        });
+        const stCls = getStatusBadgeClass(st);
 
-        const diff: 'Easy' | 'Medium' | 'Hard' =
-          idx % 3 === 0 ? 'Easy' : idx % 3 === 1 ? 'Medium' : 'Hard';
+        const diff = deriveQuestionDifficulty({
+          difficulty: q.difficulty,
+          diagram_metadata: q.diagram_metadata,
+          hasDiagram: features.hasDiagram,
+          hasTable: features.hasTable,
+          hasMath: features.hasMath,
+          stem: q.stem_markdown,
+        });
+
+        const optionsText = Array.isArray(q.options)
+          ? q.options
+              .map((o: any) => o.content_markdown || o.text_markdown || o.text || '')
+              .join(' ')
+          : undefined;
+
+        const paper = meta.paperLabel;
+        const session = meta.sessionLabel;
+        const upd = st === 'Live' ? 'Live' : '2d ago';
         const acc =
           idx % 4 === 0 ? '78%' : idx % 4 === 1 ? '64%' : idx % 4 === 2 ? '89%' : '52%';
-        const upd = q.active ? 'Live' : '2d ago';
 
         return {
           id: q.cambridge_source_ref || q.id,
@@ -390,6 +553,16 @@ export default function AdminTools({
           stCls,
           upd,
           dbId: q.id,
+          subjectCode: meta.subjectCode,
+          subjectName: meta.subjectName,
+          year: meta.year,
+          season: meta.season,
+          seriesCode: meta.seriesCode,
+          variant: meta.variant,
+          hasDiagram: features.hasDiagram,
+          hasTable: features.hasTable,
+          hasMath: features.hasMath,
+          optionsText,
         };
       });
       setBankQuestions(items);
@@ -512,62 +685,124 @@ export default function AdminTools({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [confirmationModal.isOpen, statusDropdownOpen, topicDropdownOpen]);
 
-  // Question Bank Filter State
-  const [bankSearch, setBankSearch] = useState('');
-  const [bankStatusFilter, setBankStatusFilter] = useState<string>('All');
-  const [bankPaperFilter, setBankPaperFilter] = useState<string>('All');
-  const [bankSessionFilter, setBankSessionFilter] = useState<string>('All');
-  const [bankTopicFilter, setBankTopicFilter] = useState<string>('All');
-  const [bankDifficultyFilter, setBankDifficultyFilter] = useState<string>('All');
-  const [bankPage, setBankPage] = useState(1);
+  // Question Bank Filter State & URL Synchronization
+  const [bankFilters, setBankFilters] = useState<BankFilterState>(DEFAULT_BANK_FILTER_STATE);
+  const [knownSubjects, setKnownSubjects] = useState<Array<{ code: string; name: string }>>([]);
 
-  const paperOptions = useMemo(() => {
-    const papers = Array.from(
-      new Set(bankQuestions.map((q) => q.paper).filter((p) => Boolean(p) && p !== 'None'))
-    );
-    if (papers.length === 0) {
-      return [{ value: 'None', label: 'None' }];
+  // Compatibility getters and aliases for test suites and external integrations
+  const bankSearch = bankFilters.search;
+  const setBankSearch = (q: string) => setBankFilters((prev) => ({ ...prev, search: q, page: 1 }));
+  const bankStatusFilter = bankFilters.status;
+  const setBankStatusFilter = (st: string) => setBankFilters((prev) => ({ ...prev, status: st, page: 1 }));
+  const bankPaperFilter = bankFilters.paper;
+  const setBankPaperFilter = (p: string) => setBankFilters((prev) => ({ ...prev, paper: p, page: 1 }));
+  const bankSessionFilter = bankFilters.session;
+  const setBankSessionFilter = (s: string) => setBankFilters((prev) => ({ ...prev, session: s, page: 1 }));
+  const bankTopicFilter = bankFilters.topic;
+  const setBankTopicFilter = (t: string) => setBankFilters((prev) => ({ ...prev, topic: t, page: 1 }));
+  const bankDifficultyFilter = bankFilters.difficulty;
+  const setBankDifficultyFilter = (d: string) => setBankFilters((prev) => ({ ...prev, difficulty: d, page: 1 }));
+
+  useEffect(() => {
+    let mounted = true;
+    fetchSubjectsFromDb().then((subjectsList) => {
+      if (!mounted) return;
+      if (subjectsList && subjectsList.length > 0) {
+        setKnownSubjects(subjectsList.map((s) => ({ code: s.code, name: s.name })));
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Initialize filter state from URL search params on client mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search) {
+      const fromUrl = parseBankFiltersFromQuery(window.location.search);
+      if (
+        fromUrl.search ||
+        fromUrl.subject !== 'All' ||
+        fromUrl.year !== 'All' ||
+        fromUrl.season !== 'All' ||
+        fromUrl.variant !== 'All' ||
+        fromUrl.paper !== 'All' ||
+        fromUrl.session !== 'All' ||
+        fromUrl.topic !== 'All' ||
+        (fromUrl.topics && fromUrl.topics.length > 0) ||
+        fromUrl.difficulty !== 'All' ||
+        (fromUrl.difficulties && fromUrl.difficulties.length > 0) ||
+        fromUrl.status !== 'All' ||
+        (fromUrl.features && fromUrl.features.length > 0) ||
+        fromUrl.page > 1
+      ) {
+        setBankFilters(fromUrl);
+      }
     }
-    return [
-      { value: 'All', label: 'All' },
-      ...papers.map((p) => ({ value: p, label: p })),
-    ];
-  }, [bankQuestions]);
+  }, []);
 
-  const sessionOptions = useMemo(() => {
-    const sessions = Array.from(
-      new Set(bankQuestions.map((q) => q.session).filter((s) => Boolean(s) && s !== 'None'))
-    );
-    if (sessions.length === 0) {
-      return [{ value: 'None', label: 'None' }];
+  // Synchronize bankFilters to URL query parameters
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const currentParams = new URLSearchParams(window.location.search);
+    const tab = currentParams.get('tab') || 'bank';
+    const serialized = serializeBankFiltersToQuery(bankFilters);
+    const nextParams = new URLSearchParams(serialized);
+    if (tab) {
+      nextParams.set('tab', tab);
     }
-    return [
-      { value: 'All', label: 'All' },
-      ...sessions.map((s) => ({ value: s, label: s })),
-    ];
-  }, [bankQuestions]);
+    const newQueryString = nextParams.toString();
+    const newUrl = `${window.location.pathname}${newQueryString ? `?${newQueryString}` : ''}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [bankFilters]);
 
-  const topicOptions = useMemo(() => {
-    const topicsFromBank = Array.from(
-      new Set(bankQuestions.map((q) => q.topic).filter(Boolean))
+  const knownTopicNames = useMemo(() => {
+    return dbTopics.length > 0 ? dbTopics.map((t) => t.name) : CAMBRIDGE_TOPICS.map((t) => t.name);
+  }, [dbTopics]);
+
+  const facetCounts = useMemo(() => {
+    return computeBankFacetCounts(
+      bankQuestions as EnrichedBankQuestion[],
+      knownTopicNames,
+      knownSubjects
     );
-    const knownTopics =
-      dbTopics.length > 0
-        ? dbTopics.map((t) => t.name)
-        : CAMBRIDGE_TOPICS.map((t) => t.name);
-    const allUniqueTopics = Array.from(new Set([...knownTopics, ...topicsFromBank]));
+  }, [bankQuestions, knownTopicNames, knownSubjects]);
 
-    if (allUniqueTopics.length === 0) {
-      return [{ value: 'None', label: 'None' }];
+  const featureCounts = useMemo(() => {
+    const map: Record<string, number> = { diagram: 0, table: 0, math: 0 };
+    if (facetCounts.features) {
+      facetCounts.features.forEach((f) => {
+        map[f.value] = f.count;
+      });
     }
-    return [
-      { value: 'All', label: 'All' },
-      ...allUniqueTopics.map((t, idx) => ({
-        value: t,
-        label: `${idx + 1}. ${t}`,
-      })),
-    ];
-  }, [bankQuestions, dbTopics]);
+    return map;
+  }, [facetCounts.features]);
+
+  const filteredBankItems = useMemo(() => {
+    return filterBankQuestions(bankQuestions as EnrichedBankQuestion[], bankFilters);
+  }, [bankQuestions, bankFilters]);
+
+  const activeFilterChips = useMemo(() => {
+    return getActiveFilterChips(bankFilters);
+  }, [bankFilters]);
+
+  const handleRemoveChip = (chip: ActiveFilterChip) => {
+    setBankFilters((prev) => removeActiveFilterChip(prev, chip));
+  };
+
+  const handleClearAllFilters = () => {
+    setBankFilters(DEFAULT_BANK_FILTER_STATE);
+  };
+
+  const toggleFeature = (feat: BankContentFeature) => {
+    setBankFilters((prev) => {
+      const current = prev.features || [];
+      const nextFeatures = current.includes(feat)
+        ? current.filter((f) => f !== feat)
+        : [...current, feat];
+      return { ...prev, features: nextFeatures, page: 1 };
+    });
+  };
 
   const reassignTopicOptions = useMemo(() => {
     const list = dbTopics.length > 0 ? dbTopics.map((t) => t.name) : CAMBRIDGE_TOPICS.map((t) => t.name);
@@ -575,82 +810,28 @@ export default function AdminTools({
     return Array.from(new Set([...list, ...fromBank]));
   }, [dbTopics, bankQuestions]);
 
-  const difficultyOptions = useMemo(() => [
-    { value: 'All', label: 'All' },
-    { value: 'Easy', label: 'Easy' },
-    { value: 'Medium', label: 'Medium' },
-    { value: 'Hard', label: 'Hard' },
-  ], []);
-
-  const statusOptions = useMemo(() => [
-    { value: 'All', label: 'All' },
-    { value: 'Live', label: 'Live' },
-    { value: 'Agent draft', label: 'Agent draft' },
-    { value: 'Needs review', label: 'Needs review' },
-    { value: 'Flagged', label: 'Flagged' },
-  ], []);
-
-  const filteredBankItems = useMemo(() => {
-    return bankQuestions.filter((q) => {
-      if (bankStatusFilter !== 'All' && q.st !== bankStatusFilter) {
-        return false;
-      }
-      if (bankPaperFilter !== 'All' && q.paper !== bankPaperFilter) {
-        return false;
-      }
-      if (bankSessionFilter !== 'All' && q.session !== bankSessionFilter) {
-        return false;
-      }
-      if (bankTopicFilter !== 'All' && q.topic !== bankTopicFilter) {
-        return false;
-      }
-      if (bankDifficultyFilter !== 'All' && q.diff !== bankDifficultyFilter) {
-        return false;
-      }
-      if (bankSearch.trim()) {
-        const query = bankSearch.toLowerCase();
-        const matches =
-          q.stem.toLowerCase().includes(query) ||
-          q.id.toLowerCase().includes(query) ||
-          q.cite.toLowerCase().includes(query) ||
-          q.topic.toLowerCase().includes(query);
-        if (!matches) return false;
-      }
-      return true;
-    });
-  }, [
-    bankQuestions,
-    bankStatusFilter,
-    bankPaperFilter,
-    bankSessionFilter,
-    bankTopicFilter,
-    bankDifficultyFilter,
-    bankSearch,
-  ]);
-
-  useEffect(() => {
-    setBankPage(1);
-  }, [
-    bankSearch,
-    bankStatusFilter,
-    bankPaperFilter,
-    bankSessionFilter,
-    bankTopicFilter,
-    bankDifficultyFilter,
-  ]);
-
   const pageSize = 20;
   const totalPages = Math.max(1, Math.ceil(filteredBankItems.length / pageSize));
+  const bankPage = Math.min(Math.max(1, bankFilters.page || 1), totalPages);
+
+  const setBankPage = (newPageOrFn: number | ((prev: number) => number)) => {
+    setBankFilters((prev) => {
+      const curr = prev.page || 1;
+      const target = typeof newPageOrFn === 'function' ? newPageOrFn(curr) : newPageOrFn;
+      return { ...prev, page: Math.max(1, Math.min(totalPages, target)) };
+    });
+  };
+
   const paginatedBankItems = filteredBankItems.slice(
     (bankPage - 1) * pageSize,
     bankPage * pageSize
   );
 
   useEffect(() => {
-    if (bankPage > totalPages) {
-      setBankPage(totalPages);
+    if ((bankFilters.page || 1) > totalPages) {
+      setBankFilters((prev) => ({ ...prev, page: totalPages }));
     }
-  }, [totalPages, bankPage]);
+  }, [totalPages, bankFilters.page]);
 
   // Master Checkbox State
   const allCurrentPageSelected =
@@ -754,7 +935,9 @@ export default function AdminTools({
 
       // Optimistically update bankQuestions (filtering out deleted IDs) and clamp bankPage
       setBankQuestions((prev) => {
-        const updated = prev.filter((q) => !idsSet.has(q.id));
+        const updated = confirmationModal.singleId
+          ? prev.filter((q) => !idsSet.has(q.id))
+          : prev.filter((q) => !selectedIds.has(q.id));
         const newMaxPage = Math.max(1, Math.ceil(updated.length / pageSize));
         setBankPage((p) => Math.min(p, newMaxPage));
         return updated;
@@ -794,41 +977,75 @@ export default function AdminTools({
       })();
     } else if (confirmationModal.type === 'status') {
       const newStatus = confirmationModal.payload as BankItemStatus;
-      setBankQuestions((prev) =>
-        prev.map((q) => {
-          if (selectedIds.has(q.id)) {
-            return {
-              ...q,
-              st: newStatus,
-              stCls: getStatusBadgeClass(newStatus),
-              upd: 'Just now',
-            };
-          }
-          return q;
-        })
+      const targetIds = Array.from(selectedIds);
+      const dbIdsToUpdate = targetIds.map((id) => {
+        const found = bankQuestions.find((q) => q.id === id);
+        return found?.dbId || id;
+      });
+
+      const { updatedItems } = applyMassStatusUpdate(
+        bankQuestions,
+        selectedIds,
+        newStatus,
+        getStatusBadgeClass(newStatus)
       );
+      setBankQuestions(updatedItems as QuestionBankItem[]);
       setSelectedIds(new Set());
       setConfirmationModal({ isOpen: false, type: 'delete' });
       showNotification(`Updated status to "${newStatus}" for ${count} question${count === 1 ? '' : 's'}`);
+
+      (async () => {
+        try {
+          const res = await updateQuestionsInDb(dbIdsToUpdate, { status: newStatus });
+          if (!res.success) {
+            showNotification(`Failed to persist status to Supabase: ${res.error || 'Unknown error'}`);
+            await fetchLiveQuestions();
+          } else {
+            await fetchLiveQuestions();
+            refetchQuestions();
+          }
+        } catch (err: any) {
+          showNotification(`Failed to persist status to Supabase: ${err?.message || 'Unknown error'}`);
+          await fetchLiveQuestions();
+        }
+      })();
     } else if (confirmationModal.type === 'topic') {
       const newTopic = confirmationModal.payload as string;
-      setBankQuestions((prev) =>
-        prev.map((q) => {
-          if (selectedIds.has(q.id)) {
-            return {
-              ...q,
-              topic: newTopic,
-              upd: 'Just now',
-            };
-          }
-          return q;
-        })
+      const targetIds = Array.from(selectedIds);
+      const dbIdsToUpdate = targetIds.map((id) => {
+        const found = bankQuestions.find((q) => q.id === id);
+        return found?.dbId || id;
+      });
+
+      const { updatedItems } = applyMassTopicUpdate(
+        bankQuestions,
+        selectedIds,
+        newTopic
       );
+      setBankQuestions(updatedItems as QuestionBankItem[]);
       setSelectedIds(new Set());
       setConfirmationModal({ isOpen: false, type: 'delete' });
       showNotification(`Reassigned topic to "${newTopic}" for ${count} question${count === 1 ? '' : 's'}`);
+
+      (async () => {
+        try {
+          const res = await updateQuestionsInDb(dbIdsToUpdate, { topicName: newTopic });
+          if (!res.success) {
+            showNotification(`Failed to persist topic to Supabase: ${res.error || 'Unknown error'}`);
+            await fetchLiveQuestions();
+          } else {
+            await fetchLiveQuestions();
+            refetchQuestions();
+          }
+        } catch (err: any) {
+          showNotification(`Failed to persist topic to Supabase: ${err?.message || 'Unknown error'}`);
+          await fetchLiveQuestions();
+        }
+      })();
     }
   };
+
+  const executeConfirmedMassAction = handleConfirmMassAction;
 
   const handleExportSelected = () => {
     const selected = bankQuestions.filter((q) => selectedIds.has(q.id));
@@ -1229,48 +1446,79 @@ export default function AdminTools({
             </div>
           </div>
 
-          {/* Search & Filter Pills */}
+          {/* Row 1: Primary Search & Structured Exam Filters */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative min-w-[240px]">
+            <div className="relative min-w-[240px] flex-1 max-w-sm">
               <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82796a]" />
               <input
                 type="text"
-                placeholder="Search stems, IDs, citations..."
-                value={bankSearch}
-                onChange={(e) => setBankSearch(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
+                placeholder="Search stems, IDs, citations, options..."
+                value={bankFilters.search}
+                onChange={(e) => setBankFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
+                className="w-full pl-9 pr-8 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
               />
+              {bankFilters.search && (
+                <button
+                  type="button"
+                  onClick={() => setBankFilters((prev) => ({ ...prev, search: '', page: 1 }))}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded-full cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <BankFilterDropdown
-              label="Paper"
-              value={bankPaperFilter}
-              onChange={setBankPaperFilter}
-              options={paperOptions}
+              label="Subject"
+              value={bankFilters.subject}
+              onChange={(val) => setBankFilters((prev) => ({ ...prev, subject: val, page: 1 }))}
+              options={facetCounts.subjects}
             />
             <BankFilterDropdown
-              label="Session"
-              value={bankSessionFilter}
-              onChange={setBankSessionFilter}
-              options={sessionOptions}
+              label="Year"
+              value={bankFilters.year}
+              onChange={(val) => setBankFilters((prev) => ({ ...prev, year: val, page: 1 }))}
+              options={facetCounts.years}
+            />
+            <BankFilterDropdown
+              label="Season"
+              value={bankFilters.season}
+              onChange={(val) => setBankFilters((prev) => ({ ...prev, season: val, page: 1 }))}
+              options={facetCounts.seasons}
+            />
+            <BankFilterDropdown
+              label="Variant"
+              value={bankFilters.variant}
+              onChange={(val) => setBankFilters((prev) => ({ ...prev, variant: val, page: 1 }))}
+              options={facetCounts.variants}
+            />
+            <BankFilterDropdown
+              label="Paper"
+              value={bankFilters.paper}
+              onChange={(val) => setBankFilters((prev) => ({ ...prev, paper: val, page: 1 }))}
+              options={facetCounts.papers}
+              minWidth="min-w-[220px]"
             />
             <BankFilterDropdown
               label="Topic"
-              value={bankTopicFilter}
-              onChange={setBankTopicFilter}
-              options={topicOptions}
+              multiSelect
+              selectedValues={bankFilters.topics || (bankFilters.topic && bankFilters.topic !== 'All' ? [bankFilters.topic] : [])}
+              onMultiChange={(vals) => setBankFilters((prev) => ({ ...prev, topics: vals, topic: vals.length === 1 ? vals[0] : 'All', page: 1 }))}
+              options={facetCounts.topics}
               minWidth="min-w-[260px]"
             />
             <BankFilterDropdown
               label="Difficulty"
-              value={bankDifficultyFilter}
-              onChange={setBankDifficultyFilter}
-              options={difficultyOptions}
+              multiSelect
+              selectedValues={bankFilters.difficulties || (bankFilters.difficulty && bankFilters.difficulty !== 'All' ? [bankFilters.difficulty] : [])}
+              onMultiChange={(vals) => setBankFilters((prev) => ({ ...prev, difficulties: vals, difficulty: vals.length === 1 ? vals[0] : 'All', page: 1 }))}
+              options={facetCounts.difficulties}
             />
             <BankFilterDropdown
               label="Status"
-              value={bankStatusFilter}
-              onChange={setBankStatusFilter}
-              options={statusOptions}
+              value={bankFilters.status}
+              onChange={(val) => setBankFilters((prev) => ({ ...prev, status: val, page: 1 }))}
+              options={facetCounts.statuses}
             />
             <button
               type="button"
@@ -1280,7 +1528,7 @@ export default function AdminTools({
                 refetchQuestions();
                 showNotification('Refreshed questions from Supabase');
               }}
-              className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
               title="Refresh questions from database"
             >
               <RotateCw className={`w-3.5 h-3.5 ${isLoadingLive ? 'animate-spin text-[#c67139]' : 'text-[#645c50]'}`} />
@@ -1288,50 +1536,159 @@ export default function AdminTools({
             </button>
           </div>
 
+          {/* Row 2: Content Feature Toggle Pills & Results Summary */}
+          <div className="flex items-center justify-between gap-3 flex-wrap text-xs pt-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#645c50] mr-1">
+                Features:
+              </span>
+              <button
+                type="button"
+                onClick={() => toggleFeature('diagram')}
+                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+                  bankFilters.features.includes('diagram')
+                    ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
+                    : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
+                }`}
+              >
+                <span>Has Diagram</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    bankFilters.features.includes('diagram')
+                      ? 'bg-[#c67139] text-[#f9f4ed]'
+                      : 'bg-[#e8decb] text-[#645c50]'
+                  }`}
+                >
+                  {featureCounts.diagram || 0}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleFeature('table')}
+                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+                  bankFilters.features.includes('table')
+                    ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
+                    : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
+                }`}
+              >
+                <span>Has Table</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    bankFilters.features.includes('table')
+                      ? 'bg-[#c67139] text-[#f9f4ed]'
+                      : 'bg-[#e8decb] text-[#645c50]'
+                  }`}
+                >
+                  {featureCounts.table || 0}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleFeature('math')}
+                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+                  bankFilters.features.includes('math')
+                    ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
+                    : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
+                }`}
+              >
+                <span>Has Math/LaTeX</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    bankFilters.features.includes('math')
+                      ? 'bg-[#c67139] text-[#f9f4ed]'
+                      : 'bg-[#e8decb] text-[#645c50]'
+                  }`}
+                >
+                  {featureCounts.math || 0}
+                </span>
+              </button>
+            </div>
+
+            <div className="text-xs font-semibold text-[#645c50] ml-auto">
+              Showing <span className="font-bold text-[#201e1d]">{filteredBankItems.length}</span> of{' '}
+              <span className="font-bold text-[#201e1d]">{bankQuestions.length}</span> questions
+            </div>
+          </div>
+
+          {/* Row 3: Active Filter Chips Bar */}
+          {activeFilterChips.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
+                Active Filters:
+              </span>
+              {activeFilterChips.map((chip, idx) => (
+                <button
+                  key={`${chip.key}-${chip.value}-${idx}`}
+                  type="button"
+                  onClick={() => handleRemoveChip(chip)}
+                  className="px-2.5 py-1 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] hover:border-[#c67139] cursor-pointer flex items-center gap-1 transition-all active:translate-y-0.5 active:shadow-none"
+                  title={`Remove ${chip.label}: ${chip.value}`}
+                >
+                  <span>
+                    <span className="text-[#645c50] font-medium">{chip.label}:</span> {chip.value}
+                  </span>
+                  <X className="w-3 h-3 text-[#645c50] hover:text-[#c67139] shrink-0" />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={handleClearAllFilters}
+                className="px-2.5 py-1 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold transition-colors cursor-pointer ml-1"
+              >
+                Clear all ({activeFilterChips.length})
+              </button>
+            </div>
+          )}
+
           {/* Status Counter Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold">
             <button
-              onClick={() => setBankStatusFilter('All')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+              type="button"
+              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'All', page: 1 }))}
+              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                bankFilters.status === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              All {questionsLoading ? '...' : bankQuestions.length}
+              All {bankQuestions.length}
             </button>
             <button
-              onClick={() => setBankStatusFilter('Live')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+              type="button"
+              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Live', page: 1 }))}
+              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                bankFilters.status === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Live {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Live').length}
+              Live {bankQuestions.filter((q) => q.st === 'Live').length}
             </button>
             <button
-              onClick={() => setBankStatusFilter('Agent draft')}
-              className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
-                bankStatusFilter === 'Agent draft' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+              type="button"
+              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Agent draft', page: 1 }))}
+              className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                bankFilters.status === 'Agent draft' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
               <span>Agent drafts</span>
               <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
-                {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Agent draft').length}
+                {bankQuestions.filter((q) => q.st === 'Agent draft').length}
               </span>
             </button>
             <button
-              onClick={() => setBankStatusFilter('Needs review')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+              type="button"
+              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Needs review', page: 1 }))}
+              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                bankFilters.status === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Needs review {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Needs review').length}
+              Needs review {bankQuestions.filter((q) => q.st === 'Needs review').length}
             </button>
             <button
-              onClick={() => setBankStatusFilter('Flagged')}
-              className={`px-3.5 py-1.5 rounded-full transition-all ${
-                bankStatusFilter === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+              type="button"
+              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Flagged', page: 1 }))}
+              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                bankFilters.status === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Flagged {questionsLoading ? '...' : bankQuestions.filter((q) => q.st === 'Flagged').length}
+              Flagged {bankQuestions.filter((q) => q.st === 'Flagged').length}
             </button>
           </div>
 

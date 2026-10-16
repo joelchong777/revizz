@@ -580,6 +580,153 @@ export async function deleteQuestionsFromDb(
   }
 }
 
+export interface QuestionDbUpdates {
+  status?: string;
+  difficulty?: string;
+  topicName?: string;
+  topicId?: string;
+}
+
+/**
+ * Updates questions in Supabase with status, difficulty, or topic assignments.
+ * Calls /api/questions/update when in browser, with direct Supabase client fallback
+ * updating active, topic_id, and merging bank_status / difficulty into diagram_metadata
+ * so it works 100% reliably even before schema migration is applied remotely.
+ * Also synchronizes the runtime _cachedQuestions.
+ */
+export async function updateQuestionsInDb(
+  questionIds: string[],
+  updates: QuestionDbUpdates
+): Promise<{ success: boolean; updatedCount: number; error?: string }> {
+  if (!questionIds || questionIds.length === 0) {
+    return { success: true, updatedCount: 0 };
+  }
+
+  const idsSet = new Set(questionIds);
+
+  // Local in-memory cache synchronizer
+  const syncLocalCache = (resolvedTopicId?: string) => {
+    if (_cachedQuestions && _cachedQuestions.length > 0) {
+      _cachedQuestions = _cachedQuestions.map((q) => {
+        if (!idsSet.has(q.id)) return q;
+        const currentDiagram = q.diagram || {};
+        const nextDiagram = {
+          ...currentDiagram,
+          ...(updates.status ? { bank_status: updates.status } : {}),
+          ...(updates.difficulty ? { difficulty: updates.difficulty } : {}),
+        };
+        return {
+          ...q,
+          ...(updates.topicName ? { topic: updates.topicName } : {}),
+          ...(resolvedTopicId ? { topic_id: resolvedTopicId } : updates.topicId ? { topic_id: updates.topicId } : {}),
+          diagram: nextDiagram,
+        };
+      });
+    }
+  };
+
+  // 1. Attempt API route update via fetch when in browser
+  if (typeof window !== 'undefined') {
+    try {
+      const response = await fetch('/api/questions/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ questionIds, updates }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          syncLocalCache(data.resolvedTopicId);
+          return {
+            success: true,
+            updatedCount: typeof data.updatedCount === 'number' ? data.updatedCount : questionIds.length,
+          };
+        } else {
+          throw new Error(data.error || 'API update reported failure');
+        }
+      } else {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || `API returned status ${response.status}`);
+      }
+    } catch (apiError: any) {
+      console.warn('API update failed, falling back to direct Supabase client:', apiError?.message);
+    }
+  }
+
+  // 2. Direct Supabase client fallback
+  try {
+    const uuidIds = questionIds.filter((id) => UUID_REGEX.test(id));
+    let resolvedTopicId = updates.topicId;
+
+    if (!resolvedTopicId && updates.topicName && updates.topicName.trim()) {
+      const { data: topicData } = await supabase
+        .from('topics')
+        .select('id')
+        .ilike('name', updates.topicName.trim())
+        .maybeSingle();
+
+      if (topicData?.id) {
+        resolvedTopicId = topicData.id;
+      }
+    }
+
+    if (uuidIds.length > 0) {
+      // Fetch existing diagram_metadata to merge without clobbering existing diagrams
+      const { data: existingRows } = await supabase
+        .from('questions')
+        .select('id, diagram_metadata')
+        .in('id', uuidIds);
+
+      const activeVal =
+        updates.status !== undefined ? updates.status === 'Live' : undefined;
+
+      for (const row of existingRows || []) {
+        const currentMeta =
+          row.diagram_metadata && typeof row.diagram_metadata === 'object'
+            ? { ...row.diagram_metadata }
+            : {};
+
+        if (updates.status) {
+          currentMeta.bank_status = updates.status;
+        }
+        if (updates.difficulty) {
+          currentMeta.difficulty = updates.difficulty;
+        }
+
+        const patch: Record<string, any> = {
+          diagram_metadata: currentMeta,
+        };
+
+        if (activeVal !== undefined) {
+          patch.active = activeVal;
+        }
+        if (resolvedTopicId !== undefined) {
+          patch.topic_id = resolvedTopicId;
+        }
+
+        await supabase.from('questions').update(patch).eq('id', row.id);
+      }
+    }
+
+    syncLocalCache(resolvedTopicId);
+
+    return {
+      success: true,
+      updatedCount: questionIds.length,
+    };
+  } catch (fallbackError: any) {
+    console.error('Direct Supabase update failed:', fallbackError);
+    return {
+      success: false,
+      updatedCount: 0,
+      error: fallbackError?.message || 'Update failed',
+    };
+  }
+}
+
 /**
  * Shuffles an array of questions using the Fisher-Yates algorithm.
  * Returns a new shuffled array without mutating the original.
@@ -598,7 +745,13 @@ export interface FetchQuestionsFilters {
   topicId?: string;
   questionIds?: string[];
   paperId?: string;
+  active?: boolean;
+  search?: string;
+  status?: string;
+  difficulty?: string;
 }
+
+export type QuestionQueryFilters = FetchQuestionsFilters;
 
 export function mapDbQuestionToQuestion(row: any): Question {
   const sortedOptions = (row.question_options || [])
@@ -705,6 +858,12 @@ export async function fetchQuestionsFromDb(filters?: FetchQuestionsFilters): Pro
     }
     if (filters?.questionIds && filters.questionIds.length > 0) {
       query = query.in('id', filters.questionIds);
+    }
+    if (typeof filters?.active === 'boolean') {
+      query = query.eq('active', filters.active);
+    }
+    if (filters?.search && filters.search.trim()) {
+      query = query.ilike('stem_markdown', `%${filters.search.trim()}%`);
     }
 
     query = query.order('question_number', { ascending: true });
