@@ -12,6 +12,7 @@ export interface TestPaperConfig {
   includeCandidateHeader: boolean;
   includeBubbleSheet: boolean;
   includeMarkScheme: boolean;
+  includeExplanations?: boolean;
   instructionsText?: string;
   questionIds: string[];
   compiledQuestions?: CompiledExamQuestion[];
@@ -28,3 +29,23 @@ export interface CompiledExamQuestion {
   topic?: string;
   explanationMarkdown?: string | null;
 }
+
+export interface OnlineQuizAssignment {
+  id: string;
+  title: string;
+  subjectCode: string;
+  subjectName: string;
+  cohortName: string;
+  dueDate: string;
+  durationMinutes: number;
+  questionIds: string[];
+  testCode: string;
+  createdAt: string;
+}
+
+export interface TopicDistributionItem {
+  topic: string;
+  count: number;
+  percentage: number;
+}
+

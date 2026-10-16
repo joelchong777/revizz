@@ -6,6 +6,8 @@ import 'katex/dist/katex.min.css';
 import { TestPaperConfig, CompiledExamQuestion } from '@/types/testCompiler';
 import { Code128Barcode } from '@/lib/barcode';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
+import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
 
 interface Props {
   config: TestPaperConfig;
@@ -15,11 +17,13 @@ interface Props {
 
 export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMarkScheme = false }) => {
   if (showMarkScheme) {
+    const showExplanations = config.includeExplanations !== false;
+
     return (
       <div className="print-container text-black font-serif">
         <div style={{ pageBreakBefore: 'always' }} className="p-8">
           <h2 className="text-2xl font-bold mb-6 text-center border-b-2 border-black pb-4 uppercase">
-            TEACHER COPY — MARK SCHEME & EXPLANATIONS
+            {showExplanations ? 'TEACHER COPY — MARK SCHEME & EXPLANATIONS' : 'TEACHER COPY — MARK SCHEME'}
           </h2>
           <table className="w-full text-left border-collapse border border-black">
             <thead>
@@ -27,8 +31,8 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
                 <th className="p-2 border-r border-black w-12 text-center">Q#</th>
                 <th className="p-2 border-r border-black w-12 text-center">Key</th>
                 <th className="p-2 border-r border-black w-48">Syllabus Topic</th>
-                <th className="p-2 border-r border-black w-32">Citation</th>
-                <th className="p-2">Explanation</th>
+                <th className={`p-2 ${showExplanations ? 'border-r border-black w-32' : 'w-32'}`}>Citation</th>
+                {showExplanations && <th className="p-2">Explanation</th>}
               </tr>
             </thead>
             <tbody>
@@ -39,16 +43,20 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
                     <td className="p-2 border-r border-black font-bold text-center">{q.questionNumber}</td>
                     <td className="p-2 border-r border-black text-center font-bold">{correctOption?.label}</td>
                     <td className="p-2 border-r border-black">{q.topic || '-'}</td>
-                    <td className="p-2 border-r border-black text-xs">{q.citation || '-'}</td>
-                    <td className="p-2 text-sm">
-                      {q.explanationMarkdown ? (
-                        <div className="prose prose-sm max-w-none text-black">
-                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                            {q.explanationMarkdown}
-                          </ReactMarkdown>
-                        </div>
-                      ) : '-'}
-                    </td>
+                    <td className={`p-2 ${showExplanations ? 'border-r border-black text-xs' : 'text-xs'}`}>{q.citation || '-'}</td>
+                    {showExplanations && (
+                      <td className="p-2 text-sm">
+                        {q.explanationMarkdown ? (
+                          <div className="prose prose-sm max-w-none text-black">
+                            <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(q.explanationMarkdown)}>
+                              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                {escapeCurrencyDollars(q.explanationMarkdown)}
+                              </ReactMarkdown>
+                            </MarkdownErrorBoundary>
+                          </div>
+                        ) : '-'}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -148,9 +156,11 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
             <div className="font-bold text-lg w-6 shrink-0">{q.questionNumber}</div>
             <div className="flex-1">
               <div className="prose prose-sm max-w-none text-black mb-4">
-                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                  {q.stemMarkdown}
-                </ReactMarkdown>
+                <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(q.stemMarkdown)}>
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                    {escapeCurrencyDollars(q.stemMarkdown)}
+                  </ReactMarkdown>
+                </MarkdownErrorBoundary>
               </div>
               {q.imageUrl && (
                 <div className="mb-4">
@@ -167,9 +177,11 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
                   <div key={opt.label} className="flex gap-3">
                     <span className="font-bold">{opt.label}</span>
                     <div className="prose prose-sm max-w-none text-black">
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {opt.textMarkdown}
-                      </ReactMarkdown>
+                      <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(opt.textMarkdown)}>
+                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          {escapeCurrencyDollars(opt.textMarkdown)}
+                        </ReactMarkdown>
+                      </MarkdownErrorBoundary>
                     </div>
                   </div>
                 ))}

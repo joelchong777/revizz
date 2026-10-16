@@ -68,6 +68,15 @@ import {
   resetPortalNavToDefaults,
   PortalNavItem,
 } from '../lib/portal/menuConfig';
+import {
+  buildCompiledQuestions,
+  resolveQuestionExplanation,
+  computeTopicDistribution,
+  shuffleQuestionIds,
+  SUBJECT_CATALOG,
+  saveOnlineAssignment,
+  listOnlineAssignments,
+} from '../lib/testCompiler';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -87,6 +96,15 @@ class LocalStorageMock {
 
   clear(): void {
     this.store = {};
+  }
+
+  get length(): number {
+    return Object.keys(this.store).length;
+  }
+
+  key(index: number): string | null {
+    const keys = Object.keys(this.store);
+    return keys[index] ?? null;
   }
 }
 
@@ -1992,6 +2010,181 @@ async function runSuite13() {
       componentExists || isReferencedInHub,
       'PortalMenuManager component or hub integration is present'
     );
+  });
+
+  // -----------------------------------------------------------------------------
+  // [Suite 16] Test Compiler Upgrade: Explanations, Topic Distribution, Online Assignments & Guardrail 6 Print Empty State
+  // -----------------------------------------------------------------------------
+  console.log('\n\x1b[1m\x1b[34m[Suite 16] Test Compiler Upgrade: Explanations, Topic Distribution, Online Assignments & Guardrail 6 Print Empty State\x1b[0m');
+
+  test('Test Compiler: buildCompiledQuestions populates non-null explanationMarkdown via resolveQuestionExplanation', () => {
+    assert(CAMBRIDGE_QUESTIONS.length > 0, 'CAMBRIDGE_QUESTIONS contains seeded questions');
+    const sampleIds = CAMBRIDGE_QUESTIONS.slice(0, 3).map((q) => q.id);
+    const compiled = buildCompiledQuestions(sampleIds, CAMBRIDGE_QUESTIONS);
+
+    assertEqual(compiled.length, 3, 'Compiled 3 exam questions');
+    for (const cq of compiled) {
+      assert(typeof cq.explanationMarkdown === 'string', `Question ${cq.id} has string explanationMarkdown`);
+      assert(Boolean(cq.explanationMarkdown && cq.explanationMarkdown.trim().length > 0), `Question ${cq.id} explanationMarkdown is non-empty`);
+    }
+
+    // Direct resolveQuestionExplanation verification
+    const questionWithExplicitExplanation: any = {
+      id: 'mock-exp-1',
+      stem_markdown: 'What is opportunity cost?',
+      options: [
+        { id: 'opt-a', text_markdown: 'The next best alternative forgone', is_correct: true },
+        { id: 'opt-b', text_markdown: 'The financial cost of an item', is_correct: false },
+      ],
+      correct_option_id: 'opt-a',
+      explanation_markdown: 'Opportunity cost is the benefit of the next best alternative forgone.',
+      topic: 'Basic Economic Problem',
+    };
+    const explicitResolved = resolveQuestionExplanation(questionWithExplicitExplanation);
+    assertEqual(
+      explicitResolved,
+      'Opportunity cost is the benefit of the next best alternative forgone.',
+      'Resolves explicit explanation correctly'
+    );
+
+    const questionWithoutExplicitExplanation: any = {
+      id: 'mock-exp-2',
+      stem_markdown: 'Which of the following is a macroeconomic goal?',
+      options: [
+        { id: 'opt-a', text_markdown: 'Low unemployment', is_correct: true },
+        { id: 'opt-b', text_markdown: 'Individual firm profit', is_correct: false },
+      ],
+      correct_option_id: 'opt-a',
+      explanation_markdown: null,
+      topic: 'Government and Macroeconomy',
+    };
+    const fallbackResolved = resolveQuestionExplanation(questionWithoutExplicitExplanation);
+    assert(Boolean(fallbackResolved && fallbackResolved.includes('Key A: Low unemployment')), 'Resolves non-null fallback explanation with correct key');
+  });
+
+  test('Test Compiler: computeTopicDistribution accurately calculates topic counts and percentages summing to ~100%, and returns [] for empty selection', () => {
+    // Empty selection returns []
+    const emptyDist = computeTopicDistribution([], CAMBRIDGE_QUESTIONS);
+    assertEqual(Array.isArray(emptyDist), true, 'Empty selection returns array');
+    assertEqual(emptyDist.length, 0, 'Empty selection returns empty array []');
+
+    // Multi-topic distribution calculation
+    const mockPool: any[] = [
+      { id: 'td-1', topic: 'The Basic Economic Problem' },
+      { id: 'td-2', topic: 'The Basic Economic Problem' },
+      { id: 'td-3', topic: 'Allocation of Resources' },
+      { id: 'td-4', topic: 'International Trade' },
+    ];
+    const distribution = computeTopicDistribution(['td-1', 'td-2', 'td-3', 'td-4'], mockPool);
+    assertEqual(distribution.length, 3, 'Computes 3 distinct topic segments');
+
+    const basicProblem = distribution.find((d) => d.topic === 'The Basic Economic Problem');
+    assert(Boolean(basicProblem), 'Finds The Basic Economic Problem');
+    assertEqual(basicProblem?.count, 2, 'Basic Economic Problem count is 2');
+    assertEqual(basicProblem?.percentage, 50, 'Basic Economic Problem is 50%');
+
+    const allocation = distribution.find((d) => d.topic === 'Allocation of Resources');
+    assert(Boolean(allocation), 'Finds Allocation of Resources');
+    assertEqual(allocation?.count, 1, 'Allocation count is 1');
+    assertEqual(allocation?.percentage, 25, 'Allocation is 25%');
+
+    const trade = distribution.find((d) => d.topic === 'International Trade');
+    assert(Boolean(trade), 'Finds International Trade');
+    assertEqual(trade?.count, 1, 'International Trade count is 1');
+    assertEqual(trade?.percentage, 25, 'International Trade is 25%');
+
+    const totalPct = distribution.reduce((sum, item) => sum + item.percentage, 0);
+    assertEqual(totalPct, 100, 'Percentages sum to 100%');
+  });
+
+  test('Test Compiler: shuffleQuestionIds preserves exact question ID membership and length without mutating the original array', () => {
+    const original = ['q-alpha', 'q-beta', 'q-gamma', 'q-delta', 'q-epsilon', 'q-zeta'];
+    const originalCopy = [...original];
+
+    const shuffled = shuffleQuestionIds(original);
+
+    assertEqual(original.length, originalCopy.length, 'Original array length is preserved');
+    for (let i = 0; i < original.length; i++) {
+      assertEqual(original[i], originalCopy[i], `Original element at index ${i} was not mutated`);
+    }
+
+    assertEqual(shuffled.length, original.length, 'Shuffled array matches original length');
+    assert(shuffled !== original, 'Shuffled array is an immutable new array instance');
+
+    const sortedOriginal = [...original].sort();
+    const sortedShuffled = [...shuffled].sort();
+    for (let i = 0; i < sortedOriginal.length; i++) {
+      assertEqual(sortedShuffled[i], sortedOriginal[i], `Membership element ${i} identical across arrays`);
+    }
+  });
+
+  test('Test Compiler: SUBJECT_CATALOG exports Cambridge IGCSE subjects (0455, 0610, 0620, 0625)', () => {
+    assert(Array.isArray(SUBJECT_CATALOG), 'SUBJECT_CATALOG is an array');
+    const catalogCodes = SUBJECT_CATALOG.map((s) => s.code);
+
+    assertEqual(catalogCodes.includes('0455'), true, 'SUBJECT_CATALOG includes 0455 (Economics)');
+    assertEqual(catalogCodes.includes('0610'), true, 'SUBJECT_CATALOG includes 0610 (Biology)');
+    assertEqual(catalogCodes.includes('0620'), true, 'SUBJECT_CATALOG includes 0620 (Chemistry)');
+    assertEqual(catalogCodes.includes('0625'), true, 'SUBJECT_CATALOG includes 0625 (Physics)');
+
+    const econ = SUBJECT_CATALOG.find((s) => s.code === '0455');
+    assertEqual(econ?.name, 'Economics', '0455 subject name is Economics');
+  });
+
+  test('Test Compiler: Guardrail 6 Compliance in app/portal/compiler/print/page.tsx', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const printPagePath = path.resolve(process.cwd(), 'app/portal/compiler/print/page.tsx');
+    assertEqual(fs.existsSync(printPagePath), true, 'app/portal/compiler/print/page.tsx exists');
+
+    const content = fs.readFileSync(printPagePath, 'utf8');
+
+    // Hardcoded fallback mock must NOT be present
+    assertEqual(content.includes("id: 'default-test'"), false, "No hardcoded id: 'default-test' mock fallback in print page");
+    assertEqual(content.includes('id: "default-test"'), false, 'No hardcoded "default-test" mock fallback in print page');
+
+    // Empty state rendering must be present
+    assertEqual(content.includes('No Compiled Test Paper Found'), true, 'Renders "No Compiled Test Paper Found" empty state');
+    assertEqual(content.includes('Return to Test Compiler'), true, 'Renders "Return to Test Compiler" navigation button');
+  });
+
+  test('Test Compiler: TestCompilerHub.tsx structural verification (Assign Online, shuffleQuestionIds, computeTopicDistribution, includeExplanations, test-assembly-drawer, MarkdownErrorBoundary)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const hubPath = path.resolve(process.cwd(), 'components/portal/compiler/TestCompilerHub.tsx');
+    assertEqual(fs.existsSync(hubPath), true, 'components/portal/compiler/TestCompilerHub.tsx exists');
+
+    const content = fs.readFileSync(hubPath, 'utf8');
+
+    assertEqual(content.includes('Assign Online'), true, 'Features "Assign Online" action');
+    assertEqual(content.includes('shuffleQuestionIds'), true, 'Wires "shuffleQuestionIds" helper');
+    assertEqual(content.includes('computeTopicDistribution'), true, 'Uses "computeTopicDistribution" breakdown');
+    assertEqual(content.includes('includeExplanations'), true, 'Supports "includeExplanations" configuration');
+    assertEqual(content.includes('test-assembly-drawer'), true, 'Defines "test-assembly-drawer" element id');
+    assertEqual(content.includes('MarkdownErrorBoundary'), true, 'Protects math/markdown with MarkdownErrorBoundary');
+  });
+
+  test('Test Compiler: Online Assignments saveOnlineAssignment and listOnlineAssignments persistence', () => {
+    const assignment = {
+      id: 'asg-test-portal-1',
+      title: 'Unit 1 Microeconomics Quiz',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      cohortName: '10 Economics (Cambridge 0455)',
+      dueDate: '2026-11-15',
+      durationMinutes: 45,
+      questionIds: ['q-1', 'q-2'],
+      testCode: 'REV-0455-TEST1',
+      createdAt: new Date().toISOString(),
+    };
+
+    saveOnlineAssignment(assignment);
+    const stored = listOnlineAssignments();
+    assert(stored.length > 0, 'Assignments list has at least 1 entry');
+    const found = stored.find((a) => a.id === 'asg-test-portal-1');
+    assert(Boolean(found), 'Found saved assignment in storage');
+    assertEqual(found?.testCode, 'REV-0455-TEST1', 'Test code matches REV-0455-TEST1');
+    assertEqual(found?.cohortName, '10 Economics (Cambridge 0455)', 'Cohort matches');
   });
 
   // Summary Output

@@ -18,7 +18,12 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronUp,
-  Filter
+  Filter,
+  Shuffle,
+  GripVertical,
+  Send,
+  Sparkles,
+  LayoutGrid
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -26,8 +31,19 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { useQuestions, useTopics, Question, resolveDiagramUrl } from '@/lib/questions';
+import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
 import { CompilerDiagramPreview } from './CompilerDiagramPreview';
-import { saveTestDraft, listTestDrafts, autoSelectQuestions, buildCompiledQuestions } from '@/lib/testCompiler';
+import {
+  saveTestDraft,
+  listTestDrafts,
+  autoSelectQuestions,
+  buildCompiledQuestions,
+  SUBJECT_CATALOG,
+  shuffleQuestionIds,
+  computeTopicDistribution,
+  saveOnlineAssignment,
+  listOnlineAssignments
+} from '@/lib/testCompiler';
 import {
   SelectionFilter,
   SortOption,
@@ -37,7 +53,14 @@ import {
   filterAndSortQuestions,
   countActiveFilters
 } from '@/lib/compilerFilters';
-import { TestPaperConfig } from '@/types/testCompiler';
+import { TestPaperConfig, OnlineQuizAssignment, TopicDistributionItem } from '@/types/testCompiler';
+
+const TARGET_COHORTS = [
+  '10 Economics (Cambridge 0455)',
+  '10A Physics (Cambridge 0625)',
+  '10B Physics (Cambridge 0625)',
+  '11A Physics (Cambridge 0625)'
+];
 
 export default function TestCompilerHub() {
   const { questions, loading: loadingQuestions } = useQuestions();
@@ -52,9 +75,17 @@ export default function TestCompilerHub() {
   const [withTablesOnly, setWithTablesOnly] = useState(false);
   const [withMathOnly, setWithMathOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('paper');
+  const [cardDensity, setCardDensity] = useState<'expanded' | 'compact'>('expanded');
+  const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
+  const [isFilterRowVisible, setIsFilterRowVisible] = useState(true);
 
   // --- Right Column (Test Config) State ---
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
+  const [subjectCode, setSubjectCode] = useState('0455');
+  const subjectName = useMemo(() => {
+    const found = SUBJECT_CATALOG.find((s) => s.code === subjectCode);
+    return found ? found.name : 'Economics';
+  }, [subjectCode]);
   const [testTitle, setTestTitle] = useState('Term 1 Mock Assessment - Economics');
   const [schoolName, setSchoolName] = useState('School Assessment');
   const [dateString, setDateString] = useState('October 2026');
@@ -65,10 +96,12 @@ export default function TestCompilerHub() {
   const [includeCandidateHeader, setIncludeCandidateHeader] = useState(true);
   const [includeBubbleSheet, setIncludeBubbleSheet] = useState(true);
   const [includeMarkScheme, setIncludeMarkScheme] = useState(true);
+  const [includeExplanations, setIncludeExplanations] = useState(true);
 
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // --- Modals State ---
   const [isAutoModalOpen, setIsAutoModalOpen] = useState(false);
@@ -77,6 +110,21 @@ export default function TestCompilerHub() {
 
   const [isDraftsModalOpen, setIsDraftsModalOpen] = useState(false);
   const [drafts, setDrafts] = useState<TestPaperConfig[]>([]);
+
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [assignCohort, setAssignCohort] = useState('10 Economics (Cambridge 0455)');
+  const [assignDueDate, setAssignDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split('T')[0];
+  });
+  const [assignDuration, setAssignDuration] = useState(45);
+  const [publishedBanner, setPublishedBanner] = useState<{ testCode: string; cohortName: string } | null>(null);
+  const [onlineAssignments, setOnlineAssignments] = useState<OnlineQuizAssignment[]>([]);
+
+  useEffect(() => {
+    setOnlineAssignments(listOnlineAssignments());
+  }, []);
 
   // --- Derived State & Series Extraction ---
   const availableSeries = useMemo(() => {
@@ -152,6 +200,10 @@ export default function TestCompilerHub() {
       .filter(Boolean) as Question[];
   }, [selectedQuestionIds, questions]);
 
+  const topicDistribution = useMemo(() => {
+    return computeTopicDistribution(selectedQuestionIds, questions);
+  }, [selectedQuestionIds, questions]);
+
   const estimatedTime = selectedQuestionIds.length * 1.5;
 
   // --- Handlers ---
@@ -199,8 +251,8 @@ export default function TestCompilerHub() {
     return {
       id: Math.random().toString(36).substring(7),
       title: testTitle,
-      subjectCode: '0455', // Example
-      subjectName: 'Economics',
+      subjectCode: subjectCode,
+      subjectName: subjectName,
       schoolName: schoolName,
       durationMinutes: durationMinutes,
       totalMarks: selectedQuestionIds.length,
@@ -210,6 +262,7 @@ export default function TestCompilerHub() {
       includeCandidateHeader: includeCandidateHeader,
       includeBubbleSheet: includeBubbleSheet,
       includeMarkScheme: includeMarkScheme,
+      includeExplanations: includeExplanations,
       questionIds: selectedQuestionIds,
       compiledQuestions: compiled,
       createdAt: new Date().toISOString(),
@@ -254,6 +307,7 @@ export default function TestCompilerHub() {
 
   const handleLoadDraft = (draft: TestPaperConfig) => {
     setTestTitle(draft.title);
+    if (draft.subjectCode) setSubjectCode(draft.subjectCode);
     setSchoolName(draft.schoolName);
     setDateString(draft.dateString);
     setDurationMinutes(draft.durationMinutes);
@@ -262,6 +316,7 @@ export default function TestCompilerHub() {
     setIncludeCandidateHeader(draft.includeCandidateHeader);
     setIncludeBubbleSheet(draft.includeBubbleSheet);
     setIncludeMarkScheme(draft.includeMarkScheme);
+    if (draft.includeExplanations !== undefined) setIncludeExplanations(draft.includeExplanations);
     setSelectedQuestionIds(draft.questionIds);
     setIsDraftsModalOpen(false);
   };
@@ -272,6 +327,28 @@ export default function TestCompilerHub() {
     setDrafts(listTestDrafts());
   };
 
+  const handlePublishAssignment = () => {
+    const newAssignment: OnlineQuizAssignment = {
+      id: Math.random().toString(36).substring(7),
+      title: testTitle || `${subjectName} Assessment`,
+      subjectCode: subjectCode,
+      subjectName: subjectName,
+      cohortName: assignCohort,
+      dueDate: assignDueDate,
+      durationMinutes: assignDuration,
+      questionIds: selectedQuestionIds,
+      testCode: testCode || `REV-${subjectCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      createdAt: new Date().toISOString(),
+    };
+    saveOnlineAssignment(newAssignment);
+    setOnlineAssignments(listOnlineAssignments());
+    setPublishedBanner({
+      testCode: newAssignment.testCode,
+      cohortName: newAssignment.cohortName,
+    });
+    setIsAssignModalOpen(false);
+  };
+
   // Close modals on Escape key per revizz-a11y-keyboard standards
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -280,12 +357,14 @@ export default function TestCompilerHub() {
           setIsAutoModalOpen(false);
         } else if (isDraftsModalOpen) {
           setIsDraftsModalOpen(false);
+        } else if (isAssignModalOpen) {
+          setIsAssignModalOpen(false);
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAutoModalOpen, isDraftsModalOpen]);
+  }, [isAutoModalOpen, isDraftsModalOpen, isAssignModalOpen]);
 
   return (
     <div className="flex flex-col gap-6 text-[#201e1d] font-body pb-12">
@@ -294,27 +373,143 @@ export default function TestCompilerHub() {
         {/* LEFT COLUMN: Question Bank Canvas */}
         <div className="flex flex-col gap-3 min-w-0">
           {/* Sleek, Compact Sticky Header Bar */}
-          <div className="sticky top-0 z-10 px-4 py-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex items-center justify-between gap-3 backdrop-blur-sm">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="font-heading font-black text-[#201e1d] text-base">Question Bank</h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
-                {filteredQuestions.length} of {questions.length} questions
-              </span>
-              {activeFilterCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
-                  {activeFilterCount} active
+          <div className="sticky top-0 z-10 px-4 py-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex flex-col gap-2.5 backdrop-blur-sm">
+            {/* Row 1: Title, counts, density toggle, filter toggle, select all */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="font-heading font-black text-[#201e1d] text-base">Question Bank</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
+                  {filteredQuestions.length} of {questions.length} questions
                 </span>
-              )}
+                {activeFilterCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
+                    {activeFilterCount} active
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Card Density Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setCardDensity((prev) => (prev === 'expanded' ? 'compact' : 'expanded'))}
+                  aria-label={`Switch to ${cardDensity === 'expanded' ? 'Compact' : 'Expanded'} card density`}
+                  title={`Card Density: ${cardDensity}`}
+                  className="px-2.5 py-1 rounded-xl bg-white border border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
+                  <span>{cardDensity === 'expanded' ? 'Compact' : 'Expanded'}</span>
+                </button>
+
+                {/* Collapse / Expand Filter Controls toggle button */}
+                <button
+                  type="button"
+                  onClick={() => setIsFilterRowVisible((prev) => !prev)}
+                  aria-expanded={isFilterRowVisible}
+                  aria-label={isFilterRowVisible ? 'Collapse quick filters' : 'Expand quick filters'}
+                  title={isFilterRowVisible ? 'Collapse quick filter controls' : 'Expand quick filter controls'}
+                  className="px-2.5 py-1 rounded-xl bg-white border border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                >
+                  <Filter className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
+                  <span>Filters</span>
+                  {isFilterRowVisible ? (
+                    <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSelectAllFiltered}
+                  aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+                  title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+                  className="text-xs font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 rounded-md transition-all active:translate-y-0.5 cursor-pointer ml-1"
+                >
+                  {allFilteredSelected ? 'Deselect All' : 'Select All Filtered'}
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={handleSelectAllFiltered}
-              aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-              title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-              className="text-xs font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 rounded-md transition-all active:translate-y-0.5 cursor-pointer"
-            >
-              {allFilteredSelected ? 'Deselect All' : 'Select All Filtered'}
-            </button>
+
+            {/* Row 2: Collapsible Quick Filters Controls */}
+            {isFilterRowVisible && (
+              <div className="pt-2 border-t border-[#dcd3c4] flex items-center gap-2 flex-wrap text-xs">
+                {/* Quick Search */}
+                <div className="relative flex-1 min-w-[160px]">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none" aria-hidden="true" />
+                  <input
+                    type="text"
+                    placeholder="Quick filter stems..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    aria-label="Quick search stems and options"
+                    className="w-full py-1 pl-8 pr-6 rounded-xl bg-white border border-[#dcd3c4] text-xs font-medium text-[#201e1d] outline-none focus-visible:border-[#c67139] focus-visible:ring-1 focus-visible:ring-[#c67139]"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 cursor-pointer"
+                      aria-label="Clear quick search"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Topic Selector */}
+                <select
+                  aria-label="Quick filter by topic"
+                  value={selectedTopicId}
+                  onChange={(e) => setSelectedTopicId(e.target.value)}
+                  className="px-2 py-1 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none max-w-[160px] truncate"
+                >
+                  <option value="all">All Topics</option>
+                  {topics.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+
+                {/* Content Quick Toggles */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={withDiagramsOnly}
+                    aria-label="Filter diagrams"
+                    onClick={() => setWithDiagramsOnly(!withDiagramsOnly)}
+                    className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
+                      withDiagramsOnly ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139]' : 'bg-white border-[#dcd3c4] text-[#474238]'
+                    }`}
+                  >
+                    <ImageIcon className="w-3 h-3" /> Diagrams
+                  </button>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={withMathOnly}
+                    aria-label="Filter math questions"
+                    onClick={() => setWithMathOnly(!withMathOnly)}
+                    className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
+                      withMathOnly ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139]' : 'bg-white border-[#dcd3c4] text-[#474238]'
+                    }`}
+                  >
+                    <Calculator className="w-3 h-3" /> Math
+                  </button>
+                </div>
+
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleResetAllFilters}
+                    className="text-[11px] font-bold text-[#c67139] hover:underline flex items-center gap-1 ml-auto cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Reset
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Scrollable Question Cards Container */}
@@ -377,16 +572,16 @@ export default function TestCompilerHub() {
                     </div>
                   </div>
 
-                  <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed mb-4">
-                    <MarkdownErrorBoundary fallbackText={q.stem_markdown || ''}>
+                  <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed mb-3">
+                    <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(q.stem_markdown || '')}>
                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {q.stem_markdown || ''}
+                        {escapeCurrencyDollars(q.stem_markdown || '')}
                       </ReactMarkdown>
                     </MarkdownErrorBoundary>
                   </div>
 
                   {q.image_url && (
-                    <div className="mb-4">
+                    <div className="mb-3">
                       <CompilerDiagramPreview
                         imageUrl={q.image_url}
                         citation={q.citation || q.id}
@@ -395,27 +590,80 @@ export default function TestCompilerHub() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {q.options.map((opt, i) => (
-                      <div
-                        key={opt.id}
-                        className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
-                          opt.id === q.correct_option_id
-                            ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
-                            : 'bg-white border border-[#dcd3c4] text-[#474238]'
-                        }`}
+                  {/* Options Rendering: Compact vs Expanded */}
+                  {cardDensity === 'compact' ? (
+                    <div className="pt-2 border-t border-[#dcd3c4]/70">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedCardIds((prev) =>
+                            prev.includes(q.id) ? prev.filter((id) => id !== q.id) : [...prev, q.id]
+                          );
+                        }}
+                        aria-expanded={expandedCardIds.includes(q.id)}
+                        aria-label={`${expandedCardIds.includes(q.id) ? 'Hide' : 'Preview'} options for question ${q.citation || q.id}`}
+                        className="text-xs font-bold text-[#c67139] hover:underline flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#c67139] rounded py-0.5"
                       >
-                        <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
-                        <div className="flex-1">
-                          <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
-                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                              {opt.text_markdown}
-                            </ReactMarkdown>
-                          </MarkdownErrorBoundary>
+                        {expandedCardIds.includes(q.id) ? (
+                          <>
+                            <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Hide Options</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Preview Options (4)</span>
+                          </>
+                        )}
+                      </button>
+                      {expandedCardIds.includes(q.id) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2.5" onClick={(e) => e.stopPropagation()}>
+                          {q.options.map((opt, i) => (
+                            <div
+                              key={opt.id}
+                              className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
+                                opt.id === q.correct_option_id
+                                  ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
+                                  : 'bg-white border border-[#dcd3c4] text-[#474238]'
+                              }`}
+                            >
+                              <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
+                              <div className="flex-1">
+                                <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(opt.text_markdown)}>
+                                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                    {escapeCurrencyDollars(opt.text_markdown)}
+                                  </ReactMarkdown>
+                                </MarkdownErrorBoundary>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {q.options.map((opt, i) => (
+                        <div
+                          key={opt.id}
+                          className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
+                            opt.id === q.correct_option_id
+                              ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
+                              : 'bg-white border border-[#dcd3c4] text-[#474238]'
+                          }`}
+                        >
+                          <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
+                          <div className="flex-1">
+                            <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(opt.text_markdown)}>
+                              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                {escapeCurrencyDollars(opt.text_markdown)}
+                              </ReactMarkdown>
+                            </MarkdownErrorBoundary>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -706,6 +954,20 @@ export default function TestCompilerHub() {
 
                   <button
                     type="button"
+                    onClick={() => {
+                      setOnlineAssignments(listOnlineAssignments());
+                      setIsAssignModalOpen(true);
+                    }}
+                    title="Manage online quiz assignments"
+                    aria-label="Manage online quiz assignments"
+                    className="px-2.5 py-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                  >
+                    <Send className="w-3 h-3 text-[#556b2f]" aria-hidden="true" />
+                    <span>Assignments {onlineAssignments.length > 0 && `(${onlineAssignments.length})`}</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleClearSelection}
                     title="Clear all selected questions"
                     aria-label="Clear all selected questions"
@@ -722,6 +984,7 @@ export default function TestCompilerHub() {
 
           {/* Panel 2: Dedicated Test Assembly Drawer (flex-1 min-h-0 flex flex-col) */}
           <aside
+            id="test-assembly-drawer"
             aria-label="Test Assembly Drawer"
             className="flex-1 min-h-0 flex flex-col p-4 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] overflow-hidden"
           >
@@ -753,13 +1016,41 @@ export default function TestCompilerHub() {
               >
                 <div className="flex items-center gap-2">
                   <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Layout & Settings</span>
+                  <span>Layout & Settings ({subjectCode} {subjectName})</span>
                 </div>
                 <span aria-hidden="true" className="text-[10px] text-[#645c50]">{isSettingsOpen ? '▲' : '▼'}</span>
               </button>
 
               {isSettingsOpen && (
-                <div className="flex flex-col gap-2 max-h-[22vh] overflow-y-auto pr-1">
+                <div className="flex flex-col gap-2 max-h-[24vh] overflow-y-auto pr-1">
+                  {/* Dynamic Subject Selector */}
+                  <div>
+                    <label htmlFor="settings-subject-select" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
+                      Subject Catalog
+                    </label>
+                    <select
+                      id="settings-subject-select"
+                      aria-label="Select Cambridge Subject Catalog"
+                      value={subjectCode}
+                      onChange={(e) => {
+                        const newCode = e.target.value;
+                        setSubjectCode(newCode);
+                        const cat = SUBJECT_CATALOG.find((s) => s.code === newCode);
+                        if (cat) {
+                          setTestTitle(`Term 1 Mock Assessment - ${cat.name}`);
+                          setTestCode(`REV-${cat.code}-M26-001`);
+                        }
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                    >
+                      {SUBJECT_CATALOG.map((s) => (
+                        <option key={s.code} value={s.code}>
+                          {s.code} {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <input
                     type="text"
                     value={testTitle}
@@ -810,6 +1101,7 @@ export default function TestCompilerHub() {
                       { label: 'Candidate Details Header', state: includeCandidateHeader, set: setIncludeCandidateHeader, id: 'toggle-header' },
                       { label: 'Candidate MCQ Bubble Sheet', state: includeBubbleSheet, set: setIncludeBubbleSheet, id: 'toggle-bubble' },
                       { label: 'Teacher Mark Scheme', state: includeMarkScheme, set: setIncludeMarkScheme, id: 'toggle-mark-scheme' },
+                      { label: 'Mark Scheme Explanations', state: includeExplanations, set: setIncludeExplanations, id: 'toggle-explanations' },
                     ].map((toggle, i) => (
                       <label key={i} htmlFor={toggle.id} className="flex items-center gap-2 text-xs text-[#201e1d] cursor-pointer">
                         <button
@@ -838,7 +1130,47 @@ export default function TestCompilerHub() {
               )}
             </div>
 
-            {/* Selected Questions List */}
+            {/* Topic Distribution Breakdown Strip */}
+            {selectedQuestions.length > 0 && topicDistribution.length > 0 && (
+              <div className="shrink-0 p-2.5 rounded-2xl bg-[#eee7db]/80 border border-[#dcd3c4] flex flex-col gap-1.5 my-1">
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-[#645c50]">
+                  <span>Topic Coverage Breakdown</span>
+                  <span>{topicDistribution.length} Topics</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar">
+                  {topicDistribution.map((item) => (
+                    <span
+                      key={item.topic}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-[#dcd3c4] text-[10px] font-bold text-[#201e1d]"
+                    >
+                      <span className="truncate max-w-[130px]">{item.topic}:</span>
+                      <span className="text-[#c67139]">{item.count}</span>
+                      <span className="text-[#82796a] font-normal">({item.percentage}%)</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Selected Questions Header with Shuffle Order Button */}
+            <div className="shrink-0 flex items-center justify-between py-1 px-0.5 border-b border-[#dcd3c4]/70">
+              <span className="text-xs font-bold text-[#645c50]">
+                Selected Questions ({selectedQuestions.length})
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedQuestionIds((prev) => shuffleQuestionIds(prev))}
+                disabled={selectedQuestions.length < 2}
+                aria-label="Shuffle question order"
+                title={selectedQuestions.length < 2 ? 'Add at least 2 questions to shuffle' : 'Shuffle question order'}
+                className="px-2 py-1 rounded-lg bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center gap-1 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0 shadow-xs"
+              >
+                <Shuffle className="w-3 h-3 text-[#c67139]" aria-hidden="true" />
+                <span>Shuffle Order</span>
+              </button>
+            </div>
+
+            {/* Selected Questions List with HTML5 Drag-and-Drop */}
             <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2 py-2">
               {questions.length === 0 ? (
                 <div className="text-center py-8 text-[#645c50] text-xs font-medium flex flex-col items-center justify-center gap-1.5 h-full">
@@ -853,9 +1185,39 @@ export default function TestCompilerHub() {
                 selectedQuestions.map((q, idx) => (
                   <div
                     key={q.id}
-                    className="flex items-start gap-2 p-2 rounded-xl hover:bg-[#eee7db] transition-colors group"
+                    draggable
+                    onDragStart={(e) => {
+                      setDraggedIndex(idx);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedIndex === null || draggedIndex === idx) return;
+                      setSelectedQuestionIds((prev) => {
+                        const updated = [...prev];
+                        const [moved] = updated.splice(draggedIndex, 1);
+                        updated.splice(idx, 0, moved);
+                        return updated;
+                      });
+                      setDraggedIndex(null);
+                    }}
+                    onDragEnd={() => setDraggedIndex(null)}
+                    className={`flex items-start gap-1.5 p-2 rounded-xl hover:bg-[#eee7db] transition-colors group ${
+                      draggedIndex === idx ? 'opacity-40 border-2 border-dashed border-[#c67139]' : ''
+                    }`}
                   >
-                    <span className="w-5 text-center text-xs font-black text-[#645c50] mt-0.5">{idx + 1}.</span>
+                    <span
+                      className="cursor-grab active:cursor-grabbing text-[#a19786] hover:text-[#201e1d] mt-1 shrink-0 p-0.5"
+                      title="Drag to reorder"
+                      aria-hidden="true"
+                    >
+                      <GripVertical className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="w-4 text-center text-xs font-black text-[#645c50] mt-0.5">{idx + 1}.</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-semibold text-[#201e1d] line-clamp-1">{q.stem_markdown}</div>
                       <div className="text-[10px] text-[#645c50] font-mono mt-0.5">{q.citation || q.id}</div>
@@ -898,20 +1260,51 @@ export default function TestCompilerHub() {
 
             {/* Pinned Action Footer */}
             <div className="shrink-0 pt-3 border-t-[1.5px] border-[#dcd3c4] flex flex-col gap-2 mt-auto">
+              {publishedBanner && (
+                <div className="p-2.5 rounded-xl bg-[#e3f4d7] border-2 border-[#728157] text-[#2b3a1a] text-xs font-bold flex items-center justify-between gap-2 shadow-sm animate-fade-in">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Check className="w-4 h-4 text-[#556b2f] shrink-0" aria-hidden="true" />
+                    <span className="truncate">
+                      Assigned to <span className="underline">{publishedBanner.cohortName}</span>! Code: <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#728157] text-[11px]">{publishedBanner.testCode}</span>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPublishedBanner(null)}
+                    aria-label="Dismiss assignment notification"
+                    className="p-1 hover:bg-[#cbe8b7] rounded text-[#2b3a1a] shrink-0 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
               {saveSuccess && (
                 <div className="text-[11px] font-bold text-[#56633f] flex items-center justify-center gap-1 mb-1">
                   <Check className="w-3 h-3" /> Draft saved
                 </div>
               )}
-              <div className="flex gap-2">
+
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={handleSaveDraft}
                   title="Save test configuration as draft"
                   aria-label="Save current test configuration as draft"
-                  className="flex-1 py-2.5 rounded-full bg-white border-2 border-[#201e1d] font-bold text-xs shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] transition-all cursor-pointer"
+                  className="py-2.5 px-1 rounded-2xl bg-white border-2 border-[#201e1d] font-bold text-xs text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 transition-all cursor-pointer text-center"
                 >
                   Save Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAssignModalOpen(true)}
+                  disabled={selectedQuestions.length === 0}
+                  title={selectedQuestions.length === 0 ? 'Select questions to assign online' : 'Assign as online quiz or homework'}
+                  aria-label="Assign compiled questions as online quiz"
+                  className="py-2.5 px-1 rounded-2xl bg-[#f0fae1] border-2 border-[#201e1d] font-bold text-xs text-[#2b3a1a] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#e1eecc] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 flex items-center justify-center gap-1 text-center"
+                >
+                  <Send className="w-3.5 h-3.5 text-[#556b2f]" aria-hidden="true" />
+                  <span>Assign Online</span>
                 </button>
                 <button
                   type="button"
@@ -919,9 +1312,10 @@ export default function TestCompilerHub() {
                   disabled={selectedQuestions.length === 0}
                   title={selectedQuestions.length === 0 ? 'Select questions to generate PDF' : 'Generate printable PDF'}
                   aria-label="Generate printable PDF of compiled test paper"
-                  className="flex-[2] py-2.5 rounded-full bg-[#c67139] border-2 border-[#201e1d] text-[#f9f4ed] font-black text-sm shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
+                  className="py-2.5 px-1 rounded-2xl bg-[#c67139] border-2 border-[#201e1d] text-[#f9f4ed] font-black text-xs shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 flex items-center justify-center gap-1 text-center cursor-pointer"
                 >
-                  <Download className="w-4 h-4" aria-hidden="true" /> PDF / Print
+                  <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>PDF / Print</span>
                 </button>
               </div>
             </div>
@@ -1054,6 +1448,186 @@ export default function TestCompilerHub() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Assign Online Modal */}
+      {isAssignModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="assign-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        >
+          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] w-full max-w-md flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#e3f4d7] border-2 border-[#201e1d] flex items-center justify-center text-[#556b2f]">
+                  <Send className="w-4 h-4" aria-hidden="true" />
+                </div>
+                <h3 id="assign-modal-title" className="font-heading text-xl font-black text-[#201e1d]">
+                  Assign Online Quiz
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAssignModalOpen(false)}
+                aria-label="Close assign online dialog"
+                title="Close dialog"
+                className="p-1 hover:bg-[#dcd3c4] rounded-full active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer"
+              >
+                <X className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#f0fae1] border border-[#8fa073] text-xs font-medium text-[#2b3a1a] flex flex-col gap-1">
+              <span className="font-black text-[#201e1d] text-sm">{testTitle}</span>
+              <div className="flex gap-2 text-[11px] text-[#556b2f] font-bold">
+                <span>{subjectCode} {subjectName}</span>
+                <span>•</span>
+                <span>{selectedQuestionIds.length} Questions</span>
+                <span>•</span>
+                <span>{selectedQuestionIds.length} Marks</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {/* Cohort selection */}
+              <div>
+                <label htmlFor="assign-cohort-select" className="block text-xs font-bold text-[#645c50] mb-1">
+                  Target Cohort
+                </label>
+                <select
+                  id="assign-cohort-select"
+                  aria-label="Target Cohort"
+                  value={assignCohort}
+                  onChange={(e) => setAssignCohort(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                >
+                  {TARGET_COHORTS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Due Date & Time Limit */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="assign-due-date" className="block text-xs font-bold text-[#645c50] mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    id="assign-due-date"
+                    type="date"
+                    value={assignDueDate}
+                    onChange={(e) => setAssignDueDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="assign-duration" className="block text-xs font-bold text-[#645c50] mb-1">
+                    Time Limit (mins)
+                  </label>
+                  <input
+                    id="assign-duration"
+                    type="number"
+                    min={1}
+                    max={300}
+                    value={assignDuration}
+                    onChange={(e) => setAssignDuration(Number(e.target.value) || 0)}
+                    className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                  />
+                </div>
+              </div>
+
+              {/* Test Code */}
+              <div>
+                <label htmlFor="assign-test-code" className="block text-xs font-bold text-[#645c50] mb-1">
+                  Access Code / Test Code
+                </label>
+                <input
+                  id="assign-test-code"
+                  type="text"
+                  value={testCode}
+                  onChange={(e) => setTestCode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold font-mono text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                />
+              </div>
+            </div>
+
+            {/* Recent published assignments list */}
+            {onlineAssignments.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-[#dcd3c4]">
+                <span className="text-[10px] font-black uppercase text-[#645c50] tracking-wider block mb-1.5">
+                  Recent Cohort Assignments ({onlineAssignments.length})
+                </span>
+                <div className="flex flex-col gap-1.5 max-h-28 overflow-y-auto no-scrollbar">
+                  {onlineAssignments.slice(0, 5).map((a) => (
+                    <div
+                      key={a.id}
+                      className="p-2 rounded-xl bg-white border border-[#dcd3c4] flex items-center justify-between text-xs"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-bold text-[#201e1d] truncate">{a.title}</div>
+                        <div className="text-[10px] text-[#645c50]">
+                          {a.cohortName} • Due {a.dueDate}
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-[#eee7db] text-[10px] font-mono font-bold text-[#201e1d]">
+                        {a.testCode}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setIsAssignModalOpen(false)}
+                className="flex-1 py-2.5 rounded-full border-2 border-[#201e1d] font-bold text-xs hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handlePublishAssignment}
+                className="flex-[2] py-2.5 rounded-full bg-[#728157] text-white font-black text-xs hover:bg-[#5f6c48] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center gap-1.5"
+              >
+                <Send className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Confirm & Publish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Floating Assembly Bar (lg:hidden) */}
+      {selectedQuestions.length > 0 && (
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40 p-3 rounded-2xl bg-[#201e1d] text-white border-2 border-white shadow-[0_4px_16px_rgba(0,0,0,0.3)] flex items-center justify-between gap-3 animate-fade-in">
+          <div className="flex flex-col">
+            <span className="font-heading font-black text-sm">
+              {selectedQuestions.length} Questions · {selectedQuestions.length} Marks
+            </span>
+            <span className="text-[11px] text-[#eee7db]/80 font-medium">
+              ~{estimatedTime} mins estimated
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const drawer = document.getElementById('test-assembly-drawer');
+              if (drawer) {
+                drawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-[#c67139] text-[#f9f4ed] font-bold text-xs border border-white hover:bg-[#b2622d] active:translate-y-0.5 transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            Jump to Assembly Drawer
+          </button>
         </div>
       )}
     </div>

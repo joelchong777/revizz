@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { loadTestDraft, buildCompiledQuestions } from '@/lib/testCompiler';
+import { loadTestDraft, saveTestDraft, buildCompiledQuestions } from '@/lib/testCompiler';
 import { TestPaperConfig, CompiledExamQuestion } from '@/types/testCompiler';
 import { PrintableExamLayout } from '@/components/portal/compiler/PrintableExamLayout';
-import { CAMBRIDGE_QUESTIONS, fetchQuestionsFromDb } from '@/lib/questions';
-import { AlertTriangle, ArrowLeft, Sparkles, Loader2, Printer, FileText } from 'lucide-react';
+import { fetchQuestionsFromDb } from '@/lib/questions';
+import { AlertTriangle, ArrowLeft, Loader2, Printer } from 'lucide-react';
 
 function PrintPageContent() {
   const searchParams = useSearchParams();
@@ -17,24 +17,20 @@ function PrintPageContent() {
   const [questions, setQuestions] = useState<CompiledExamQuestion[]>([]);
   const [showMarkScheme, setShowMarkScheme] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
 
     async function loadTest() {
       setIsLoading(true);
-      setNotFound(false);
 
       if (!testId) {
-        setNotFound(true);
         setIsLoading(false);
         return;
       }
 
       const loadedConfig = loadTestDraft(testId);
       if (!loadedConfig) {
-        setNotFound(true);
         setIsLoading(false);
         return;
       }
@@ -80,78 +76,8 @@ function PrintPageContent() {
     };
   }, [testId]);
 
-  const handleLoadDemo = () => {
-    const sampleIds = CAMBRIDGE_QUESTIONS.slice(0, 5).map((q) => q.id);
-    const demoCompiled = buildCompiledQuestions(sampleIds, CAMBRIDGE_QUESTIONS);
-    const sampleConfig: TestPaperConfig = {
-      id: 'demo-sample-test',
-      title: 'Cambridge IGCSE Economics — Sample Diagnostic Exam',
-      subjectCode: '0455',
-      subjectName: 'Economics',
-      schoolName: 'Revizz Cambridge Exam Academy',
-      durationMinutes: 45,
-      totalMarks: demoCompiled.length,
-      testCode: 'REV-0455-2026-DEMO',
-      dateString: 'October 2026',
-      includeCoverPage: true,
-      includeCandidateHeader: false,
-      includeBubbleSheet: true,
-      includeMarkScheme: true,
-      questionIds: sampleIds,
-      compiledQuestions: demoCompiled,
-      createdAt: new Date().toISOString(),
-    };
-
-    setConfig(sampleConfig);
-    setQuestions(demoCompiled);
-    setNotFound(false);
-    setIsLoading(false);
-  };
-
-  // Error state: Draft not found in browser storage
-  if (notFound && !config) {
-    return (
-      <div className="min-h-screen bg-[#f7f4ee] flex items-center justify-center p-4 sm:p-6 font-sans">
-        <div className="max-w-md w-full bg-white rounded-2xl border-2 border-[#201e1d] shadow-[6px_6px_0px_#201e1d] p-6 sm:p-8 flex flex-col gap-4 text-left">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#ffe1d0] border border-[#c67139] text-[#c67139] font-mono text-xs font-bold uppercase tracking-wider">
-              <AlertTriangle className="w-4 h-4" aria-hidden="true" /> Draft Not Found
-            </span>
-          </div>
-
-          <div>
-            <h1 className="text-xl font-bold text-[#201e1d]">Test Paper Draft Unavailable</h1>
-            <p className="text-xs text-[#645c50] mt-1.5 leading-relaxed">
-              Draft <code className="font-mono bg-[#eee7db] text-[#201e1d] px-1.5 py-0.5 rounded font-bold">{testId || 'unknown'}</code> was not found in browser storage.
-            </p>
-            <p className="text-xs text-[#8c8273] mt-2 leading-relaxed">
-              Test compiler drafts are cached in local browser memory. If you opened this link from another tab, incognito mode, or another computer, return to the compiler to generate a fresh printable draft.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={() => router.push('/portal?tab=compiler')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#201e1d] bg-[#c67139] text-white font-bold text-xs font-mono shadow-[2px_2px_0px_#201e1d] hover:bg-[#b05f2b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Return to Compiler
-            </button>
-            <button
-              type="button"
-              onClick={handleLoadDemo}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] font-bold text-xs font-mono shadow-[2px_2px_0px_#201e1d] hover:bg-[#f7f4ee] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-[#c67139]" aria-hidden="true" /> Load Sample Demo
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Loading state
-  if (isLoading || !config) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f7f4ee] flex items-center justify-center p-4 sm:p-6 font-sans">
         <div className="bg-white rounded-2xl border-2 border-[#201e1d] shadow-[4px_4px_0px_#201e1d] p-8 max-w-sm w-full flex flex-col items-center text-center gap-3">
@@ -168,13 +94,37 @@ function PrintPageContent() {
     );
   }
 
+  // Guardrail 6 Compliance (Zero-Fallback Data Layer): Empty State when no valid config found
+  if (!config) {
+    return (
+      <div className="min-h-screen bg-[#f7f4ee] p-4 sm:p-6 font-sans">
+        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-3xl p-8 max-w-lg mx-auto mt-16 text-center shadow-[4px_4px_0_0_#201e1d]">
+          <div className="w-12 h-12 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center mx-auto mb-4 text-[#c67139] shadow-[2px_2px_0_0_#201e1d]">
+            <AlertTriangle className="w-6 h-6" aria-hidden="true" />
+          </div>
+          <h1 className="text-xl font-black text-[#201e1d] mb-2 font-mono">No Compiled Test Paper Found</h1>
+          <p className="text-xs text-[#645c50] mb-6 leading-relaxed">
+            The requested test paper draft could not be found or loaded from browser storage. Return to the compiler to generate or open a valid test draft.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push('/portal?nav=compiler')}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#201e1d] bg-[#c67139] text-white font-bold text-xs font-mono shadow-[2px_2px_0px_#201e1d] hover:bg-[#b05f2b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Return to Test Compiler
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 pb-12 font-sans">
       {/* Top Action Bar (hidden during printing) */}
       <div className="no-print sticky top-0 z-50 bg-[#f7f4ee] border-b-2 border-[#201e1d] shadow-sm p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => router.push('/portal?tab=compiler')}
+          onClick={() => router.push('/portal?nav=compiler')}
           className="px-3.5 py-2 text-xs font-bold font-mono text-[#201e1d] bg-white border-2 border-[#201e1d] rounded-xl shadow-[2px_2px_0px_#201e1d] hover:bg-[#ffe1d0] hover:text-[#c67139] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back to Compiler
@@ -205,6 +155,25 @@ function PrintPageContent() {
               Teacher Mark Scheme
             </button>
           </div>
+
+          {showMarkScheme && (
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = config.includeExplanations === false;
+                const updatedConfig = { ...config, includeExplanations: nextVal };
+                setConfig(updatedConfig);
+                saveTestDraft(updatedConfig);
+              }}
+              className={`px-3 py-1.5 text-xs font-bold font-mono rounded-xl border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer ${
+                config.includeExplanations !== false
+                  ? 'bg-[#ffe1d0] text-[#c67139]'
+                  : 'bg-white text-[#201e1d] hover:bg-[#f7f4ee]'
+              }`}
+            >
+              {config.includeExplanations !== false ? 'Explanations: ON' : 'Explanations: OFF'}
+            </button>
+          )}
 
           <button
             type="button"
