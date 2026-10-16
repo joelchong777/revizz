@@ -3,6 +3,12 @@ import { Question } from './questions';
 export type SelectionFilter = 'all' | 'selected' | 'unselected';
 export type SortOption = 'paper' | 'shortest' | 'longest';
 
+export interface CitationTagPill {
+  kind: 'subject' | 'paper' | 'series' | 'question' | 'fallback';
+  label: string;
+  text?: string;
+}
+
 export interface CompilerFilterOptions {
   search?: string;
   topicId?: string;
@@ -74,6 +80,114 @@ export function extractSeriesOrYear(citation?: string, id?: string): string {
   }
 
   return 'Other Series';
+}
+
+/**
+ * Strips "Cambridge" and "IGCSE" (case-insensitive) along with trademark symbols ™ from text,
+ * collapsing multiple spaces into a single space, and trimming the result.
+ */
+export function stripCambridgeIgcse(text?: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\b(?:cambridge|igcse)\b/gi, '')
+    .replace(/™/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const SYLLABUS_CODE_TO_SUBJECT: Record<string, string> = {
+  '0455': 'Economics',
+  '0610': 'Biology',
+  '0620': 'Chemistry',
+  '0625': 'Physics',
+  '0580': 'Mathematics',
+  '0478': 'Computer Science',
+};
+
+/**
+ * Parses citation and/or question ID into discrete tag pills (Subject, Paper, Series, Question)
+ * with Cambridge and IGCSE branding stripped.
+ */
+export function parseCitationTagPills(citation?: string, id?: string): CitationTagPill[] {
+  const pills: CitationTagPill[] = [];
+
+  // 1. Subject (Title Case)
+  let subjectLabel: string | undefined;
+  if (citation) {
+    const subjectMatch = citation.match(
+      /\b(Economics|Biology|Chemistry|Physics|Mathematics|Computer Science)\b/i
+    );
+    if (subjectMatch) {
+      const raw = subjectMatch[1].toLowerCase();
+      subjectLabel = raw
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+  }
+  if (!subjectLabel) {
+    const codeMatch =
+      (citation && citation.match(/\b(0455|0610|0620|0625|0580|0478)\b/)) ||
+      (id && id.match(/\b(0455|0610|0620|0625|0580|0478)\b/));
+    if (codeMatch && SYLLABUS_CODE_TO_SUBJECT[codeMatch[1]]) {
+      subjectLabel = SYLLABUS_CODE_TO_SUBJECT[codeMatch[1]];
+    }
+  }
+  if (subjectLabel) {
+    pills.push({ kind: 'subject', label: subjectLabel, text: subjectLabel });
+  }
+
+  // 2. Paper (e.g. '0455/12')
+  let paperLabel: string | undefined;
+  if (citation) {
+    const paperMatch = citation.match(/\b(\d{4}\/\d{1,2})\b/);
+    if (paperMatch) {
+      paperLabel = paperMatch[1];
+    }
+  }
+  if (!paperLabel && id) {
+    const idPaperMatch = id.match(/\b(\d{4})[-_](?:[swm]|sp)\d{2}[-_](\d{1,2})\b/i);
+    if (idPaperMatch) {
+      paperLabel = `${idPaperMatch[1]}/${idPaperMatch[2]}`;
+    }
+  }
+  if (paperLabel) {
+    pills.push({ kind: 'paper', label: paperLabel, text: paperLabel });
+  }
+
+  // 3. Series (e.g. 'Oct/Nov 2024')
+  const series = extractSeriesOrYear(citation, id);
+  if (series && series !== 'Other Series') {
+    pills.push({ kind: 'series', label: series, text: series });
+  }
+
+  // 4. Question (e.g. 'Q1')
+  let questionLabel: string | undefined;
+  if (citation) {
+    const qMatch = citation.match(/\bQ0*(\d+)\b/i);
+    if (qMatch) {
+      questionLabel = `Q${qMatch[1]}`;
+    }
+  }
+  if (!questionLabel && id) {
+    const qIdMatch = id.match(/(?:[-_]q|\bq)0*(\d+)\b/i);
+    if (qIdMatch) {
+      questionLabel = `Q${qIdMatch[1]}`;
+    }
+  }
+  if (questionLabel) {
+    pills.push({ kind: 'question', label: questionLabel, text: questionLabel });
+  }
+
+  // 5. Fallback
+  if (pills.length === 0) {
+    const cleaned = stripCambridgeIgcse(citation || id);
+    if (cleaned) {
+      pills.push({ kind: 'fallback', label: cleaned, text: cleaned });
+    }
+  }
+
+  return pills;
 }
 
 /**

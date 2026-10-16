@@ -49,6 +49,8 @@ import {
   getAvailableSeries,
   filterAndSortQuestions,
   countActiveFilters,
+  stripCambridgeIgcse,
+  parseCitationTagPills,
 } from '../lib/compilerFilters';
 import { normalizeGeminiModel, toBase64, isTransientCapacityError } from '../lib/ingestion/geminiExtractor';
 import { normalizeStagingPayload, ingestionStore, LOCAL_STORAGE_KEY } from '../lib/ingestion/useIngestionStore';
@@ -2192,6 +2194,52 @@ async function runSuite13() {
     assert(Boolean(found), 'Found saved assignment in storage');
     assertEqual(found?.testCode, 'REV-0455-TEST1', 'Test code matches REV-0455-TEST1');
     assertEqual(found?.cohortName, '10 Economics (Cambridge 0455)', 'Cohort matches');
+  });
+
+  test('Test Compiler: stripCambridgeIgcse, parseCitationTagPills, and TestCompilerHub citation tag pill integration', () => {
+    const rawCitation = 'Cambridge IGCSE Economics 0455/12 Oct/Nov 2024 Q1';
+    const rawId = '0455-w24-12-q01';
+
+    // 1. stripCambridgeIgcse verification
+    const stripped = stripCambridgeIgcse(rawCitation);
+    assertEqual(stripped, 'Economics 0455/12 Oct/Nov 2024 Q1', 'stripCambridgeIgcse removes Cambridge IGCSE prefix');
+    assertEqual(/cambridge/i.test(stripped), false, 'Stripped citation contains no "Cambridge"');
+    assertEqual(/igcse/i.test(stripped), false, 'Stripped citation contains no "IGCSE"');
+
+    // Edge cases for stripCambridgeIgcse
+    assertEqual(stripCambridgeIgcse('Cambridge O Level Mathematics D 4024/11'), 'O Level Mathematics D 4024/11', 'Handles Cambridge prefix without IGCSE');
+    assertEqual(stripCambridgeIgcse('IGCSE Biology 0610/22'), 'Biology 0610/22', 'Handles standalone IGCSE prefix');
+    assertEqual(stripCambridgeIgcse(''), '', 'Handles empty citation safely');
+
+    // 2. parseCitationTagPills verification
+    const pills = parseCitationTagPills(rawCitation, rawId);
+    assertEqual(pills.length, 4, 'Returns 4 distinct citation pills');
+
+    const kinds = pills.map((p) => p.kind);
+    assertEqual(JSON.stringify(kinds), JSON.stringify(['subject', 'paper', 'series', 'question']), 'Pill kinds match [subject, paper, series, question]');
+
+    const labels = pills.map((p) => p.label || (p as any).text);
+    assertEqual(labels[0], 'Economics', 'Subject pill is Economics');
+    assertEqual(labels[1], '0455/12', 'Paper pill is 0455/12');
+    assertEqual(labels[2], 'Oct/Nov 2024', 'Series pill is Oct/Nov 2024');
+    assertEqual(labels[3], 'Q1', 'Question pill is Q1');
+
+    for (const pill of pills) {
+      const txt = pill.label || (pill as any).text;
+      assertEqual(/cambridge/i.test(txt), false, `Pill "${txt}" contains no Cambridge`);
+      assertEqual(/igcse/i.test(txt), false, `Pill "${txt}" contains no IGCSE`);
+    }
+
+    // 3. TestCompilerHub.tsx static structure verification
+    const fs = require('fs');
+    const path = require('path');
+    const hubPath = path.resolve(process.cwd(), 'components/portal/compiler/TestCompilerHub.tsx');
+    assertEqual(fs.existsSync(hubPath), true, 'components/portal/compiler/TestCompilerHub.tsx exists');
+
+    const hubContent = fs.readFileSync(hubPath, 'utf8');
+    assertEqual(hubContent.includes('parseCitationTagPills'), true, 'TestCompilerHub imports/uses parseCitationTagPills');
+    assertEqual(hubContent.includes('stripCambridgeIgcse'), true, 'TestCompilerHub imports/uses stripCambridgeIgcse');
+    assertEqual(hubContent.includes('Cambridge Cover Page'), false, 'TestCompilerHub does not contain old "Cambridge Cover Page" label');
   });
 
   // Summary Output

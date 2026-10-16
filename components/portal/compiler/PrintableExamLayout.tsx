@@ -8,6 +8,7 @@ import { Code128Barcode } from '@/lib/barcode';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
+import { stripCambridgeIgcse } from '@/lib/compilerFilters';
 
 interface Props {
   config: TestPaperConfig;
@@ -43,7 +44,7 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
                     <td className="p-2 border-r border-black font-bold text-center">{q.questionNumber}</td>
                     <td className="p-2 border-r border-black text-center font-bold">{correctOption?.label}</td>
                     <td className="p-2 border-r border-black">{q.topic || '-'}</td>
-                    <td className={`p-2 ${showExplanations ? 'border-r border-black text-xs' : 'text-xs'}`}>{q.citation || '-'}</td>
+                    <td className={`p-2 ${showExplanations ? 'border-r border-black text-xs' : 'text-xs'}`}>{stripCambridgeIgcse(q.citation) || '-'}</td>
                     {showExplanations && (
                       <td className="p-2 text-sm">
                         {q.explanationMarkdown ? (
@@ -80,7 +81,6 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
           <div className="flex justify-between items-start mb-8">
             <div>
               <h1 className="text-2xl font-bold">{config.schoolName}</h1>
-              <h2 className="text-xl mt-1">Cambridge IGCSE™</h2>
             </div>
             {config.testCode && (
               <Code128Barcode value={config.testCode} height={50} width={200} />

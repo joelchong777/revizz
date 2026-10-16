@@ -51,15 +51,17 @@ import {
   isMathOrCalculation,
   getAvailableSeries,
   filterAndSortQuestions,
-  countActiveFilters
+  countActiveFilters,
+  parseCitationTagPills,
+  stripCambridgeIgcse
 } from '@/lib/compilerFilters';
 import { TestPaperConfig, OnlineQuizAssignment, TopicDistributionItem } from '@/types/testCompiler';
 
 const TARGET_COHORTS = [
-  '10 Economics (Cambridge 0455)',
-  '10A Physics (Cambridge 0625)',
-  '10B Physics (Cambridge 0625)',
-  '11A Physics (Cambridge 0625)'
+  '10 Economics (0455)',
+  '10A Physics (0625)',
+  '10B Physics (0625)',
+  '11A Physics (0625)'
 ];
 
 export default function TestCompilerHub() {
@@ -111,7 +113,7 @@ export default function TestCompilerHub() {
   const [drafts, setDrafts] = useState<TestPaperConfig[]>([]);
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [assignCohort, setAssignCohort] = useState('10 Economics (Cambridge 0455)');
+  const [assignCohort, setAssignCohort] = useState('10 Economics (0455)');
   const [assignDueDate, setAssignDueDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
@@ -420,7 +422,7 @@ export default function TestCompilerHub() {
                   role="checkbox"
                   aria-checked={isSelected}
                   tabIndex={0}
-                  aria-label={`Question ${q.citation || q.id}: ${q.topic}. ${isSelected ? 'Selected' : 'Not selected'}`}
+                  aria-label={`Question ${stripCambridgeIgcse(q.citation || q.id)}: ${q.topic}. ${isSelected ? 'Selected' : 'Not selected'}`}
                   className={`p-5 rounded-3xl border-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 active:translate-y-0.5 ${
                     isSelected
                       ? 'border-[#728157] bg-[#f0fae1] shadow-[4px_4px_0_0_#728157]'
@@ -435,25 +437,41 @@ export default function TestCompilerHub() {
                   }}
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2.5 py-1 rounded-md bg-[#201e1d] text-white font-mono text-[10px] font-bold tracking-wider uppercase">
-                        {q.citation || q.id}
-                      </span>
-                      <span className="px-2.5 py-1 rounded-md bg-[#eee7db] text-[#474238] text-[10px] font-bold">
-                        {q.topic}
-                      </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {parseCitationTagPills(q.citation, q.id).map((pill, pIdx) => {
+                        let pillClass = 'px-2.5 py-0.5 rounded-full bg-[#eee7db] text-[#474238] border border-[#c8beae] font-mono text-[11px] font-bold';
+                        if (pill.kind === 'subject') {
+                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#e3eed4] text-[#273818] border border-[#94a878] text-[11px] font-bold';
+                        } else if (pill.kind === 'paper') {
+                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#9c4100] border border-[#e09f77] font-mono text-[11px] font-bold';
+                        } else if (pill.kind === 'series') {
+                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#dff0f7] text-[#18526b] border border-[#8ec3d8] text-[11px] font-bold';
+                        } else if (pill.kind === 'question') {
+                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#fef0c7] text-[#854d0e] border border-[#e8c468] font-mono text-[11px] font-bold';
+                        }
+                        return (
+                          <span key={`${pill.kind}-${pIdx}`} className={pillClass}>
+                            {pill.label}
+                          </span>
+                        );
+                      })}
+                      {q.topic && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#ede8f5] text-[#4a3875] border border-[#bfb2d9] text-[11px] font-bold">
+                          {q.topic}
+                        </span>
+                      )}
                       {q.image_url && (
-                        <span className="px-2.5 py-1 rounded-md bg-[#ffe1d0] text-[#c67139] text-[10px] font-bold flex items-center gap-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#f0c2a8] text-[11px] font-bold flex items-center gap-1">
                           <ImageIcon className="w-3 h-3" aria-hidden="true" /> Diagram
                         </span>
                       )}
                       {hasDataTable(q.stem_markdown) && (
-                        <span className="px-2.5 py-1 rounded-md bg-[#e1f0fa] text-[#2c6e91] text-[10px] font-bold flex items-center gap-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#e1f0fa] text-[#2c6e91] border border-[#aed2e6] text-[11px] font-bold flex items-center gap-1">
                           <Table className="w-3 h-3" aria-hidden="true" /> Table
                         </span>
                       )}
                       {isMathOrCalculation(q.stem_markdown) && (
-                        <span className="px-2.5 py-1 rounded-md bg-[#ede8f5] text-[#5e4b8b] text-[10px] font-bold flex items-center gap-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#ede8f5] text-[#5e4b8b] border border-[#cdc2e8] text-[11px] font-bold flex items-center gap-1">
                           <Calculator className="w-3 h-3" aria-hidden="true" /> Math
                         </span>
                       )}
@@ -482,8 +500,8 @@ export default function TestCompilerHub() {
                     <div className="mb-3">
                       <CompilerDiagramPreview
                         imageUrl={q.image_url}
-                        citation={q.citation || q.id}
-                        altText={q.citation ? `Diagram for ${q.citation}` : 'Question diagram'}
+                        citation={stripCambridgeIgcse(q.citation || q.id)}
+                        altText={q.citation ? `Diagram for ${stripCambridgeIgcse(q.citation)}` : 'Question diagram'}
                       />
                     </div>
                   )}
@@ -500,7 +518,7 @@ export default function TestCompilerHub() {
                           );
                         }}
                         aria-expanded={expandedCardIds.includes(q.id)}
-                        aria-label={`${expandedCardIds.includes(q.id) ? 'Hide' : 'Preview'} options for question ${q.citation || q.id}`}
+                        aria-label={`${expandedCardIds.includes(q.id) ? 'Hide' : 'Preview'} options for question ${stripCambridgeIgcse(q.citation || q.id)}`}
                         className="text-xs font-bold text-[#c67139] hover:underline flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#c67139] rounded py-0.5"
                       >
                         {expandedCardIds.includes(q.id) ? (
@@ -728,7 +746,7 @@ export default function TestCompilerHub() {
                     </label>
                     <select
                       id="compiler-topic-filter"
-                      aria-label="Filter by Cambridge topic"
+                      aria-label="Filter by topic"
                       value={selectedTopicId}
                       onChange={(e) => setSelectedTopicId(e.target.value)}
                       className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all truncate"
@@ -981,7 +999,7 @@ export default function TestCompilerHub() {
                     </label>
                     <select
                       id="settings-subject-select"
-                      aria-label="Select Cambridge Subject Catalog"
+                      aria-label="Select Subject Catalog"
                       value={subjectCode}
                       onChange={(e) => {
                         const newCode = e.target.value;
@@ -1048,7 +1066,7 @@ export default function TestCompilerHub() {
                   {/* Layout Toggles */}
                   <div className="flex flex-col gap-1.5 mt-0.5">
                     {[
-                      { label: 'Cambridge Cover Page', state: includeCoverPage, set: setIncludeCoverPage, id: 'toggle-cover-page' },
+                      { label: 'Exam Cover Page', state: includeCoverPage, set: setIncludeCoverPage, id: 'toggle-cover-page' },
                       { label: 'Candidate Details Header', state: includeCandidateHeader, set: setIncludeCandidateHeader, id: 'toggle-header' },
                       { label: 'Candidate MCQ Bubble Sheet', state: includeBubbleSheet, set: setIncludeBubbleSheet, id: 'toggle-bubble' },
                       { label: 'Teacher Mark Scheme', state: includeMarkScheme, set: setIncludeMarkScheme, id: 'toggle-mark-scheme' },
@@ -1171,7 +1189,7 @@ export default function TestCompilerHub() {
                     <span className="w-4 text-center text-xs font-black text-[#645c50] mt-0.5">{idx + 1}.</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-semibold text-[#201e1d] line-clamp-1">{q.stem_markdown}</div>
-                      <div className="text-[10px] text-[#645c50] font-mono mt-0.5">{q.citation || q.id}</div>
+                      <div className="text-[10px] text-[#645c50] font-mono mt-0.5">{stripCambridgeIgcse(q.citation || q.id)}</div>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
                       <button
