@@ -2148,7 +2148,7 @@ async function runSuite13() {
     assertEqual(content.includes('Return to Test Compiler'), true, 'Renders "Return to Test Compiler" navigation button');
   });
 
-  test('Test Compiler: TestCompilerHub.tsx structural verification (Assign Online, shuffleQuestionIds, computeTopicDistribution, includeExplanations, test-assembly-drawer, MarkdownErrorBoundary)', () => {
+  test('Test Compiler: TestCompilerHub.tsx structural verification (Assign Online, shuffleQuestionIds, computeTopicDistribution, includeExplanations, test-assembly-drawer, MarkdownErrorBoundary, right-side Question Filters, no duplicate left filter bar)', () => {
     const fs = require('fs');
     const path = require('path');
     const hubPath = path.resolve(process.cwd(), 'components/portal/compiler/TestCompilerHub.tsx');
@@ -2162,6 +2162,13 @@ async function runSuite13() {
     assertEqual(content.includes('includeExplanations'), true, 'Supports "includeExplanations" configuration');
     assertEqual(content.includes('test-assembly-drawer'), true, 'Defines "test-assembly-drawer" element id');
     assertEqual(content.includes('MarkdownErrorBoundary'), true, 'Protects math/markdown with MarkdownErrorBoundary');
+
+    // Right-side Filter Panel Optimization & Duplicate Left Filter Bar Removal
+    assertEqual(content.includes('Quick filter stems...'), false, 'Duplicate left-side filter search bar is removed');
+    assertEqual(content.includes('isFilterRowVisible'), false, 'Redundant left filter toggle state is removed');
+    assertEqual(content.includes('Question Filters'), true, 'Right-side Question Filters panel header is preserved');
+    assertEqual(content.includes('grid-cols-3'), true, 'Features 3-column content filter chips');
+    assertEqual(content.includes('grid-cols-4'), true, 'Features 4-column non-wrapping utility action grid');
   });
 
   test('Test Compiler: Online Assignments saveOnlineAssignment and listOnlineAssignments persistence', () => {

@@ -77,7 +77,6 @@ export default function TestCompilerHub() {
   const [sortBy, setSortBy] = useState<SortOption>('paper');
   const [cardDensity, setCardDensity] = useState<'expanded' | 'compact'>('expanded');
   const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
-  const [isFilterRowVisible, setIsFilterRowVisible] = useState(true);
 
   // --- Right Column (Test Config) State ---
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
@@ -373,143 +372,42 @@ export default function TestCompilerHub() {
         {/* LEFT COLUMN: Question Bank Canvas */}
         <div className="flex flex-col gap-3 min-w-0">
           {/* Sleek, Compact Sticky Header Bar */}
-          <div className="sticky top-0 z-10 px-4 py-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex flex-col gap-2.5 backdrop-blur-sm">
-            {/* Row 1: Title, counts, density toggle, filter toggle, select all */}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="font-heading font-black text-[#201e1d] text-base">Question Bank</h2>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
-                  {filteredQuestions.length} of {questions.length} questions
+          <div className="sticky top-0 z-10 px-4 py-2.5 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex items-center justify-between gap-3 flex-wrap backdrop-blur-sm">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="font-heading font-black text-[#201e1d] text-base">Question Bank</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
+                {filteredQuestions.length} of {questions.length} questions
+              </span>
+              {activeFilterCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
+                  {activeFilterCount} active
                 </span>
-                {activeFilterCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
-                    {activeFilterCount} active
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Card Density Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setCardDensity((prev) => (prev === 'expanded' ? 'compact' : 'expanded'))}
-                  aria-label={`Switch to ${cardDensity === 'expanded' ? 'Compact' : 'Expanded'} card density`}
-                  title={`Card Density: ${cardDensity}`}
-                  className="px-2.5 py-1 rounded-xl bg-white border border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
-                  <span>{cardDensity === 'expanded' ? 'Compact' : 'Expanded'}</span>
-                </button>
-
-                {/* Collapse / Expand Filter Controls toggle button */}
-                <button
-                  type="button"
-                  onClick={() => setIsFilterRowVisible((prev) => !prev)}
-                  aria-expanded={isFilterRowVisible}
-                  aria-label={isFilterRowVisible ? 'Collapse quick filters' : 'Expand quick filters'}
-                  title={isFilterRowVisible ? 'Collapse quick filter controls' : 'Expand quick filter controls'}
-                  className="px-2.5 py-1 rounded-xl bg-white border border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                >
-                  <Filter className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
-                  <span>Filters</span>
-                  {isFilterRowVisible ? (
-                    <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSelectAllFiltered}
-                  aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                  title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                  className="text-xs font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 rounded-md transition-all active:translate-y-0.5 cursor-pointer ml-1"
-                >
-                  {allFilteredSelected ? 'Deselect All' : 'Select All Filtered'}
-                </button>
-              </div>
+              )}
             </div>
 
-            {/* Row 2: Collapsible Quick Filters Controls */}
-            {isFilterRowVisible && (
-              <div className="pt-2 border-t border-[#dcd3c4] flex items-center gap-2 flex-wrap text-xs">
-                {/* Quick Search */}
-                <div className="relative flex-1 min-w-[160px]">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none" aria-hidden="true" />
-                  <input
-                    type="text"
-                    placeholder="Quick filter stems..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    aria-label="Quick search stems and options"
-                    className="w-full py-1 pl-8 pr-6 rounded-xl bg-white border border-[#dcd3c4] text-xs font-medium text-[#201e1d] outline-none focus-visible:border-[#c67139] focus-visible:ring-1 focus-visible:ring-[#c67139]"
-                  />
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch('')}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 cursor-pointer"
-                      aria-label="Clear quick search"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Card Density Toggle */}
+              <button
+                type="button"
+                onClick={() => setCardDensity((prev) => (prev === 'expanded' ? 'compact' : 'expanded'))}
+                aria-label={`Switch to ${cardDensity === 'expanded' ? 'Compact' : 'Expanded'} card density`}
+                title={`Card Density: ${cardDensity}`}
+                className="px-2.5 py-1 rounded-xl bg-white border border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              >
+                <LayoutGrid className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
+                <span>{cardDensity === 'expanded' ? 'Compact' : 'Expanded'}</span>
+              </button>
 
-                {/* Quick Topic Selector */}
-                <select
-                  aria-label="Quick filter by topic"
-                  value={selectedTopicId}
-                  onChange={(e) => setSelectedTopicId(e.target.value)}
-                  className="px-2 py-1 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none max-w-[160px] truncate"
-                >
-                  <option value="all">All Topics</option>
-                  {topics.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-
-                {/* Content Quick Toggles */}
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={withDiagramsOnly}
-                    aria-label="Filter diagrams"
-                    onClick={() => setWithDiagramsOnly(!withDiagramsOnly)}
-                    className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
-                      withDiagramsOnly ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139]' : 'bg-white border-[#dcd3c4] text-[#474238]'
-                    }`}
-                  >
-                    <ImageIcon className="w-3 h-3" /> Diagrams
-                  </button>
-
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={withMathOnly}
-                    aria-label="Filter math questions"
-                    onClick={() => setWithMathOnly(!withMathOnly)}
-                    className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
-                      withMathOnly ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139]' : 'bg-white border-[#dcd3c4] text-[#474238]'
-                    }`}
-                  >
-                    <Calculator className="w-3 h-3" /> Math
-                  </button>
-                </div>
-
-                {activeFilterCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleResetAllFilters}
-                    className="text-[11px] font-bold text-[#c67139] hover:underline flex items-center gap-1 ml-auto cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" /> Reset
-                  </button>
-                )}
-              </div>
-            )}
+              <button
+                type="button"
+                onClick={handleSelectAllFiltered}
+                aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+                title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+                className="text-xs font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 rounded-md transition-all active:translate-y-0.5 cursor-pointer ml-1"
+              >
+                {allFilteredSelected ? 'Deselect All' : 'Select All Filtered'}
+              </button>
+            </div>
           </div>
 
           {/* Scrollable Question Cards Container */}
@@ -697,30 +595,39 @@ export default function TestCompilerHub() {
         <div className="flex flex-col gap-3.5 lg:sticky lg:top-4 h-[calc(100vh-130px)] max-h-[calc(100vh-130px)] min-w-0">
           {/* Panel 1: Compact Question Filters & Tools (shrink-0) */}
           <div className="p-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex flex-col gap-2.5 shrink-0">
-            {/* Header: Title, Found Badge, Reset Button, Collapse Toggle */}
+            {/* Header: Title, Found Badge, Reset Button, Select All Quick Toggle, Collapse Toggle */}
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5">
-                  <Filter className="w-4 h-4 text-[#201e1d]" aria-hidden="true" />
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Filter className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
                   <span className="font-heading font-black text-sm text-[#201e1d]">Question Filters</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-[#eee7db] text-[10px] font-bold text-[#645c50]">
-                  {filteredQuestions.length} found
+                <span className="px-2 py-0.5 rounded-full bg-[#eee7db] text-[10px] font-bold text-[#645c50] shrink-0">
+                  {filteredQuestions.length}/{questions.length}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {activeFilterCount > 0 && (
                   <button
                     type="button"
                     onClick={handleResetAllFilters}
-                    aria-label="Reset all filters"
-                    title="Reset all filters"
+                    aria-label={`Reset ${activeFilterCount} active filters`}
+                    title="Reset all active filters"
                     className="px-2 py-0.5 rounded-full bg-white border border-[#c67139] text-[#c67139] text-[10px] font-bold hover:bg-[#ffe1d0] flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 transition-all shadow-xs"
                   >
                     <RotateCcw className="w-2.5 h-2.5" aria-hidden="true" />
                     <span>Reset ({activeFilterCount})</span>
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={handleSelectAllFiltered}
+                  aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+                  title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
+                  className="text-[11px] font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] rounded px-1 transition-all active:translate-y-0.5 cursor-pointer"
+                >
+                  {allFilteredSelected ? 'Deselect All' : 'Select All'}
+                </button>
                 <button
                   type="button"
                   onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
@@ -737,6 +644,50 @@ export default function TestCompilerHub() {
                 </button>
               </div>
             </div>
+
+            {/* Collapsed Active Filter Summary Strip */}
+            {!isFiltersExpanded && activeFilterCount > 0 && (
+              <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#dcd3c4] overflow-x-auto text-[10px] text-[#645c50]">
+                <span className="font-bold text-[#c67139] shrink-0">Active:</span>
+                <div className="flex items-center gap-1 flex-nowrap shrink-0">
+                  {search && (
+                    <span className="px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium max-w-[90px] truncate" title={`Search: ${search}`}>
+                      &ldquo;{search}&rdquo;
+                    </span>
+                  )}
+                  {selectedTopicId !== 'all' && (
+                    <span className="px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium max-w-[90px] truncate" title={topics.find((t) => t.id === selectedTopicId)?.name || selectedTopicId}>
+                      {topics.find((t) => t.id === selectedTopicId)?.name || selectedTopicId}
+                    </span>
+                  )}
+                  {selectedSeries !== 'all' && (
+                    <span className="px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium">
+                      {selectedSeries}
+                    </span>
+                  )}
+                  {selectionFilter !== 'all' && (
+                    <span className="px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium capitalize">
+                      {selectionFilter}
+                    </span>
+                  )}
+                  {withDiagramsOnly && (
+                    <span className="px-1.5 py-0.5 rounded bg-[#ffe1d0] text-[#c67139] font-medium">
+                      Diagrams
+                    </span>
+                  )}
+                  {withTablesOnly && (
+                    <span className="px-1.5 py-0.5 rounded bg-[#e1f0fa] text-[#2c6e91] font-medium">
+                      Tables
+                    </span>
+                  )}
+                  {withMathOnly && (
+                    <span className="px-1.5 py-0.5 rounded bg-[#ede8f5] text-[#5e4b8b] font-medium">
+                      Math
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Collapsible Body */}
             {isFiltersExpanded && (
@@ -770,7 +721,7 @@ export default function TestCompilerHub() {
                 </div>
 
                 {/* Dropdowns Grid */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <div className="col-span-2">
                     <label htmlFor="compiler-topic-filter" className="sr-only">
                       Topic
@@ -874,8 +825,8 @@ export default function TestCompilerHub() {
                   })}
                 </div>
 
-                {/* Content Type Chips */}
-                <div className="flex items-center gap-1.5 flex-wrap">
+                {/* Content Type Chips - Uniform 3-Column Grid */}
+                <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     role="switch"
@@ -883,14 +834,14 @@ export default function TestCompilerHub() {
                     aria-label="Filter questions with diagrams only"
                     title="Toggle diagrams only filter"
                     onClick={() => setWithDiagramsOnly(!withDiagramsOnly)}
-                    className={`px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
+                    className={`justify-center py-1 px-2 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
                       withDiagramsOnly
                         ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
                         : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
                     }`}
                   >
-                    <ImageIcon className="w-3 h-3" aria-hidden="true" />
-                    <span>Diagrams</span>
+                    <ImageIcon className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Diagrams</span>
                   </button>
 
                   <button
@@ -900,14 +851,14 @@ export default function TestCompilerHub() {
                     aria-label="Filter questions with data tables only"
                     title="Toggle data tables only filter"
                     onClick={() => setWithTablesOnly(!withTablesOnly)}
-                    className={`px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
+                    className={`justify-center py-1 px-2 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
                       withTablesOnly
                         ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
                         : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
                     }`}
                   >
-                    <Table className="w-3 h-3" aria-hidden="true" />
-                    <span>Tables</span>
+                    <Table className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Tables</span>
                   </button>
 
                   <button
@@ -917,28 +868,28 @@ export default function TestCompilerHub() {
                     aria-label="Filter questions with calculations or math formulas only"
                     title="Toggle calculations / math filter"
                     onClick={() => setWithMathOnly(!withMathOnly)}
-                    className={`px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
+                    className={`justify-center py-1 px-2 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
                       withMathOnly
                         ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
                         : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
                     }`}
                   >
-                    <Calculator className="w-3 h-3" aria-hidden="true" />
-                    <span>Math</span>
+                    <Calculator className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Math</span>
                   </button>
                 </div>
 
-                {/* Quick Utility Buttons */}
-                <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#dcd3c4]/70 flex-wrap">
+                {/* Single-Row 4-Column Quick Utility Bar */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1.5 border-t border-[#dcd3c4]/70">
                   <button
                     type="button"
                     onClick={() => setIsAutoModalOpen(true)}
                     title="Auto-generate question preset"
                     aria-label="Auto-generate question preset"
-                    className="px-2.5 py-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                    className="justify-center py-1 px-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs truncate"
                   >
-                    <Zap className="w-3 h-3" aria-hidden="true" />
-                    <span>Auto Preset</span>
+                    <Zap className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Preset</span>
                   </button>
 
                   <button
@@ -946,10 +897,10 @@ export default function TestCompilerHub() {
                     onClick={handleOpenDrafts}
                     title="View and load saved test drafts"
                     aria-label="View and load saved test drafts"
-                    className="px-2.5 py-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                    className="justify-center py-1 px-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center gap-1 transition-all cursor-pointer shadow-xs truncate"
                   >
-                    <Save className="w-3 h-3" aria-hidden="true" />
-                    <span>Drafts</span>
+                    <Save className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Drafts</span>
                   </button>
 
                   <button
@@ -960,10 +911,10 @@ export default function TestCompilerHub() {
                     }}
                     title="Manage online quiz assignments"
                     aria-label="Manage online quiz assignments"
-                    className="px-2.5 py-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                    className="justify-center py-1 px-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs truncate"
                   >
-                    <Send className="w-3 h-3 text-[#556b2f]" aria-hidden="true" />
-                    <span>Assignments {onlineAssignments.length > 0 && `(${onlineAssignments.length})`}</span>
+                    <Send className="w-3 h-3 shrink-0 text-[#556b2f]" aria-hidden="true" />
+                    <span className="truncate">Assign{onlineAssignments.length > 0 ? ` (${onlineAssignments.length})` : ''}</span>
                   </button>
 
                   <button
@@ -972,10 +923,10 @@ export default function TestCompilerHub() {
                     title="Clear all selected questions"
                     aria-label="Clear all selected questions"
                     disabled={selectedQuestionIds.length === 0}
-                    className="px-2.5 py-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1 transition-all cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0"
+                    className="justify-center py-1 px-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1 transition-all cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0 truncate"
                   >
-                    <X className="w-3 h-3" aria-hidden="true" />
-                    <span>Clear Selection</span>
+                    <X className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Clear</span>
                   </button>
                 </div>
               </div>
