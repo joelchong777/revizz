@@ -17,6 +17,7 @@ const TAB_TITLES: Record<string, string> = {
   editor: 'Question Editor',
   system: 'System Overview',
   school: 'School Licences',
+  'portal-menu': 'Portal Menu Manager',
 };
 
 function AdminContent() {
@@ -58,7 +59,7 @@ function AdminContent() {
       const normalized = tab.toLowerCase();
       if (normalized === 'importer') {
         setActiveTab('ingestion');
-      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'system', 'school'].includes(normalized)) {
+      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'system', 'school', 'portal-menu'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }

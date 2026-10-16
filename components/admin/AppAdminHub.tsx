@@ -6,6 +6,7 @@ import IngestionHub from '@/components/portal/IngestionHub';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
+import PortalMenuManager from '@/components/admin/PortalMenuManager';
 import { useQuestions } from '@/lib/questions';
 import type { StagingQuestion } from '@/types/ingestion';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
@@ -646,6 +647,9 @@ export default function AppAdminHub({
           </div>
         </div>
       );
+
+    case 'portal-menu':
+      return <PortalMenuManager />;
 
     default:
       return renderIngestion();

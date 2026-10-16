@@ -13,6 +13,7 @@ import {
   Home,
   X,
   ShieldCheck,
+  Menu,
 } from 'lucide-react';
 
 export interface AppAdminNavProps {
@@ -281,6 +282,18 @@ export default function AppAdminNav({
                 {renderIcon(Building2, 'school')}
                 {!compact && (
                   <span className="flex-1 min-w-0 truncate">School Licences</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleNavClick('portal-menu')}
+                className={navItemClass('portal-menu')}
+                title="Portal Menu Manager"
+              >
+                {renderIcon(Menu, 'portal-menu')}
+                {!compact && (
+                  <span className="flex-1 min-w-0 truncate">Portal Menu Manager</span>
                 )}
               </button>
             </nav>

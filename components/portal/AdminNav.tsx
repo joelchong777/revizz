@@ -14,8 +14,14 @@ import {
   Sparkles,
   X,
   FileText,
-  Home
+  Home,
+  ExternalLink,
 } from 'lucide-react';
+import {
+  PortalNavItem,
+  getPortalNavItems,
+  PORTAL_NAV_CHANGE_EVENT,
+} from '@/lib/portal/menuConfig';
 
 export interface AdminNavProps {
   role?: 'teacher' | 'content';
@@ -59,6 +65,33 @@ export default function AdminNav({
   const avatarBg = 'var(--color-accent-300, #ffe1d0)';
   const userName = userDisplayName || 'Ms. A. Okafor';
   const userRole = isAdmin ? 'Teacher · School admin' : 'Teacher · Educator';
+
+  const [navConfig, setNavConfig] = React.useState<PortalNavItem[]>([]);
+
+  React.useEffect(() => {
+    setNavConfig(getPortalNavItems());
+    const handleUpdate = (e: any) => {
+      if (e?.detail && Array.isArray(e.detail)) {
+        setNavConfig(e.detail);
+      } else {
+        setNavConfig(getPortalNavItems());
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener(PORTAL_NAV_CHANGE_EVENT, handleUpdate);
+      return () => {
+        window.removeEventListener(PORTAL_NAV_CHANGE_EVENT, handleUpdate);
+      };
+    }
+  }, []);
+
+  const isEnabled = (id: string) => {
+    if (navConfig.length === 0) return true;
+    const item = navConfig.find((i) => i.id === id);
+    return item ? item.enabled : true;
+  };
+
+  const customItems = navConfig.filter((i) => i.isCustom && i.enabled);
 
   const handleNavClick = (tabKey: string) => {
     if (onSelect) {
@@ -201,124 +234,144 @@ export default function AdminNav({
                 </span>
               )}
 
-              <button
-                type="button"
-                onClick={() => handleNavClick('overview')}
-                className={navItemClass('overview')}
-                title="Overview"
-              >
-                {renderIcon(LayoutGrid, 'overview')}
-                {!compact && <span className="flex-1 min-w-0 truncate">Overview</span>}
-              </button>
+              {isEnabled('overview') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('overview')}
+                  className={navItemClass('overview')}
+                  title="Overview"
+                >
+                  {renderIcon(LayoutGrid, 'overview')}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Overview</span>}
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => handleNavClick('roster')}
-                className={navItemClass('roster')}
-                title="Classes & students"
-              >
-                {renderIcon(Users, 'roster')}
-                {!compact && <span className="flex-1 min-w-0 truncate">Classes & students</span>}
-              </button>
+              {isEnabled('roster') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('roster')}
+                  className={navItemClass('roster')}
+                  title="Classes & students"
+                >
+                  {renderIcon(Users, 'roster')}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Classes & students</span>}
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => handleNavClick('assign')}
-                className={navItemClass('assign')}
-                title="Assign rounds"
-              >
-                {renderIcon(Send, 'assign')}
-                {!compact && <span className="flex-1 min-w-0 truncate">Assign rounds</span>}
-              </button>
+              {isEnabled('assign') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('assign')}
+                  className={navItemClass('assign')}
+                  title="Assign rounds"
+                >
+                  {renderIcon(Send, 'assign')}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Assign rounds</span>}
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => handleNavClick('compiler')}
-                className={navItemClass('compiler')}
-                title="Test compiler"
-              >
-                {renderIcon(FileText, 'compiler')}
-                {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Test compiler</span>
-                    <span className="px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#c67139] text-[9px] font-black uppercase tracking-wider shrink-0 whitespace-nowrap">
-                      New
-                    </span>
-                  </>
-                )}
-              </button>
+              {isEnabled('compiler') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('compiler')}
+                  className={navItemClass('compiler')}
+                  title="Test compiler"
+                >
+                  {renderIcon(FileText, 'compiler')}
+                  {!compact && (
+                    <>
+                      <span className="flex-1 min-w-0 truncate">Test compiler</span>
+                      <span className="px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#c67139] text-[9px] font-black uppercase tracking-wider shrink-0 whitespace-nowrap">
+                        New
+                      </span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           )}
 
           {/* Analytics Section */}
-          <div className="flex flex-col gap-1">
-            {!compact && (
-              <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
-                Analytics
-              </span>
-            )}
+          {(isEnabled('mastery') || isEnabled('xp')) && (
+            <div className="flex flex-col gap-1">
+              {!compact && (
+                <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
+                  Analytics
+                </span>
+              )}
 
-            <button
-              type="button"
-              onClick={() => handleNavClick('mastery')}
-              className={navItemClass('mastery')}
-              title="Mastery analytics"
-            >
-              {renderIcon(BarChart3, 'mastery')}
-              {!compact && <span className="flex-1 min-w-0 truncate">Mastery analytics</span>}
-            </button>
+              {isEnabled('mastery') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('mastery')}
+                  className={navItemClass('mastery')}
+                  title="Mastery analytics"
+                >
+                  {renderIcon(BarChart3, 'mastery')}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Mastery analytics</span>}
+                </button>
+              )}
 
-            <button
-              type="button"
-              onClick={() => handleNavClick('xp')}
-              className={navItemClass('xp')}
-              title="Leaderboard & XP"
-            >
-              {renderIcon(Trophy, 'xp')}
-              {!compact && <span className="flex-1 min-w-0 truncate">Leaderboard & XP</span>}
-            </button>
-          </div>
+              {isEnabled('xp') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('xp')}
+                  className={navItemClass('xp')}
+                  title="Leaderboard & XP"
+                >
+                  {renderIcon(Trophy, 'xp')}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Leaderboard & XP</span>}
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Question Verification Section */}
-          <div className="flex flex-col gap-1">
-            {!compact && (
-              <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
-                Question Verification
-              </span>
-            )}
-
-            <button
-              type="button"
-              onClick={() => handleNavClick('bank')}
-              className={navItemClass('bank')}
-              title="Question bank"
-            >
-              {renderIcon(BookOpen, 'bank')}
-              {!compact && <span className="flex-1 min-w-0 truncate">Question bank</span>}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleNavClick('flagged')}
-              className={navItemClass('flagged')}
-              title="Flagged questions"
-            >
-              {renderIcon(Flag, 'flagged')}
+          {(isEnabled('bank') || isEnabled('flagged')) && (
+            <div className="flex flex-col gap-1">
               {!compact && (
-                <>
-                  <span className="flex-1 min-w-0 truncate">Flagged questions</span>
-                  {flaggedCount > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
-                      {flaggedCount}
-                    </span>
-                  )}
-                </>
+                <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
+                  Question Verification
+                </span>
               )}
-            </button>
-          </div>
+
+              {isEnabled('bank') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('bank')}
+                  className={navItemClass('bank')}
+                  title="Question bank"
+                >
+                  {renderIcon(BookOpen, 'bank')}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Question bank</span>}
+                </button>
+              )}
+
+              {isEnabled('flagged') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('flagged')}
+                  className={navItemClass('flagged')}
+                  title="Flagged questions"
+                >
+                  {renderIcon(Flag, 'flagged')}
+                  {!compact && (
+                    <>
+                      <span className="flex-1 min-w-0 truncate">Flagged questions</span>
+                      {flaggedCount > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
+                          {flaggedCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
 
           {/* School Section */}
-          {isTeacher && (
+          {isTeacher && isEnabled('school') && (
             <div className="flex flex-col gap-1">
               {!compact && (
                 <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
@@ -335,6 +388,52 @@ export default function AdminNav({
                 {renderIcon(Building2, 'school')}
                 {!compact && <span className="flex-1 min-w-0 truncate">School & licence</span>}
               </button>
+            </div>
+          )}
+
+          {/* Custom School Resources Section */}
+          {customItems.length > 0 && (
+            <div className="flex flex-col gap-1">
+              {!compact && (
+                <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
+                  School Resources
+                </span>
+              )}
+
+              {customItems.map((custom) => {
+                if (custom.href) {
+                  return (
+                    <a
+                      key={custom.id}
+                      href={custom.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={navItemClass(custom.id)}
+                      title={custom.label}
+                    >
+                      {renderIcon(ExternalLink, custom.id)}
+                      {!compact && (
+                        <>
+                          <span className="flex-1 min-w-0 truncate">{custom.label}</span>
+                          <ExternalLink className="w-3 h-3 text-[#645c50] shrink-0" />
+                        </>
+                      )}
+                    </a>
+                  );
+                }
+                return (
+                  <button
+                    key={custom.id}
+                    type="button"
+                    onClick={() => handleNavClick(custom.id)}
+                    className={navItemClass(custom.id)}
+                    title={custom.label}
+                  >
+                    {renderIcon(ExternalLink, custom.id)}
+                    {!compact && <span className="flex-1 min-w-0 truncate">{custom.label}</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

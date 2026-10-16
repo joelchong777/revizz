@@ -4,13 +4,14 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useAuth, signInWithGoogle } from '@/lib/auth';
 import { useSearchParams } from 'next/navigation';
-import { Menu, ArrowRightLeft, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import { Menu, ArrowRightLeft, ChevronDown, ChevronUp, Copy, Check, ExternalLink } from 'lucide-react';
 import AdminNav from '@/components/portal/AdminNav';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import TeacherAnalytics from '@/components/portal/TeacherAnalytics';
 import TestCompilerHub from '@/components/portal/compiler/TestCompilerHub';
 import { fetchWeeklyLeaderboard, LeaderboardEntry } from '@/lib/leaderboard';
+import { getPortalNavItems } from '@/lib/portal/menuConfig';
 
 const NAV_LABELS: Record<string, string> = {
   overview: 'Overview',
@@ -50,6 +51,8 @@ function PortalContent() {
   const [activeNav, setActiveNav] = useState<string>('overview');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | undefined>(undefined);
+
+  const activeLabel = NAV_LABELS[activeNav] || getPortalNavItems().find((i) => i.id === activeNav)?.label || 'Overview';
 
   // Auth & error states
   const [authError, setAuthError] = useState<string | null>(null);
@@ -644,7 +647,80 @@ function PortalContent() {
             </div>
           </div>
         );
-      default:
+      default: {
+        const customItem = getPortalNavItems().find((i) => i.id === activeNav);
+        if (customItem) {
+          return (
+            <div className="space-y-6">
+              <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 sm:p-8 shadow-offset-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#fce7f3] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#831843]">
+                    {customItem.section?.toUpperCase() || 'CUSTOM RESOURCE'}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-[#645c50]">
+                    Configured Module · ID: {customItem.id}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-[#201e1d] font-heading tracking-tight">
+                      {customItem.label}
+                    </h1>
+                    <p className="text-sm font-medium text-[#645c50] mt-1 max-w-xl">
+                      {customItem.href
+                        ? 'External institutional resource linked by your school administrator.'
+                        : 'Custom module configured for your educator command deck.'}
+                    </p>
+                  </div>
+
+                  {customItem.href && (
+                    <a
+                      href={customItem.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] text-xs font-bold text-[#201e1d] transition-all active:translate-y-0.5 shrink-0"
+                    >
+                      <span>Open Resource</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+
+                {customItem.href ? (
+                  <div className="mt-4 p-4 rounded-2xl bg-white border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-10 h-10 rounded-xl bg-[#e8f4d9] border border-[#201e1d] flex items-center justify-center text-lg shrink-0">
+                        🌐
+                      </span>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-[#645c50] block font-mono">LINK DESTINATION</span>
+                        <span className="text-sm font-mono font-bold text-[#201e1d] truncate block">{customItem.href}</span>
+                      </div>
+                    </div>
+                    <a
+                      href={customItem.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 rounded-xl bg-[#201e1d] text-[#f9f4ed] text-xs font-bold hover:bg-[#3d3835] transition-colors shrink-0"
+                    >
+                      Visit ↗
+                    </a>
+                  </div>
+                ) : (
+                  <div className="py-12 px-4 text-center rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5] space-y-2">
+                    <div className="text-4xl">📚</div>
+                    <h3 className="font-heading font-black text-base text-[#201e1d]">{customItem.label} Workspace</h3>
+                    <p className="text-xs font-medium text-[#645c50] max-w-md mx-auto">
+                      This custom module is active in your school navigation configuration. Configure a destination URL in the Admin Menu Manager to link an external service.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
         return (
           <TeacherAnalytics
             key="default-roster"
@@ -652,6 +728,7 @@ function PortalContent() {
             onNavigateToAssign={() => setActiveNav('assign')}
           />
         );
+      }
     }
   };
 
@@ -713,7 +790,7 @@ function PortalContent() {
               </span>
               <span className="text-[#645c50] text-xs font-mono">/</span>
               <span className="text-xs font-bold text-[#645c50] truncate">
-                {NAV_LABELS[activeNav] || 'Overview'}
+                {activeLabel}
               </span>
             </div>
           </div>
@@ -741,7 +818,7 @@ function PortalContent() {
               </span>
               <span className="text-[#645c50] font-mono text-base">/</span>
               <span className="font-heading font-bold text-base text-[#201e1d]">
-                {NAV_LABELS[activeNav] || 'Overview'}
+                {activeLabel}
               </span>
             </div>
 
