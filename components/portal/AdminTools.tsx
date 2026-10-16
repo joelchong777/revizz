@@ -1081,31 +1081,7 @@ export default function AdminTools({
   };
 
   return (
-    <div className="flex flex-col gap-6 p-2 sm:p-4 text-[#201e1d] font-body">
-      {/* Top View Selector Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#dcd3c4] pb-2 flex-wrap">
-        <button
-          onClick={() => setActiveSubTab('assign')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-            activeSubTab === 'assign'
-              ? 'bg-[#201e1d] text-[#f9f4ed]'
-              : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-          }`}
-        >
-          🚀 Assign Rounds / Homework
-        </button>
-        <button
-          onClick={() => setActiveSubTab('bank')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-            activeSubTab === 'bank'
-              ? 'bg-[#201e1d] text-[#f9f4ed]'
-              : 'bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-          }`}
-        >
-          📚 Question Bank & Verification
-        </button>
-      </div>
-
+    <div className="flex flex-col gap-3 pt-0 px-2 pb-2 sm:px-3 sm:pb-3 text-[#201e1d] font-body">
       {/* ========================================================
           SUB-TAB 1: ASSIGN ROUNDS & HOMEWORK (Mockup 2c)
           ======================================================== */}
@@ -1397,7 +1373,7 @@ export default function AdminTools({
           SUB-TAB 2: QUESTION BANK BROWSER (Mockup 2f)
           ======================================================== */}
       {activeSubTab === 'bank' && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2.5">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
