@@ -25,6 +25,7 @@ import {
   FileCode,
   SlidersHorizontal,
   Check,
+  Eye,
 } from "lucide-react";
 
 export interface IngestionHeaderProps {
@@ -136,6 +137,8 @@ export default function IngestionHeader({
   onOpenAudit,
   onOpenMarkSchemeModal,
   markSchemeStatus = "unverified",
+  showLivePreview = false,
+  onTogglePreview,
 }: IngestionHeaderProps) {
   const [archiveState, setArchiveState] = useState<"idle" | "archiving" | "archived" | "error">("idle");
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -146,16 +149,25 @@ export default function IngestionHeader({
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close more menu on click outside
+  // Close more menu on click outside or Escape key
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
         setIsMoreMenuOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsMoreMenuOpen(false);
+      }
+    }
     if (isMoreMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+      };
     }
   }, [isMoreMenuOpen]);
 
@@ -280,6 +292,7 @@ export default function IngestionHeader({
   // MODE: SETUP (Wizard / Setup Mode)
   // When in setup mode, the wizard renders its own hero / inputs. Return null.
   // -------------------------------------------------------------
+  if (mode === "setup") return null;
   if (currentMode === "setup") {
     return null;
   }
@@ -336,11 +349,15 @@ export default function IngestionHeader({
                 className={`px-2.5 py-1 rounded-full border-2 border-[#201e1d] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d] ${
                   validCount === totalCount
                     ? "bg-[#d1fae5] text-[#065f46]"
-                    : "bg-[#d1fae5] text-[#065f46]"
+                    : "bg-[#fef3c7] text-[#92400e]"
                 }`}
                 title={`${validCount} of ${totalCount} questions pass all validation checks`}
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#065f46]" />
+                <CheckCircle2
+                  className={`w-3.5 h-3.5 ${
+                    validCount === totalCount ? "text-[#065f46]" : "text-[#92400e]"
+                  }`}
+                />
                 <span>
                   {validCount}/{totalCount} Valid {validCount === totalCount && "✓"}
                 </span>
@@ -375,6 +392,36 @@ export default function IngestionHeader({
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>{showPdfViewer ? "Hide PDF" : "Show PDF"}</span>
+            </button>
+          )}
+
+          {/* Student Live Preview Simulator Toggle */}
+          {onTogglePreview && (
+            <button
+              type="button"
+              onClick={onTogglePreview}
+              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+                showLivePreview
+                  ? "bg-[#0284c7] text-white"
+                  : "bg-[#e0f2fe] text-[#0369a1] hover:bg-[#bae6fd]"
+              }`}
+              title={showLivePreview ? "Close Student Preview" : "Open Student Interactive Preview Simulator"}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Preview</span>
+            </button>
+          )}
+
+          {/* 7-Point Quality Gate Audit Drawer Button */}
+          {onOpenAudit && (
+            <button
+              type="button"
+              onClick={onOpenAudit}
+              className="px-3 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
+              title="Open 7-Point Quality Gate Audit Drawer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#201e1d]" />
+              <span>Audit</span>
             </button>
           )}
 

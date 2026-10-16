@@ -82,6 +82,22 @@ export function IngestionOptionsEditor({
     D: false,
   });
 
+  const allDistractorsExpanded = useMemo(() => {
+    return OPTION_LABELS.every((label) => Boolean(expandedDistractors[label]));
+  }, [expandedDistractors]);
+
+  const handleToggleAllDistractors = useCallback(() => {
+    setExpandedDistractors((prev) => {
+      const targetState = !OPTION_LABELS.every((label) => Boolean(prev[label]));
+      return {
+        A: targetState,
+        B: targetState,
+        C: targetState,
+        D: targetState,
+      };
+    });
+  }, []);
+
   // Local state for distractor rationales if not controlled externally
   const [localDistractorMap, setLocalDistractorMap] = useState<Record<string, string>>({});
   const [generatingLabel, setGeneratingLabel] = useState<string | null>(null);
@@ -101,7 +117,7 @@ export function IngestionOptionsEditor({
         }
       }
     }
-    setLocalDistractorMap((prev) => ({ ...nextMap, ...prev }));
+    setLocalDistractorMap(nextMap);
   }, [distractorAnalysis, options]);
 
   // Lookup map of options
@@ -201,26 +217,35 @@ export function IngestionOptionsEditor({
     >
       {/* Matrix Header Banner */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1 select-none">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="font-adminHeading font-bold text-xs uppercase tracking-wider text-[#201e1d]">
             MCQ Options (A-D)
           </span>
           <span className="bg-white border border-[#201e1d] text-[#201e1d] rounded-full px-2.5 py-0.5 text-[11px] font-mono font-bold shadow-[1px_1px_0_#201e1d]">
             Exactly 1 Correct
           </span>
+          {/* Keyboard shortcut hint pill next to correct answer status badge */}
+          <span className="bg-[#f9f4ed] border border-[#dcd3c4] text-[#645c50] rounded-full px-2.5 py-0.5 text-[11px] font-mono font-bold shadow-xs flex items-center gap-1">
+            <span>Hotkeys: 1–4 or A–D</span>
+          </span>
         </div>
 
-        {/* Hotkeys Quick Reference */}
-        <div className="flex items-center gap-1.5 text-xs text-[#645c50] font-medium">
-          <span className="text-[11px] text-[#645c50] font-bold hidden sm:inline">Hotkeys:</span>
-          <kbd className="px-1.5 py-0.5 rounded-full bg-white border border-[#201e1d] font-mono text-[11px] font-bold text-[#201e1d] shadow-[1px_1px_0_#201e1d]">
-            1-4
-          </kbd>
-          <span>or</span>
-          <kbd className="px-1.5 py-0.5 rounded-full bg-white border border-[#201e1d] font-mono text-[11px] font-bold text-[#201e1d] shadow-[1px_1px_0_#201e1d]">
-            A-D
-          </kbd>
-          <span className="text-[#82796a] text-[11px] hidden md:inline">to mark answer key</span>
+        <div className="flex items-center gap-2">
+          {/* Expand / Collapse All Distractors Toggle Button */}
+          <button
+            type="button"
+            onClick={handleToggleAllDistractors}
+            className="px-2.5 py-1 rounded-full bg-white hover:bg-[#eee7db] text-[#201e1d] border border-[#201e1d] text-[11px] font-bold shadow-[1px_1px_0_#201e1d] active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer"
+            title={allDistractorsExpanded ? "Collapse all distractor rationales" : "Expand all distractor rationales"}
+          >
+            <ChevronDown
+              className={cn(
+                "w-3 h-3 text-[#645c50] transition-transform duration-150",
+                allDistractorsExpanded && "rotate-180"
+              )}
+            />
+            <span>{allDistractorsExpanded ? "Collapse All Distractors" : "Expand All Distractors"}</span>
+          </button>
         </div>
       </div>
 

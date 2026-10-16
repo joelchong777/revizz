@@ -87,35 +87,27 @@ export default function AppAdminHub({
 
   const renderIngestion = () => (
     <div className="space-y-4">
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
-              INGESTION ENGINE v2.4
-            </span>
-            <span className="text-xs font-mono font-bold text-[#645c50]">
-              Dual-PDF OCR & Gemini 1.5 Pro Multimodal Pipeline
-            </span>
-          </div>
-          <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
+      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl px-4 py-2.5 shadow-[2px_2px_0_#201e1d] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
+            INGESTION ENGINE v2.4
+          </span>
+          <h1 className="text-base sm:text-lg font-black text-[#201e1d] font-heading tracking-tight">
             Cambridge Ingestion Studio
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
-            Upload Question Papers & Mark Schemes, parse diagram bounding crops, and publish validated items directly to the database.
-          </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => onSelectTab('diagnostics')}
-            className="px-3 py-2 rounded-xl bg-[#ebddc5] border-2 border-[#201e1d] font-bold text-xs hover:bg-[#ffe1d0] transition-colors shadow-offset-2 active:translate-y-0.5"
+            className="px-3 py-1.5 rounded-xl bg-[#ebddc5] border-2 border-[#201e1d] font-bold text-xs hover:bg-[#ffe1d0] transition-colors shadow-offset-2 active:translate-y-0.5"
           >
             KaTeX Diagnostics
           </button>
           <button
             type="button"
             onClick={() => onSelectTab('bank')}
-            className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-colors shadow-offset-2 active:translate-y-0.5"
+            className="px-3.5 py-1.5 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-colors shadow-offset-2 active:translate-y-0.5"
           >
             Question Bank →
           </button>

@@ -469,7 +469,13 @@ function AdminContent() {
         </header>
 
         {/* Scrollable Main Area */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
+        <main
+          className={
+            activeTab === "ingestion"
+              ? "p-3 sm:p-4 lg:p-6 max-w-[1800px] mx-auto w-full flex-1"
+              : "p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1"
+          }
+        >
           {guestMode && !userProfile && (
             <div className="mb-6 p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
               <div className="flex items-center gap-2">

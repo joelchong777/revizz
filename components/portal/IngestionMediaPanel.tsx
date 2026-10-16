@@ -63,6 +63,8 @@ export interface IngestionMediaPanelProps {
   activePdfPage?: number;
   /** Action to focus or open the PDF cropper canvas */
   onOpenPdfCropper?: () => void;
+  /** Action to request PDF re-crop / expansion of PDF viewer */
+  onRequestRecrop?: () => void;
 }
 
 export function IngestionMediaPanel({
@@ -78,6 +80,7 @@ export function IngestionMediaPanel({
   questionNumber = 1,
   pdfUrl,
   onOpenPdfCropper,
+  onRequestRecrop,
 }: IngestionMediaPanelProps) {
   const hasDiagram = Boolean(diagram?.has_diagram);
   const imageUrl = diagram?.image_url || "";
@@ -103,6 +106,7 @@ export function IngestionMediaPanel({
 
   // Re-crop execution states
   const [isRecropping, setIsRecropping] = useState(false);
+  const [isRecropMode, setIsRecropMode] = useState(false);
   const [recropFeedback, setRecropFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   // Copy URL state
@@ -270,6 +274,19 @@ export function IngestionMediaPanel({
     }
   };
 
+  // Trigger Re-crop & Auto-expand PDF Viewer (even if isRecropMode is already active)
+  const handleTriggerRecrop = () => {
+    setIsRecropMode(true);
+    if (onRequestRecrop) {
+      onRequestRecrop();
+    }
+    if (onOpenPdfCropper) {
+      onOpenPdfCropper();
+    } else {
+      document.getElementById("pdf-canvas-container")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   // Copy storage / image URL
   const handleCopyUrl = () => {
     if (!imageUrl) return;
@@ -377,21 +394,15 @@ export function IngestionMediaPanel({
 
             {/* Interactive Action Controls Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {/* 1. Adjust Crop on PDF */}
+              {/* 1. Re-crop from PDF / Adjust Crop on PDF */}
               <button
                 type="button"
-                onClick={() => {
-                  if (onOpenPdfCropper) {
-                    onOpenPdfCropper();
-                  } else {
-                    document.getElementById("pdf-canvas-container")?.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
+                onClick={handleTriggerRecrop}
                 className="px-3.5 py-2 bg-white hover:bg-[#eee7db] text-[#201e1d] rounded-full border-[1.5px] border-[#dcd3c4] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                title="Open interactive cropper on PDF canvas"
+                title="Re-crop from PDF / Open interactive cropper on PDF canvas"
               >
                 <Scissors className="w-3.5 h-3.5 text-[#c67139]" />
-                <span>Adjust on PDF</span>
+                <span>Re-crop from PDF</span>
               </button>
 
               {/* 2. Re-crop Current BBox */}
@@ -540,11 +551,22 @@ export function IngestionMediaPanel({
                   </div>
                 </div>
               ) : (
-                <div className="p-6 bg-white border-[1.5px] border-dashed border-[#dcd3c4] rounded-xl flex items-center justify-center text-center gap-2 text-[#82796a]">
-                  <ImageIcon className="w-5 h-5 opacity-40 shrink-0" />
-                  <span className="text-xs font-medium">
-                    No image cropped yet. Click &quot;Adjust on PDF&quot; or upload a custom image.
-                  </span>
+                <div className="p-6 bg-white border-[1.5px] border-dashed border-[#dcd3c4] rounded-xl flex flex-col sm:flex-row items-center justify-center text-center gap-3 text-[#82796a]">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 opacity-40 shrink-0" />
+                    <span className="text-xs font-medium">
+                      No image cropped yet.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTriggerRecrop}
+                    className="px-3.5 py-1.5 rounded-full bg-[#ffe1d0] hover:bg-[#c67139] hover:text-white text-[#c67139] border border-[#c67139] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                    title="Open PDF viewer and cropper to crop diagram"
+                  >
+                    <Scissors className="w-3.5 h-3.5" />
+                    <span>Re-crop from PDF</span>
+                  </button>
                 </div>
               )}
             </div>

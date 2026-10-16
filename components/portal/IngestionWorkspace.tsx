@@ -138,7 +138,7 @@ export function IngestionWorkspace({
       ) : (
         /* Collapsed Left Pane Vertical Rail */
         <div
-          className="w-12 bg-white border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_#201e1d] flex flex-col items-center py-4 gap-4 shrink-0 transition-all duration-300 sticky top-4 hover:border-[#c67139]"
+          className="w-12 bg-white border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_#201e1d] flex flex-col items-center py-4 gap-3 shrink-0 transition-all duration-300 sticky top-4 hover:border-[#c67139]"
           data-testid="ingestion-pdf-pane-collapsed"
         >
           <button
@@ -150,7 +150,23 @@ export function IngestionWorkspace({
           >
             <PanelLeftOpen className="w-4 h-4" />
           </button>
-          <div className="rotate-90 text-xs font-adminHeading font-bold text-[#645c50] tracking-wider uppercase whitespace-nowrap mt-12 flex items-center gap-1.5 select-none">
+
+          {/* Quick-action button on collapsed rail with page badge */}
+          <button
+            type="button"
+            onClick={onTogglePdfViewer}
+            className="px-1.5 py-1 bg-[#ffe1d0] hover:bg-[#c67139] hover:text-white text-[#c67139] border border-[#c67139] rounded-lg text-[10px] font-mono font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+            title={`Expand PDF Viewer (Current Page: P.${activePdfPage})`}
+            aria-label={`Open PDF at Page ${activePdfPage}`}
+          >
+            P.{activePdfPage}
+          </button>
+
+          <div
+            onClick={onTogglePdfViewer}
+            className="rotate-90 text-xs font-adminHeading font-bold text-[#645c50] hover:text-[#c67139] tracking-wider uppercase whitespace-nowrap mt-10 flex items-center gap-1.5 select-none cursor-pointer"
+            title="Click to expand PDF viewer"
+          >
             <BookOpen className="w-3.5 h-3.5 -rotate-90 text-[#c67139]" />
             <span>PDF Source</span>
           </div>
@@ -259,6 +275,16 @@ export function IngestionWorkspace({
               questionNumber={currentQuestion.question_number || selectedIdx + 1}
               pdfUrl={qpPdfUrl || undefined}
               activePdfPage={activePdfPage}
+              onRequestRecrop={() => {
+                if (!showPdfViewer) {
+                  onTogglePdfViewer();
+                }
+              }}
+              onOpenPdfCropper={() => {
+                if (!showPdfViewer) {
+                  onTogglePdfViewer();
+                }
+              }}
               onUpdateDiagram={(diag) => {
                 onUpdateQuestion(selectedIdx, {
                   ...currentQuestion,

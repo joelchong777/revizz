@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import {
   getQuestionValidation,
   hasDiagram,
@@ -99,3 +101,37 @@ const textOnlyQ: StagingQuestion = {
 assert(hasDiagram(textOnlyQ) === false, "Text only question hasDiagram is false");
 
 console.log("\n🎉 All IngestionQuestionNav logic checks passed successfully!");
+
+console.log("\n=== Testing Ingestion Studio UI Polish Contracts ===");
+const rootDir = path.resolve(__dirname, "..");
+
+// 1. app/admin/page.tsx includes max-w-[1800px]
+const adminPage = fs.readFileSync(path.join(rootDir, "app/admin/page.tsx"), "utf-8");
+assert(adminPage.includes("max-w-[1800px]"), "app/admin/page.tsx includes max-w-[1800px] for wide ingestion studio canvas");
+
+// 2. components/portal/IngestionHub.tsx mounts <IngestionPreviewModal, <IngestionAuditDrawer, and <IngestionPayloadModal
+const ingestionHub = fs.readFileSync(path.join(rootDir, "components/portal/IngestionHub.tsx"), "utf-8");
+assert(ingestionHub.includes("<IngestionPreviewModal"), "components/portal/IngestionHub.tsx mounts <IngestionPreviewModal");
+assert(ingestionHub.includes("<IngestionAuditDrawer"), "components/portal/IngestionHub.tsx mounts <IngestionAuditDrawer");
+assert(ingestionHub.includes("<IngestionPayloadModal"), "components/portal/IngestionHub.tsx mounts <IngestionPayloadModal");
+
+// 3. components/portal/IngestionHeader.tsx renders Preview and Audit buttons and includes the amber fallback "bg-[#fef3c7] text-[#92400e]"
+const ingestionHeader = fs.readFileSync(path.join(rootDir, "components/portal/IngestionHeader.tsx"), "utf-8");
+assert(ingestionHeader.includes("Preview"), "components/portal/IngestionHeader.tsx renders Preview button");
+assert(ingestionHeader.includes("Audit"), "components/portal/IngestionHeader.tsx renders Audit button");
+assert(ingestionHeader.includes("bg-[#fef3c7] text-[#92400e]"), "components/portal/IngestionHeader.tsx includes amber fallback bg-[#fef3c7] text-[#92400e] for partial valid counts");
+
+// 4. components/portal/IngestionQuestionNav.tsx includes Next Issue quick-jump button and Collapse Grid toggle
+const ingestionQuestionNav = fs.readFileSync(path.join(rootDir, "components/portal/IngestionQuestionNav.tsx"), "utf-8");
+assert(ingestionQuestionNav.includes("Next Issue"), "components/portal/IngestionQuestionNav.tsx includes Next Issue quick-jump button");
+assert(ingestionQuestionNav.includes("Collapse Grid"), "components/portal/IngestionQuestionNav.tsx includes Collapse Grid toggle");
+
+// 5. components/portal/IngestionOptionsEditor.tsx includes Expand All Distractors / Collapse All Distractors bulk toggle
+const ingestionOptionsEditor = fs.readFileSync(path.join(rootDir, "components/portal/IngestionOptionsEditor.tsx"), "utf-8");
+assert(ingestionOptionsEditor.includes("Expand All Distractors") && ingestionOptionsEditor.includes("Collapse All Distractors"), "components/portal/IngestionOptionsEditor.tsx includes Expand All Distractors / Collapse All Distractors bulk toggle");
+
+// 6. components/portal/IngestionMarkSchemeModal.tsx includes e.key === "Escape" dismissal handler
+const ingestionMarkSchemeModal = fs.readFileSync(path.join(rootDir, "components/portal/IngestionMarkSchemeModal.tsx"), "utf-8");
+assert(ingestionMarkSchemeModal.includes('e.key === "Escape"'), 'components/portal/IngestionMarkSchemeModal.tsx includes e.key === "Escape" dismissal handler');
+
+console.log("\n🎉 All Ingestion Studio UI Polish assertions passed successfully!\n");

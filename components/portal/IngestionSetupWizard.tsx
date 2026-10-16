@@ -451,10 +451,10 @@ export default function IngestionSetupWizard({
       />
 
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#dcd3c4] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#dcd3c4] pb-3 sm:pb-3.5">
         <div>
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ffe1d0] border-2 border-[#201e1d] text-[#c67139] rounded-full text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]">
+          <div className="flex items-center gap-2 flex-wrap mb-1 sm:mb-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-[#ffe1d0] border-2 border-[#201e1d] text-[#c67139] rounded-full text-xs font-mono font-bold shadow-[1.5px_1.5px_0_#201e1d]">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Cambridge Multimodal Ingestion Pipeline</span>
             </div>
@@ -462,7 +462,7 @@ export default function IngestionSetupWizard({
             {/* Informative chip when active paper session exists */}
             {activePaper && (
               <div
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#d1fae5] border-2 border-[#201e1d] text-[#065f46] rounded-full text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]"
+                className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-[#d1fae5] border-2 border-[#201e1d] text-[#065f46] rounded-full text-xs font-mono font-bold shadow-[1.5px_1.5px_0_#201e1d]"
                 title={`Active paper in memory: ${activePaper.id || "paper"}`}
               >
                 <span className="w-2 h-2 rounded-full bg-[#065f46] animate-pulse" />
@@ -473,10 +473,10 @@ export default function IngestionSetupWizard({
             )}
           </div>
 
-          <h2 className="font-adminHeading text-2xl sm:text-3xl font-bold text-[#201e1d]">
+          <h2 className="font-adminHeading text-xl sm:text-2xl font-bold text-[#201e1d]">
             Digitize &amp; Upsert Past Exam Papers
           </h2>
-          <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5 max-w-2xl">
             Upload your Cambridge Question Paper (QP) PDF or load an Antigravity agent offline extraction to curate questions and push to production.
           </p>
         </div>
@@ -487,7 +487,7 @@ export default function IngestionSetupWizard({
             <button
               type="button"
               onClick={onReturnToWorkspace}
-              className="px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
+              className="px-3 py-1 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Current Paper</span>
@@ -498,7 +498,7 @@ export default function IngestionSetupWizard({
             <button
               type="button"
               onClick={() => setShowResetConfirm(true)}
-              className="px-3.5 py-1.5 rounded-full border-2 border-[#201e1d] bg-[#fee2e2]/60 hover:bg-[#fee2e2] text-xs font-bold text-[#b91c1c] flex items-center gap-1.5 transition-colors cursor-pointer active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_#201e1d]"
+              className="px-3 py-1 rounded-full border-2 border-[#201e1d] bg-[#fee2e2]/60 hover:bg-[#fee2e2] text-xs font-bold text-[#b91c1c] flex items-center gap-1.5 transition-colors cursor-pointer active:translate-y-0.5 active:shadow-none shadow-[1.5px_1.5px_0_#201e1d]"
               title="Clear all leftover draft data and start fresh in 1 click"
             >
               <Trash2 className="w-3.5 h-3.5 text-[#b91c1c]" />
@@ -509,7 +509,7 @@ export default function IngestionSetupWizard({
       </div>
 
       {/* Neobrutalist Dual-Workflow Tab Toggle */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 bg-[#f0eade] border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_#201e1d]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-1 sm:p-1.5 bg-[#f0eade] border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_#201e1d]">
         <div className="flex items-center gap-2 w-full">
           {/* Tab 1: AI Cloud Pipeline */}
           <motion.button
@@ -518,7 +518,7 @@ export default function IngestionSetupWizard({
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-adminHeading font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-adminHeading font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               workflowTab === "cloud"
                 ? "bg-[#c67139] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] -translate-y-0.5"
                 : "bg-transparent text-[#645c50] hover:text-[#201e1d] hover:bg-black/5"
@@ -535,7 +535,7 @@ export default function IngestionSetupWizard({
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-adminHeading font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-adminHeading font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               workflowTab === "agent"
                 ? "bg-[#201e1d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_#c67139] -translate-y-0.5"
                 : "bg-transparent text-[#645c50] hover:text-[#201e1d] hover:bg-black/5"
@@ -589,7 +589,7 @@ export default function IngestionSetupWizard({
       {workflowTab === "cloud" ? (
         <>
           {/* Step 1: Cambridge Paper Metadata Selectors */}
-      <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-5 flex flex-col gap-3.5 shadow-[2px_2px_0_#201e1d]">
+      <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 flex flex-col gap-2.5 sm:gap-3 shadow-[2px_2px_0_#201e1d]">
         <div className="flex items-center gap-2">
           <span className="w-5 h-5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-black flex items-center justify-center shadow-xs">
             1
@@ -599,7 +599,7 @@ export default function IngestionSetupWizard({
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
           {/* Subject Dropdown */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-bold text-[#645c50]">Subject</label>
@@ -688,7 +688,7 @@ export default function IngestionSetupWizard({
       </div>
 
       {/* Fast-Track JSON Past Paper Card / Dropzone */}
-      <div className="bg-[#fff7f0] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[2px_2px_0_#201e1d] flex flex-col gap-3">
+      <div className="bg-[#fff7f0] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[2px_2px_0_#201e1d] flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-xl">⚡</span>
@@ -709,7 +709,7 @@ export default function IngestionSetupWizard({
               setUploadError(null);
               jsonInputRef.current?.click();
             }}
-            className="px-4 py-2 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white text-xs font-adminHeading font-bold shadow-[2px_2px_0_#201e1d] border-2 border-[#201e1d] active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white text-xs font-adminHeading font-bold shadow-[2px_2px_0_#201e1d] border-2 border-[#201e1d] active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Upload className="w-4 h-4" />
             <span>Upload JSON Past Paper</span>
@@ -740,7 +740,7 @@ export default function IngestionSetupWizard({
             setUploadError(null);
             jsonInputRef.current?.click();
           }}
-          className={`p-4 border-2 border-dashed rounded-xl flex items-center justify-center text-center gap-3 cursor-pointer transition-all ${
+          className={`p-3 sm:p-3.5 border-2 border-dashed rounded-xl flex items-center justify-center text-center gap-3 cursor-pointer transition-all ${
             isDraggingJson
               ? "bg-[#ffe1d0] border-[#c67139] shadow-sm scale-[1.01]"
               : "bg-white/80 border-[#201e1d] hover:bg-white hover:border-[#c67139]"
@@ -755,7 +755,7 @@ export default function IngestionSetupWizard({
       </div>
 
       {/* Step 2: Dual PDF Dropzones (QP & MS) */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-2">
           <span className="w-6 h-6 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-adminHeading font-bold flex items-center justify-center shadow-[1px_1px_0_#201e1d]">
             2

@@ -243,7 +243,26 @@ export function IngestionQuestionNav({
     }
   }, [selectedIdx, viewMode]);
 
-  // Global Keyboard Navigation: Left/Right arrow keys to cycle questions
+  // Evaluate status map
+  const questionStatuses = useMemo(() => {
+    return questions.map((q) => evaluateQuestionStatus(q));
+  }, [questions]);
+
+  // Next Issue Quick-Jump: circularly search from (selectedIdx + 1) % totalQuestions
+  const handleJumpNextIssue = useCallback(() => {
+    if (totalQuestions <= 0) return;
+    for (let offset = 1; offset <= totalQuestions; offset++) {
+      const idx = (selectedIdx + offset) % totalQuestions;
+      const status = questionStatuses[idx];
+      const q = questions[idx];
+      if (!status?.isValid || q?.status === "needs_review") {
+        handleSelect(idx);
+        break;
+      }
+    }
+  }, [totalQuestions, selectedIdx, questionStatuses, questions, handleSelect]);
+
+  // Global Keyboard Navigation: Left/Right arrow keys to cycle questions, Alt+N for Next Issue
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -259,6 +278,12 @@ export function IngestionQuestionNav({
 
       if (totalQuestions <= 0) return;
 
+      if (e.altKey && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        handleJumpNextIssue();
+        return;
+      }
+
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         handleSelect(selectedIdx - 1);
@@ -270,12 +295,7 @@ export function IngestionQuestionNav({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIdx, totalQuestions, handleSelect]);
-
-  // Evaluate status map
-  const questionStatuses = useMemo(() => {
-    return questions.map((q) => evaluateQuestionStatus(q));
-  }, [questions]);
+  }, [selectedIdx, totalQuestions, handleSelect, handleJumpNextIssue]);
 
   // Tab counts
   const validCount = useMemo(
@@ -459,6 +479,22 @@ export function IngestionQuestionNav({
             </button>
           )}
 
+          {/* Next Issue (⚠) Quick-Jump Button */}
+          {(reviewCount > 0 || errorCount > 0) && (
+            <button
+              type="button"
+              onClick={handleJumpNextIssue}
+              className="bg-[#fef3c7] hover:bg-[#fde68a] text-[#92400e] border-2 border-[#201e1d] rounded-full px-2.5 py-1 text-xs font-bold shadow-[1px_1px_0_#201e1d] active:translate-y-0.5 flex items-center gap-1 cursor-pointer transition-colors"
+              title="Jump to next issue (Alt+N)"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-[#92400e]" />
+              <span>Next Issue</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-[#fde68a] text-[#92400e] border border-[#d97706]/30">
+                {reviewCount + errorCount}
+              </span>
+            </button>
+          )}
+
           {hasActiveFilters && (
             <button
               type="button"
@@ -475,6 +511,14 @@ export function IngestionQuestionNav({
 
         {/* Right: Quick Search + Stepper + View Mode Toggle + Add Question */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Keyboard Shortcut Hint */}
+          <span
+            className="text-[10px] font-mono text-[#82796a] hidden xl:inline-flex items-center gap-1 bg-white/70 border border-[#dcd3c4] px-2.5 py-1 rounded-full select-none"
+            title="Keyboard shortcuts: Left/Right arrows to navigate questions, Alt+N to jump to next issue"
+          >
+            ←/→ Nav · Alt+N Next Issue
+          </span>
+
           {/* Search Input */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-[#82796a] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -576,57 +620,93 @@ export function IngestionQuestionNav({
         </div>
       ) : viewMode === "grid" ? (
         /* Full Grid Matrix Mode: see all questions at a glance */
-        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 p-2.5 bg-white border-2 border-[#201e1d] rounded-xl shadow-inner max-h-56 overflow-y-auto">
-          {questions.map((q, idx) => {
-            const status = questionStatuses[idx];
-            const isSelected = selectedIdx === idx;
-            const isMatch = matchingIndices.includes(idx);
-            const qNum = q.question_number || idx + 1;
+        <div className="flex flex-col gap-2 p-3 bg-white border-2 border-[#201e1d] rounded-xl shadow-inner">
+          {/* Grid Mode Ergonomics Header Bar */}
+          <div className="flex items-center justify-between gap-2 px-1 pb-2 border-b border-[#dcd3c4] flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="font-adminHeading font-bold text-xs text-[#201e1d]">
+                Question Matrix ({matchingIndices.length}/{totalQuestions})
+              </span>
+              {/* Status legend pills */}
+              <div className="hidden sm:flex items-center gap-2.5 text-[10px] font-mono text-[#645c50]">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#728157]" /> Valid
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#c67139]" /> Review
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#b91c1c]" /> Error
+                </span>
+                <span className="flex items-center gap-1">
+                  <Camera className="w-2.5 h-2.5 text-[#645c50]" /> Diagram
+                </span>
+              </div>
+            </div>
 
-            return (
-              <button
-                key={`q-grid-${idx}-${qNum}`}
-                type="button"
-                onClick={() => handleSelect(idx)}
-                aria-pressed={isSelected}
-                title={`Question ${qNum}${
-                  status.isValid
-                    ? " (Valid)"
-                    : status.isError
-                    ? ` (Error: ${status.errorMessages.join(", ")})`
-                    : ` (Needs Review: ${status.warningMessages.join(", ")})`
-                }${status.hasDiagram ? " · Has Diagram" : ""}${
-                  status.correctKey ? ` · Key ${status.correctKey}` : ""
-                }`}
-                className={`relative rounded-lg p-1.5 transition-all flex flex-col items-center justify-center cursor-pointer select-none ${
-                  isSelected
-                    ? "bg-[#ffe1d0] border-2 border-[#c67139] text-[#201e1d] shadow-[2px_2px_0_#c67139] font-bold scale-[1.04] z-10"
-                    : "bg-[#fcfaf6] border border-[#dcd3c4] hover:border-[#201e1d] hover:bg-[#eee7db] text-[#474238]"
-                } ${!isMatch && hasActiveFilters ? "opacity-30 grayscale" : "opacity-100"}`}
-              >
-                <div className="w-full flex items-center justify-between gap-1 leading-none mb-0.5">
-                  {status.hasDiagram ? (
-                    <Camera className="w-2.5 h-2.5 text-[#645c50]" />
-                  ) : (
-                    <span className="w-2.5 h-2.5" />
-                  )}
-                  {status.isError ? (
-                    <span className="w-2 h-2 rounded-full bg-[#b91c1c]" />
-                  ) : status.isWarning ? (
-                    <span className="w-2 h-2 rounded-full bg-[#c67139]" />
-                  ) : (
-                    <span className="w-2 h-2 rounded-full bg-[#728157]" />
-                  )}
-                </div>
-                <span className="text-xs font-adminHeading font-bold text-[#201e1d] leading-tight">
-                  {qNum}
-                </span>
-                <span className="text-[9px] font-mono font-bold uppercase text-[#645c50] leading-none mt-0.5">
-                  {status.correctKey ? status.correctKey : "—"}
-                </span>
-              </button>
-            );
-          })}
+            <button
+              type="button"
+              onClick={() => setViewMode("strip")}
+              className="px-2.5 py-1 rounded-full border border-[#201e1d] bg-[#f9f4ed] hover:bg-[#ffe1d0] hover:text-[#c67139] text-[11px] font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5"
+              title="Collapse grid drawer and switch to strip view"
+            >
+              <Rows className="w-3 h-3 text-[#c67139]" />
+              <span>Collapse Grid</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 max-h-56 overflow-y-auto pr-0.5">
+            {questions.map((q, idx) => {
+              const status = questionStatuses[idx];
+              const isSelected = selectedIdx === idx;
+              const isMatch = matchingIndices.includes(idx);
+              const qNum = q.question_number || idx + 1;
+
+              return (
+                <button
+                  key={`q-grid-${idx}-${qNum}`}
+                  type="button"
+                  onClick={() => handleSelect(idx)}
+                  aria-pressed={isSelected}
+                  title={`Question ${qNum}${
+                    status.isValid
+                      ? " (Valid)"
+                      : status.isError
+                      ? ` (Error: ${status.errorMessages.join(", ")})`
+                      : ` (Needs Review: ${status.warningMessages.join(", ")})`
+                  }${status.hasDiagram ? " · Has Diagram" : ""}${
+                    status.correctKey ? ` · Key ${status.correctKey}` : ""
+                  }`}
+                  className={`relative rounded-lg p-1.5 transition-all flex flex-col items-center justify-center cursor-pointer select-none ${
+                    isSelected
+                      ? "bg-[#ffe1d0] border-2 border-[#c67139] text-[#201e1d] shadow-[2px_2px_0_#c67139] font-bold scale-[1.04] z-10"
+                      : "bg-[#fcfaf6] border border-[#dcd3c4] hover:border-[#201e1d] hover:bg-[#eee7db] text-[#474238]"
+                  } ${!isMatch && hasActiveFilters ? "opacity-30 grayscale" : "opacity-100"}`}
+                >
+                  <div className="w-full flex items-center justify-between gap-1 leading-none mb-0.5">
+                    {status.hasDiagram ? (
+                      <Camera className="w-2.5 h-2.5 text-[#645c50]" />
+                    ) : (
+                      <span className="w-2.5 h-2.5" />
+                    )}
+                    {status.isError ? (
+                      <span className="w-2 h-2 rounded-full bg-[#b91c1c]" />
+                    ) : status.isWarning ? (
+                      <span className="w-2 h-2 rounded-full bg-[#c67139]" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-[#728157]" />
+                    )}
+                  </div>
+                  <span className="text-xs font-adminHeading font-bold text-[#201e1d] leading-tight">
+                    {qNum}
+                  </span>
+                  <span className="text-[9px] font-mono font-bold uppercase text-[#645c50] leading-none mt-0.5">
+                    {status.correctKey ? status.correctKey : "—"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : (
         /* Strip View Mode: Sleek horizontal scroll strip */

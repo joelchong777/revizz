@@ -5,9 +5,11 @@ import { useIngestionStore } from "@/lib/ingestion/useIngestionStore";
 import IngestionHeader from "./IngestionHeader";
 import IngestionStudioFrame from "./IngestionStudioFrame";
 import IngestionWorkspace from "./IngestionWorkspace";
-import { IngestionSettingsModal } from "./IngestionModals";
+import { IngestionSettingsModal, IngestionPayloadModal } from "./IngestionModals";
 import IngestionPipelineModal from "./IngestionPipelineModal";
 import IngestionMarkSchemeModal from "./IngestionMarkSchemeModal";
+import IngestionPreviewModal from "./IngestionPreviewModal";
+import IngestionAuditDrawer from "./IngestionAuditDrawer";
 import type { MarkSchemeVerificationReport } from "@/lib/ingestion/markSchemeChecker";
 import type { StagingPaper, StagingQuestion } from "@/types/ingestion";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,7 +26,13 @@ export default function IngestionHub() {
   const {
     paper,
     selectedIdx,
+    showLivePreview,
+    setShowLivePreview,
     isSettingsModalOpen,
+    isPayloadModalOpen,
+    setIsPayloadModalOpen,
+    isAuditDrawerOpen,
+    setIsAuditDrawerOpen,
     publishStatus,
     publishMessage,
     selectedQuestion,
@@ -294,7 +302,7 @@ export default function IngestionHub() {
       : "workspace";
 
   return (
-    <div className="min-h-screen bg-[#f5ead8] font-body p-4 sm:p-6 lg:p-8 relative overflow-x-hidden">
+    <div className="w-full font-body relative overflow-x-hidden">
       <IngestionStudioFrame
         mode={mode}
         header={
@@ -309,6 +317,10 @@ export default function IngestionHub() {
               lifecycleState={lifecycleState}
               showPdfViewer={showPdfViewer}
               onTogglePdfViewer={() => setShowPdfViewer((prev) => !prev)}
+              showLivePreview={showLivePreview}
+              onTogglePreview={() => setShowLivePreview((prev) => !prev)}
+              onOpenAudit={() => setIsAuditDrawerOpen(true)}
+              onOpenPayloads={() => setIsPayloadModalOpen(true)}
               onUndo={undo}
               onRedo={redo}
               canUndo={canUndo}
@@ -571,6 +583,65 @@ export default function IngestionHub() {
         }}
         onVerificationSuccess={(rep) => {
           setMarkSchemeReport(rep);
+        }}
+      />
+
+      {/* Overlays: Student Live Preview Modal */}
+      <IngestionPreviewModal
+        isOpen={showLivePreview}
+        onClose={() => setShowLivePreview(false)}
+        questions={questions}
+        selectedIdx={selectedIdx}
+        onSelectIdx={(idx) => setSelectedIdx(idx)}
+        paperCode={
+          paper
+            ? `${paper.subject?.code || "0455"}/${paper.paper?.paper_code || "12"}`
+            : undefined
+        }
+      />
+
+      {/* Overlays: Cambridge Quality Gate Audit Drawer */}
+      <IngestionAuditDrawer
+        isOpen={isAuditDrawerOpen}
+        onClose={() => setIsAuditDrawerOpen(false)}
+        paper={paper}
+        onSelectQuestion={(idx) => {
+          setSelectedIdx(idx);
+          setIsAuditDrawerOpen(false);
+        }}
+      />
+
+      {/* Overlays: Direct JSON Payload Modal */}
+      <IngestionPayloadModal
+        paper={paper}
+        isOpen={isPayloadModalOpen}
+        onClose={() => setIsPayloadModalOpen(false)}
+        onUploadJson={handleFileUpload}
+        onPasteJson={(rawJson) => {
+          try {
+            const parsed = JSON.parse(rawJson);
+            const res = loadJson(parsed, {
+              name: "pasted_payload.json",
+              size: rawJson.length,
+            });
+            if (res.success) {
+              setIsPayloadModalOpen(false);
+              setIsSetupOpen(false);
+              setPublishStatus("success");
+              setPublishMessage("JSON payload loaded and validated.");
+            } else {
+              setPublishStatus("error");
+              setPublishMessage(
+                "Validation failed for pasted JSON:\n" +
+                  (res.errors || []).join("\n")
+              );
+            }
+          } catch (e: any) {
+            setPublishStatus("error");
+            setPublishMessage(
+              "Invalid JSON syntax: " + (e?.message || "Parse error")
+            );
+          }
         }}
       />
     </div>
