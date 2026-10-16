@@ -133,7 +133,11 @@ async function runVerificationSuite() {
 
   // Test 4: Verification of Real Staged Paper
   await it('4. Real paper 0455_s24_11.json passes verification with perfect_match', async () => {
-    const jsonPath = path.resolve(process.cwd(), 'staging/0455_s24_11.json');
+    const candidates = [
+      path.resolve(process.cwd(), 'staging/0455_s24_11.json'),
+      path.resolve(process.cwd(), '../../staging/0455_s24_11.json'),
+    ];
+    const jsonPath = candidates.find((c) => fs.existsSync(c)) || candidates[0];
     assert(fs.existsSync(jsonPath), '0455_s24_11.json must exist in staging');
 
     const paper: StagingPaper = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));

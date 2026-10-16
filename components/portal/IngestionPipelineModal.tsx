@@ -106,9 +106,6 @@ export default function IngestionPipelineModal({
     }
   };
 
-  const open = isOpen !== undefined ? isOpen : isPipelineModalOpen;
-  if (!open) return null;
-
   const handleClose = () => {
     if (onClose) onClose();
     else setIsPipelineModalOpen(false);
@@ -260,6 +257,9 @@ export default function IngestionPipelineModal({
       // ignore clipboard error in unsupported envs
     }
   };
+
+  const open = isOpen !== undefined ? isOpen : isPipelineModalOpen;
+  if (!open) return null;
 
   return (
     <div
