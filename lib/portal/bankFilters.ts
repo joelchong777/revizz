@@ -41,6 +41,7 @@ export interface BankFilterState {
   season: string;           // 'All' or season label / seriesCode
   variant: string;          // 'All' or paper_code e.g. '12'
   paper: string;            // 'All' or full paper string
+  papers?: string[];        // optional multi-select papers
   session: string;          // 'All' or session string
   topic: string;            // 'All' or topic name
   topics?: string[];        // optional multi-select topics
@@ -70,6 +71,7 @@ export const DEFAULT_BANK_FILTER_STATE: BankFilterState = {
   season: 'All',
   variant: 'All',
   paper: 'All',
+  papers: [],
   session: 'All',
   topic: 'All',
   topics: [],
@@ -557,8 +559,13 @@ export function filterBankQuestions(
       }
     }
 
-    // 6. Paper Filter
-    if (filters.paper && filters.paper !== 'All') {
+    // 6. Paper Filter (multi-select preferred, single-select fallback)
+    if (filters.papers && filters.papers.length > 0) {
+      const hasMatch = filters.papers.some(
+        (p) => q.paper === p || q.paper.includes(p) || p.includes(q.paper)
+      );
+      if (!hasMatch) return false;
+    } else if (filters.paper && filters.paper !== 'All') {
       if (q.paper !== filters.paper && !q.paper.includes(filters.paper)) {
         return false;
       }
@@ -820,7 +827,11 @@ export function getActiveFilterChips(filters: BankFilterState): ActiveFilterChip
   if (filters.variant && filters.variant !== 'All') {
     chips.push({ key: 'variant', label: 'Variant', value: filters.variant });
   }
-  if (filters.paper && filters.paper !== 'All') {
+  if (filters.papers && filters.papers.length > 0) {
+    for (const p of filters.papers) {
+      chips.push({ key: 'papers', label: 'Paper', value: p });
+    }
+  } else if (filters.paper && filters.paper !== 'All') {
     chips.push({ key: 'paper', label: 'Paper', value: filters.paper });
   }
   if (filters.session && filters.session !== 'All') {
@@ -890,6 +901,9 @@ export function removeActiveFilterChip(
     case 'paper':
       next.paper = 'All';
       break;
+    case 'papers':
+      next.papers = (filters.papers || []).filter((p) => p !== chip.value);
+      break;
     case 'session':
       next.session = 'All';
       break;
@@ -940,6 +954,9 @@ export function serializeBankFiltersToQuery(filters: BankFilterState): string {
   if (filters.paper && filters.paper !== 'All') {
     params.set('paper', filters.paper);
   }
+  if (filters.papers && filters.papers.length > 0) {
+    params.set('papers', filters.papers.join(';'));
+  }
   if (filters.session && filters.session !== 'All') {
     params.set('session', filters.session);
   }
@@ -981,6 +998,10 @@ export function parseBankFiltersFromQuery(searchString: string): BankFilterState
   const season = params.get('season') || 'All';
   const variant = params.get('variant') || 'All';
   const paper = params.get('paper') || 'All';
+  const papersParam = params.get('papers');
+  const papers = papersParam
+    ? papersParam.split(';').map((p) => p.trim()).filter(Boolean)
+    : [];
   const session = params.get('session') || 'All';
   const topic = params.get('topic') || 'All';
   const topicsParam = params.get('topics');
@@ -1016,6 +1037,7 @@ export function parseBankFiltersFromQuery(searchString: string): BankFilterState
     season,
     variant,
     paper,
+    papers,
     session,
     topic,
     topics,

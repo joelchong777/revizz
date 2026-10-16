@@ -695,7 +695,7 @@ export default function AdminTools({
   const bankStatusFilter = bankFilters.status;
   const setBankStatusFilter = (st: string) => setBankFilters((prev) => ({ ...prev, status: st, page: 1 }));
   const bankPaperFilter = bankFilters.paper;
-  const setBankPaperFilter = (p: string) => setBankFilters((prev) => ({ ...prev, paper: p, page: 1 }));
+  const setBankPaperFilter = (p: string) => setBankFilters((prev) => ({ ...prev, paper: p, papers: p !== 'All' ? [p] : [], page: 1 }));
   const bankSessionFilter = bankFilters.session;
   const setBankSessionFilter = (s: string) => setBankFilters((prev) => ({ ...prev, session: s, page: 1 }));
   const bankTopicFilter = bankFilters.topic;
@@ -727,6 +727,7 @@ export default function AdminTools({
         fromUrl.season !== 'All' ||
         fromUrl.variant !== 'All' ||
         fromUrl.paper !== 'All' ||
+        (fromUrl.papers && fromUrl.papers.length > 0) ||
         fromUrl.session !== 'All' ||
         fromUrl.topic !== 'All' ||
         (fromUrl.topics && fromUrl.topics.length > 0) ||
@@ -1384,8 +1385,10 @@ export default function AdminTools({
                     <span className="w-4 h-4 border-2 border-[#c67139] border-t-transparent rounded-full animate-spin" />
                     Syncing live database...
                   </span>
-                ) : (
+                ) : filteredBankItems.length === bankQuestions.length ? (
                   `${bankQuestions.length} questions`
+                ) : (
+                  `${filteredBankItems.length} of ${bankQuestions.length} questions`
                 )}
               </h2>
             </div>
@@ -1470,10 +1473,11 @@ export default function AdminTools({
             />
             <BankFilterDropdown
               label="Paper"
-              value={bankFilters.paper}
-              onChange={(val) => setBankFilters((prev) => ({ ...prev, paper: val, page: 1 }))}
+              multiSelect
+              selectedValues={bankFilters.papers || (bankFilters.paper && bankFilters.paper !== 'All' ? [bankFilters.paper] : [])}
+              onMultiChange={(vals) => setBankFilters((prev) => ({ ...prev, papers: vals, paper: vals.length === 1 ? vals[0] : 'All', page: 1 }))}
               options={facetCounts.papers}
-              minWidth="min-w-[220px]"
+              minWidth="min-w-[240px]"
             />
             <BankFilterDropdown
               label="Topic"
@@ -1625,7 +1629,7 @@ export default function AdminTools({
                 bankFilters.status === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              All {bankQuestions.length}
+              All {filteredBankItems.length}
             </button>
             <button
               type="button"
@@ -1634,7 +1638,7 @@ export default function AdminTools({
                 bankFilters.status === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Live {bankQuestions.filter((q) => q.st === 'Live').length}
+              Live {filteredBankItems.filter((q) => q.st === 'Live').length}
             </button>
             <button
               type="button"
@@ -1645,7 +1649,7 @@ export default function AdminTools({
             >
               <span>Agent drafts</span>
               <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
-                {bankQuestions.filter((q) => q.st === 'Agent draft').length}
+                {filteredBankItems.filter((q) => q.st === 'Agent draft').length}
               </span>
             </button>
             <button
@@ -1655,7 +1659,7 @@ export default function AdminTools({
                 bankFilters.status === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Needs review {bankQuestions.filter((q) => q.st === 'Needs review').length}
+              Needs review {filteredBankItems.filter((q) => q.st === 'Needs review').length}
             </button>
             <button
               type="button"
@@ -1664,7 +1668,7 @@ export default function AdminTools({
                 bankFilters.status === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
               }`}
             >
-              Flagged {bankQuestions.filter((q) => q.st === 'Flagged').length}
+              Flagged {filteredBankItems.filter((q) => q.st === 'Flagged').length}
             </button>
           </div>
 

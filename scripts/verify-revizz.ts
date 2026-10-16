@@ -2624,6 +2624,19 @@ async function runSuite13() {
     });
     assertEqual(variant12.length, 3, 'Variant 12 yields 3 questions (q1, q2, q4)');
 
+    // 4b. Paper filter (single-select and multi-select)
+    const singlePaper = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      paper: '0455/12 s 2024',
+    });
+    assertEqual(singlePaper.length, 2, 'Single paper filter yields 2 questions (q1, q2)');
+
+    const multiPapers = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      papers: ['0455/12 s 2024', '0455/22 w 2023'],
+    });
+    assertEqual(multiPapers.length, 3, 'Multi-select papers yields 3 questions (q1, q2, q3)');
+
     // 5. Multi-Topic filter
     const multiTopics = filterBankQuestions(mockBankQuestions, {
       ...DEFAULT_BANK_FILTER_STATE,
@@ -2811,6 +2824,23 @@ async function runSuite13() {
       value: 'deficit',
     });
     assertEqual(afterSearchRemoval.search, '', 'Search query cleared to empty string');
+
+    // Multi-select papers active chips and chip removal
+    const paperState: BankFilterState = {
+      ...DEFAULT_BANK_FILTER_STATE,
+      papers: ['0455/12 s 2024', '0455/22 w 2023'],
+    };
+    const paperChips = getActiveFilterChips(paperState);
+    assertEqual(paperChips.length, 2, 'Two paper chips generated');
+    assert(paperChips.some((c) => c.key === 'papers' && c.value === '0455/12 s 2024'), 'Contains first paper chip');
+    assert(paperChips.some((c) => c.key === 'papers' && c.value === '0455/22 w 2023'), 'Contains second paper chip');
+
+    const afterPaperRemoval = removeActiveFilterChip(paperState, {
+      key: 'papers',
+      label: 'Paper',
+      value: '0455/12 s 2024',
+    });
+    assertEqual(JSON.stringify(afterPaperRemoval.papers), JSON.stringify(['0455/22 w 2023']), 'First paper removed, second kept');
   });
 
   test('serializeBankFiltersToQuery and parseBankFiltersFromQuery perform lossless bidirectional round-trip', () => {
@@ -2824,6 +2854,7 @@ async function runSuite13() {
     assertEqual(parsedDefault.status, 'All', "Parsed empty status is 'All'");
     assertEqual(parsedDefault.page, 1, 'Parsed empty page is 1');
     assertEqual(parsedDefault.features.length, 0, 'Parsed empty features is []');
+    assertEqual(parsedDefault.papers?.length || 0, 0, 'Parsed empty papers is []');
 
     // 3. Rich state bidirectional serialization round-trip
     const richState: BankFilterState = {
@@ -2833,6 +2864,7 @@ async function runSuite13() {
       season: 'May/June (s)',
       variant: '12',
       paper: '0455/12 s 2024',
+      papers: ['0455/12 s 2024', '0455/22 w 2023'],
       session: 'May/June 2024',
       topic: 'All',
       topics: ['Microeconomics', 'Markets'],
@@ -2848,6 +2880,7 @@ async function runSuite13() {
     assert(queryString.includes('subject=0455'), 'Query contains subject');
     assert(queryString.includes('year=2024'), 'Query contains year');
     assert(queryString.includes('variant=12'), 'Query contains variant');
+    assert(queryString.includes('papers='), 'Query contains papers param');
     assert(queryString.includes('topics=Microeconomics%2CMarkets') || queryString.includes('topics=Microeconomics,Markets'), 'Query contains comma-separated topics');
     assert(queryString.includes('diffs=Medium%2CHard') || queryString.includes('diffs=Medium,Hard'), 'Query contains comma-separated diffs');
     assert(queryString.includes('status=Live'), 'Query contains status');
@@ -2861,6 +2894,7 @@ async function runSuite13() {
     assertEqual(parsedRoundTrip.season, richState.season, 'Round-trip season matches');
     assertEqual(parsedRoundTrip.variant, richState.variant, 'Round-trip variant matches');
     assertEqual(parsedRoundTrip.paper, richState.paper, 'Round-trip paper matches');
+    assertEqual(JSON.stringify(parsedRoundTrip.papers), JSON.stringify(richState.papers), 'Round-trip papers match');
     assertEqual(parsedRoundTrip.session, richState.session, 'Round-trip session matches');
     assertEqual(JSON.stringify(parsedRoundTrip.topics), JSON.stringify(richState.topics), 'Round-trip topics match');
     assertEqual(JSON.stringify(parsedRoundTrip.difficulties), JSON.stringify(richState.difficulties), 'Round-trip difficulties match');
