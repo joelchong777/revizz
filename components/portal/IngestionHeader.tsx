@@ -56,6 +56,10 @@ export interface IngestionHeaderProps {
   // Workflow actions
   onSwitchPaper?: () => void;
 
+  // Mark scheme verification
+  onOpenMarkSchemeModal?: () => void;
+  markSchemeStatus?: "perfect_match" | "mismatches_found" | "incomplete" | "unverified";
+
   // Backwards compatibility props (optional)
   onUploadJson?: (file: File) => void;
   onOpenPayloads?: () => void;
@@ -130,6 +134,8 @@ export default function IngestionHeader({
   onDeleteStagedPaper,
   onOpenPayloads,
   onOpenAudit,
+  onOpenMarkSchemeModal,
+  markSchemeStatus = "unverified",
 }: IngestionHeaderProps) {
   const [archiveState, setArchiveState] = useState<"idle" | "archiving" | "archived" | "error">("idle");
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -369,6 +375,39 @@ export default function IngestionHeader({
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>{showPdfViewer ? "Hide PDF" : "Show PDF"}</span>
+            </button>
+          )}
+
+          {/* Cambridge Mark Scheme Verification Button */}
+          {onOpenMarkSchemeModal && (
+            <button
+              type="button"
+              onClick={onOpenMarkSchemeModal}
+              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+                markSchemeStatus === "perfect_match"
+                  ? "bg-[#dcfce7] text-[#166534] hover:bg-[#bbf7d0]"
+                  : markSchemeStatus === "mismatches_found"
+                  ? "bg-[#fef3c7] text-[#92400e] hover:bg-[#fde68a]"
+                  : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
+              }`}
+              title="Verify paper against Cambridge Mark Scheme"
+            >
+              <CheckCircle2
+                className={`w-3.5 h-3.5 ${
+                  markSchemeStatus === "perfect_match"
+                    ? "text-[#166534]"
+                    : markSchemeStatus === "mismatches_found"
+                    ? "text-[#92400e]"
+                    : "text-[#201e1d]"
+                }`}
+              />
+              <span>Verify MS</span>
+              {markSchemeStatus === "perfect_match" && (
+                <span className="w-2 h-2 rounded-full bg-[#16a34a]" />
+              )}
+              {markSchemeStatus === "mismatches_found" && (
+                <span className="w-2 h-2 rounded-full bg-[#d97706]" />
+              )}
             </button>
           )}
 

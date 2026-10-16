@@ -7,6 +7,8 @@ import IngestionStudioFrame from "./IngestionStudioFrame";
 import IngestionWorkspace from "./IngestionWorkspace";
 import { IngestionSettingsModal } from "./IngestionModals";
 import IngestionPipelineModal from "./IngestionPipelineModal";
+import IngestionMarkSchemeModal from "./IngestionMarkSchemeModal";
+import type { MarkSchemeVerificationReport } from "@/lib/ingestion/markSchemeChecker";
 import type { StagingPaper, StagingQuestion } from "@/types/ingestion";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -72,6 +74,8 @@ export default function IngestionHub() {
   // Local switch to toggle setup wizard screen even when paper is active
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const [isMarkSchemeModalOpen, setIsMarkSchemeModalOpen] = useState(false);
+  const [markSchemeReport, setMarkSchemeReport] = useState<MarkSchemeVerificationReport | null>(null);
 
   const questions = paper?.questions || [];
   const currentQuestion: StagingQuestion | null =
@@ -313,6 +317,8 @@ export default function IngestionHub() {
               onReturnToStudio={() => setIsSetupOpen(false)}
               onArchiveStagedPaper={archiveStagedPaper}
               onDeleteStagedPaper={deleteStagedPaper}
+              onOpenMarkSchemeModal={() => setIsMarkSchemeModalOpen(true)}
+              markSchemeStatus={markSchemeReport?.status || "unverified"}
             />
           ) : null
         }
@@ -550,6 +556,21 @@ export default function IngestionHub() {
           if (typeof window !== "undefined") {
             window.location.href = "/admin?tab=bank";
           }
+        }}
+      />
+
+      {/* Overlays: Cambridge Mark Scheme Verification Modal */}
+      <IngestionMarkSchemeModal
+        isOpen={isMarkSchemeModalOpen}
+        onClose={() => setIsMarkSchemeModalOpen(false)}
+        paper={paper}
+        onApplyFix={(fixedPaper) => {
+          setPaper(fixedPaper);
+          setPublishStatus("success");
+          setPublishMessage("Mark scheme auto-remediations successfully applied to paper.");
+        }}
+        onVerificationSuccess={(rep) => {
+          setMarkSchemeReport(rep);
         }}
       />
     </div>
