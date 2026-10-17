@@ -468,11 +468,12 @@ export function QuestionCard({
           <button
             type="button"
             onClick={onNext}
-            className="w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
+            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
           >
             <span>
-              {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
+              {questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}
             </span>
+            <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
           </button>
         </motion.div>
       )}
@@ -649,9 +650,12 @@ export function QuestionCard({
           <button
             type="button"
             onClick={onNext}
-            className="w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none text-center"
+            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
           >
-            {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
+            <span>
+              {questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}
+            </span>
+            <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
           </button>
         </motion.div>
       )}

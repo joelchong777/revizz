@@ -1052,8 +1052,10 @@ test('QuestionCard CTA: First-try correct popup CTA is positioned between questi
 
   // Verify motion and button styling invariants
   assertEqual(content.includes("transition={{ type: 'spring', stiffness: 450, damping: 25 }}"), true, 'CTA adheres to spring physics invariants');
-  assertEqual(content.includes('Next question →'), true, 'CTA includes Next question label');
-  assertEqual(content.includes('See results →'), true, 'CTA includes See results label for final question');
+  assertEqual(content.includes('bg-accent hover:bg-accent-600'), true, 'Next question button contains bg-accent hover:bg-accent-600 styling');
+  assertEqual(content.includes('text-2xl font-black'), true, 'Next question button renders arrow with larger text-2xl font-black styling');
+  assertEqual(content.includes('Next question'), true, 'CTA includes Next question label');
+  assertEqual(content.includes('See results'), true, 'CTA includes See results label for final question');
 });
 
 
