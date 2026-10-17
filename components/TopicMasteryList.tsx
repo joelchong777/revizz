@@ -37,6 +37,7 @@ export function TopicMasteryList({
   topics,
 }: TopicMasteryListProps) {
   const [firstTryIds, setFirstTryIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setFirstTryIds(getFirstTryCorrectIds());
@@ -129,6 +130,17 @@ export function TopicMasteryList({
     onPracticeTopic(topicId, topicName);
   };
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredChapters = chapters.filter((c) => {
+    if (!normalizedQuery) return true;
+    const nameMatch = c.topic.name.toLowerCase().includes(normalizedQuery);
+    const orderMatch =
+      c.topic.orderIndex !== undefined &&
+      (String(c.topic.orderIndex).includes(normalizedQuery) ||
+        `topic ${c.topic.orderIndex}`.includes(normalizedQuery));
+    return nameMatch || Boolean(orderMatch);
+  });
+
   return (
     <div className="w-full flex flex-col gap-3 select-none">
       {/* Subject Overall Mastery Card */}
@@ -177,54 +189,114 @@ export function TopicMasteryList({
         </div>
       </div>
 
-      {/* Chapters List Matching Mockup */}
-      <div className="flex flex-col gap-2.5">
-        {chapters.map((c) => (
-          <div
-            key={c.topic.id}
-            className="flex flex-col gap-2 p-3 sm:px-3.5 rounded-[22px] bg-neutral-100 border-2 border-text shadow-offset-3"
+      {/* Topic Search Bar */}
+      <div className="border-2 border-text rounded-2xl bg-surface shadow-offset-2 px-3 py-2 flex items-center gap-2 focus-within:ring-2 focus-within:ring-accent">
+        <svg
+          className="w-4 h-4 text-neutral-500 flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setSearchQuery('');
+            }
+          }}
+          placeholder="Search topics by name..."
+          aria-label="Search syllabus topics"
+          className="w-full bg-transparent text-sm font-semibold text-text placeholder:text-neutral-500 outline-none"
+        />
+        {searchQuery.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            aria-label="Clear search"
+            className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-neutral-600 hover:text-text hover:bg-neutral-200 transition-colors flex-shrink-0 cursor-pointer"
           >
-            {/* Header row: Topic Name + Tier Badge + Practice Button */}
-            <div className="flex items-center gap-2">
-              <span className="flex-1 font-bold text-sm text-text truncate">
-                {c.topic.name}
-              </span>
-              <span
-                className={cn(
-                  'px-2.5 py-0.5 rounded-full border-[1.5px] border-text text-xs font-bold whitespace-nowrap text-text flex-shrink-0',
-                  c.tierBg
-                )}
-              >
-                {c.tierLabel}
-              </span>
-              <button
-                type="button"
-                onClick={() => handlePractice(c.topic.id, c.topic.name)}
-                title={`Practice questions for ${c.topic.name}`}
-                className="px-2.5 py-1 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 text-xs font-bold border-[1.5px] border-text shadow-xs active:scale-95 transition-transform cursor-pointer flex-shrink-0"
-              >
-                Practice
-              </button>
-            </div>
-
-            {/* Progress bar row */}
-            <div className="flex items-center gap-2.5">
-              <div className="flex-1 h-3.5 rounded-full bg-bg border-2 border-text overflow-hidden">
-                <div
-                  className={cn(
-                    'h-full border-r-2 border-text transition-all duration-700 ease-out',
-                    c.barColor
-                  )}
-                  style={{ width: `${c.percentage}%` }}
-                />
-              </div>
-              <span className="font-bold text-xs text-text w-9 text-right tabular-nums">
-                {c.percentage}%
-              </span>
-            </div>
-          </div>
-        ))}
+            ✕
+          </button>
+        )}
       </div>
+
+      {/* Chapters List Matching Mockup */}
+      {filteredChapters.length === 0 ? (
+        <div className="w-full p-6 rounded-[22px] bg-neutral-100 border-2 border-text shadow-offset-3 text-center space-y-3">
+          <div className="text-3xl">🔍</div>
+          <div className="space-y-1">
+            <h3 className="font-heading text-base font-black text-text">No topics found</h3>
+            <p className="text-xs font-semibold text-neutral-600 max-w-sm mx-auto">
+              No topics matched &ldquo;{searchQuery}&rdquo;. Try another keyword or clear your search.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            className="px-3.5 py-1.5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 text-xs font-bold border-[1.5px] border-text shadow-xs active:scale-95 transition-transform cursor-pointer inline-flex items-center gap-1.5"
+          >
+            Clear search
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {filteredChapters.map((c) => (
+            <div
+              key={c.topic.id}
+              className="flex flex-col gap-2 p-3 sm:px-3.5 rounded-[22px] bg-neutral-100 border-2 border-text shadow-offset-3"
+            >
+              {/* Header row: Topic Name + Tier Badge + Practice Button */}
+              <div className="flex items-center gap-2">
+                <span className="flex-1 font-bold text-sm text-text truncate">
+                  {c.topic.name}
+                </span>
+                <span
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-full border-[1.5px] border-text text-xs font-bold whitespace-nowrap text-text flex-shrink-0',
+                    c.tierBg
+                  )}
+                >
+                  {c.tierLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handlePractice(c.topic.id, c.topic.name)}
+                  title={`Practice questions for ${c.topic.name}`}
+                  className="px-2.5 py-1 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 text-xs font-bold border-[1.5px] border-text shadow-xs active:scale-95 transition-transform cursor-pointer flex-shrink-0"
+                >
+                  Practice
+                </button>
+              </div>
+
+              {/* Progress bar row */}
+              <div className="flex items-center gap-2.5">
+                <div className="flex-1 h-3.5 rounded-full bg-bg border-2 border-text overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full border-r-2 border-text transition-all duration-700 ease-out',
+                      c.barColor
+                    )}
+                    style={{ width: `${c.percentage}%` }}
+                  />
+                </div>
+                <span className="font-bold text-xs text-text w-9 text-right tabular-nums">
+                  {c.percentage}%
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

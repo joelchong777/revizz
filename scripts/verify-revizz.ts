@@ -3485,6 +3485,41 @@ async function runSuite13() {
     );
   });
 
+  test('Static Code Contract: components/TopicMasteryList.tsx supports topic search, clear button, and empty state', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const topicListPath = path.resolve(process.cwd(), 'components/TopicMasteryList.tsx');
+    assertEqual(fs.existsSync(topicListPath), true, 'components/TopicMasteryList.tsx exists');
+
+    const content = fs.readFileSync(topicListPath, 'utf8');
+
+    // 1. Search input with aria-label and placeholder
+    assert(
+      content.includes('aria-label="Search syllabus topics"'),
+      'components/TopicMasteryList.tsx contains search input with aria-label="Search syllabus topics"'
+    );
+    assert(
+      content.includes('placeholder="Search topics by name..."'),
+      'components/TopicMasteryList.tsx contains placeholder="Search topics by name..."'
+    );
+
+    // 2. Clear search button with aria-label
+    assert(
+      content.includes('aria-label="Clear search"'),
+      'components/TopicMasteryList.tsx contains clear button with aria-label="Clear search"'
+    );
+
+    // 3. Empty state handling
+    assert(
+      content.includes('No topics found'),
+      'components/TopicMasteryList.tsx contains "No topics found" empty state message'
+    );
+    assert(
+      content.includes('Clear search'),
+      'components/TopicMasteryList.tsx contains "Clear search" action in empty state'
+    );
+  });
+
   // Summary Output
   console.log('\n========================================================');
   console.log(`   TOTAL TESTS: ${totalTests}`);
