@@ -572,9 +572,48 @@ function PortalContent() {
             </div>
           </div>
         );
+      case 'school':
+        return (
+          <div className="rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] p-8 sm:p-12 shadow-offset-4 text-center space-y-6 max-w-2xl mx-auto my-8">
+            <div className="flex justify-end">
+              <Link
+                href="/admin?tab=settings&sub=school"
+                className="px-3.5 py-1.5 text-xs font-black rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] hover:bg-[#ffc6a5] transition-all shadow-offset-2 flex items-center gap-1.5"
+              >
+                <span>⚙️ Full Admin Settings</span>
+              </Link>
+            </div>
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#fed7aa] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
+              🏫
+            </div>
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#c2410c]">Admin Access Required</span>
+              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight">
+                Institutional Licence &amp; Seat Quota Management
+              </h1>
+              <p className="text-sm font-medium text-[#645c50] leading-relaxed max-w-lg mx-auto">
+                Institutional Licence &amp; Seat Quota Management have moved to the unified <b>Platform Settings</b> under the App Admin Dashboard.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/admin?tab=settings&sub=school"
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#fed7aa] text-[#431407] font-black text-sm border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#fdba74] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2"
+              >
+                <span>Open in App Admin Settings ⚙️</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setActiveNav('overview')}
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#f9f4ed] text-[#201e1d] font-bold text-sm border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#eee7db] transition-all active:translate-y-0.5"
+              >
+                Back to Teacher Overview
+              </button>
+            </div>
+          </div>
+        );
       case 'flagged':
       case 'editor':
-      case 'school':
         return (
           <div className="rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] p-8 sm:p-12 shadow-offset-4 text-center space-y-6 max-w-2xl mx-auto my-8">
             <div className="w-16 h-16 mx-auto rounded-full bg-[#fed7aa] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
@@ -585,12 +624,10 @@ function PortalContent() {
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight">
                 {activeNav === 'flagged'
                   ? 'Flag Moderation Queue Restricted to App Admin'
-                  : activeNav === 'editor'
-                  ? 'Direct Question Editing Restricted to App Admin'
-                  : 'Institutional Licence & Seat Quota Management Restricted to App Admin'}
+                  : 'Direct Question Editing Restricted to App Admin'}
               </h1>
               <p className="text-sm font-medium text-[#645c50] leading-relaxed max-w-lg mx-auto">
-                Direct Question Editing, Flag Moderation Queues, and Institutional Licence &amp; Seat Quota Management are restricted to the <b>App Admin Dashboard (/admin)</b> so educators have a focused classroom workspace.
+                Direct Question Editing and Flag Moderation Queues are restricted to the <b>App Admin Dashboard (/admin)</b> so educators have a focused classroom workspace.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -831,6 +868,22 @@ function PortalContent() {
                 className="px-3 py-1 rounded-full bg-[#ccdbb2] border border-[#201e1d] hover:bg-[#b8c99d] transition-colors flex items-center gap-1 shrink-0 text-[#201e1d] font-bold"
               >
                 <span>Open in App Admin 🛠️</span>
+              </Link>
+            </div>
+          )}
+
+          {/* Notification banner if navigating to settings on portal */}
+          {(searchParams?.get('tab') === 'settings' || searchParams?.get('nav') === 'settings') && (
+            <div className="mb-6 p-3 px-4 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
+              <div className="flex items-center gap-2">
+                <span className="text-base">⚙️</span>
+                <span>Platform Settings are hosted in the App Admin Dashboard.</span>
+              </div>
+              <Link
+                href="/admin?tab=settings"
+                className="px-3 py-1 rounded-full bg-[#f9f4ed] border border-[#201e1d] hover:bg-[#eee7db] transition-colors flex items-center gap-1 shrink-0 text-[#201e1d] font-bold"
+              >
+                <span>Open Platform Settings ⚙️</span>
               </Link>
             </div>
           )}

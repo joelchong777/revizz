@@ -15,6 +15,7 @@ const TAB_TITLES: Record<string, string> = {
   bank: 'Question Bank',
   flagged: 'Flagged Reports',
   editor: 'Question Editor',
+  settings: 'Platform Settings',
   system: 'System Overview',
   school: 'School Licences',
   'portal-menu': 'Portal Menu Manager',
@@ -26,6 +27,7 @@ function AdminContent() {
   const { questions, loading: questionsLoading } = useQuestions();
 
   const [activeTab, setActiveTab] = useState<string>('ingestion');
+  const [subTab, setSubTab] = useState<string | undefined>(undefined);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | undefined>(undefined);
 
@@ -54,12 +56,23 @@ function AdminContent() {
       setDevOverride(true);
     }
 
+    const subParam = searchParams?.get('sub');
+    if (subParam) {
+      setSubTab(subParam);
+    }
+
     const tab = searchParams?.get('tab') || searchParams?.get('nav');
     if (tab) {
       const normalized = tab.toLowerCase();
       if (normalized === 'importer') {
         setActiveTab('ingestion');
-      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'system', 'school', 'portal-menu'].includes(normalized)) {
+      } else if (normalized === 'system') {
+        setActiveTab('settings');
+        setSubTab('system');
+      } else if (normalized === 'school') {
+        setActiveTab('settings');
+        setSubTab('school');
+      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'portal-menu'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }
@@ -70,12 +83,33 @@ function AdminContent() {
     }
   }, [searchParams, isDev]);
 
-  const handleSelectTab = (tab: string) => {
-    setActiveTab(tab);
+  const handleSelectTab = (tab: string, sub?: string) => {
+    if (tab === 'system') {
+      setActiveTab('settings');
+      setSubTab('system');
+    } else if (tab === 'school') {
+      setActiveTab('settings');
+      setSubTab('school');
+    } else {
+      setActiveTab(tab);
+      if (sub) {
+        setSubTab(sub);
+      }
+    }
     setMobileNavOpen(false);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      url.searchParams.set('tab', tab);
+      if (tab === 'system' || tab === 'school') {
+        url.searchParams.set('tab', 'settings');
+        url.searchParams.set('sub', tab);
+      } else {
+        url.searchParams.set('tab', tab);
+        if (sub) {
+          url.searchParams.set('sub', sub);
+        } else if (tab !== 'settings') {
+          url.searchParams.delete('sub');
+        }
+      }
       window.history.replaceState(null, '', url.toString());
     }
   };
@@ -499,6 +533,7 @@ function AdminContent() {
             onSelectTab={handleSelectTab}
             selectedQuestionId={selectedQuestionId}
             onSelectQuestionId={setSelectedQuestionId}
+            subTab={subTab}
           />
         </main>
       </div>

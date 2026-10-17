@@ -7,6 +7,7 @@ import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
 import PortalMenuManager from '@/components/admin/PortalMenuManager';
+import AdminSettingsHub, { SettingsSubTab } from '@/components/admin/AdminSettingsHub';
 import { useQuestions } from '@/lib/questions';
 import type { StagingQuestion } from '@/types/ingestion';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
@@ -25,9 +26,10 @@ import {
 
 export interface AppAdminHubProps {
   activeTab: string;
-  onSelectTab: (tab: string) => void;
+  onSelectTab: (tab: string, sub?: string) => void;
   selectedQuestionId?: string;
   onSelectQuestionId?: (id: string) => void;
+  subTab?: string | null;
 }
 
 export default function AppAdminHub({
@@ -35,6 +37,7 @@ export default function AppAdminHub({
   onSelectTab,
   selectedQuestionId,
   onSelectQuestionId,
+  subTab,
 }: AppAdminHubProps) {
   const { questions, loading: questionsLoading } = useQuestions();
 
@@ -319,188 +322,53 @@ export default function AppAdminHub({
     case 'editor':
       return <AdminCMS initialView="editor" questionId={selectedQuestionId || questions[0]?.id} />;
 
+    case 'settings':
+      return (
+        <AdminSettingsHub
+          initialSubTab={(subTab as SettingsSubTab) || 'school'}
+          onSelectSubTab={(s) => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', 'settings');
+              url.searchParams.set('sub', s);
+              window.history.replaceState(null, '', url.toString());
+            }
+          }}
+          onSelectParentTab={onSelectTab}
+        />
+      );
+
     case 'system':
       return (
-        <div className="space-y-6">
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
-                LIVE TELEMETRY · PRODUCTION OPS
-              </span>
-              <span className="text-xs font-mono font-bold text-emerald-800 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                ALL SYSTEMS OPERATIONAL
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#201e1d] font-heading tracking-tight">
-              Revizz Platform Command Deck
-            </h1>
-            <p className="text-sm font-medium text-[#645c50] max-w-2xl">
-              Real-time platform telemetry, OCR pipeline status, Cambridge question bank health, and institutional school allocations.
-            </p>
-          </div>
-
-          {/* High-Density KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: Total Verified Questions */}
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Total Verified Questions</span>
-                <BookOpen className="w-4 h-4 text-[#201e1d]" />
-              </div>
-              {questionsLoading ? (
-                <div className="space-y-1 py-1">
-                  <div className="h-8 w-24 bg-[#eee7db] rounded-lg animate-pulse" />
-                  <p className="text-[11px] font-bold text-[#645c50] animate-pulse">
-                    Syncing Supabase DB...
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="text-3xl font-black font-heading text-[#201e1d]">
-                    {questions.length} Live
-                  </div>
-                  <p className={`text-[11px] font-bold ${questions.length > 0 ? 'text-emerald-700' : 'text-[#8c491a]'}`}>
-                    {questions.length > 0 ? '100% Mark Scheme Audited' : '0 Questions Live. Start by uploading an exam paper in Ingestion Studio.'}
-                  </p>
-                </>
-              )}
-            </div>
-
-            {/* Card 2: Publish Pipeline */}
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Publish Pipeline</span>
-                <Layers className="w-4 h-4 text-[#201e1d]" />
-              </div>
-              <div className="text-3xl font-black font-heading text-[#201e1d]">
-                Direct DB
-              </div>
-              <p className="text-[11px] font-bold text-emerald-700">
-                Instant Publishing Active
-              </p>
-            </div>
-
-            {/* Card 3: OCR Pipeline Status */}
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">OCR Pipeline Status</span>
-                <Cpu className="w-4 h-4 text-emerald-700" />
-              </div>
-              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d] truncate">
-                Online · Gemini 1.5 Pro
-              </div>
-              <p className="text-[11px] font-bold text-emerald-700">
-                Dual-Vision + KaTeX Active
-              </p>
-            </div>
-
-            {/* Card 4: Active Schools */}
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Active Schools</span>
-                <Building2 className="w-4 h-4 text-[#8c491a]" />
-              </div>
-              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d] truncate">
-                0 Active Licences
-              </div>
-              <p className="text-[11px] font-bold text-[#645c50]">
-                No cohorts registered
-              </p>
-            </div>
-          </div>
-
-          {/* 0-State Neobrutalist Telemetry Card */}
-          {!questionsLoading && questions.length === 0 && (
-            <div className="bg-[#fff2eb] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center text-xl shrink-0">
-                  🗄️
-                </div>
-                <div>
-                  <h4 className="font-heading font-black text-sm text-[#201e1d]">
-                    0 Questions Live. Start by uploading an exam paper in Ingestion Studio
-                  </h4>
-                  <p className="text-xs font-medium text-[#645c50]">
-                    The global Cambridge question repository is currently empty. Upload question papers and mark schemes in Ingestion Studio to populate live telemetry.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => onSelectTab('ingestion')}
-                className="px-3.5 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-black text-xs hover:bg-[#ffc6a5] transition-all shadow-offset-2 active:translate-y-0.5 whitespace-nowrap cursor-pointer shrink-0"
-              >
-                Launch Ingestion Studio →
-              </button>
-            </div>
-          )}
-
-          {/* Quick Action Telemetry Buttons */}
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading font-black text-lg text-[#201e1d]">
-                Quick Action Telemetry & Control
-              </h3>
-              <span className="font-mono text-xs text-[#645c50] font-bold">
-                OPS ACTIONS
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => onSelectTab('ingestion')}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1.5 cursor-pointer active:translate-y-0.5 group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139] transition-colors">
-                    Launch Ingestion Studio
-                  </div>
-                  <span className="text-sm">⚡</span>
-                </div>
-                <div className="text-xs font-medium text-[#645c50]">
-                  Ingest and parse raw Cambridge PDF papers into structured items
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onSelectTab('diagnostics')}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1.5 cursor-pointer active:translate-y-0.5 group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139] transition-colors">
-                    Inspect OCR Diagnostics
-                  </div>
-                  <span className="text-sm">🔬</span>
-                </div>
-                <div className="text-xs font-medium text-[#645c50]">
-                  Stress-test KaTeX sanitizer and 6-point OCR bounding boxes
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onSelectTab('bank')}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-1.5 cursor-pointer active:translate-y-0.5 group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139] transition-colors">
-                    Explore Question Bank
-                  </div>
-                  <span className="text-sm">📚</span>
-                </div>
-                <div className="text-xs font-medium text-[#645c50]">
-                  Audit question stems, mark schemes, and diagram crops
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
+        <AdminSettingsHub
+          initialSubTab="system"
+          onSelectSubTab={(s) => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', 'settings');
+              url.searchParams.set('sub', s);
+              window.history.replaceState(null, '', url.toString());
+            }
+          }}
+          onSelectParentTab={onSelectTab}
+        />
       );
 
     case 'school':
-      return <SchoolLicenceManager />;
+      return (
+        <AdminSettingsHub
+          initialSubTab="school"
+          onSelectSubTab={(s) => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', 'settings');
+              url.searchParams.set('sub', s);
+              window.history.replaceState(null, '', url.toString());
+            }
+          }}
+          onSelectParentTab={onSelectTab}
+        />
+      );
 
     case 'portal-menu':
       return <PortalMenuManager />;
@@ -509,7 +377,6 @@ export default function AppAdminHub({
       return renderIngestion();
   }
 }
-
 interface EducatorSeat {
   id: string;
   name: string;

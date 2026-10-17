@@ -14,6 +14,7 @@ import {
   X,
   ShieldCheck,
   Menu,
+  Sliders,
 } from 'lucide-react';
 
 export interface AppAdminNavProps {
@@ -263,25 +264,18 @@ export default function AppAdminNav({
             <nav className="flex flex-col gap-1">
               <button
                 type="button"
-                onClick={() => handleNavClick('system')}
-                className={navItemClass('system')}
-                title="System Overview"
+                onClick={() => handleNavClick('settings')}
+                className={navItemClass('settings')}
+                title="Platform Settings"
               >
-                {renderIcon(Activity, 'system')}
+                {renderIcon(Sliders, 'settings')}
                 {!compact && (
-                  <span className="flex-1 min-w-0 truncate">System Overview</span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleNavClick('school')}
-                className={navItemClass('school')}
-                title="School Licences"
-              >
-                {renderIcon(Building2, 'school')}
-                {!compact && (
-                  <span className="flex-1 min-w-0 truncate">School Licences</span>
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Platform Settings</span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-mono font-bold border border-[#201e1d]/25 shrink-0">
+                      5 Panels
+                    </span>
+                  </>
                 )}
               </button>
 
