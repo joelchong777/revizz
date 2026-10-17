@@ -299,7 +299,15 @@ export default function AppAdminNav({
       <div className="pt-3 border-t-2 border-[#201e1d]/15 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2">
-            AD
+            {(() => {
+              const trimmed = (userDisplayName || '').trim();
+              if (!trimmed) return 'AD';
+              const parts = trimmed.split(/\s+/).filter(Boolean);
+              if (parts.length >= 2) {
+                return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+              }
+              return trimmed.slice(0, 2).toUpperCase();
+            })()}
           </div>
           {!compact && (
             <div className="flex flex-col min-w-0">

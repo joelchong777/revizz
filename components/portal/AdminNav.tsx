@@ -61,9 +61,9 @@ export default function AdminNav({
         .join('')
         .slice(0, 2)
         .toUpperCase()
-    : 'AO';
+    : 'ED';
   const avatarBg = 'var(--color-accent-300, #ffe1d0)';
-  const userName = userDisplayName || 'Ms. A. Okafor';
+  const userName = userDisplayName || 'Educator';
   const userRole = isAdmin ? 'Teacher · School admin' : 'Teacher · Educator';
 
   const [navConfig, setNavConfig] = React.useState<PortalNavItem[]>([]);

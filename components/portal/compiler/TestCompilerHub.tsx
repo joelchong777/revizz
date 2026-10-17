@@ -87,11 +87,11 @@ export default function TestCompilerHub() {
     const found = SUBJECT_CATALOG.find((s) => s.code === subjectCode);
     return found ? found.name : 'Economics';
   }, [subjectCode]);
-  const [testTitle, setTestTitle] = useState('Term 1 Mock Assessment - Economics');
-  const [schoolName, setSchoolName] = useState('School Assessment');
+  const [testTitle, setTestTitle] = useState('');
+  const [schoolName, setSchoolName] = useState('');
   const [dateString, setDateString] = useState('October 2026');
   const [durationMinutes, setDurationMinutes] = useState(45);
-  const [testCode, setTestCode] = useState('REV-0455-M26-001');
+  const [testCode, setTestCode] = useState('');
 
   const [includeCoverPage, setIncludeCoverPage] = useState(true);
   const [includeCandidateHeader, setIncludeCandidateHeader] = useState(true);
@@ -1006,8 +1006,8 @@ export default function TestCompilerHub() {
                         setSubjectCode(newCode);
                         const cat = SUBJECT_CATALOG.find((s) => s.code === newCode);
                         if (cat) {
-                          setTestTitle(`Term 1 Mock Assessment - ${cat.name}`);
-                          setTestCode(`REV-${cat.code}-M26-001`);
+                          if (testTitle) setTestTitle(`Assessment - ${cat.name}`);
+                          if (testCode) setTestCode(`REV-${cat.code}`);
                         }
                       }}
                       className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
@@ -1024,7 +1024,7 @@ export default function TestCompilerHub() {
                     type="text"
                     value={testTitle}
                     onChange={(e) => setTestTitle(e.target.value)}
-                    placeholder="Test Title"
+                    placeholder="Enter assessment title..."
                     aria-label="Test Title"
                     className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
                   />
@@ -1032,7 +1032,7 @@ export default function TestCompilerHub() {
                     type="text"
                     value={schoolName}
                     onChange={(e) => setSchoolName(e.target.value)}
-                    placeholder="School Name"
+                    placeholder="Enter school name..."
                     aria-label="School Name"
                     className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
                   />
@@ -1058,7 +1058,7 @@ export default function TestCompilerHub() {
                     type="text"
                     value={testCode}
                     onChange={(e) => setTestCode(e.target.value)}
-                    placeholder="Test Code"
+                    placeholder="e.g. REV-0455-T1"
                     aria-label="Test Code"
                     className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
                   />

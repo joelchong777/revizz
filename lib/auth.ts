@@ -163,7 +163,7 @@ export const GUEST_EDUCATOR_STORAGE_KEY = 'revizz_guest_educator_session';
 export const DEFAULT_GUEST_EDUCATOR_PROFILE: UserProfile = {
   id: 'guest-educator-local',
   display_name: 'Guest Educator',
-  email: 'educator.guest@frontier.edu',
+  email: 'educator.guest@revizz.app',
   is_school_account: true,
   total_xp: 2500,
   current_streak: 5,

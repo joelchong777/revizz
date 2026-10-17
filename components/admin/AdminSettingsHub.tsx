@@ -56,7 +56,7 @@ interface EducatorSeat {
 }
 
 const TABS: { id: SettingsSubTab; label: string; icon: React.ElementType; badge: string }[] = [
-  { id: 'school', label: 'School & Licences', icon: Building2, badge: '4 Cohorts' },
+  { id: 'school', label: 'School & Licences', icon: Building2, badge: 'Cohorts' },
   { id: 'system', label: 'System & Telemetry', icon: Activity, badge: 'Online' },
   { id: 'ingestion', label: 'Ingestion & AI Engine', icon: Sparkles, badge: 'v2.5 Flash' },
   { id: 'gameplay', label: 'Curriculum & Quiz Rules', icon: Sliders, badge: '2-Try Active' },
@@ -94,86 +94,24 @@ export default function AdminSettingsHub({
   // ==========================================
   // TAB 1: SCHOOL & LICENCES STATE
   // ==========================================
-  const [planTier, setPlanTier] = useState('Enterprise Campus');
-  const [totalSeatQuota, setTotalSeatQuota] = useState(500);
-  const [utilizedSeats, setUtilizedSeats] = useState(250);
-  const [teacherSeatLimit, setTeacherSeatLimit] = useState(25);
-  const [licenceExpiry, setLicenceExpiry] = useState('2027-08-31');
+  const [planTier, setPlanTier] = useState('Standard Educator');
+  const [totalSeatQuota, setTotalSeatQuota] = useState(0);
+  const [utilizedSeats, setUtilizedSeats] = useState(0);
+  const [teacherSeatLimit, setTeacherSeatLimit] = useState(0);
+  const [licenceExpiry, setLicenceExpiry] = useState('');
   const [schoolSaveSuccess, setSchoolSaveSuccess] = useState(false);
 
-  const [cohorts, setCohorts] = useState<InstitutionalCohort[]>([
-    {
-      id: 'coh-1',
-      name: '10A Physics',
-      subjectCode: '0625',
-      department: 'Physics',
-      studentCount: 28,
-      assignedTeacher: 'Dr. Marcus Vance',
-      term: '2026-2027 Session',
-    },
-    {
-      id: 'coh-2',
-      name: '10B Physics',
-      subjectCode: '0625',
-      department: 'Physics',
-      studentCount: 26,
-      assignedTeacher: 'Dr. Marcus Vance',
-      term: '2026-2027 Session',
-    },
-    {
-      id: 'coh-3',
-      name: '11A Physics',
-      subjectCode: '0625',
-      department: 'Physics',
-      studentCount: 30,
-      assignedTeacher: 'Sarah Jenkins',
-      term: '2026-2027 Session',
-    },
-    {
-      id: 'coh-4',
-      name: '10 Economics',
-      subjectCode: '0455',
-      department: 'Economics',
-      studentCount: 32,
-      assignedTeacher: 'Dr. Jane Smith',
-      term: '2026-2027 Session',
-    },
-  ]);
+  const [cohorts, setCohorts] = useState<InstitutionalCohort[]>([]);
 
   const [showAddCohort, setShowAddCohort] = useState(false);
   const [newCohortName, setNewCohortName] = useState('');
   const [newCohortSubject, setNewCohortSubject] = useState('0625 Physics');
   const [newCohortDept, setNewCohortDept] = useState('Physics');
   const [newCohortStudents, setNewCohortStudents] = useState(25);
-  const [newCohortTeacher, setNewCohortTeacher] = useState('Dr. Marcus Vance');
+  const [newCohortTeacher, setNewCohortTeacher] = useState('');
   const [newCohortTerm, setNewCohortTerm] = useState('2026-2027 Session');
 
-  const [educators, setEducators] = useState<EducatorSeat[]>([
-    {
-      id: 'ed-1',
-      name: 'Dr. Jane Smith',
-      email: 'jane.smith@revizz.edu',
-      department: 'Economics',
-      role: 'Teacher (Read-Only Bank)',
-      status: 'Active',
-    },
-    {
-      id: 'ed-2',
-      name: 'Dr. Marcus Vance',
-      email: 'marcus.v@revizz.edu',
-      department: 'Physics',
-      role: 'App Admin (Full Edit)',
-      status: 'Active',
-    },
-    {
-      id: 'ed-3',
-      name: 'Sarah Jenkins',
-      email: 's.jenkins@revizz.edu',
-      department: 'Physics',
-      role: 'Teacher (Read-Only Bank)',
-      status: 'Active',
-    },
-  ]);
+  const [educators, setEducators] = useState<EducatorSeat[]>([]);
 
   const [showAddEducator, setShowAddEducator] = useState(false);
   const [newEducatorName, setNewEducatorName] = useState('');
@@ -443,13 +381,13 @@ export default function AdminSettingsHub({
                 <div className="w-full bg-[#eee7db] rounded-full h-2.5 border border-[#201e1d] overflow-hidden">
                   <div
                     className="bg-[#201e1d] h-full rounded-full transition-all duration-300"
-                    style={{ width: `${Math.min(100, Math.round((utilizedSeats / totalSeatQuota) * 100))}%` }}
+                    style={{ width: `${Math.min(100, totalSeatQuota > 0 ? Math.round((utilizedSeats / totalSeatQuota) * 100) : 0)}%` }}
                   />
                 </div>
               </div>
               <div className="flex items-center justify-between text-xs font-bold text-[#645c50]">
                 <span>{Math.max(0, totalSeatQuota - utilizedSeats)} seats remaining</span>
-                <span className="text-[#201e1d] font-black">{Math.round((utilizedSeats / totalSeatQuota) * 100)}% Used</span>
+                <span className="text-[#201e1d] font-black">{totalSeatQuota > 0 ? Math.round((utilizedSeats / totalSeatQuota) * 100) : 0}% Used</span>
               </div>
             </div>
 
@@ -472,14 +410,14 @@ export default function AdminSettingsHub({
               <div className="flex items-center justify-between text-[#645c50]">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider">Licence Status</span>
                 <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-black text-[#272e1b]">
-                  ACTIVE
+                  {licenceExpiry ? 'ACTIVE' : 'STANDARD'}
                 </span>
               </div>
               <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-                Aug 2027
+                {licenceExpiry || 'Standard Tier'}
               </div>
               <p className="text-xs font-bold text-[#645c50]">
-                Tier: <span className="text-[#201e1d] font-black">{planTier}</span> (Renewal: {licenceExpiry})
+                Tier: <span className="text-[#201e1d] font-black">{planTier}</span>{licenceExpiry ? ` (Renewal: ${licenceExpiry})` : ' (No expiry configured)'}
               </p>
             </div>
           </div>
@@ -562,7 +500,7 @@ export default function AdminSettingsHub({
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Dr. Marcus Vance"
+                      placeholder="e.g. Instructor Name"
                       value={newCohortTeacher}
                       onChange={(e) => setNewCohortTeacher(e.target.value)}
                       className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
@@ -642,6 +580,13 @@ export default function AdminSettingsHub({
                       </td>
                     </tr>
                   ))}
+                  {cohorts.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-xs sm:text-sm font-bold text-[#645c50]">
+                        No institutional cohorts registered yet. Click &quot;+ New Cohort&quot; to configure classroom groups.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -763,6 +708,13 @@ export default function AdminSettingsHub({
                       </td>
                     </tr>
                   ))}
+                  {educators.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-xs sm:text-sm font-bold text-[#645c50]">
+                        No licensed educators assigned yet. Click &quot;+ Invite Educator&quot; to grant team access.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -795,6 +747,7 @@ export default function AdminSettingsHub({
                   onChange={(e) => setPlanTier(e.target.value)}
                   className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
                 >
+                  <option value="Standard Educator">Standard Educator</option>
                   <option value="Enterprise Campus">Enterprise Campus</option>
                   <option value="Department Pro">Department Pro</option>
                   <option value="Pilot">Pilot</option>

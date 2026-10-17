@@ -176,7 +176,7 @@ export function Header({
 
   const flameFill = displayStreak >= 3 ? '#c67139' : '#a19786';
 
-  const userName = userProfile?.display_name || 'Alex M.';
+  const userName = userProfile?.display_name || 'Guest Learner';
   const userInitials = userProfile?.display_name
     ? userProfile.display_name
         .split(' ')
@@ -185,7 +185,7 @@ export function Header({
         .replace('.', '')
         .slice(0, 2)
         .toUpperCase()
-    : 'AM';
+    : 'GL';
   const isDev = process.env.NODE_ENV === 'development';
   const isAdmin = userProfile?.role === 'admin' || isDev;
 
@@ -366,7 +366,7 @@ export function Header({
                     <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
-                  {userProfile?.is_school_account ? "Frontier Int'l" : "Frontier Int'l"}
+                  {userProfile?.is_school_account ? ((userProfile as any).school_name || 'School Member') : 'Revizz Learner'}
                 </span>
               </div>
             </div>

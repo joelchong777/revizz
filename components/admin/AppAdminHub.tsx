@@ -377,7 +377,8 @@ export default function AppAdminHub({
       return renderIngestion();
   }
 }
-interface EducatorSeat {
+
+export interface EducatorSeat {
   id: string;
   name: string;
   email: string;
@@ -386,7 +387,7 @@ interface EducatorSeat {
   status: 'Active' | 'Invited';
 }
 
-interface InstitutionalCohort {
+export interface InstitutionalCohort {
   id: string;
   name: string;
   department: string;
@@ -394,74 +395,27 @@ interface InstitutionalCohort {
   term: string;
 }
 
-function SchoolLicenceManager() {
-  const [planTier, setPlanTier] = useState('Enterprise Campus');
-  const [totalSeatQuota, setTotalSeatQuota] = useState(300);
-  const [teacherSeatLimit, setTeacherSeatLimit] = useState(15);
-  const [licenceExpiry, setLicenceExpiry] = useState('2027-08-31');
+export function SchoolLicenceManager() {
+  const [planTier, setPlanTier] = useState('Standard Educator');
+  const [totalSeatQuota, setTotalSeatQuota] = useState(0);
+  const [teacherSeatLimit, setTeacherSeatLimit] = useState(0);
+  const [licenceExpiry, setLicenceExpiry] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const [educators, setEducators] = useState<EducatorSeat[]>([
-    {
-      id: 'ed-1',
-      name: 'Dr. Jane Smith',
-      email: 'jane.smith@revizz.edu',
-      department: 'Economics',
-      role: 'Teacher (Read-Only Bank)',
-      status: 'Active',
-    },
-    {
-      id: 'ed-2',
-      name: 'Marcus Vance',
-      email: 'marcus.v@revizz.edu',
-      department: 'Business Studies',
-      role: 'App Admin (Full Edit)',
-      status: 'Active',
-    },
-    {
-      id: 'ed-3',
-      name: 'Sarah Jenkins',
-      email: 's.jenkins@revizz.edu',
-      department: 'Accounting',
-      role: 'Teacher (Read-Only Bank)',
-      status: 'Active',
-    },
-  ]);
+  const [educators, setEducators] = useState<EducatorSeat[]>([]);
 
   const [newEducatorName, setNewEducatorName] = useState('');
   const [newEducatorEmail, setNewEducatorEmail] = useState('');
-  const [newEducatorDept, setNewEducatorDept] = useState('Economics');
+  const [newEducatorDept, setNewEducatorDept] = useState('');
   const [newEducatorRole, setNewEducatorRole] = useState<'Teacher (Read-Only Bank)' | 'App Admin (Full Edit)'>('Teacher (Read-Only Bank)');
   const [showAddEducator, setShowAddEducator] = useState(false);
 
-  const [cohorts, setCohorts] = useState<InstitutionalCohort[]>([
-    {
-      id: 'coh-1',
-      name: 'Grade 12 Economics (0455)',
-      department: 'Economics',
-      studentCount: 28,
-      term: '2026-2027 Session',
-    },
-    {
-      id: 'coh-2',
-      name: 'Grade 11 Business Studies (0450)',
-      department: 'Business Studies',
-      studentCount: 32,
-      term: '2026-2027 Session',
-    },
-    {
-      id: 'coh-3',
-      name: 'Grade 10 IGCSE Accounting (0452)',
-      department: 'Accounting',
-      studentCount: 24,
-      term: '2026-2027 Session',
-    },
-  ]);
+  const [cohorts, setCohorts] = useState<InstitutionalCohort[]>([]);
 
   const [newCohortName, setNewCohortName] = useState('');
-  const [newCohortDept, setNewCohortDept] = useState('Economics');
-  const [newCohortStudents, setNewCohortStudents] = useState(30);
-  const [newCohortTerm, setNewCohortTerm] = useState('2026-2027 Session');
+  const [newCohortDept, setNewCohortDept] = useState('');
+  const [newCohortStudents, setNewCohortStudents] = useState(25);
+  const [newCohortTerm, setNewCohortTerm] = useState('Current Term');
   const [showAddCohort, setShowAddCohort] = useState(false);
 
   const handleSaveQuotas = (e: React.FormEvent) => {
@@ -579,7 +533,7 @@ function SchoolLicenceManager() {
             Licence Expiry
           </span>
           <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-            {licenceExpiry}
+            {licenceExpiry || 'Not Configured'}
           </div>
           <p className="text-xs font-bold text-[#645c50]">
             Tier: <span className="text-[#201e1d] font-black">{planTier}</span>
@@ -616,6 +570,7 @@ function SchoolLicenceManager() {
                 onChange={(e) => setPlanTier(e.target.value)}
                 className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-1 focus:outline-none focus:ring-2 focus:ring-[#ffe1d0]"
               >
+                <option value="Standard Educator">Standard Educator</option>
                 <option value="Enterprise Campus">Enterprise Campus</option>
                 <option value="Department Pro">Department Pro</option>
                 <option value="Pilot">Pilot</option>
@@ -628,7 +583,7 @@ function SchoolLicenceManager() {
               </label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 value={totalSeatQuota}
                 onChange={(e) => setTotalSeatQuota(Number(e.target.value) || 0)}
                 className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-1 focus:outline-none focus:ring-2 focus:ring-[#ffe1d0]"
@@ -641,7 +596,7 @@ function SchoolLicenceManager() {
               </label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 value={teacherSeatLimit}
                 onChange={(e) => setTeacherSeatLimit(Number(e.target.value) || 0)}
                 className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-sm font-bold text-[#201e1d] shadow-offset-1 focus:outline-none focus:ring-2 focus:ring-[#ffe1d0]"
@@ -707,7 +662,7 @@ function SchoolLicenceManager() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <input
                 type="text"
-                placeholder="Full Name (e.g. Dr. Jane Smith)"
+                placeholder="Full Name (e.g. Instructor Name)"
                 value={newEducatorName}
                 onChange={(e) => setNewEducatorName(e.target.value)}
                 required
@@ -715,7 +670,7 @@ function SchoolLicenceManager() {
               />
               <input
                 type="email"
-                placeholder="Email Address"
+                placeholder="Email (e.g. educator@school.edu)"
                 value={newEducatorEmail}
                 onChange={(e) => setNewEducatorEmail(e.target.value)}
                 required
@@ -723,7 +678,7 @@ function SchoolLicenceManager() {
               />
               <input
                 type="text"
-                placeholder="Department (e.g. Economics)"
+                placeholder="Department (e.g. Science)"
                 value={newEducatorDept}
                 onChange={(e) => setNewEducatorDept(e.target.value)}
                 className="bg-white border-2 border-[#201e1d] rounded-xl px-3 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none"
@@ -819,6 +774,13 @@ function SchoolLicenceManager() {
                   </td>
                 </tr>
               ))}
+              {educators.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-xs font-medium text-[#645c50]">
+                    No educator seats assigned yet. Click &quot;+ Allocate Educator Seat&quot; to allocate licences.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -853,7 +815,7 @@ function SchoolLicenceManager() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <input
                 type="text"
-                placeholder="Cohort Name (e.g. Grade 10 Econ)"
+                placeholder="Cohort Name (e.g. Year 10 Group)"
                 value={newCohortName}
                 onChange={(e) => setNewCohortName(e.target.value)}
                 required
