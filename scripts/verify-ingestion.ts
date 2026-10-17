@@ -15,6 +15,7 @@ import {
   fixEscapedBackslashes,
   normalizeMathDelimiters,
   normalizeUnits,
+  validateKaTeXSyntax,
 } from '../lib/ingestion/katexSanitizer';
 
 let passed = 0;
@@ -319,6 +320,36 @@ console.log('\nTest Suite 2: KaTeX Sanitizer & Typography Normalization');
     normalizeMathDelimiters('Unclosed $ x and later') === 'Unclosed $ x and later',
     'Unclosed $ with no partner is left unchanged'
   );
+  assert(
+    normalizeMathDelimiters('$a$ then $b$ and then $c$') === '$a$ then $b$ and then $c$',
+    'Three inline spans on one line keep every space between them'
+  );
+  assert(
+    normalizeMathDelimiters('$ a $ then $ b $ and then $ c $') === '$a$ then $b$ and then $c$',
+    'Three padded inline spans on one line are each trimmed and the prose is untouched'
+  );
+  assert(
+    normalizeMathDelimiters('\\( x \\) and \\( y \\)') === '$x$ and $y$',
+    'Two \\(...\\) spans convert to $...$ and keep the space between them'
+  );
+  assert(
+    normalizeMathDelimiters('$ a $ then $ b $\r\n$ c $ and $ d $\r\n') === '$a$ then $b$\r\n$c$ and $d$\r\n',
+    'Windows \\r\\n line endings: spans trimmed per line, line endings and prose preserved'
+  );
+  assert(
+    normalizeMathDelimiters('**$P_1$** rises to **$P_2$**') === '**$P_1$** rises to **$P_2$**',
+    'Bold markers around two inline spans are preserved with the prose between'
+  );
+  assert(
+    normalizeMathDelimiters('$ a $ then $$ x') === '$a$ then $$ x',
+    'An unclosed $$ after a padded span is left alone and does not swallow the span'
+  );
+  assert(
+    normalizeMathDelimiters(null as unknown as string) === '' &&
+      normalizeMathDelimiters(undefined as unknown as string) === '' &&
+      normalizeMathDelimiters('') === '',
+    'null, undefined and empty input return an empty string'
+  );
 }
 
 // 7. Escaped backslash normalization tests
@@ -442,6 +473,107 @@ console.log('\nTest Suite 2: KaTeX Sanitizer & Typography Normalization');
     sanitizeKaTeX('a $ $ b') === 'a $ $ b',
     'Whitespace-only span is not collapsed into a display $$'
   );
+  assert(
+    sanitizeKaTeX('It costs $1,500.50 to $2,000 when $D_1$ shifts to $D_2$.') ===
+      'It costs \\$1,500.50 to \\$2,000 when $D_1$ shifts to $D_2$.',
+    'Currency with commas and decimals is escaped and the spaces between two spans survive'
+  );
+  assert(
+    sanitizeKaTeX('Costs $1,500.50 and $x$ rises to $y$') === 'Costs \\$1,500.50 and $x$ rises to $y$',
+    'Odd currency amount with decimals before two spans leaves the prose between them intact'
+  );
+  assert(
+    sanitizeKaTeX('US$100 to US$200 and $x$ and $y$') === 'US\\$100 to US\\$200 and $x$ and $y$',
+    'Two US$ amounts followed by two spans: both escaped, every space kept'
+  );
+  assert(
+    sanitizeKaTeX('SGD$50 when $x$ rises to $y$') === 'SGD\\$50 when $x$ rises to $y$',
+    'SGD$ prefix currency before two spans: escaped, every space kept'
+  );
+  assert(
+    sanitizeKaTeX('$a$ then $b$ and then $c$') === '$a$ then $b$ and then $c$',
+    'Three inline spans on one line keep every space between them'
+  );
+  assert(
+    sanitizeKaTeX('\\[ a \\] then \\( b \\) and \\( c \\)') === '$$a$$ then $b$ and $c$',
+    'Mixed \\[...\\] and \\(...\\) delimiters convert without eating the prose between spans'
+  );
+  assert(
+    sanitizeKaTeX('$5\\%$ of $x$ and $10%$ of $y$') === '$5\\%$ of $x$ and $10\\%$ of $y$',
+    'Percent is escaped per span (\\%) without touching the prose between spans'
+  );
+  assert(
+    sanitizeKaTeX('$\\text{costs \\$5}$ and $y$') === '$\\text{costs \\$5}$ and $y$',
+    'An escaped \\$ inside a span does not close it and the following prose is kept'
+  );
+  assert(
+    sanitizeKaTeX('**$P_1$** rises to **$P_2$**') === '**$P_1$** rises to **$P_2$**',
+    'Bold markers around two inline spans are preserved with the prose between'
+  );
+  assert(
+    sanitizeKaTeX('$ a $ then $ b $\r\n$ c $ and $ d $\r\n') === '$a$ then $b$\r\n$c$ and $d$\r\n',
+    'Windows \\r\\n line endings: spans trimmed per line, line endings and prose preserved'
+  );
+  assert(
+    sanitizeKaTeX('$ a $ then $$ x') === '$a$ then $$ x',
+    'An unclosed $$ after a padded span is left alone'
+  );
+  assert(
+    sanitizeKaTeX(null as unknown as string) === '' &&
+      sanitizeKaTeX(undefined as unknown as string) === '' &&
+      sanitizeKaTeX('') === '',
+    'sanitizeKaTeX returns an empty string for null, undefined and empty input'
+  );
+  {
+    // Lines taken from real staged papers (Economics 0455) where the old step 3 / step 4 ate the spaces
+    const q28 =
+      'The diagram shows the market for the Chinese yuan (¥) priced in US dollars (\\$).\n\nWhat could have caused the change in demand for the yuan from $D_1$ to $D_2$?';
+    assert(sanitizeKaTeX(q28) === q28, 'Real stem (0455_s24_12 Q28): "from $D_1$ to $D_2$" is returned unchanged');
+
+    const atc = 'What would cause the shift from $\\text{ATC}_1$ to $\\text{ATC}_2$?';
+    assert(sanitizeKaTeX(atc) === atc, 'Real explanation (0455_w24_12 Q13): "$\\text{ATC}_1$ to $\\text{ATC}_2$" is unchanged');
+
+    const secondary =
+      'The deficit narrowed from $-1.11$ to $-1.02$ trillion yen, representing an improvement of $+0.09$ trillion yen.';
+    assert(sanitizeKaTeX(secondary) === secondary, 'Real explanation (0455_s24_12 Q30): signed-number spans keep their spaces');
+
+    const yearly =
+      'the student sacrifices $\\$16,000 - \\$10,000 = \\$6,000$ per year, which over two years equals $2 \\times \\$6,000 = \\$12,000$.';
+    assert(sanitizeKaTeX(yearly) === yearly, 'Real explanation (0455_s24_12 Q2): spans containing escaped \\$ keep the prose around them');
+  }
+  {
+    const once = sanitizeKaTeX('Price rises from $50 to $60 when $D_1$ shifts to $D_2$ and $ x $ equals $P_1$.');
+    assert(
+      once === 'Price rises from \\$50 to \\$60 when $D_1$ shifts to $D_2$ and $x$ equals $P_1$.' &&
+        sanitizeKaTeX(once) === once,
+      'sanitizeKaTeX is idempotent on prose with currency, padded and unpadded spans'
+    );
+  }
+  {
+    // validateKaTeXSyntax must report, never throw, on the delimiter edge cases the sanitizer now walks
+    const edgeInputs: unknown[] = [
+      'a \\\\$ x $ b',
+      '$x$$$y$$',
+      '$$$',
+      'a $$ x + y',
+      '$ a $ then $$ x',
+      '$ a $ then $ b $\r\n$ c $\r\n',
+      'US$100 and $x$ and $y$',
+      '',
+      null,
+      undefined,
+    ];
+    let threw = false;
+    for (const input of edgeInputs) {
+      try {
+        const v = validateKaTeXSyntax(input as string);
+        if (typeof v.isValid !== 'boolean' || !Array.isArray(v.errors)) threw = true;
+      } catch {
+        threw = true;
+      }
+    }
+    assert(!threw, 'validateKaTeXSyntax returns { isValid, errors } and never throws on delimiter edge cases');
+  }
 
   try {
     const inlineMath = '20 \\text{m/s}';
