@@ -38,12 +38,15 @@ export type Question = {
   subtopic?: string;
 };
 
+export type DiagramFilter = 'mixed' | 'diagrams' | 'no-diagrams';
+
 export type QuizRoundConfig = {
   subject: string;
   sourceType: 'topic' | 'paper' | 'random' | 'review';
   sourceValue: string; // e.g., topic id, paper id, or 'review'
   roundLength: 3 | 5 | 10 | 30 | 'endless';
   isTimed: boolean;
+  diagramFilter?: DiagramFilter;
 };
 
 export type GameState = 'setup' | 'playing' | 'finished';

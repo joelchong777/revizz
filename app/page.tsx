@@ -11,6 +11,9 @@ import {
   fetchTopicsFromDb,
   SyllabusTopic,
   shuffleQuestions,
+  CAMBRIDGE_QUESTIONS,
+  isDiagramQuestion,
+  filterQuestionsByDiagram,
 } from '../lib/questions';
 import { getReviewPileIds } from '../lib/mastery';
 
@@ -71,6 +74,19 @@ export default function HomePage() {
     if (config.sourceType === 'topic' && config.sourceValue !== 'all') {
       const topicFiltered = pool.filter((q) => q.topic_id === config.sourceValue);
       if (topicFiltered.length > 0) pool = topicFiltered;
+    }
+
+    if (config.diagramFilter && config.diagramFilter !== 'mixed') {
+      const filtered = filterQuestionsByDiagram(pool, config.diagramFilter);
+      if (filtered.length > 0) {
+        pool = filtered;
+      } else {
+        // Fallback across full question bank if topic had zero matching questions
+        const subjectFallback = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, config.diagramFilter);
+        if (subjectFallback.length > 0) {
+          pool = subjectFallback;
+        }
+      }
     }
 
     pool = shuffleQuestions(pool);
@@ -139,6 +155,7 @@ export default function HomePage() {
         sourceValue: 'all',
         roundLength: 5,
         isTimed: true,
+        diagramFilter: 'mixed',
       });
     }
   };

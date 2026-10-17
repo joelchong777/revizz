@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { QuizRoundConfig } from '../hooks/useQuizGame';
+import { QuizRoundConfig, DiagramFilter } from '../hooks/useQuizGame';
 import { getReviewPileCount, subscribeMasteryChanges, getFirstTryCorrectIds } from '@/lib/mastery';
 import { playPop } from '@/lib/audio';
 import { TopicMasteryList } from './TopicMasteryList';
@@ -33,6 +33,7 @@ export function StartFlow({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'review'>('standard');
   const [roundLength, setRoundLength] = useState<3 | 5 | 10 | 'endless'>(5);
+  const [diagramFilter, setDiagramFilter] = useState<DiagramFilter>('mixed');
   const [isTimed, setIsTimed] = useState<boolean>(true);
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [isMasteryOpen, setIsMasteryOpen] = useState<boolean>(false);
@@ -96,6 +97,13 @@ export function StartFlow({
         const parsed = JSON.parse(saved);
         if (parsed.roundLength) setRoundLength(parsed.roundLength);
         if (typeof parsed.isTimed === 'boolean') setIsTimed(parsed.isTimed);
+        if (
+          parsed.diagramFilter === 'mixed' ||
+          parsed.diagramFilter === 'diagrams' ||
+          parsed.diagramFilter === 'no-diagrams'
+        ) {
+          setDiagramFilter(parsed.diagramFilter);
+        }
         if (parsed.sourceType === 'review') setSelectedMode('review');
         else if (parsed.sourceType === 'topic') setSelectedMode('topic');
         else setSelectedMode('standard');
@@ -176,6 +184,7 @@ export function StartFlow({
       sourceValue: selectedMode === 'topic' ? 'all' : 'random',
       roundLength,
       isTimed,
+      diagramFilter,
     };
 
     localStorage.setItem('revizz_last_config', JSON.stringify(roundConfig));
@@ -196,6 +205,11 @@ export function StartFlow({
   const handleLengthSelect = (len: 3 | 5 | 10 | 'endless') => {
     playPop();
     setRoundLength(len);
+  };
+
+  const handleDiagramFilterSelect = (filter: DiagramFilter) => {
+    playPop();
+    setDiagramFilter(filter);
   };
 
   const handleTimerSelect = (timed: boolean) => {
@@ -423,7 +437,62 @@ export function StartFlow({
         </div>
       </div>
 
-      {/* 4. Timer Selection */}
+      {/* 4. Questions (Diagram Filter) */}
+      <div className="flex flex-col gap-2.5">
+        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+          Questions
+        </h2>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            {
+              val: 'mixed' as const,
+              icon: '🔀',
+              label: 'Mixed',
+              subtitle: 'All questions',
+              selectedBg: 'bg-accent-2-300',
+            },
+            {
+              val: 'diagrams' as const,
+              icon: '📊',
+              label: 'Diagrams',
+              subtitle: 'Visual charts',
+              selectedBg: 'bg-accent-300',
+            },
+            {
+              val: 'no-diagrams' as const,
+              icon: '📝',
+              label: 'No diagrams',
+              subtitle: 'Text only',
+              selectedBg: 'bg-neutral-200',
+            },
+          ].map((opt) => {
+            const isSelected = diagramFilter === opt.val;
+            return (
+              <button
+                key={opt.val}
+                type="button"
+                onClick={() => handleDiagramFilterSelect(opt.val)}
+                className={cn(
+                  'flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
+                  isSelected
+                    ? `${opt.selectedBg} shadow-none translate-x-[3px] translate-y-[3px]`
+                    : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                )}
+              >
+                <span className="font-heading text-sm text-text flex items-center gap-1.5 leading-tight">
+                  <span className="text-base">{opt.icon}</span>
+                  {opt.label}
+                </span>
+                <span className="text-[11px] font-semibold opacity-85 text-text leading-tight">
+                  {opt.subtitle}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 5. Timer Selection */}
       <div className="flex flex-col gap-2.5">
         <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
           Timer
@@ -461,7 +530,7 @@ export function StartFlow({
         </div>
       </div>
 
-      {/* 5. Topic Mastery Card Trigger */}
+      {/* 6. Topic Mastery Card Trigger */}
       <button
         type="button"
         onClick={() => {
@@ -508,7 +577,7 @@ export function StartFlow({
         </svg>
       </button>
 
-      {/* 6. Hero CTA: START ROUND 🚀 */}
+      {/* 7. Hero CTA: START ROUND 🚀 */}
       <button
         type="button"
         onClick={handleStart}

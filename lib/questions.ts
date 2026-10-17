@@ -1,9 +1,9 @@
-import type { Question } from '../hooks/useQuizGame';
+import type { Question, DiagramFilter } from '../hooks/useQuizGame';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { resolveDiagramUrl } from './resolveDiagramUrl';
 export { resolveDiagramUrl };
-export type { Question };
+export type { Question, DiagramFilter };
 
 export interface SyllabusTopic {
   id: string;
@@ -500,6 +500,28 @@ export function getQuestionsByIds(ids: string[], pool?: Question[]): Question[] 
   const set = new Set(ids);
   const source = pool ?? _cachedQuestions;
   return source.filter((q) => set.has(q.id));
+}
+
+export function isDiagramQuestion(q: Question): boolean {
+  return Boolean(
+    q.has_diagram ||
+    q.diagram?.has_diagram ||
+    q.image_url ||
+    q.diagram?.image_url
+  );
+}
+
+export function filterQuestionsByDiagram(
+  questions: Question[],
+  filter?: DiagramFilter
+): Question[] {
+  if (filter === 'diagrams') {
+    return questions.filter(isDiagramQuestion);
+  }
+  if (filter === 'no-diagrams') {
+    return questions.filter((q) => !isDiagramQuestion(q));
+  }
+  return questions;
 }
 
 const UUID_REGEX =
