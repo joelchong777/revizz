@@ -298,17 +298,17 @@ export function QuestionCard({
           </svg>
         </button>
 
-        <div className="flex-1 h-[18px] rounded-full bg-neutral-100 border-2 border-text overflow-hidden">
+        <div className="flex-1 h-3 rounded-full bg-neutral-100 border-2 border-text overflow-hidden">
           <div
-            className="h-full bg-accent-2-500 border-r-2 border-text transition-all duration-500 ease-out"
+            className="h-full bg-accent-2-500 transition-all duration-300 ease-out"
             style={{ width: progressPct }}
           />
         </div>
 
-        <span className="font-bold text-sm text-text whitespace-nowrap">
+        <span className="font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap">
           {isEndless
-            ? `Question ${questionNumber} · ∞`
-            : `Question ${questionNumber} of ${totalQuestions}`}
+            ? `Q${questionNumber} · ∞`
+            : `${questionNumber} / ${totalQuestions}`}
         </span>
       </div>
 
@@ -317,18 +317,17 @@ export function QuestionCard({
         {isTimed ? (
           <div
             className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-text shadow-offset-2',
-              timerBg,
-              urgent && !isResolved && 'animate-pulse'
+              'px-3 py-1 rounded-full border-2 border-text shadow-offset-2 flex items-center gap-1.5 font-bold text-xs tabular-nums text-text',
+              urgent ? 'bg-accent-200 animate-pulse' : 'bg-neutral-100'
             )}
           >
             <svg
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2.75"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
               className="text-text flex-shrink-0"
@@ -336,25 +335,23 @@ export function QuestionCard({
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            <span className="font-bold text-sm tabular-nums text-text">
-              {timeLabel}
-            </span>
-            <span className="w-16 h-2 rounded-full bg-neutral-100 border-[1.5px] border-text overflow-hidden block">
+            <span>{timeLabel}</span>
+            <span className="w-12 h-1.5 rounded-full bg-neutral-100 border border-text overflow-hidden block ml-0.5">
               <span
-                className={cn('block h-full transition-all duration-1000 ease-linear', timerFill)}
+                className={cn('block h-full transition-all duration-1000 ease-linear', urgent ? 'bg-accent-600' : 'bg-accent-2-500')}
                 style={{ width: timePct }}
               />
             </span>
           </div>
         ) : (
-          <span className="px-3 py-1.5 rounded-full bg-accent-2-200 border-2 border-text font-bold text-[13px] text-text">
+          <span className="px-3 py-1 rounded-full bg-accent-2-200 border-2 border-text font-bold text-xs text-text shadow-offset-2">
             Chill · untimed
           </span>
         )}
 
         <span
           className={cn(
-            'ml-auto px-3 py-1.5 rounded-full border-2 border-text shadow-offset-2 font-bold text-[13px] text-text whitespace-nowrap',
+            'ml-auto px-3 py-1 rounded-full border-2 border-text shadow-offset-2 font-bold text-xs sm:text-[13px] text-text whitespace-nowrap',
             streakBg
           )}
         >
@@ -363,22 +360,21 @@ export function QuestionCard({
       </div>
 
       {/* Third Row: Question Card */}
-      <div className="flex flex-col gap-3 p-[18px] rounded-[28px] bg-neutral-100 border-2 border-text shadow-offset-4">
-        {status !== 'unanswered' && (
-          <div className="flex flex-wrap gap-1.5">
-            <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
-              {question.citation || 'Cambridge IGCSE'}
+      <div className="rounded-3xl bg-white border-2 border-text p-4 sm:p-5 shadow-offset-4 flex flex-col gap-3">
+        {/* Permanent Citation Badges: Zero Layout Shift */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
+            {question.citation || 'Cambridge IGCSE'}
+          </span>
+          {subject && (
+            <span className="px-2.5 py-0.5 rounded-full bg-accent-300 text-text border-[1.5px] border-text text-[11px] font-bold">
+              {subject}
             </span>
-            {subject && (
-              <span className="px-2.5 py-0.5 rounded-full bg-accent-300 text-text border-[1.5px] border-text text-[11px] font-bold">
-                {subject}
-              </span>
-            )}
-            <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-[1.5px] border-text text-[11px] font-bold">
-              {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
-            </span>
-          </div>
-        )}
+          )}
+          <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-[1.5px] border-text text-[11px] font-bold">
+            {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
+          </span>
+        </div>
 
         <div className="text-[17px] leading-relaxed font-semibold text-text break-words overflow-x-auto min-h-[48px]">
           <MarkdownErrorBoundary fallbackText={question.stem_markdown}>
@@ -391,9 +387,9 @@ export function QuestionCard({
           </MarkdownErrorBoundary>
         </div>
 
-        {/* Diagram container */}
+        {/* Diagram asset */}
         {diagramUrl && (
-          <div className="relative my-3 rounded-2xl border-2 border-text bg-white p-3 shadow-offset-2 flex flex-col items-center group">
+          <div className="relative my-2 rounded-2xl border-2 border-text bg-white p-3 shadow-offset-2 flex flex-col items-center group">
             {imageError ? (
               <div className="flex flex-col items-center justify-center py-6 px-4 text-center gap-2">
                 <span className="text-2xl" role="img" aria-label="Warning">
@@ -407,28 +403,22 @@ export function QuestionCard({
                 </span>
               </div>
             ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setIsZoomOpen(true)}
-                  className="w-full flex justify-center focus:outline-none cursor-zoom-in bg-transparent border-0 p-0"
-                  aria-label="Enlarge diagram"
-                >
-                  <img
-                    src={diagramUrl}
-                    alt={altDescription}
-                    onError={() => setImageError(true)}
-                    className="max-h-[300px] sm:max-h-[360px] w-auto max-w-full object-contain cursor-zoom-in rounded-xl transition-transform duration-150 hover:scale-[1.01]"
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsZoomOpen(true)}
-                  className="text-xs font-bold text-text/80 hover:text-text flex items-center gap-1.5 mt-2 cursor-pointer bg-transparent border-0 p-0"
-                >
-                  <span>🔍</span> Click diagram to enlarge
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => setIsZoomOpen(true)}
+                className="w-full flex justify-center focus:outline-none cursor-zoom-in bg-transparent border-0 p-0 relative"
+                aria-label="Enlarge diagram"
+              >
+                <img
+                  src={diagramUrl}
+                  alt={altDescription}
+                  onError={() => setImageError(true)}
+                  className="max-h-[280px] sm:max-h-[340px] w-auto max-w-full object-contain cursor-zoom-in rounded-xl transition-transform duration-150 group-hover:scale-[1.01]"
+                />
+                <span className="absolute bottom-2 right-2 px-2.5 py-1 rounded-full bg-neutral-100/95 border-2 border-text shadow-offset-2 text-xs font-bold text-text flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                  🔍 Zoom
+                </span>
+              </button>
             )}
           </div>
         )}
@@ -437,10 +427,10 @@ export function QuestionCard({
       {/* Fourth Row: Retry Alert on First Wrong Attempt */}
       {isRetry && (
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          className="flex items-center gap-2.5 p-3 px-3.5 rounded-[20px] bg-accent-300 border-2 border-text shadow-offset-3"
+          className="flex items-center gap-2.5 p-3 px-3.5 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-3"
         >
           <svg
             width="20"
@@ -478,7 +468,7 @@ export function QuestionCard({
           <button
             type="button"
             onClick={onNext}
-            className="w-full py-3.5 px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
+            className="w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
           >
             <span>
               {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
@@ -487,7 +477,7 @@ export function QuestionCard({
         </motion.div>
       )}
 
-      {/* Fifth Row: Options List (Pill Buttons) */}
+      {/* Fifth Row: Options List (Tactile Rounded-2xl Cards) */}
       <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Answer options">
         {question.options.map((opt, i) => {
           const isCorrect = opt.id === question.correct_option_id;
@@ -496,30 +486,23 @@ export function QuestionCard({
 
           const showCheck = isResolved && isCorrect;
           const showX = (isRetry && isFirstWrongPick) || (isResolved && isPicked && !isCorrect);
-          const isDisabled =
-            isResolved || (isRetry && isFirstWrongPick);
+          const isDisabled = isResolved || (isRetry && isFirstWrongPick);
 
-          let bg = 'bg-neutral-100';
-          let chipBg = 'bg-bg';
-          let chipFg = 'text-text';
-          let opacity = 'opacity-100';
-          let shadow = 'shadow-offset-3';
+          let cardStyles = 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer';
+          let chipBg = 'bg-white text-text';
 
           if (showCheck) {
-            bg = 'bg-accent-2-300';
-            chipBg = 'bg-accent-2-600';
-            chipFg = 'text-neutral-100';
+            cardStyles = 'bg-accent-2-300 shadow-offset-3 font-black text-text cursor-default';
+            chipBg = 'bg-accent-2-600 text-neutral-100';
           } else if (showX) {
-            bg = 'bg-accent-200';
-            chipBg = 'bg-accent-600';
-            chipFg = 'text-neutral-100';
-            shadow = 'shadow-none';
-            opacity = isFirstWrongPick && isResolved ? 'opacity-70' : 'opacity-100';
-          } else if (isResolved) {
-            opacity = 'opacity-50';
+            cardStyles = 'bg-accent-200 shadow-none opacity-70 cursor-default';
+            chipBg = 'bg-accent-600 text-neutral-100';
           } else if (isRetry && isFirstWrongPick) {
-            opacity = 'opacity-50';
-            shadow = 'shadow-none';
+            cardStyles = 'bg-accent-200 shadow-none opacity-80 cursor-not-allowed';
+            chipBg = 'bg-accent-600 text-neutral-100';
+          } else if (isResolved) {
+            cardStyles = 'bg-neutral-100 shadow-none opacity-50 cursor-default';
+            chipBg = 'bg-neutral-200 text-text/70';
           }
 
           return (
@@ -532,28 +515,22 @@ export function QuestionCard({
               disabled={isDisabled}
               onClick={() => onAnswer(opt.id)}
               className={cn(
-                'flex items-center gap-3 p-2.5 pr-3.5 rounded-full border-2 border-text text-left transition-all',
-                bg,
-                opacity,
-                shadow,
-                !isDisabled
-                  ? 'cursor-pointer hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-                  : 'cursor-default'
+                'w-full rounded-2xl border-2 border-text p-3 sm:p-3.5 text-left font-bold flex items-start gap-3 transition-all',
+                cardStyles
               )}
             >
-              {/* Circular Letter Chip */}
+              {/* Letter Chip */}
               <span
                 className={cn(
-                  'w-[38px] h-[38px] flex-none rounded-full border-2 border-text flex items-center justify-center font-heading text-[17px]',
-                  chipBg,
-                  chipFg
+                  'w-8 h-8 rounded-xl border-2 border-text flex-none flex items-center justify-center font-heading text-base transition-colors',
+                  chipBg
                 )}
               >
                 {letters[i]}
               </span>
 
               {/* Option Text Markdown */}
-              <span className="flex-1 text-base font-semibold text-text break-words min-w-0">
+              <span className="flex-1 text-sm sm:text-base font-semibold text-text break-words min-w-0 pt-0.5 leading-snug">
                 <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
@@ -565,41 +542,41 @@ export function QuestionCard({
               </span>
 
               {/* Status Stamp / Hotkey Tag */}
-              {showCheck ? (
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="#728157"
-                  stroke="#f9f4ed"
-                  strokeWidth="2.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="flex-shrink-0"
-                >
-                  <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
-                  <path d="m8 12 3 3 5-6" />
-                </svg>
-              ) : showX ? (
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="#b2622d"
-                  stroke="#f9f4ed"
-                  strokeWidth="2.75"
-                  strokeLinecap="round"
-                  className="flex-shrink-0"
-                >
-                  <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
-                  <path d="m15 9-6 6" />
-                  <path d="m9 9 6 6" />
-                </svg>
-              ) : !isResolved ? (
-                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-[6px] border-[1.5px] border-neutral-500 text-neutral-700 text-[11px] font-bold font-mono flex-shrink-0">
-                  {i + 1}
-                </span>
-              ) : null}
+              <div className="flex-none pt-0.5">
+                {showCheck ? (
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="#728157"
+                    stroke="#f9f4ed"
+                    strokeWidth="2.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
+                    <path d="m8 12 3 3 5-6" />
+                  </svg>
+                ) : showX ? (
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="#b2622d"
+                    stroke="#f9f4ed"
+                    strokeWidth="2.75"
+                    strokeLinecap="round"
+                  >
+                    <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
+                    <path d="m15 9-6 6" />
+                    <path d="m9 9 6 6" />
+                  </svg>
+                ) : !isResolved ? (
+                  <span className="hidden sm:inline-flex px-2 py-0.5 rounded-lg border-[1.5px] border-neutral-400 text-neutral-600 text-xs font-bold font-mono">
+                    {i + 1}
+                  </span>
+                ) : null}
+              </div>
             </button>
           );
         })}
@@ -612,7 +589,7 @@ export function QuestionCard({
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 350, damping: 25 }}
           className={cn(
-            'flex flex-col gap-3.5 p-[18px] rounded-[28px] border-2 border-text shadow-offset-4',
+            'flex flex-col gap-3.5 p-4 sm:p-5 rounded-3xl border-2 border-text shadow-offset-4',
             fbBg
           )}
         >
@@ -627,49 +604,40 @@ export function QuestionCard({
                 {fbSub}
               </span>
             </div>
-            <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-bold text-sm text-text whitespace-nowrap">
+            <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-bold text-sm text-text whitespace-nowrap shadow-offset-2">
               +{gainedXP} XP
             </span>
           </div>
 
-          {/* Primary Next Question CTA Button (on top of explanations) */}
-          <button
-            type="button"
-            onClick={onNext}
-            className="w-full py-3.5 px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
-          >
-            {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
-          </button>
-
-          {/* Step by Step Explanation */}
-          <div className="flex flex-col gap-2 p-3.5 rounded-[20px] bg-neutral-100 border-2 border-text">
-            <h6 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-              Step by step
+          {/* Step by Step Explanation: Why Option X is Correct */}
+          <div className="p-3.5 rounded-2xl bg-accent-2-100 border-2 border-text flex flex-col gap-1.5">
+            <h6 className="font-bold text-xs uppercase tracking-wider text-accent-2-900 m-0">
+              Why Option {correctLetter} is Correct
             </h6>
             {explanationSteps.map((step, idx) => (
               <div key={idx} className="flex gap-2.5 items-start">
-                <span className="w-[22px] h-[22px] flex-none rounded-full bg-accent-2-300 border-[1.5px] border-text flex items-center justify-center text-xs font-bold text-text">
+                <span className="w-5 h-5 flex-none rounded-full bg-accent-2-300 border-[1.5px] border-text flex items-center justify-center text-xs font-bold text-text">
                   {idx + 1}
                 </span>
-                <span className="text-sm leading-relaxed text-text">
+                <span className="text-xs sm:text-sm leading-relaxed text-text">
                   {step}
                 </span>
               </div>
             ))}
           </div>
 
-          {/* Distractor Breakdown */}
+          {/* Distractor Breakdown: Distractor Traps */}
           {distractorBreakdown.length > 0 && (
-            <div className="flex flex-col gap-2 p-3.5 rounded-[20px] bg-neutral-100 border-2 border-text">
-              <h6 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-                Why the distractors are wrong
+            <div className="p-3.5 rounded-2xl bg-accent-100 border-2 border-text flex flex-col gap-1.5">
+              <h6 className="font-bold text-xs uppercase tracking-wider text-accent-900 m-0">
+                Distractor Traps
               </h6>
               {distractorBreakdown.map((item, idx) => (
                 <div key={idx} className="flex gap-2.5 items-start">
-                  <span className="w-[22px] h-[22px] flex-none rounded-full bg-accent-200 border-[1.5px] border-text flex items-center justify-center text-xs font-heading text-text">
+                  <span className="w-5 h-5 flex-none rounded-full bg-accent-200 border-[1.5px] border-text flex items-center justify-center text-xs font-heading text-text">
                     {item.letter}
                   </span>
-                  <span className="text-sm leading-relaxed text-text">
+                  <span className="text-xs sm:text-sm leading-relaxed text-text">
                     {item.text}
                   </span>
                 </div>
@@ -677,11 +645,11 @@ export function QuestionCard({
             </div>
           )}
 
-          {/* Next Question CTA Pill */}
+          {/* Single High-Impact Next CTA Button */}
           <button
             type="button"
             onClick={onNext}
-            className="w-full py-3.5 px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center"
+            className="w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none text-center"
           >
             {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
           </button>

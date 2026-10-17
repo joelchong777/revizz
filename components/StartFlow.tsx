@@ -221,7 +221,7 @@ export function StartFlow({
     <div className="w-full max-w-[480px] mx-auto py-5 px-4 pb-12 flex flex-col gap-5 select-none">
       {/* Title Header */}
       <div>
-        <h1 className="font-heading text-4xl text-text leading-tight mb-1">
+        <h1 className="font-heading text-3xl sm:text-4xl text-text leading-tight mb-1">
           Ready, {firstName}?
         </h1>
         <p className="text-[15px] text-neutral-700 font-semibold m-0">
@@ -230,93 +230,93 @@ export function StartFlow({
       </div>
 
       {/* 1. Subject Selection Dropdown */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
           Subject
         </h2>
         {subjects.length === 0 ? (
-          <div className="border-2 border-text bg-neutral-100 rounded-[20px] shadow-offset-3 p-3.5 px-4 text-center">
+          <div className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3.5 px-4 text-center">
             <span className="text-xs font-bold text-neutral-600">No subjects available</span>
           </div>
         ) : (
           <div ref={dropdownRef} className="relative w-full">
-          {/* Dropdown Trigger */}
-          <button
-            type="button"
-            onClick={() => {
-              playPop();
-              setIsDropdownOpen((prev) => !prev);
-            }}
-            aria-haspopup="listbox"
-            aria-expanded={isDropdownOpen}
-            aria-label="Select subject"
-            className="border-2 border-text bg-neutral-100 rounded-[20px] shadow-offset-3 p-3.5 px-4 flex items-center justify-between cursor-pointer w-full transition-all hover:bg-neutral-200/50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="text-2xl leading-none flex-shrink-0">
-                {getSubjectEmoji(currentSubject)}
-              </span>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-heading text-base sm:text-lg text-text truncate">
-                  {currentSubject.name}
-                </span>
-                <span className="text-xs font-bold text-neutral-700 bg-neutral-200/80 px-2 py-0.5 rounded-full border border-text/20 flex-shrink-0">
-                  {currentSubject.code}
-                </span>
-              </div>
-            </div>
-            <ChevronDown
-              className={cn(
-                'w-5 h-5 text-text transition-transform duration-200 flex-shrink-0',
-                isDropdownOpen && 'rotate-180'
-              )}
-            />
-          </button>
-
-          {/* Dropdown Menu Panel */}
-          {isDropdownOpen && (
-            <div
-              role="listbox"
-              className="absolute top-full left-0 right-0 mt-2 z-30 bg-neutral-100 border-2 border-text rounded-[20px] shadow-offset-4 overflow-hidden py-1.5 animate-in fade-in-50 zoom-in-95 duration-150"
+            {/* Dropdown Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                playPop();
+                setIsDropdownOpen((prev) => !prev);
+              }}
+              aria-haspopup="listbox"
+              aria-expanded={isDropdownOpen}
+              aria-label="Select subject"
+              className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
             >
-              {subjects.map((s) => {
-                const isSelected = s.code === currentSubject.code;
-                return (
-                  <button
-                    key={s.id || s.code}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => handleSubjectSelect(s.code)}
-                    className={cn(
-                      'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
-                      isSelected
-                        ? 'bg-accent-2-300 font-bold'
-                        : 'hover:bg-neutral-200/60'
-                    )}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xl leading-none flex-shrink-0">
-                        {getSubjectEmoji(s)}
-                      </span>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-heading text-base text-text truncate">
-                          {s.name}
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl leading-none flex-shrink-0">
+                  {getSubjectEmoji(currentSubject)}
+                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-heading text-base sm:text-lg text-text truncate">
+                    {currentSubject.name}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold flex-shrink-0">
+                    {currentSubject.code}
+                  </span>
+                </div>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'w-5 h-5 text-text transition-transform duration-200 flex-shrink-0',
+                  isDropdownOpen && 'rotate-180'
+                )}
+              />
+            </button>
+
+            {/* Dropdown Menu Panel */}
+            {isDropdownOpen && (
+              <div
+                role="listbox"
+                className="absolute top-full left-0 right-0 mt-2 z-30 bg-neutral-100 border-2 border-text rounded-2xl shadow-offset-4 overflow-hidden py-1.5 animate-in fade-in-50 zoom-in-95 duration-150"
+              >
+                {subjects.map((s) => {
+                  const isSelected = s.code === currentSubject.code;
+                  return (
+                    <button
+                      key={s.id || s.code}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => handleSubjectSelect(s.code)}
+                      className={cn(
+                        'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
+                        isSelected
+                          ? 'bg-accent-2-300 font-bold'
+                          : 'hover:bg-neutral-200/60'
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-xl leading-none flex-shrink-0">
+                          {getSubjectEmoji(s)}
                         </span>
-                        <span className="text-xs font-bold text-neutral-700 bg-neutral-200/80 px-2 py-0.5 rounded-full border border-text/20 flex-shrink-0">
-                          {s.code}
-                        </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-heading text-base text-text truncate">
+                            {s.name}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold flex-shrink-0">
+                            {s.code}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    {isSelected && (
-                      <Check className="w-5 h-5 text-text flex-shrink-0 stroke-[2.5]" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                      {isSelected && (
+                        <Check className="w-5 h-5 text-text flex-shrink-0 stroke-[2.5]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -331,13 +331,13 @@ export function StartFlow({
             type="button"
             onClick={() => handleModeSelect('standard')}
             className={cn(
-              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
               selectedMode === 'standard'
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
+                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
             )}
           >
-            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
+            <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
               🎲
             </span>
             <span className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -348,6 +348,11 @@ export function StartFlow({
                 Randomised pool across the syllabus
               </span>
             </span>
+            {selectedMode === 'standard' && (
+              <span className="w-6 h-6 rounded-full bg-text text-neutral-100 flex items-center justify-center flex-shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              </span>
+            )}
           </button>
 
           {/* Mode 2: Topic Practice */}
@@ -355,13 +360,13 @@ export function StartFlow({
             type="button"
             onClick={() => handleModeSelect('topic')}
             className={cn(
-              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
               selectedMode === 'topic'
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
+                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
             )}
           >
-            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
+            <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
               📚
             </span>
             <span className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -372,6 +377,11 @@ export function StartFlow({
                 Drill chapter by chapter, in syllabus order
               </span>
             </span>
+            {selectedMode === 'topic' && (
+              <span className="w-6 h-6 rounded-full bg-text text-neutral-100 flex items-center justify-center flex-shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              </span>
+            )}
           </button>
 
           {/* Mode 3: Review Pile */}
@@ -379,13 +389,13 @@ export function StartFlow({
             type="button"
             onClick={() => handleModeSelect('review')}
             className={cn(
-              'flex items-center gap-3 p-3 sm:px-3.5 rounded-[22px] border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
               selectedMode === 'review'
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
+                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
             )}
           >
-            <span className="w-[42px] h-[42px] flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-xl">
+            <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
               🧠
             </span>
             <span className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -396,148 +406,150 @@ export function StartFlow({
                 Spaced repetition of questions you missed
               </span>
             </span>
-            {reviewCount > 0 && (
-              <span className="min-w-[28px] h-7 px-2 rounded-full bg-accent-600 text-neutral-100 border-2 border-text flex items-center justify-center font-bold text-[13px]">
-                {reviewCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* 3. Round Length */}
-      <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-          Round length
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { val: 3 as const, label: '3 Qs' },
-            { val: 5 as const, label: '5 Qs' },
-            { val: 10 as const, label: '10 Qs' },
-            { val: 'endless' as const, label: 'Endless ∞' },
-          ].map((item) => {
-            const isSelected = roundLength === item.val;
-            return (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => handleLengthSelect(item.val)}
-                className={cn(
-                  'px-4 py-2 rounded-full border-2 border-text font-bold text-sm cursor-pointer transition-all select-none',
-                  isSelected
-                    ? 'bg-text text-neutral-100 shadow-none translate-x-[2px] translate-y-[2px]'
-                    : 'bg-neutral-100 text-text shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-                )}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. Questions (Diagram Filter) */}
-      <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-          Questions
-        </h2>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            {
-              val: 'mixed' as const,
-              icon: '🔀',
-              label: 'Mixed',
-              subtitle: 'All questions',
-              selectedBg: 'bg-accent-2-300',
-            },
-            {
-              val: 'diagrams' as const,
-              icon: '📊',
-              label: 'Diagrams',
-              subtitle: 'Visual charts',
-              selectedBg: 'bg-accent-300',
-            },
-            {
-              val: 'no-diagrams' as const,
-              icon: '📝',
-              label: 'No diagrams',
-              subtitle: 'Text only',
-              selectedBg: 'bg-neutral-200',
-            },
-          ].map((opt) => {
-            const isSelected = diagramFilter === opt.val;
-            return (
-              <button
-                key={opt.val}
-                type="button"
-                onClick={() => handleDiagramFilterSelect(opt.val)}
-                className={cn(
-                  'flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
-                  isSelected
-                    ? `${opt.selectedBg} shadow-none translate-x-[3px] translate-y-[3px]`
-                    : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-                )}
-              >
-                <span className="font-heading text-sm text-text flex items-center gap-1.5 leading-tight">
-                  <span className="text-base">{opt.icon}</span>
-                  {opt.label}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {reviewCount > 0 && (
+                <span className="bg-accent text-neutral-100 px-2 py-0.5 rounded-full text-xs font-bold border-2 border-text">
+                  {reviewCount}
                 </span>
-                <span className="text-[11px] font-semibold opacity-85 text-text leading-tight">
-                  {opt.subtitle}
+              )}
+              {selectedMode === 'review' && (
+                <span className="w-6 h-6 rounded-full bg-text text-neutral-100 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
                 </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 5. Timer Selection */}
-      <div className="flex flex-col gap-2.5">
-        <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-          Timer
-        </h2>
-        <div className="grid grid-cols-2 gap-2">
-          {/* Chill / Untimed */}
-          <button
-            type="button"
-            onClick={() => handleTimerSelect(false)}
-            className={cn(
-              'flex flex-col items-start gap-0.5 px-4 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
-              !isTimed
-                ? 'bg-accent-2-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-            )}
-          >
-            <span className="font-heading text-base text-text">Chill</span>
-            <span className="text-xs font-semibold opacity-85 text-text">Untimed</span>
-          </button>
-
-          {/* Exam / Timed */}
-          <button
-            type="button"
-            onClick={() => handleTimerSelect(true)}
-            className={cn(
-              'flex flex-col items-start gap-0.5 px-4 py-2.5 rounded-[20px] border-2 border-text text-left cursor-pointer transition-all',
-              isTimed
-                ? 'bg-accent-300 shadow-none translate-x-[3px] translate-y-[3px]'
-                : 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-200/50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-            )}
-          >
-            <span className="font-heading text-base text-text">Exam</span>
-            <span className="text-xs font-semibold opacity-85 text-text">90 s per question</span>
+              )}
+            </div>
           </button>
         </div>
       </div>
 
-      {/* 6. Topic Mastery Card Trigger */}
+      {/* 3. Unified "Mission Rules" Deck */}
+      <div className="flex flex-col gap-3.5 p-4 rounded-3xl bg-neutral-100/90 border-2 border-text shadow-offset-3">
+        {/* Round Length */}
+        <div className="flex flex-col gap-2">
+          <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+            Round length
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { val: 3 as const, label: '3 Qs' },
+              { val: 5 as const, label: '5 Qs' },
+              { val: 10 as const, label: '10 Qs' },
+              { val: 'endless' as const, label: 'Endless ∞' },
+            ].map((item) => {
+              const isSelected = roundLength === item.val;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => handleLengthSelect(item.val)}
+                  className={cn(
+                    'px-3.5 py-1.5 rounded-full border-2 border-text font-bold text-xs sm:text-sm cursor-pointer transition-all select-none',
+                    isSelected
+                      ? 'bg-accent text-neutral-100 shadow-offset-2'
+                      : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                  )}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Diagram Filter */}
+        <div className="flex flex-col gap-2">
+          <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+            Questions
+          </h2>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              {
+                val: 'mixed' as const,
+                icon: '🔀',
+                label: 'All',
+              },
+              {
+                val: 'diagrams' as const,
+                icon: '📊',
+                label: 'Diagrams',
+              },
+              {
+                val: 'no-diagrams' as const,
+                icon: '📝',
+                label: 'Text',
+              },
+            ].map((opt) => {
+              const isSelected = diagramFilter === opt.val;
+              return (
+                <button
+                  key={opt.val}
+                  type="button"
+                  onClick={() => handleDiagramFilterSelect(opt.val)}
+                  className={cn(
+                    'py-2 px-2 rounded-2xl border-2 border-text font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all select-none',
+                    isSelected
+                      ? 'bg-accent-2-300 text-text shadow-offset-2'
+                      : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                  )}
+                >
+                  <span>{opt.icon}</span>
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Timer Selection */}
+        <div className="flex flex-col gap-2">
+          <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+            Timer
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleTimerSelect(false)}
+              className={cn(
+                'p-2.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all flex items-center gap-2.5 select-none',
+                !isTimed
+                  ? 'bg-accent-300 text-text shadow-offset-2'
+                  : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+              )}
+            >
+              <span className="text-xl">☕</span>
+              <div className="flex flex-col leading-tight">
+                <span className="font-heading text-sm text-text">Chill</span>
+                <span className="text-[11px] font-semibold opacity-85 text-text">Untimed</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTimerSelect(true)}
+              className={cn(
+                'p-2.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all flex items-center gap-2.5 select-none',
+                isTimed
+                  ? 'bg-accent-300 text-text shadow-offset-2'
+                  : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+              )}
+            >
+              <span className="text-xl">⚡</span>
+              <div className="flex flex-col leading-tight">
+                <span className="font-heading text-sm text-text">Exam</span>
+                <span className="text-[11px] font-semibold opacity-85 text-text">90s per Q</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Topic Mastery Card Trigger */}
       <button
         type="button"
         onClick={() => {
           playPop();
           setIsMasteryOpen(true);
         }}
-        className="flex items-center gap-3 p-3.5 sm:p-4 rounded-[24px] bg-surface border-2 border-text shadow-offset-4 cursor-pointer text-left transition-all active:translate-x-1 active:translate-y-1 active:shadow-none hover:brightness-[0.98]"
+        className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border-2 border-text shadow-offset-3 cursor-pointer text-left transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none hover:brightness-[0.98]"
       >
         <span className="flex flex-col gap-1.5 flex-1 min-w-0">
           <span className="font-heading text-[17px] text-text leading-tight truncate">
@@ -577,13 +589,15 @@ export function StartFlow({
         </svg>
       </button>
 
-      {/* 7. Hero CTA: START ROUND 🚀 */}
+      {/* 5. Hero CTA: START ROUND */}
       <button
         type="button"
         onClick={handleStart}
-        className="w-full py-[18px] px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-6 font-heading text-2xl tracking-[0.03em] cursor-pointer transition-all active:translate-x-[6px] active:translate-y-[6px] active:shadow-none select-none flex items-center justify-center gap-2"
+        className="w-full py-4 px-6 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-xl sm:text-2xl tracking-wide flex items-center justify-center gap-2 transition-all active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer select-none"
       >
-        START ROUND 🚀
+        {selectedMode === 'review' && reviewCount > 0
+          ? `START REVIEW · ${reviewCount} Qs 🧠`
+          : `START ROUND · ${roundLength === 'endless' ? '∞' : roundLength + ' Qs'} 🚀`}
       </button>
 
       {/* Topic Mastery Drawer Modal */}

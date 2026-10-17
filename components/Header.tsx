@@ -168,10 +168,8 @@ export function Header({
   };
 
   const streakBg =
-    displayStreak >= 5
+    displayStreak >= 3
       ? 'bg-accent-300'
-      : displayStreak >= 3
-      ? 'bg-accent-200'
       : 'bg-neutral-100';
 
   const flameFill = displayStreak >= 3 ? '#c67139' : '#a19786';
@@ -212,25 +210,25 @@ export function Header({
 
       <header
         className={cn(
-          'sticky top-0 z-20 bg-bg border-b-2 border-text select-none transition-all',
+          'sticky top-0 z-20 bg-bg/95 backdrop-blur-xs border-b-2 border-text select-none transition-all py-2 px-3 sm:px-4',
           className
         )}
       >
-        <div className="max-w-[480px] mx-auto px-4 py-3 flex flex-col gap-2.5">
-          {/* Top Row: Brand Wordmark + Circular Tactile Controls */}
+        <div className="max-w-[480px] mx-auto flex flex-col gap-2">
+          {/* Top Row: Brand Wordmark + Tactile Controls */}
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="flex items-center gap-2 mr-auto cursor-pointer group"
+              className="flex items-center gap-1.5 mr-auto cursor-pointer group"
               title="REVIZZ Home"
             >
-              <span className="font-heading text-[28px] leading-none tracking-[0.03em] text-text font-normal">
+              <span className="font-heading text-2xl sm:text-[26px] leading-none tracking-[0.03em] text-text font-normal">
                 REVIZZ
               </span>
-              <span className="w-[30px] h-[30px] rounded-full bg-accent-300 border-2 border-text shadow-offset-2 flex items-center justify-center -rotate-12 transition-transform group-hover:rotate-0">
+              <span className="w-7 h-7 rounded-full bg-accent-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-xs -rotate-12 transition-transform group-hover:rotate-0">
                 <svg
-                  width="16"
-                  height="16"
+                  width="14"
+                  height="14"
                   viewBox="0 0 24 24"
                   fill="#201e1d"
                   stroke="#201e1d"
@@ -242,22 +240,22 @@ export function Header({
               </span>
             </Link>
 
-            {/* Educator Portal Pill Link */}
+            {/* Educator Portal Pill */}
             <Link
               href="/portal"
               title="Educator Portal"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent-100 border-2 border-text shadow-offset-3 font-bold text-xs text-text cursor-pointer transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none hover:bg-accent-200"
+              className="px-2.5 py-1 rounded-full bg-accent-100 border-2 border-text shadow-offset-2 font-bold text-[11px] text-text hover:bg-accent-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center gap-1 cursor-pointer transition-all"
             >
               <span>Portal</span>
               <span>🎓</span>
             </Link>
 
-            {/* App Admin Pill Link for Admins */}
+            {/* Admin Pill (when isAdmin) */}
             {isAdmin && (
               <Link
                 href="/admin"
                 title="App Administration"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#ccdbb2] border-2 border-text shadow-offset-3 font-bold text-xs text-text cursor-pointer transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none hover:bg-[#bccca1]"
+                className="px-2.5 py-1 rounded-full bg-accent-2-200 border-2 border-text shadow-offset-2 font-bold text-[11px] text-text hover:bg-accent-2-300 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center gap-1 cursor-pointer transition-all"
               >
                 <span>Admin</span>
                 <span>🛠️</span>
@@ -269,12 +267,12 @@ export function Header({
               type="button"
               onClick={handleToggleSound}
               title={soundOn ? 'Mute sound effects' : 'Enable sound effects'}
-              className="w-10 h-10 rounded-full bg-neutral-100 border-2 border-text shadow-offset-3 flex items-center justify-center cursor-pointer transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none hover:bg-neutral-200 text-text"
+              className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text"
             >
               {soundOn ? (
                 <svg
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -288,8 +286,8 @@ export function Header({
                 </svg>
               ) : (
                 <svg
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -309,11 +307,11 @@ export function Header({
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Leaderboard"
-              className="w-10 h-10 rounded-full bg-accent-300 border-2 border-text shadow-offset-3 flex items-center justify-center cursor-pointer transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none hover:bg-accent-400 text-text"
+              className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text"
             >
               <svg
-                width="18"
-                height="18"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -331,9 +329,9 @@ export function Header({
             </button>
           </div>
 
-          {/* Bottom Row: User Profile Pill + XP Chip + Streak Chip */}
+          {/* Bottom Row: User Telemetry */}
           <div className="flex items-center gap-2">
-            {/* User Profile Pill */}
+            {/* User Profile Chip */}
             <div
               onClick={() => {
                 if (userProfile) {
@@ -345,17 +343,17 @@ export function Header({
               className="flex items-center gap-2 mr-auto min-w-0 cursor-pointer group"
               title={userProfile ? 'View Profile & Leaderboard' : 'Sign in to save progress'}
             >
-              <span className="w-[34px] h-[34px] flex-none rounded-full bg-accent-2-300 border-2 border-text flex items-center justify-center font-bold text-[13px] text-text group-hover:scale-105 transition-transform">
+              <span className="w-8 h-8 flex-none rounded-full bg-accent-2-300 border-2 border-text flex items-center justify-center font-bold text-xs text-text group-hover:scale-105 transition-transform">
                 {userInitials}
               </span>
-              <div className="flex flex-col leading-[1.15] min-w-0">
-                <span className="font-bold text-sm text-text truncate">
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="font-bold text-xs sm:text-sm text-text truncate">
                   {userName}
                 </span>
-                <span className="flex items-center gap-[3px] text-[11px] text-accent-2-800 font-semibold whitespace-nowrap">
+                <span className="flex items-center gap-1 text-[10px] text-accent-2-800 font-semibold whitespace-nowrap">
                   <svg
-                    width="12"
-                    height="12"
+                    width="11"
+                    height="11"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -371,15 +369,15 @@ export function Header({
               </div>
             </div>
 
-            {/* XP Pill with Star Icon */}
+            {/* XP Pill */}
             <motion.span
               animate={xpControls}
               title={`Total XP: ${displayXp}`}
-              className="flex items-center gap-[5px] px-3 py-[5px] rounded-full bg-accent-200 border-2 border-text shadow-offset-2 font-bold text-sm text-text whitespace-nowrap select-none"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-200 border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none"
             >
               <svg
-                width="15"
-                height="15"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="#f6a06b"
                 stroke="#201e1d"
@@ -391,19 +389,19 @@ export function Header({
               <span>{displayXp} XP</span>
             </motion.span>
 
-            {/* Streak Pill with Flame Icon */}
+            {/* Streak Pill */}
             <motion.span
               animate={streakControls}
               title={`Current Streak: ${displayStreak}`}
               className={cn(
-                'flex items-center gap-1 px-3 py-[5px] rounded-full border-2 border-text shadow-offset-2 font-bold text-sm text-text whitespace-nowrap select-none',
+                'flex items-center gap-1 px-3 py-1 rounded-full border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none',
                 streakBg
               )}
             >
               <span className={cn('inline-flex', displayStreak >= 3 && 'animate-bounce')}>
                 <svg
-                  width="15"
-                  height="15"
+                  width="14"
+                  height="14"
                   viewBox="0 0 24 24"
                   fill={flameFill}
                   stroke="#201e1d"
