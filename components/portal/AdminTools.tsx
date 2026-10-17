@@ -8,6 +8,8 @@ import {
   X, 
   Check, 
   ChevronDown,
+  ChevronUp,
+  ExternalLink,
   Calendar, 
   Clock, 
   SlidersHorizontal, 
@@ -23,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { 
   useQuestions, 
   useTopics, 
@@ -62,6 +65,14 @@ import {
 export type { BankItemStatus };
 export const applyMassTopicReassign = applyMassTopicUpdate;
 
+export interface BankQuestionOption {
+  id: string;
+  label: string;
+  text: string;
+  isCorrect: boolean;
+  distractorReasoning?: string;
+}
+
 export interface QuestionBankItem {
   id: string;
   stem: string;
@@ -85,6 +96,9 @@ export interface QuestionBankItem {
   hasTable?: boolean;
   hasMath?: boolean;
   optionsText?: string;
+  options?: BankQuestionOption[];
+  imageUrl?: string;
+  explanationMarkdown?: string;
 }
 
 export function getStatusBadgeClass(st: BankItemStatus): string {
@@ -149,6 +163,21 @@ export function createInitialBankItems(questions: Question[]): QuestionBankItem[
       ?.map((o: any) => o.content_markdown || o.text_markdown || o.text || '')
       .join(' ');
 
+    const parsedOptions: BankQuestionOption[] = (q.options || []).map((o: any, oIdx: number) => {
+      const label = o.label || ['A', 'B', 'C', 'D'][oIdx] || String(oIdx + 1);
+      const text = o.content_markdown || o.text_markdown || o.text || '';
+      const isCorrect = typeof o.is_correct === 'boolean'
+        ? o.is_correct
+        : (q as any).correct_option_id === o.id;
+      return {
+        id: o.id || `${q.id}-opt-${label.toLowerCase()}`,
+        label,
+        text,
+        isCorrect,
+        distractorReasoning: o.distractor_rationale || o.distractor_reasoning || o.explanation,
+      };
+    });
+
     return {
       id: q.id,
       stem: q.stem_markdown,
@@ -172,6 +201,9 @@ export function createInitialBankItems(questions: Question[]): QuestionBankItem[
       hasTable: features.hasTable,
       hasMath: features.hasMath,
       optionsText,
+      options: parsedOptions,
+      imageUrl: q.image_url || (q.diagram as any)?.image_url || (q as any).diagram_metadata?.image_url,
+      explanationMarkdown: (q as any).explanation_markdown || (q as any).explanation,
     };
   });
 }
@@ -534,6 +566,21 @@ export default function AdminTools({
               .join(' ')
           : undefined;
 
+        const parsedOptions: BankQuestionOption[] = (Array.isArray(q.options) ? q.options : []).map((o: any, oIdx: number) => {
+          const label = o.label || ['A', 'B', 'C', 'D'][oIdx] || String(oIdx + 1);
+          const text = o.content_markdown || o.text_markdown || o.text || '';
+          const isCorrect = typeof o.is_correct === 'boolean'
+            ? o.is_correct
+            : (q as any).correct_option_id === o.id;
+          return {
+            id: o.id || `${q.id}-opt-${label.toLowerCase()}`,
+            label,
+            text,
+            isCorrect,
+            distractorReasoning: o.distractor_rationale || o.distractor_reasoning || o.explanation,
+          };
+        });
+
         const paper = meta.paperLabel;
         const session = meta.sessionLabel;
         const upd = st === 'Live' ? 'Live' : '2d ago';
@@ -563,6 +610,9 @@ export default function AdminTools({
           hasTable: features.hasTable,
           hasMath: features.hasMath,
           optionsText,
+          options: parsedOptions,
+          imageUrl: q.image_url || q.diagram_metadata?.image_url,
+          explanationMarkdown: q.explanation_markdown,
         };
       });
       setBankQuestions(items);
@@ -619,6 +669,7 @@ export default function AdminTools({
 
   // Mass Selection & Action States
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const topicDropdownRef = useRef<HTMLDivElement>(null);
@@ -779,8 +830,11 @@ export default function AdminTools({
     return map;
   }, [facetCounts.features]);
 
-  const filteredBankItems = useMemo(() => {
-    return filterBankQuestions(bankQuestions as EnrichedBankQuestion[], bankFilters);
+  const filteredBankItems: QuestionBankItem[] = useMemo(() => {
+    return filterBankQuestions(
+      bankQuestions as unknown as EnrichedBankQuestion[],
+      bankFilters
+    ) as unknown as QuestionBankItem[];
   }, [bankQuestions, bankFilters]);
 
   const activeFilterChips = useMemo(() => {
@@ -1755,70 +1809,239 @@ export default function AdminTools({
                   ) : (
                     paginatedBankItems.map((item) => {
                       const isSelected = selectedIds.has(item.id);
+                      const isExpanded = expandedQuestionId === item.id;
                       return (
-                        <div
-                          key={item.id}
-                          onClick={() => onOpenEditor?.(item.id)}
-                          className={`grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-colors px-1 ${
-                            isSelected
-                              ? 'bg-[#ffe1d0]/50 border-l-4 border-[#c67139]'
-                              : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
-                          }`}
-                        >
+                        <div key={item.id} className="transition-all">
                           <div
-                            className="flex items-center justify-center"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={() =>
+                              setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
+                            }
+                            className={`grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1 ${
+                              isSelected
+                                ? 'bg-[#ffe1d0]/50 border-l-4 border-[#c67139]'
+                                : isExpanded
+                                ? 'bg-[#fbf8f2] border-l-4 border-[#201e1d] shadow-xs'
+                                : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
+                            }`}
                           >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                toggleSelect(item.id);
-                              }}
-                              aria-label={`Select question ${item.id}`}
-                              className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
-                            />
-                          </div>
-                          <span className="font-mono font-bold text-[#201e1d] truncate" title={item.id}>
-                            {item.id}
-                          </span>
-                          <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
-                            {item.stem}
-                          </span>
-                          <span className="text-[#645c50] truncate" title={item.cite}>
-                            {item.cite}
-                          </span>
-                          <span className="text-[#474238] truncate" title={item.topic}>
-                            {item.topic}
-                          </span>
-                          <span className="font-medium">{item.diff}</span>
-                          <span className="font-black text-[#201e1d]">{item.acc}</span>
-                          <span>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
+                            <div
+                              className="flex items-center justify-center"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              {item.st}
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  toggleSelect(item.id);
+                                }}
+                                aria-label={`Select question ${item.id}`}
+                                className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <motion.div
+                                animate={{ rotate: isExpanded ? 180 : 0 }}
+                                transition={{ duration: 0.15 }}
+                                className="text-[#8c8275] shrink-0"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </motion.div>
+                              <span className="font-mono font-bold text-[#201e1d] truncate" title={item.id}>
+                                {item.id}
+                              </span>
+                            </div>
+                            <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
+                              {item.stem}
                             </span>
-                          </span>
-                          <span className="text-[#645c50]">{item.upd}</span>
-                          <div
-                            className="flex items-center justify-center"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenDeleteSingle(item.id);
-                              }}
-                              aria-label={`Delete question ${item.id}`}
-                              title={`Delete question ${item.id}`}
-                              className="p-1.5 rounded-lg border border-transparent hover:border-[#e0533c]/40 hover:bg-[#fde8e8] text-[#8c8275] hover:text-[#e0533c] transition-all cursor-pointer active:translate-y-0.5"
+                            <span className="text-[#645c50] truncate" title={item.cite}>
+                              {item.cite}
+                            </span>
+                            <span className="text-[#474238] truncate" title={item.topic}>
+                              {item.topic}
+                            </span>
+                            <span className="font-medium">{item.diff}</span>
+                            <span className="font-black text-[#201e1d]">{item.acc}</span>
+                            <span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
+                              >
+                                {item.st}
+                              </span>
+                            </span>
+                            <span className="text-[#645c50]">{item.upd}</span>
+                            <div
+                              className="flex items-center justify-center"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenDeleteSingle(item.id);
+                                }}
+                                aria-label={`Delete question ${item.id}`}
+                                title={`Delete question ${item.id}`}
+                                className="p-1.5 rounded-lg border border-transparent hover:border-[#e0533c]/40 hover:bg-[#fde8e8] text-[#8c8275] hover:text-[#e0533c] transition-all cursor-pointer active:translate-y-0.5"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
+
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                className="overflow-hidden"
+                              >
+                                <div className="bg-[#faf6ee] border-y border-[#dcd3c4] p-4 text-xs sm:text-sm my-1 rounded-xl shadow-inner space-y-3">
+                                  {/* Top Bar inside dropdown */}
+                                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#dcd3c4]">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-bold text-[11px]">
+                                        {item.paper}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#645c50] text-[11px] font-mono">
+                                        {item.cite}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-medium text-[11px]">
+                                        {item.topic}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded-md bg-[#fdfbf7] border border-[#dcd3c4] text-[#474238] font-medium text-[11px]">
+                                        {item.diff}
+                                      </span>
+                                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}>
+                                        {item.st}
+                                      </span>
+                                      <span className="text-[11px] font-bold text-[#645c50] ml-1">
+                                        Accuracy: <span className="text-[#201e1d] font-black">{item.acc}</span>
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onOpenEditor?.(item.id);
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#201e1d] hover:bg-[#34302c] text-[#fdfbf7] font-bold text-xs shadow-[0_2px_0_0_#000] hover:shadow-[0_1px_0_0_#000] active:translate-y-0.5 transition-all cursor-pointer"
+                                      >
+                                        <Edit3 className="w-3.5 h-3.5" />
+                                        <span>Open Full Editor</span>
+                                        <span className="text-[10px] opacity-75">↗</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedQuestionId(null);
+                                        }}
+                                        className="p-1.5 rounded-lg border border-[#dcd3c4] hover:bg-[#eee7db] text-[#645c50] transition-colors cursor-pointer"
+                                        title="Collapse details"
+                                      >
+                                        <ChevronUp className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Question Stem */}
+                                  <div className="bg-white rounded-xl border border-[#dcd3c4] p-3">
+                                    <div className="text-[11px] font-bold text-[#8c8275] uppercase tracking-wider mb-1">
+                                      Question Stem
+                                    </div>
+                                    <div className="text-[#201e1d] font-medium leading-relaxed">
+                                      <MarkdownErrorBoundary fallbackText={item.stem}>
+                                        <span>{item.stem}</span>
+                                      </MarkdownErrorBoundary>
+                                    </div>
+                                  </div>
+
+                                  {/* Diagram Image Preview */}
+                                  {item.imageUrl && (
+                                    <div className="bg-white rounded-xl border border-[#dcd3c4] p-3">
+                                      <div className="text-[11px] font-bold text-[#8c8275] uppercase tracking-wider mb-2">
+                                        Diagram / Figure
+                                      </div>
+                                      <img
+                                        src={item.imageUrl}
+                                        alt={`Diagram for question ${item.id}`}
+                                        className="max-h-48 rounded-lg border border-[#dcd3c4] object-contain bg-white p-2"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* Options Grid */}
+                                  {item.options && item.options.length > 0 && (
+                                    <div className="space-y-1.5">
+                                      <div className="text-[11px] font-bold text-[#8c8275] uppercase tracking-wider">
+                                        Answer Options
+                                      </div>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {item.options.map((opt) => (
+                                          <div
+                                            key={opt.id}
+                                            className={`p-3 rounded-xl transition-all ${
+                                              opt.isCorrect
+                                                ? 'bg-[#ecf5e4] border-2 border-[#728157] text-[#222c15]'
+                                                : 'bg-white border border-[#dcd3c4] text-[#201e1d]'
+                                            }`}
+                                          >
+                                            <div className="flex items-start justify-between gap-2 mb-1">
+                                              <span
+                                                className={`inline-flex items-center justify-center w-5 h-5 rounded-full font-bold text-xs shrink-0 ${
+                                                  opt.isCorrect
+                                                    ? 'bg-[#728157] text-white'
+                                                    : 'bg-[#eee7db] text-[#474238]'
+                                                }`}
+                                              >
+                                                {opt.label}
+                                              </span>
+                                              {opt.isCorrect && (
+                                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#4c5c2d] bg-[#dbe8cb] px-2 py-0.5 rounded-full">
+                                                  <Check className="w-3 h-3" /> Correct Answer
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="font-medium text-xs leading-relaxed">
+                                              <MarkdownErrorBoundary fallbackText={opt.text}>
+                                                <span>{opt.text}</span>
+                                              </MarkdownErrorBoundary>
+                                            </div>
+                                            {opt.distractorReasoning && (
+                                              <div className="mt-2 pt-2 border-t border-[#dcd3c4]/60 text-[11px] text-[#645c50]">
+                                                <span className="font-semibold text-[#8c8275]">Reasoning: </span>
+                                                {opt.distractorReasoning}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Explanation Card */}
+                                  {item.explanationMarkdown && (
+                                    <div className="bg-[#f0fae1]/60 rounded-xl border border-[#c4dc9e] p-3 text-xs">
+                                      <div className="text-[11px] font-bold text-[#4c5c2d] uppercase tracking-wider mb-1 flex items-center gap-1">
+                                        <Sparkles className="w-3 h-3 text-[#728157]" />
+                                        Explanation & Key Takeaway
+                                      </div>
+                                      <div className="text-[#272e1b] font-medium leading-relaxed">
+                                        <MarkdownErrorBoundary fallbackText={item.explanationMarkdown}>
+                                          <span>{item.explanationMarkdown}</span>
+                                        </MarkdownErrorBoundary>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       );
                     })

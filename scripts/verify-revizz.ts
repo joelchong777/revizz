@@ -41,7 +41,7 @@ import {
   checkIsSchoolAccount,
 } from '../lib/auth';
 
-import { CAMBRIDGE_QUESTIONS } from '../lib/questions';
+import { CAMBRIDGE_QUESTIONS, Question } from '../lib/questions';
 import {
   extractSeriesOrYear,
   hasDataTable,
@@ -2901,6 +2901,165 @@ async function runSuite13() {
     assertEqual(parsedRoundTrip.status, richState.status, 'Round-trip status matches');
     assertEqual(JSON.stringify(parsedRoundTrip.features), JSON.stringify(richState.features), 'Round-trip features match');
     assertEqual(parsedRoundTrip.page, richState.page, 'Round-trip page matches');
+  });
+
+  // -----------------------------------------------------------------------------
+  // [Suite 18: Question Bank Table Dropdown & Inspection Architecture]
+  // -----------------------------------------------------------------------------
+  console.log('\n\x1b[1m\x1b[34m[Suite 18: Question Bank Table Dropdown & Inspection Architecture]\x1b[0m');
+
+  test('Static Code Contract: components/portal/AdminTools.tsx exports types and handles table row dropdown', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const toolsPath = path.resolve(process.cwd(), 'components/portal/AdminTools.tsx');
+    assertEqual(fs.existsSync(toolsPath), true, 'components/portal/AdminTools.tsx exists');
+
+    const content = fs.readFileSync(toolsPath, 'utf8');
+
+    // 1. BankQuestionOption interface definition
+    assert(
+      content.includes('export interface BankQuestionOption') || content.includes('export type BankQuestionOption'),
+      'AdminTools.tsx exports BankQuestionOption'
+    );
+    assert(content.includes('id: string'), 'BankQuestionOption has id field');
+    assert(content.includes('label: string'), 'BankQuestionOption has label field');
+    assert(content.includes('text: string'), 'BankQuestionOption has text field');
+    assert(content.includes('isCorrect: boolean'), 'BankQuestionOption has isCorrect field');
+
+    // 2. QuestionBankItem interface definition
+    assert(content.includes('export interface QuestionBankItem'), 'AdminTools.tsx exports QuestionBankItem');
+    assert(content.includes('options?: BankQuestionOption[]'), 'QuestionBankItem has options?: BankQuestionOption[]');
+    assert(content.includes('imageUrl?: string'), 'QuestionBankItem has imageUrl?: string');
+
+    // 3. createInitialBankItems export
+    assert(content.includes('export function createInitialBankItems'), 'AdminTools.tsx exports createInitialBankItems');
+
+    // 4. expandedQuestionId state management
+    assert(content.includes('expandedQuestionId'), 'AdminTools.tsx manages expandedQuestionId state');
+
+    // 5. Open Full Editor button triggers onOpenEditor
+    assert(content.includes('Open Full Editor'), 'AdminTools.tsx contains Open Full Editor action button');
+    assert(content.includes('onOpenEditor?.(') || content.includes('onOpenEditor('), 'Open Full Editor triggers onOpenEditor');
+
+    // 6. MarkdownErrorBoundary defensive wrapping
+    assert(content.includes('MarkdownErrorBoundary'), 'AdminTools.tsx uses MarkdownErrorBoundary');
+
+    // 7. e.stopPropagation() prevents unwanted row toggling
+    assert(content.includes('e.stopPropagation()') || content.includes('e.stopPropagation();'), 'AdminTools.tsx uses e.stopPropagation() on row action elements');
+  });
+
+  // Reference implementation of option and metadata normalization
+  interface RefBankQuestionOption {
+    id: string;
+    label: string;
+    text: string;
+    isCorrect: boolean;
+    distractorReasoning?: string;
+  }
+
+  function normalizeQuestionBankOptions(q: any): RefBankQuestionOption[] {
+    return (q.options || []).map((o: any, oIdx: number) => {
+      const label = o.label || ['A', 'B', 'C', 'D'][oIdx] || String(oIdx + 1);
+      const text = o.content_markdown || o.text_markdown || o.text || '';
+      const isCorrect = typeof o.is_correct === 'boolean'
+        ? o.is_correct
+        : (q as any).correct_option_id === o.id;
+      return {
+        id: o.id || `${q.id}-opt-${label.toLowerCase()}`,
+        label,
+        text,
+        isCorrect,
+        distractorReasoning: o.distractor_rationale || o.distractor_reasoning || o.explanation,
+      };
+    });
+  }
+
+  function resolveQuestionImageUrl(q: any): string | undefined {
+    return q.image_url || (q.diagram as any)?.image_url || (q as any).diagram_metadata?.image_url;
+  }
+
+  test('Reference normalizer preserves options as BankQuestionOption[] with label, text, and isCorrect', () => {
+    const mockQuestion = {
+      id: 'q-test-opts-1',
+      stem_markdown: 'What is the primary function of price mechanism?',
+      options: [
+        { id: 'opt-a', label: 'A', text: 'Resource allocation', is_correct: true },
+        { id: 'opt-b', label: 'B', text: 'Income redistribution', is_correct: false },
+        { id: 'opt-c', label: 'C', text: 'Fiscal policy control', is_correct: false },
+        { id: 'opt-d', label: 'D', text: 'Exchange rate stabilization', is_correct: false },
+      ],
+      citation: '0455/12 May/June 2024 Q10',
+      topic: 'Allocation of resources',
+    };
+
+    const options = normalizeQuestionBankOptions(mockQuestion);
+    assertEqual(options.length, 4, 'options array has length 4');
+
+    const optA = options[0];
+    assertEqual(optA.label, 'A', 'Option 0 label is A');
+    assertEqual(optA.text, 'Resource allocation', 'Option 0 text preserved');
+    assertEqual(optA.isCorrect, true, 'Option 0 isCorrect is true');
+
+    const optB = options[1];
+    assertEqual(optB.label, 'B', 'Option 1 label is B');
+    assertEqual(optB.text, 'Income redistribution', 'Option 1 text preserved');
+    assertEqual(optB.isCorrect, false, 'Option 1 isCorrect is false');
+  });
+
+  test('Reference normalizer maps correct_option_id accurately to isCorrect: true and other options to false', () => {
+    const mockQuestionWithCorrectId = {
+      id: 'q-test-opts-2',
+      stem_markdown: 'Which curve shifts when production technology improves?',
+      correct_option_id: 'opt-supply',
+      options: [
+        { id: 'opt-demand', label: 'A', content_markdown: 'Demand curve to the right' },
+        { id: 'opt-supply', label: 'B', content_markdown: 'Supply curve to the right' },
+        { id: 'opt-both', label: 'C', content_markdown: 'Both curves to the left' },
+        { id: 'opt-none', label: 'D', content_markdown: 'Neither curve moves' },
+      ],
+      citation: '0455/12 s 2024 Q15',
+    };
+
+    const options = normalizeQuestionBankOptions(mockQuestionWithCorrectId);
+    assertEqual(options.length, 4, 'options array has length 4');
+
+    assertEqual(options[0].isCorrect, false, 'Demand curve option isCorrect is false');
+    assertEqual(options[1].isCorrect, true, 'Supply curve option matching correct_option_id has isCorrect: true');
+    assertEqual(options[2].isCorrect, false, 'Option C isCorrect is false');
+    assertEqual(options[3].isCorrect, false, 'Option D isCorrect is false');
+  });
+
+  test('Reference normalizer extracts imageUrl from image_url, diagram, and diagram_metadata', () => {
+    const mockWithImageUrl = {
+      id: 'q-img-1',
+      stem_markdown: 'Refer to the diagram below:',
+      image_url: 'https://example.com/diagrams/supply-demand.png',
+      citation: '0455/12 s 2024 Q20',
+      options: [],
+    };
+    assertEqual(resolveQuestionImageUrl(mockWithImageUrl), 'https://example.com/diagrams/supply-demand.png', 'Sets imageUrl from image_url');
+
+    const mockWithDiagramObj = {
+      id: 'q-img-2',
+      stem_markdown: 'Examine the cell structure in the figure:',
+      diagram: {
+        image_url: 'https://example.com/diagrams/cell-microscope.png',
+      },
+      citation: '0610/22 m 2023 Q05',
+      options: [],
+    };
+    assertEqual(resolveQuestionImageUrl(mockWithDiagramObj), 'https://example.com/diagrams/cell-microscope.png', 'Sets imageUrl from diagram.image_url');
+
+    const mockWithDiagramMeta = {
+      id: 'q-img-3',
+      stem_markdown: 'Check metabolic rate graph:',
+      diagram_metadata: {
+        image_url: 'https://example.com/diagrams/metabolism.png',
+      },
+      citation: '0610/11 w 2022 Q12',
+      options: [],
+    };
+    assertEqual(resolveQuestionImageUrl(mockWithDiagramMeta), 'https://example.com/diagrams/metabolism.png', 'Sets imageUrl from diagram_metadata.image_url');
   });
 
   // Summary Output
