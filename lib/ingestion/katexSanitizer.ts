@@ -15,6 +15,108 @@ import katex from 'katex';
  */
 
 /**
+ * Walks `text` left to right and calls `transform` on the inner text of every real
+ * inline math span ($...$), returning the rebuilt string. Everything outside the spans
+ * is copied through untouched, so prose spacing can never be altered.
+ *
+ * Dollar signs are paired in order, the way KaTeX / remark-math would:
+ * - an escaped character (`\$`, `\\`) is never a delimiter,
+ * - `$$...$$` display blocks are copied through verbatim (they may cross newlines),
+ * - an inline span never crosses a newline; an opening `$` with no closing `$` on its
+ *   line is left alone as a lone dollar sign,
+ * - positions in `ignore` (unescaped currency dollars) are treated as ordinary text.
+ */
+function mapInlineMathSpans(
+  text: string,
+  transform: (inner: string) => string,
+  ignore?: ReadonlySet<number>
+): string {
+  const n = text.length;
+  let out = '';
+  let i = 0;
+
+  while (i < n) {
+    const ch = text[i];
+
+    // Escaped character: copy both chars, so `\$` is never treated as a delimiter
+    // and `\\$` still leaves the `$` live.
+    if (ch === '\\' && i + 1 < n && text[i + 1] !== '\n') {
+      out += text.slice(i, i + 2);
+      i += 2;
+      continue;
+    }
+
+    if (ch !== '$' || ignore?.has(i)) {
+      out += ch;
+      i++;
+      continue;
+    }
+
+    // Display math: copy through the closing $$ untouched. An unclosed $$ is just skipped.
+    if (text[i + 1] === '$') {
+      const displayClose = text.indexOf('$$', i + 2);
+      const end = displayClose === -1 ? i + 2 : displayClose + 2;
+      out += text.slice(i, end);
+      i = end;
+      continue;
+    }
+
+    // Inline math: find the next unescaped `$` on the same line.
+    let close = -1;
+    for (let j = i + 1; j < n; j++) {
+      const c = text[j];
+      if (c === '\n') break;
+      if (c === '\\' && j + 1 < n && text[j + 1] !== '\n') {
+        j++; // skip the escaped character
+        continue;
+      }
+      if (c === '$') {
+        if (ignore?.has(j)) continue;
+        // `$$` here is a display delimiter, not the end of this span
+        if (text[j + 1] !== '$') close = j;
+        break;
+      }
+    }
+
+    if (close === -1) {
+      out += '$';
+      i++;
+      continue;
+    }
+
+    out += '$' + transform(text.slice(i + 1, close)) + '$';
+    i = close + 1;
+  }
+
+  return out;
+}
+
+/**
+ * Returns the positions of unescaped dollar signs in `text` that escapeCurrencyDollars
+ * would treat as currency ($50, US$100, a dangling $). normalizeMathDelimiters runs before
+ * escapeCurrencyDollars, so without this a single currency amount flips the pairing order
+ * of every later `$` on its line ($50 when $D_1$ shifts to $D_2$ would pair "$ shifts to $").
+ */
+function findCurrencyDollarPositions(text: string): Set<number> {
+  const currency = new Set<number>();
+  const escaped = escapeCurrencyDollars(text);
+  let i = 0;
+  let j = 0;
+  while (i < text.length && j < escaped.length) {
+    if (escaped[j] === text[i]) {
+      i++;
+      j++;
+    } else if (text[i] === '$' && escaped[j] === '\\' && escaped[j + 1] === '$') {
+      currency.add(i); // escapeCurrencyDollars inserted a backslash in front of this `$`
+      j++;
+    } else {
+      break; // unexpected divergence: keep what was found, stay conservative
+    }
+  }
+  return currency;
+}
+
+/**
  * Standardizes math delimiters:
  * - \[...\] -> $$...$$ (display math)
  * - \(...\) -> $...$ (inline math)
@@ -33,8 +135,17 @@ export function normalizeMathDelimiters(text: string): string {
     return `$${math.trim()}$`;
   });
 
-  // 3. Trim whitespace directly inside inline dollar signs ($ x $ -> $x$)
-  result = result.replace(/(?<!\$)\$\s+([^$\n]+?)\s+\$(?!\$)/g, '$$$1$$');
+  // 3. Trim whitespace directly inside inline dollar signs ($ x $ -> $x$).
+  // Only real spans (paired in order, currency dollars excluded) are touched, so the
+  // text between two spans ($P_1$ rises to $P_2$) keeps its spaces.
+  result = mapInlineMathSpans(
+    result,
+    (inner) => {
+      const trimmed = inner.trim();
+      return trimmed && /^\s/.test(inner) && /\s$/.test(inner) ? trimmed : inner;
+    },
+    findCurrencyDollarPositions(result)
+  );
 
   return result;
 }
@@ -426,10 +537,11 @@ export function sanitizeKaTeX(text: string): string {
   });
 
   // 4. Process Inline Math blocks ($...$)
-  output = output.replace(/(?<!\$)\$([^$\n]+?)\$(?!\$)/g, (_match, mathInner) => {
-    const sanitized = sanitizeMathSegment(mathInner);
-    return `$${sanitized}$`;
-  });
+  // Spans are paired in order and skip escaped \$, so prose between two escaped
+  // currency amounts or between two formulas is never treated as math.
+  output = mapInlineMathSpans(output, (mathInner) =>
+    mathInner.trim() ? sanitizeMathSegment(mathInner) : mathInner
+  );
 
   return output;
 }

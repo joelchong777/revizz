@@ -259,6 +259,66 @@ console.log('\nTest Suite 2: KaTeX Sanitizer & Typography Normalization');
     normalizeMathDelimiters('\\( F = ma \\)') === '$F = ma$',
     'Converts \\(...\\) inline math to $...$'
   );
+
+  // Inline padding trim must only touch real spans, never the prose between two spans
+  assert(
+    normalizeMathDelimiters('$P_1$ rises to $P_2$') === '$P_1$ rises to $P_2$',
+    'Two inline spans on one line keep the spaces between them ($P_1$ rises to $P_2$)'
+  );
+  assert(
+    normalizeMathDelimiters('$ P_1 $ rises to $ P_2 $') === '$P_1$ rises to $P_2$',
+    'Trims padding inside each of two inline spans without eating the prose between'
+  );
+  assert(
+    normalizeMathDelimiters('The variable $ x $ is positive.') === 'The variable $x$ is positive.',
+    'Trims padding inside a single inline span'
+  );
+  assert(
+    normalizeMathDelimiters('$ x $ and $$ E = mc^2 $$ and $ y $') === '$x$ and $$ E = mc^2 $$ and $y$',
+    'Display $$...$$ block is left untouched next to padded inline spans'
+  );
+  assert(
+    normalizeMathDelimiters('$$\n a \n$$\n$ x $') === '$$\n a \n$$\n$x$',
+    'Multi-line display block is left untouched'
+  );
+  assert(
+    normalizeMathDelimiters('$ a $\n$ b $') === '$a$\n$b$',
+    'Spans on separate lines are trimmed independently and keep the newline'
+  );
+  assert(
+    normalizeMathDelimiters('a $ x\n$ y $ b') === 'a $ x\n$y$ b',
+    'A span never crosses a newline (the dangling $ on line 1 is not paired with line 2)'
+  );
+  assert(
+    normalizeMathDelimiters('a $ x\n y $ b') === 'a $ x\n y $ b',
+    'Dollar signs on different lines are never paired into a span'
+  );
+  assert(
+    normalizeMathDelimiters('\\$ 5 and $ x $') === '\\$ 5 and $x$',
+    'Escaped \\$ is not a delimiter: only the real $ x $ span is trimmed'
+  );
+  assert(
+    normalizeMathDelimiters('Price rises from $50 when $D_1$ shifts to $D_2$.') ===
+      'Price rises from $50 when $D_1$ shifts to $D_2$.',
+    'An unescaped currency $50 does not flip the pairing of later spans ($D_1$ shifts to $D_2$)'
+  );
+  assert(
+    normalizeMathDelimiters('The price is $5 while $x$ changes to $y$ later.') ===
+      'The price is $5 while $x$ changes to $y$ later.',
+    'Currency before two spans leaves the prose between the spans intact'
+  );
+  assert(
+    normalizeMathDelimiters('US$100 and $ x $') === 'US$100 and $x$',
+    'Prefix currency US$100 is not paired with the next inline span'
+  );
+  assert(
+    normalizeMathDelimiters('a $ $ b') === 'a $ $ b' && normalizeMathDelimiters('$') === '$',
+    'Whitespace-only span and lone $ are left unchanged'
+  );
+  assert(
+    normalizeMathDelimiters('Unclosed $ x and later') === 'Unclosed $ x and later',
+    'Unclosed $ with no partner is left unchanged'
+  );
 }
 
 // 7. Escaped backslash normalization tests
@@ -325,6 +385,62 @@ console.log('\nTest Suite 2: KaTeX Sanitizer & Typography Normalization');
   assert(
     sanitized.includes('\\frac{v - u}{t} = 5') && sanitized.includes('\\text{m/s}^2'),
     'Sanitized display math with \\frac and \\text{m/s}^2'
+  );
+
+  // Regression: spaces between inline-math spans must survive (the old step 3 ate them)
+  assert(
+    sanitizeKaTeX('Price rises from $50 to $60 when $D_1$ shifts to $D_2$.') ===
+      'Price rises from \\$50 to \\$60 when $D_1$ shifts to $D_2$.',
+    'Currency escaped, $D_1$ and $D_2$ stay math, every space preserved'
+  );
+  assert(
+    sanitizeKaTeX('Price rises from $50 when $D_1$ shifts to $D_2$.') ===
+      'Price rises from \\$50 when $D_1$ shifts to $D_2$.',
+    'Odd number of currency amounts does not eat spaces between two spans'
+  );
+  assert(
+    sanitizeKaTeX('$P_1$ rises to $P_2$') === '$P_1$ rises to $P_2$',
+    'sanitizeKaTeX keeps $P_1$ rises to $P_2$ intact'
+  );
+  assert(
+    sanitizeKaTeX('$ P_1 $ rises to $ P_2 $') === '$P_1$ rises to $P_2$',
+    'sanitizeKaTeX trims padding but keeps the prose between spans'
+  );
+  assert(
+    sanitizeKaTeX('costs \\$5 when $x$ rises') === 'costs \\$5 when $x$ rises',
+    'Escaped \\$5 next to a real span: escape and span both kept, no fake span between them'
+  );
+  assert(
+    sanitizeKaTeX('Fee is \\$5 when $v_max$ rises') === 'Fee is \\$5 when $v_{max}$ rises',
+    'Real span after an escaped \\$ is still sanitized ($v_max$ -> $v_{max}$)'
+  );
+  assert(
+    sanitizeKaTeX('cost \\$5 and $ x $ then \\$6') === 'cost \\$5 and $x$ then \\$6',
+    'Escaped currency on both sides of a padded span: span trimmed, prose untouched'
+  );
+  assert(
+    sanitizeKaTeX('\\$50 and \\$60') === '\\$50 and \\$60',
+    'Text between two escaped dollars is not treated as a span'
+  );
+  assert(
+    sanitizeKaTeX('US$100 and $D_1$') === 'US\\$100 and $D_1$',
+    'US$100 is escaped and the following span is kept'
+  );
+  assert(
+    sanitizeKaTeX('Value is $10^-5$ and $v_max$ here') === 'Value is $10^{-5}$ and $v_{max}$ here',
+    'Exponent and subscript fixes apply per span without touching the prose between'
+  );
+  assert(
+    sanitizeKaTeX('$$ a + b $$ then $ x $ and $ y $') === '$$a + b$$ then $x$ and $y$',
+    'Display block sanitized separately from the two inline spans after it'
+  );
+  assert(
+    sanitizeKaTeX('Unclosed $ x and later') === 'Unclosed \\$ x and later',
+    'Unclosed $ is escaped as a lone dollar and the text is untouched'
+  );
+  assert(
+    sanitizeKaTeX('a $ $ b') === 'a $ $ b',
+    'Whitespace-only span is not collapsed into a display $$'
   );
 
   try {
