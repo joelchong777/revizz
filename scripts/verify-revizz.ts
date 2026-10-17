@@ -1008,6 +1008,55 @@ test('QuestionCard Protection: QuestionCard wraps stem and options in MarkdownEr
   assertEqual(content.includes("<MarkdownErrorBoundary fallbackText={opt.text_markdown}>"), true, 'Option labels protected by error boundary');
 });
 
+test('QuestionCard Layout: Citation pill is rendered first in the pills container', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
+  const content = fs.readFileSync(cardPath, 'utf8');
+
+  const pillContainerIndex = content.indexOf('<div className="flex flex-wrap gap-1.5">');
+  assertEqual(pillContainerIndex !== -1, true, 'Pills container found in QuestionCard');
+
+  const citationIndex = content.indexOf("question.citation || 'Cambridge IGCSE'", pillContainerIndex);
+  const subjectIndex = content.indexOf('{subject && (', pillContainerIndex);
+  const topicIndex = content.indexOf('question.topic || question.topic_id', pillContainerIndex);
+
+  assertEqual(citationIndex !== -1, true, 'Citation pill found in pills container');
+  assertEqual(subjectIndex !== -1, true, 'Subject pill found in pills container');
+  assertEqual(topicIndex !== -1, true, 'Topic pill found in pills container');
+  assertEqual(citationIndex < subjectIndex, true, 'Citation pill is rendered before subject pill');
+  assertEqual(citationIndex < topicIndex, true, 'Citation pill is rendered before topic pill');
+});
+
+test('QuestionCard CTA: First-try correct popup CTA is positioned between question card and options list', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
+  const content = fs.readFileSync(cardPath, 'utf8');
+
+  // Verify first-try correct condition and onNext wiring
+  assertEqual(content.includes('{isFirstTryCorrect && ('), true, 'QuestionCard checks isFirstTryCorrect');
+  assertEqual(content.includes('onClick={onNext}'), true, 'Next button wires onClick to onNext');
+
+  // Verify position relative to stem/question card and options list
+  const stemIndex = content.indexOf('question.stem_markdown');
+  const firstTryCtaIndex = content.indexOf('{isFirstTryCorrect && (');
+  const optionsIndex = content.indexOf('role="radiogroup" aria-label="Answer options"');
+
+  assertEqual(stemIndex !== -1, true, 'Question stem found');
+  assertEqual(firstTryCtaIndex !== -1, true, 'First-try CTA popup found');
+  assertEqual(optionsIndex !== -1, true, 'Options list found');
+
+  assertEqual(stemIndex < firstTryCtaIndex, true, 'First-try CTA is rendered after question card stem');
+  assertEqual(firstTryCtaIndex < optionsIndex, true, 'First-try CTA is rendered before options list');
+
+  // Verify motion and button styling invariants
+  assertEqual(content.includes("transition={{ type: 'spring', stiffness: 450, damping: 25 }}"), true, 'CTA adheres to spring physics invariants');
+  assertEqual(content.includes('Next question →'), true, 'CTA includes Next question label');
+  assertEqual(content.includes('See results →'), true, 'CTA includes See results label for final question');
+});
+
+
 // -----------------------------------------------------------------------------
 // [Suite 10] Simplified Direct JSON Pipeline, Zero-Draft Contract & Supabase Bank
 // -----------------------------------------------------------------------------

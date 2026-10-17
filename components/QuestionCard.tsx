@@ -366,14 +366,14 @@ export function QuestionCard({
       <div className="flex flex-col gap-3 p-[18px] rounded-[28px] bg-neutral-100 border-2 border-text shadow-offset-4">
         {status !== 'unanswered' && (
           <div className="flex flex-wrap gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
+              {question.citation || 'Cambridge IGCSE'}
+            </span>
             {subject && (
               <span className="px-2.5 py-0.5 rounded-full bg-accent-300 text-text border-[1.5px] border-text text-[11px] font-bold">
                 {subject}
               </span>
             )}
-            <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
-              {question.citation || 'Cambridge IGCSE'}
-            </span>
             <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-[1.5px] border-text text-[11px] font-bold">
               {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
             </span>
@@ -464,6 +464,26 @@ export function QuestionCard({
               Streak reset. Pick another option.
             </span>
           </div>
+        </motion.div>
+      )}
+
+      {/* Next Question CTA Popup on First-Try Correct (between question and options) */}
+      {isFirstTryCorrect && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+          className="w-full"
+        >
+          <button
+            type="button"
+            onClick={onNext}
+            className="w-full py-3.5 px-5 rounded-full bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
+          >
+            <span>
+              {questionNumber >= totalQuestions && !isEndless ? 'See results →' : 'Next question →'}
+            </span>
+          </button>
         </motion.div>
       )}
 
