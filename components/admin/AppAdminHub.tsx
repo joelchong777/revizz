@@ -317,36 +317,7 @@ export default function AppAdminHub({
       );
 
     case 'editor':
-      return (
-        <div className="space-y-4">
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-black uppercase tracking-wider text-[#201e1d]">
-                  Editor
-                </span>
-                <span className="text-xs font-bold text-[#645c50]">
-                  Question ID: {selectedQuestionId || (questionsLoading ? 'Loading...' : questions[0]?.id || 'None')}
-                </span>
-              </div>
-              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
-                Direct Question Editor
-              </h1>
-              <p className="text-xs sm:text-sm font-medium text-[#645c50] mt-0.5">
-                Fine-tune stems, mark schemes, distractor rationales, and diagram attachments.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onSelectTab('bank')}
-              className="px-3.5 py-2 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-bold text-xs hover:bg-[#dcd3c4] transition-colors shadow-offset-2 active:translate-y-0.5 self-start sm:self-auto"
-            >
-              ← Back to Bank
-            </button>
-          </div>
-          <AdminCMS initialView="editor" questionId={selectedQuestionId || questions[0]?.id} />
-        </div>
-      );
+      return <AdminCMS initialView="editor" questionId={selectedQuestionId || questions[0]?.id} />;
 
     case 'system':
       return (
