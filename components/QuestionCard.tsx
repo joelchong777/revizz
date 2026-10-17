@@ -362,7 +362,7 @@ export function QuestionCard({
       {/* Third Row: Question Card */}
       <div className="rounded-3xl bg-white border-2 border-text p-4 sm:p-5 shadow-offset-4 flex flex-col gap-3">
         {/* Permanent Citation Badges: Zero Layout Shift */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
             {question.citation || 'Cambridge IGCSE'}
           </span>
