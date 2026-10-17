@@ -7,6 +7,7 @@
  * - [Suite 3] Tagging and categorization operations & suggested tags
  * - [Suite 4] Question type contract and schema compliance
  * - [Suite 5] AdminCMS.tsx code structure & React hook integrity inspection
+ * - [Suite 6] AdminCMS.tsx Options Viewability & Ergonomics
  */
 
 import * as fs from 'fs';
@@ -319,6 +320,77 @@ runTest('AdminCMS.tsx declares React hooks at top level without early returns pr
     !earlyReturnMatch,
     'No early return statements should precede React hook declarations (prevents React Error #310)'
   );
+});
+
+// ------------------------------------------------------------------
+// [Suite 6] AdminCMS.tsx Options Viewability & Ergonomics
+// ------------------------------------------------------------------
+console.log('\n[Suite 6] AdminCMS.tsx Options Viewability & Ergonomics:');
+
+runTest('AdminCMS.tsx removes cramped 140px fixed-width column from options editor', () => {
+  const adminCmsPath = path.resolve(__dirname, '../components/portal/AdminCMS.tsx');
+  const fileContent = fs.readFileSync(adminCmsPath, 'utf-8');
+
+  // Assert that cramped layout grid-cols-[36px_140px_1fr] has been removed
+  assert(!fileContent.includes('grid-cols-[36px_140px_1fr]'), 'Cramped grid-cols-[36px_140px_1fr] must be removed');
+
+  // Also verify that 140px is not present in options editor section
+  const optionsSectionMatch = fileContent.match(/options\.map\([\s\S]*?explanationSteps/);
+  if (optionsSectionMatch) {
+    assert(!optionsSectionMatch[0].includes('140px'), 'Options editor must not constrain options with 140px fixed width');
+  }
+});
+
+runTest('AdminCMS.tsx uses multi-line textarea with handleOptionTextChange for spacious option text editing', () => {
+  const adminCmsPath = path.resolve(__dirname, '../components/portal/AdminCMS.tsx');
+  const fileContent = fs.readFileSync(adminCmsPath, 'utf-8');
+
+  // Find the opening tag directly preceding the handleOptionTextChange call in the options loop
+  const lastIndex = fileContent.lastIndexOf('handleOptionTextChange');
+  assert(lastIndex !== -1, 'handleOptionTextChange must be present in AdminCMS.tsx');
+
+  const before = fileContent.slice(0, lastIndex);
+  const lastOpenTag = before.slice(before.lastIndexOf('<'));
+  const tagNameMatch = lastOpenTag.match(/^<([a-zA-Z0-9]+)/);
+
+  assert(tagNameMatch, 'handleOptionTextChange must be attached to an element tag');
+  assert.strictEqual(
+    tagNameMatch[1].toLowerCase(),
+    'textarea',
+    `Expected option text editor to be a <textarea>, but found <${tagNameMatch[1]}>`
+  );
+
+  // Verify multiple rows configured for multi-line display
+  assert(
+    /rows=\s*\{?\s*[2-9]/.test(lastOpenTag),
+    'Option textarea must be configured with rows >= 2 for multi-line display'
+  );
+});
+
+runTest('AdminCMS.tsx option card includes letter selector, text editor, and misconception reason input', () => {
+  const adminCmsPath = path.resolve(__dirname, '../components/portal/AdminCMS.tsx');
+  const fileContent = fs.readFileSync(adminCmsPath, 'utf-8');
+
+  // Extract the options.map section
+  const optionsMapMatch = fileContent.match(/options\.map\s*\(\s*\(\s*opt\s*,\s*idx\s*\)\s*=>/);
+  assert(optionsMapMatch, 'AdminCMS.tsx must map over options to render each option card');
+
+  // Assert presence of letter selector trigger, text editor handler, and misconception reason handler
+  assert(fileContent.includes('handleSetCorrectOption'), 'Option card must include handleSetCorrectOption letter selector');
+  assert(fileContent.includes('handleOptionTextChange'), 'Option card must include handleOptionTextChange text editor');
+  assert(fileContent.includes('handleOptionReasonChange'), 'Option card must include handleOptionReasonChange misconception reason input');
+});
+
+runTest('AdminCMS.tsx visibly distinguishes the correct answer state with badge or styling', () => {
+  const adminCmsPath = path.resolve(__dirname, '../components/portal/AdminCMS.tsx');
+  const fileContent = fs.readFileSync(adminCmsPath, 'utf-8');
+
+  // Assert correct answer visual indicators
+  const hasCorrectAnswerBadge = /Correct\s+Answer/i.test(fileContent);
+  const hasIsCorrectStyling = /opt\.isCorrect[\s\S]*?(?:bg-\[#f0fae1\]|border-\[#728157\])/.test(fileContent);
+
+  assert(hasCorrectAnswerBadge, 'Must render visible "Correct Answer" badge or text');
+  assert(hasIsCorrectStyling, 'Must conditionally style correct option card with distinct green accent/background when opt.isCorrect is true');
 });
 
 // ------------------------------------------------------------------

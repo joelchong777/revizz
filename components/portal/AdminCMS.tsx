@@ -839,53 +839,102 @@ export default function AdminCMS({
               </div>
 
               {/* Options & Distractor Explanations */}
-              <div className="p-5 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] flex flex-col gap-3 shadow-sm">
-                <div className="grid grid-cols-[36px_140px_1fr] gap-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
-                  <span></span>
-                  <span>Option</span>
-                  <span>Why it&apos;s wrong (shown after answering)</span>
+              <div className="p-5 rounded-3xl bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] flex flex-col gap-4 shadow-sm">
+                {/* Container Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#dcd3c4]/60">
+                  <div>
+                    <h3 className="font-heading font-black text-sm text-[#201e1d]">
+                      MCQ Options & Distractor Explanations
+                    </h3>
+                    <p className="text-xs text-[#645c50] mt-0.5">
+                      Click an option letter to set the correct answer. Provide misconception reasons for distractors.
+                    </p>
+                  </div>
+                  <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-[#ccdbb2]/50 border border-[#8fa073]/40 text-[#272e1b] font-bold text-[11px] tracking-wide shrink-0">
+                    4 Options (A–D)
+                  </span>
                 </div>
 
-                {options.map((opt, idx) => (
-                  <div
-                    key={opt.letter}
-                    className="grid grid-cols-[36px_140px_1fr] gap-2.5 items-center text-xs"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleSetCorrectOption(idx)}
-                      title={`Mark ${opt.letter} as correct`}
-                      className={`w-8 h-8 rounded-full border-[1.5px] border-[#201e1d] font-heading font-black grid place-items-center transition-all ${
+                {/* Option Cards */}
+                <div className="flex flex-col gap-3.5">
+                  {options.map((opt, idx) => (
+                    <div
+                      key={opt.letter}
+                      className={`p-4 rounded-2xl border-[1.5px] transition-all flex flex-col gap-3 ${
                         opt.isCorrect
-                          ? 'bg-[#728157] text-[#f9f4ed]'
-                          : 'bg-white text-[#201e1d] hover:bg-[#eee7db]'
+                          ? 'bg-[#f0fae1] border-[#728157] shadow-sm'
+                          : 'bg-white border-[#dcd3c4] hover:border-[#c0b6a5]'
                       }`}
                     >
-                      {opt.letter}
-                    </button>
-                    <input
-                      type="text"
-                      value={opt.text}
-                      onChange={(e) => handleOptionTextChange(idx, e.target.value)}
-                      className={`px-3 py-2 rounded-xl bg-white border-[1.5px] text-xs font-bold text-[#201e1d] ${
-                        opt.isCorrect ? 'border-[#728157] bg-[#f0fae1]' : 'border-[#dcd3c4]'
-                      }`}
-                    />
-                    {opt.isCorrect ? (
-                      <span className="text-[#3d472b] font-bold px-2 py-1 bg-[#f0fae1] rounded-lg border border-[#8fa073]/40 w-fit">
-                        ✓ Correct answer
-                      </span>
-                    ) : (
-                      <input
-                        type="text"
-                        value={opt.reason}
-                        onChange={(e) => handleOptionReasonChange(idx, e.target.value)}
-                        placeholder="Misconception reason..."
-                        className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs text-[#474238]"
-                      />
-                    )}
-                  </div>
-                ))}
+                      {/* Top Section: Header Bar & Option Text */}
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleSetCorrectOption(idx)}
+                              title={`Mark Option ${opt.letter} as correct`}
+                              className={`w-9 h-9 rounded-full border-[1.5px] border-[#201e1d] font-heading font-black grid place-items-center cursor-pointer shadow-[1px_1px_0_#201e1d] transition-all ${
+                                opt.isCorrect
+                                  ? 'bg-[#728157] text-[#f9f4ed]'
+                                  : 'bg-white text-[#201e1d] hover:bg-[#eee7db]'
+                              }`}
+                            >
+                              {opt.letter}
+                            </button>
+                            <span className="font-heading font-bold text-xs text-[#201e1d]">
+                              Option {opt.letter} Text
+                            </span>
+                          </div>
+
+                          {opt.isCorrect ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#728157] text-[#f9f4ed] font-bold text-xs shadow-sm">
+                              <Check className="w-3.5 h-3.5" />
+                              Correct Answer
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSetCorrectOption(idx)}
+                              className="text-xs font-bold text-[#645c50] hover:text-[#728157] transition-colors cursor-pointer"
+                            >
+                              Mark as correct
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Option Text Area */}
+                        <textarea
+                          rows={2}
+                          value={opt.text}
+                          onChange={(e) => handleOptionTextChange(idx, e.target.value)}
+                          placeholder={`Enter Option ${opt.letter} text (supports math / markdown)...`}
+                          className={`w-full p-3 rounded-xl border-[1.5px] font-bold text-xs leading-relaxed resize-y outline-none transition-all ${
+                            opt.isCorrect
+                              ? 'bg-white border-[#728157] text-[#201e1d] focus:border-[#728157] focus:ring-1 focus:ring-[#728157]'
+                              : 'bg-white border-[#dcd3c4] text-[#201e1d] focus:border-[#c67139]'
+                          }`}
+                        />
+                      </div>
+
+                      {/* Bottom Section: Distractor / Misconception Reason */}
+                      {!opt.isCorrect && (
+                        <div className="ml-12 pl-3 border-l-2 border-[#dcd3c4] flex flex-col gap-1.5">
+                          <label className="text-[11px] font-bold text-[#645c50]">
+                            Why it&apos;s wrong / Misconception reason (shown to student after answering):
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={opt.reason}
+                            onChange={(e) => handleOptionReasonChange(idx, e.target.value)}
+                            placeholder="Explain why this option is incorrect or maps to a common misconception..."
+                            className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs text-[#474238] outline-none focus:border-[#c67139] leading-relaxed resize-y"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Step-by-Step Explanation */}
