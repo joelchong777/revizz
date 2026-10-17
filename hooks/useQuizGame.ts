@@ -26,6 +26,16 @@ export type Question = {
     alt_description?: string;
   };
   explanation_markdown?: string;
+  // Optional extended metadata fields:
+  year?: number;
+  variant?: string;
+  series?: string;
+  paper_code?: string;
+  question_number?: number;
+  tags?: string[];
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  status?: 'Live' | 'Needs review' | 'Agent draft' | 'Withdrawn' | 'active' | 'flagged' | string;
+  subtopic?: string;
 };
 
 export type QuizRoundConfig = {
