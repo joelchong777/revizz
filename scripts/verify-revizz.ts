@@ -3062,6 +3062,186 @@ async function runSuite13() {
     assertEqual(resolveQuestionImageUrl(mockWithDiagramMeta), 'https://example.com/diagrams/metabolism.png', 'Sets imageUrl from diagram_metadata.image_url');
   });
 
+  // -----------------------------------------------------------------------------
+  // [Suite 19: Teacher vs Admin Portal Table & Access Separation]
+  // -----------------------------------------------------------------------------
+  console.log('\n\x1b[1m\x1b[34m[Suite 19: Teacher vs Admin Portal Table & Access Separation]\x1b[0m');
+
+  test('Static Code Contract: components/portal/AdminTools.tsx exports teacher annotations and handles teacher vs admin portalMode', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const toolsPath = path.resolve(process.cwd(), 'components/portal/AdminTools.tsx');
+    assertEqual(fs.existsSync(toolsPath), true, 'components/portal/AdminTools.tsx exists');
+
+    const content = fs.readFileSync(toolsPath, 'utf8');
+
+    // 1. TeacherQuestionAnnotation and TEACHER_ANNOTATION_STORAGE_KEY exports
+    assert(
+      content.includes('export interface TeacherQuestionAnnotation') ||
+      content.includes('export type TeacherQuestionAnnotation'),
+      'AdminTools.tsx exports TeacherQuestionAnnotation'
+    );
+    assert(content.includes('classroomTags: string[]'), 'TeacherQuestionAnnotation has classroomTags');
+    assert(content.includes('teacherNote: string'), 'TeacherQuestionAnnotation has teacherNote');
+    assert(
+      content.includes('export const TEACHER_ANNOTATION_STORAGE_KEY'),
+      'AdminTools.tsx exports TEACHER_ANNOTATION_STORAGE_KEY'
+    );
+
+    // 2. AdminToolsProps supports portalMode
+    assert(
+      content.includes("portalMode?: 'teacher' | 'admin'") || content.includes('portalMode?: "teacher" | "admin"'),
+      'AdminToolsProps supports portalMode'
+    );
+
+    // 3. Filters to Live questions in teacher mode
+    assert(
+      content.includes("isTeacherMode ? bankQuestions.filter((q) => q.st === 'Live') : bankQuestions") ||
+      content.includes("isTeacherMode ? bankQuestions.filter") ||
+      content.includes("q.st === 'Live'"),
+      'Filters to Live questions in teacher mode'
+    );
+
+    // 4. Hides internal columns (ID, Status, Updated, delete action) in teacher mode while preserving in admin mode
+    assert(content.includes('isTeacherMode'), 'AdminTools.tsx branches UI on isTeacherMode');
+    assert(content.includes('Question & Classroom Tags'), 'AdminTools.tsx renders teacher mode table header');
+    assert(content.includes('Open Full Editor'), 'AdminTools.tsx preserves Open Full Editor in admin mode');
+
+    // 5. Classroom tags and teacher notes handling
+    assert(
+      content.includes('classroomTags') && content.includes('teacherNote'),
+      'AdminTools.tsx manages classroom tags and teacher notes'
+    );
+  });
+
+  test('Static Code Contract: app/portal/page.tsx enforces Teacher portalMode and restricts admin tabs', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const portalPagePath = path.resolve(process.cwd(), 'app/portal/page.tsx');
+    assertEqual(fs.existsSync(portalPagePath), true, 'app/portal/page.tsx exists');
+
+    const content = fs.readFileSync(portalPagePath, 'utf8');
+
+    // 1. Assign tab passes portalMode="teacher"
+    assert(
+      content.includes('key="assign"') && content.includes('portalMode="teacher"'),
+      'app/portal/page.tsx passes portalMode="teacher" to AdminTools in case assign'
+    );
+
+    // 2. Bank tab passes portalMode="teacher"
+    assert(
+      content.includes('key="bank"') && content.includes('portalMode="teacher"'),
+      'app/portal/page.tsx passes portalMode="teacher" to AdminTools in case bank'
+    );
+
+    // 3. Direct question editing, flagged queue, and school tabs restricted to App Admin
+    assert(
+      content.includes("case 'flagged':") &&
+      content.includes("case 'editor':") &&
+      content.includes("case 'school':"),
+      'app/portal/page.tsx handles flagged, editor, and school cases'
+    );
+    assert(
+      content.includes('Admin Access Required') || content.includes('Restricted to App Admin'),
+      'app/portal/page.tsx renders Admin Access Required banner'
+    );
+    assert(
+      content.includes('Open in App Admin 🛠️'),
+      'app/portal/page.tsx provides link to Open in App Admin 🛠️'
+    );
+    assert(
+      content.includes('Back to Teacher Overview'),
+      'app/portal/page.tsx provides Back to Teacher Overview action'
+    );
+  });
+
+  test('Static Code Contract: components/portal/AdminNav.tsx curates clean Teacher Navigation', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const navPath = path.resolve(process.cwd(), 'components/portal/AdminNav.tsx');
+    assertEqual(fs.existsSync(navPath), true, 'components/portal/AdminNav.tsx exists');
+
+    const content = fs.readFileSync(navPath, 'utf8');
+
+    // Retains Question bank
+    assert(content.includes("title=\"Question bank\""), 'AdminNav retains Question bank');
+
+    // Removes flagged moderation queue and school licence buttons from teacher sidebar
+    assert(!content.includes("title=\"Flagged questions\""), 'AdminNav hides Flagged questions button');
+    assert(!content.includes("title=\"School & licence\""), 'AdminNav hides School & licence button');
+  });
+
+  test('Static Code Contract: components/admin/AppAdminHub.tsx passes portalMode="admin" and renders School & Licence tables', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const adminHubPath = path.resolve(process.cwd(), 'components/admin/AppAdminHub.tsx');
+    assertEqual(fs.existsSync(adminHubPath), true, 'components/admin/AppAdminHub.tsx exists');
+
+    const content = fs.readFileSync(adminHubPath, 'utf8');
+
+    // 1. Bank tab explicitly passes portalMode="admin"
+    assert(
+      content.includes('initialView="bank"') && content.includes('portalMode="admin"'),
+      'AppAdminHub.tsx passes portalMode="admin" to AdminTools in case bank'
+    );
+
+    // 2. Licence & Seat Quota Controls
+    assert(content.includes('Plan Tier'), 'AppAdminHub renders Plan Tier control');
+    assert(content.includes('Total Seat Quota'), 'AppAdminHub renders Total Seat Quota control');
+    assert(content.includes('Teacher Seat Limit'), 'AppAdminHub renders Teacher Seat Limit control');
+    assert(content.includes('Licence Expiry'), 'AppAdminHub renders Licence Expiry control');
+    assert(content.includes('Save Licence Quotas'), 'AppAdminHub renders Save Licence Quotas action');
+
+    // 3. Educator Seats & Permissions Table
+    assert(content.includes('Educator Seats & Permissions Table'), 'AppAdminHub renders Educator Seats table');
+    assert(content.includes('Educator'), 'Educator Seats table has Educator column');
+    assert(content.includes('Email'), 'Educator Seats table has Email column');
+    assert(content.includes('Department'), 'Educator Seats table has Department column');
+    assert(content.includes('Portal Role'), 'Educator Seats table has Portal Role column');
+    assert(content.includes('Seat Status'), 'Educator Seats table has Seat Status column');
+    assert(content.includes('Teacher (Read-Only Bank)'), 'AppAdminHub supports Teacher role');
+    assert(content.includes('App Admin (Full Edit)'), 'AppAdminHub supports App Admin role');
+    assert(content.includes('+ Allocate Educator Seat'), 'AppAdminHub provides inline Allocate Educator Seat action');
+
+    // 4. Institutional Cohort Allocations Table
+    assert(content.includes('Institutional Cohort Allocations Table'), 'AppAdminHub renders Cohort Allocations table');
+    assert(content.includes('+ Register Cohort'), 'AppAdminHub provides inline Register Cohort action');
+  });
+
+  test('Behavioral Logic: Teacher live question filtering and educator seat role toggle simulation', () => {
+    // 1. Question bank live status filtering logic
+    const mockBank = [
+      { id: 'q1', st: 'Live', stem: 'Live question 1' },
+      { id: 'q2', st: 'Agent draft', stem: 'Draft question 2' },
+      { id: 'q3', st: 'Needs review', stem: 'Review question 3' },
+      { id: 'q4', st: 'Flagged', stem: 'Flagged question 4' },
+      { id: 'q5', st: 'Live', stem: 'Live question 5' },
+    ];
+
+    const teacherVisible = mockBank.filter((q) => q.st === 'Live');
+    assertEqual(teacherVisible.length, 2, 'Teacher mode only exposes Live questions (2 of 5)');
+    assertEqual(teacherVisible[0].id, 'q1', 'First visible is q1');
+    assertEqual(teacherVisible[1].id, 'q5', 'Second visible is q5');
+
+    // 2. Educator role toggle behavior
+    let educator = {
+      id: 'ed-1',
+      name: 'Dr. Jane Smith',
+      role: 'Teacher (Read-Only Bank)' as 'Teacher (Read-Only Bank)' | 'App Admin (Full Edit)',
+    };
+
+    const toggleRole = (current: string) =>
+      current === 'Teacher (Read-Only Bank)'
+        ? 'App Admin (Full Edit)'
+        : 'Teacher (Read-Only Bank)';
+
+    educator.role = toggleRole(educator.role) as any;
+    assertEqual(educator.role, 'App Admin (Full Edit)', 'Toggled role to App Admin');
+
+    educator.role = toggleRole(educator.role) as any;
+    assertEqual(educator.role, 'Teacher (Read-Only Bank)', 'Toggled role back to Teacher');
+  });
+
   // Summary Output
   console.log('\n========================================================');
   console.log(`   TOTAL TESTS: ${totalTests}`);

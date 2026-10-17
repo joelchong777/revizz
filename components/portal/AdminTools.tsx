@@ -21,7 +21,10 @@ import {
   Filter,
   Download,
   AlertTriangle,
-  RotateCw
+  RotateCw,
+  Tag,
+  Flag,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
@@ -208,9 +211,19 @@ export function createInitialBankItems(questions: Question[]): QuestionBankItem[
   });
 }
 
+export interface TeacherQuestionAnnotation {
+  classroomTags: string[];
+  teacherNote: string;
+  flaggedForAdmin?: boolean;
+  flagReason?: string;
+}
+
+export const TEACHER_ANNOTATION_STORAGE_KEY = 'revizz_teacher_question_annotations';
+
 export interface AdminToolsProps {
   initialView?: 'assign' | 'bank' | 'importer';
   onOpenEditor?: (questionId: string) => void;
+  portalMode?: 'teacher' | 'admin';
 }
 
 export interface BankFilterOption {
@@ -384,8 +397,10 @@ export function BankFilterDropdown({
 
 export default function AdminTools({ 
   initialView = 'assign',
-  onOpenEditor 
+  onOpenEditor,
+  portalMode = 'admin',
 }: AdminToolsProps) {
+  const isTeacherMode = portalMode === 'teacher';
   const { questions: dbQuestions, loading: questionsLoading, refetch: refetchQuestions } = useQuestions();
   const { topics: dbTopics } = useTopics();
   const [activeSubTab, setActiveSubTab] = useState<'assign' | 'bank' | 'importer'>(initialView);
@@ -435,7 +450,10 @@ export default function AdminTools({
   // Assigned Questions Dataset
   const assignQs = useMemo(() => {
     if (liveQuestions && liveQuestions.length > 0) {
-      return liveQuestions.map((q) => {
+      const filtered = isTeacherMode
+        ? liveQuestions.filter((q) => !q.status || q.status === 'active' || q.status === 'Live')
+        : liveQuestions;
+      return filtered.map((q) => {
         const topicObj = Array.isArray(q.topic) ? q.topic[0] : q.topic;
         return {
           id: q.cambridge_source_ref || q.id,
@@ -447,14 +465,17 @@ export default function AdminTools({
       });
     }
     const source = dbQuestions.length > 0 ? dbQuestions : CAMBRIDGE_QUESTIONS;
-    return source.map((q) => ({
+    const filteredSource = isTeacherMode
+      ? source.filter((q: any) => !q.status || q.status === 'active' || q.status === 'Live')
+      : source;
+    return filteredSource.map((q) => ({
       id: q.id,
       stem: q.stem_markdown,
       topic: q.topic || 'General',
       acc: '—',
       agent: false,
     }));
-  }, [liveQuestions, dbQuestions]);
+  }, [liveQuestions, dbQuestions, isTeacherMode]);
 
   const fetchLiveQuestions = async () => {
     setIsLoadingLive(true);
@@ -699,6 +720,110 @@ export default function AdminTools({
     }, 4000);
   };
 
+  // Teacher Classroom Annotations State & Inline Inputs
+  const [teacherAnnotations, setTeacherAnnotations] = useState<Record<string, TeacherQuestionAnnotation>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = localStorage.getItem(TEACHER_ANNOTATION_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) {
+      console.error('Failed to parse teacher question annotations:', err);
+      return {};
+    }
+  });
+
+  const [tagInput, setTagInput] = useState<string>('');
+  const [noteDraft, setNoteDraft] = useState<string>('');
+  const [flagReasonInput, setFlagReasonInput] = useState<string>('');
+  const [showFlagForm, setShowFlagForm] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (expandedQuestionId) {
+      const existing = teacherAnnotations[expandedQuestionId];
+      setNoteDraft(existing?.teacherNote || '');
+      setTagInput('');
+      setFlagReasonInput(existing?.flagReason || '');
+      setShowFlagForm(false);
+    } else {
+      setNoteDraft('');
+      setTagInput('');
+      setFlagReasonInput('');
+      setShowFlagForm(false);
+    }
+  }, [expandedQuestionId]);
+
+  const saveTeacherAnnotations = (newAnnotations: Record<string, TeacherQuestionAnnotation>) => {
+    setTeacherAnnotations(newAnnotations);
+    try {
+      localStorage.setItem(TEACHER_ANNOTATION_STORAGE_KEY, JSON.stringify(newAnnotations));
+    } catch (err) {
+      console.error('Failed to save teacher question annotations:', err);
+    }
+  };
+
+  const handleAddClassroomTag = (questionId: string, tag: string) => {
+    const trimmed = tag.trim();
+    if (!trimmed) return;
+    const current = teacherAnnotations[questionId] || { classroomTags: [], teacherNote: '' };
+    if (current.classroomTags.includes(trimmed)) {
+      showNotification(`Tag "${trimmed}" already added`);
+      setTagInput('');
+      return;
+    }
+    const updated = {
+      ...teacherAnnotations,
+      [questionId]: {
+        ...current,
+        classroomTags: [...current.classroomTags, trimmed],
+      },
+    };
+    saveTeacherAnnotations(updated);
+    setTagInput('');
+    showNotification(`Added classroom tag: #${trimmed}`);
+  };
+
+  const handleRemoveClassroomTag = (questionId: string, tag: string) => {
+    const current = teacherAnnotations[questionId];
+    if (!current) return;
+    const updated = {
+      ...teacherAnnotations,
+      [questionId]: {
+        ...current,
+        classroomTags: current.classroomTags.filter((t) => t !== tag),
+      },
+    };
+    saveTeacherAnnotations(updated);
+    showNotification(`Removed classroom tag: #${tag}`);
+  };
+
+  const handleSaveTeacherNote = (questionId: string, note: string) => {
+    const current = teacherAnnotations[questionId] || { classroomTags: [], teacherNote: '' };
+    const updated = {
+      ...teacherAnnotations,
+      [questionId]: {
+        ...current,
+        teacherNote: note,
+      },
+    };
+    saveTeacherAnnotations(updated);
+    showNotification('Saved classroom note');
+  };
+
+  const handleFlagForAdmin = (questionId: string, reason: string) => {
+    const current = teacherAnnotations[questionId] || { classroomTags: [], teacherNote: '' };
+    const updated = {
+      ...teacherAnnotations,
+      [questionId]: {
+        ...current,
+        flaggedForAdmin: true,
+        flagReason: reason.trim() || 'Flagged by educator for review',
+      },
+    };
+    saveTeacherAnnotations(updated);
+    setShowFlagForm(false);
+    showNotification('Flagged question for App Admin review');
+  };
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -812,13 +937,18 @@ export default function AdminTools({
     return dbTopics.length > 0 ? dbTopics.map((t) => t.name) : CAMBRIDGE_TOPICS.map((t) => t.name);
   }, [dbTopics]);
 
+  const baseBankQuestions = useMemo(
+    () => (isTeacherMode ? bankQuestions.filter((q) => q.st === 'Live') : bankQuestions),
+    [bankQuestions, isTeacherMode]
+  );
+
   const facetCounts = useMemo(() => {
     return computeBankFacetCounts(
-      bankQuestions as EnrichedBankQuestion[],
+      baseBankQuestions as EnrichedBankQuestion[],
       knownTopicNames,
       knownSubjects
     );
-  }, [bankQuestions, knownTopicNames, knownSubjects]);
+  }, [baseBankQuestions, knownTopicNames, knownSubjects]);
 
   const featureCounts = useMemo(() => {
     const map: Record<string, number> = { diagram: 0, table: 0, math: 0 };
@@ -832,10 +962,10 @@ export default function AdminTools({
 
   const filteredBankItems: QuestionBankItem[] = useMemo(() => {
     return filterBankQuestions(
-      bankQuestions as unknown as EnrichedBankQuestion[],
+      baseBankQuestions as unknown as EnrichedBankQuestion[],
       bankFilters
     ) as unknown as QuestionBankItem[];
-  }, [bankQuestions, bankFilters]);
+  }, [baseBankQuestions, bankFilters]);
 
   const activeFilterChips = useMemo(() => {
     return getActiveFilterChips(bankFilters);
@@ -1392,19 +1522,26 @@ export default function AdminTools({
                   {assignQs.map((q, idx) => (
                     <div
                       key={idx}
-                      onClick={() => onOpenEditor?.(q.id)}
+                      onClick={() => {
+                        if (isTeacherMode) {
+                          setActiveSubTab('bank');
+                          setExpandedQuestionId(q.id);
+                        } else {
+                          onOpenEditor?.(q.id);
+                        }
+                      }}
                       className="pt-2 flex items-start gap-2 text-xs hover:bg-[#eee7db]/50 p-1.5 rounded-xl transition-colors cursor-pointer"
                     >
                       <div className="flex-1 min-w-0">
                         <span className="font-mono text-[10px] font-bold text-[#645c50] block">
-                          {q.id} · {q.topic}
+                          {isTeacherMode ? q.topic : `${q.id} · ${q.topic}`}
                         </span>
                         <span className="font-semibold text-[#201e1d] line-clamp-2 leading-tight">
                           {q.stem}
                         </span>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
-                        {q.agent && (
+                        {!isTeacherMode && q.agent && (
                           <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-bold">
                             Agent · new
                           </span>
@@ -1439,10 +1576,10 @@ export default function AdminTools({
                     <span className="w-4 h-4 border-2 border-[#c67139] border-t-transparent rounded-full animate-spin" />
                     Syncing live database...
                   </span>
-                ) : filteredBankItems.length === bankQuestions.length ? (
-                  `${bankQuestions.length} questions`
+                ) : filteredBankItems.length === baseBankQuestions.length ? (
+                  `${baseBankQuestions.length} questions`
                 ) : (
-                  `${filteredBankItems.length} of ${bankQuestions.length} questions`
+                  `${filteredBankItems.length} of ${baseBankQuestions.length} questions`
                 )}
               </h2>
             </div>
@@ -1455,27 +1592,31 @@ export default function AdminTools({
               >
                 <FileText className="w-3.5 h-3.5" /> Compile Test Paper (PDF)
               </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleJsonUpload}
-                accept=".json"
-                className="hidden"
-              />
-              <button
-                type="button"
-                disabled={isUploadingJson}
-                onClick={() => fileInputRef.current?.click()}
-                className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <Upload className="w-3.5 h-3.5" /> {isUploadingJson ? 'Uploading...' : 'Upload JSON 🚀'}
-              </button>
-              <button
-                onClick={() => onOpenEditor?.('new')}
-                className="px-4 py-2 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading text-xs font-black hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" /> New question
-              </button>
+              {!isTeacherMode && (
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleJsonUpload}
+                    accept=".json"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    disabled={isUploadingJson}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Upload className="w-3.5 h-3.5" /> {isUploadingJson ? 'Uploading...' : 'Upload JSON 🚀'}
+                  </button>
+                  <button
+                    onClick={() => onOpenEditor?.('new')}
+                    className="px-4 py-2 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading text-xs font-black hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> New question
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -1485,7 +1626,7 @@ export default function AdminTools({
               <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82796a]" />
               <input
                 type="text"
-                placeholder="Search stems, IDs, citations, options..."
+                placeholder={isTeacherMode ? "Search question stems, citations, topics, options..." : "Search stems, IDs, citations, options..."}
                 value={bankFilters.search}
                 onChange={(e) => setBankFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
                 className="w-full pl-9 pr-8 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
@@ -1548,12 +1689,14 @@ export default function AdminTools({
               onMultiChange={(vals) => setBankFilters((prev) => ({ ...prev, difficulties: vals, difficulty: vals.length === 1 ? vals[0] : 'All', page: 1 }))}
               options={facetCounts.difficulties}
             />
-            <BankFilterDropdown
-              label="Status"
-              value={bankFilters.status}
-              onChange={(val) => setBankFilters((prev) => ({ ...prev, status: val, page: 1 }))}
-              options={facetCounts.statuses}
-            />
+            {!isTeacherMode && (
+              <BankFilterDropdown
+                label="Status"
+                value={bankFilters.status}
+                onChange={(val) => setBankFilters((prev) => ({ ...prev, status: val, page: 1 }))}
+                options={facetCounts.statuses}
+              />
+            )}
             <button
               type="button"
               disabled={isLoadingLive}
@@ -1674,87 +1817,107 @@ export default function AdminTools({
             </div>
           )}
 
-          {/* Status Counter Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'All', page: 1 }))}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                bankFilters.status === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              All {filteredBankItems.length}
-            </button>
-            <button
-              type="button"
-              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Live', page: 1 }))}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                bankFilters.status === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              Live {filteredBankItems.filter((q) => q.st === 'Live').length}
-            </button>
-            <button
-              type="button"
-              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Agent draft', page: 1 }))}
-              className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
-                bankFilters.status === 'Agent draft' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              <span>Agent drafts</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
-                {filteredBankItems.filter((q) => q.st === 'Agent draft').length}
+          {/* Status Counter Tabs / Educator Banner */}
+          {isTeacherMode ? (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-semibold text-[#3d472b]">
+              <span className="w-2 h-2 rounded-full bg-[#728157] shrink-0" />
+              <span>
+                Verified Curriculum Bank · Only Live Cambridge questions are shown. Click any question to preview and add classroom tags or teacher notes.
               </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Needs review', page: 1 }))}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                bankFilters.status === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              Needs review {filteredBankItems.filter((q) => q.st === 'Needs review').length}
-            </button>
-            <button
-              type="button"
-              onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Flagged', page: 1 }))}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                bankFilters.status === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
-              }`}
-            >
-              Flagged {filteredBankItems.filter((q) => q.st === 'Flagged').length}
-            </button>
-          </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setBankFilters((prev) => ({ ...prev, status: 'All', page: 1 }))}
+                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                  bankFilters.status === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+                }`}
+              >
+                All {filteredBankItems.length}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Live', page: 1 }))}
+                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                  bankFilters.status === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+                }`}
+              >
+                Live {filteredBankItems.filter((q) => q.st === 'Live').length}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Agent draft', page: 1 }))}
+                className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                  bankFilters.status === 'Agent draft' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+                }`}
+              >
+                <span>Agent drafts</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
+                  {filteredBankItems.filter((q) => q.st === 'Agent draft').length}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Needs review', page: 1 }))}
+                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                  bankFilters.status === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+                }`}
+              >
+                Needs review {filteredBankItems.filter((q) => q.st === 'Needs review').length}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Flagged', page: 1 }))}
+                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                  bankFilters.status === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
+                }`}
+              >
+                Flagged {filteredBankItems.filter((q) => q.st === 'Flagged').length}
+              </button>
+            </div>
+          )}
 
           {/* Bank Table */}
           <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[920px]">
-                {/* Table Header with Master Checkbox */}
-                <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
-                  <div className="flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      ref={headerCheckboxRef}
-                      checked={allCurrentPageSelected}
-                      onChange={handleToggleSelectPage}
-                      aria-label="Select all questions on this page"
-                      className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
-                    />
+                {/* Table Header */}
+                {isTeacherMode ? (
+                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[2.6fr_1.1fr_1.2fr_0.7fr_0.7fr_110px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4] px-1">
+                    <span>Question & Classroom Tags</span>
+                    <span>Citation</span>
+                    <span>Topic</span>
+                    <span>Difficulty</span>
+                    <span>1st try</span>
+                    <span className="text-right pr-2">Classroom</span>
                   </div>
-                  <span>ID</span>
-                  <span>Stem</span>
-                  <span>Citation</span>
-                  <span>Topic</span>
-                  <span>Difficulty</span>
-                  <span>1st try</span>
-                  <span>Status</span>
-                  <span>Updated</span>
-                  <span className="text-center">Action</span>
-                </div>
+                ) : (
+                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        ref={headerCheckboxRef}
+                        checked={allCurrentPageSelected}
+                        onChange={handleToggleSelectPage}
+                        aria-label="Select all questions on this page"
+                        className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
+                      />
+                    </div>
+                    <span>ID</span>
+                    <span>Stem</span>
+                    <span>Citation</span>
+                    <span>Topic</span>
+                    <span>Difficulty</span>
+                    <span>1st try</span>
+                    <span>Status</span>
+                    <span>Updated</span>
+                    <span className="text-center">Action</span>
+                  </div>
+                )}
 
                 {/* Selection helper banner */}
-                {selectedIds.size > 0 && (
+                {!isTeacherMode && selectedIds.size > 0 && (
                   <div className="bg-[#ffe1d0]/70 border-b border-[#dcd3c4] px-4 py-2 text-xs font-semibold text-[#201e1d] flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-[#c67139]" />
@@ -1810,84 +1973,163 @@ export default function AdminTools({
                     paginatedBankItems.map((item) => {
                       const isSelected = selectedIds.has(item.id);
                       const isExpanded = expandedQuestionId === item.id;
+                      const annotation = teacherAnnotations[item.id];
                       return (
                         <div key={item.id} className="transition-all">
-                          <div
-                            onClick={() =>
-                              setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
-                            }
-                            className={`grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1 ${
-                              isSelected
-                                ? 'bg-[#ffe1d0]/50 border-l-4 border-[#c67139]'
-                                : isExpanded
-                                ? 'bg-[#fbf8f2] border-l-4 border-[#201e1d] shadow-xs'
-                                : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
-                            }`}
-                          >
+                          {isTeacherMode ? (
                             <div
-                              className="flex items-center justify-center"
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={() =>
+                                setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
+                              }
+                              className={`grid grid-cols-[2.6fr_1.1fr_1.2fr_0.7fr_0.7fr_110px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1.5 ${
+                                isExpanded
+                                  ? 'bg-[#fbf8f2] border-l-4 border-[#201e1d] shadow-xs'
+                                  : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
+                              }`}
                             >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  toggleSelect(item.id);
-                                }}
-                                aria-label={`Select question ${item.id}`}
-                                className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
-                              />
-                            </div>
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <motion.div
-                                animate={{ rotate: isExpanded ? 180 : 0 }}
-                                transition={{ duration: 0.15 }}
-                                className="text-[#8c8275] shrink-0"
-                              >
-                                <ChevronDown className="w-3.5 h-3.5" />
-                              </motion.div>
-                              <span className="font-mono font-bold text-[#201e1d] truncate" title={item.id}>
-                                {item.id}
+                              <div className="flex items-start gap-1.5 min-w-0">
+                                <motion.div
+                                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="text-[#8c8275] shrink-0 mt-0.5"
+                                >
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </motion.div>
+                                <div className="flex flex-col gap-1 min-w-0">
+                                  <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
+                                    {item.stem}
+                                  </span>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {annotation?.classroomTags && annotation.classroomTags.length > 0 && (
+                                      annotation.classroomTags.map((tag) => (
+                                        <span
+                                          key={tag}
+                                          className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#8c491a] font-bold text-[10px]"
+                                        >
+                                          #{tag}
+                                        </span>
+                                      ))
+                                    )}
+                                    {annotation?.teacherNote && (
+                                      <span
+                                        className="px-2 py-0.5 rounded-full bg-[#eee7db] text-[#474238] font-bold text-[10px] inline-flex items-center gap-1"
+                                        title={annotation.teacherNote}
+                                      >
+                                        📝 Note
+                                      </span>
+                                    )}
+                                    {annotation?.flaggedForAdmin && (
+                                      <span
+                                        className="px-2 py-0.5 rounded-full bg-[#fde8e8] text-[#e0533c] font-bold text-[10px] inline-flex items-center gap-1"
+                                        title={annotation.flagReason || 'Flagged by educator for review'}
+                                      >
+                                        🚩 Flagged
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="text-[#645c50] truncate" title={item.cite}>
+                                {item.cite}
                               </span>
-                            </div>
-                            <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
-                              {item.stem}
-                            </span>
-                            <span className="text-[#645c50] truncate" title={item.cite}>
-                              {item.cite}
-                            </span>
-                            <span className="text-[#474238] truncate" title={item.topic}>
-                              {item.topic}
-                            </span>
-                            <span className="font-medium">{item.diff}</span>
-                            <span className="font-black text-[#201e1d]">{item.acc}</span>
-                            <span>
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
-                              >
-                                {item.st}
+                              <span className="text-[#474238] truncate" title={item.topic}>
+                                {item.topic}
                               </span>
-                            </span>
-                            <span className="text-[#645c50]">{item.upd}</span>
+                              <span className="font-medium">{item.diff}</span>
+                              <span className="font-black text-[#201e1d]">{item.acc}</span>
+                              <div
+                                className="flex items-center justify-end"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
+                                  }
+                                  className="px-2.5 py-1 rounded-lg border border-[#c0b6a5] bg-[#f9f4ed] hover:bg-[#eee7db] text-[11px] font-bold text-[#201e1d] transition-all cursor-pointer whitespace-nowrap active:translate-y-0.5"
+                                >
+                                  Preview & Notes
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
                             <div
-                              className="flex items-center justify-center"
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={() =>
+                                setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
+                              }
+                              className={`grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1 ${
+                                isSelected
+                                  ? 'bg-[#ffe1d0]/50 border-l-4 border-[#c67139]'
+                                  : isExpanded
+                                  ? 'bg-[#fbf8f2] border-l-4 border-[#201e1d] shadow-xs'
+                                  : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
+                              }`}
                             >
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenDeleteSingle(item.id);
-                                }}
-                                aria-label={`Delete question ${item.id}`}
-                                title={`Delete question ${item.id}`}
-                                className="p-1.5 rounded-lg border border-transparent hover:border-[#e0533c]/40 hover:bg-[#fde8e8] text-[#8c8275] hover:text-[#e0533c] transition-all cursor-pointer active:translate-y-0.5"
+                              <div
+                                className="flex items-center justify-center"
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    toggleSelect(item.id);
+                                  }}
+                                  aria-label={`Select question ${item.id}`}
+                                  className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <motion.div
+                                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="text-[#8c8275] shrink-0"
+                                >
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </motion.div>
+                                <span className="font-mono font-bold text-[#201e1d] truncate" title={item.id}>
+                                  {item.id}
+                                </span>
+                              </div>
+                              <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
+                                {item.stem}
+                              </span>
+                              <span className="text-[#645c50] truncate" title={item.cite}>
+                                {item.cite}
+                              </span>
+                              <span className="text-[#474238] truncate" title={item.topic}>
+                                {item.topic}
+                              </span>
+                              <span className="font-medium">{item.diff}</span>
+                              <span className="font-black text-[#201e1d]">{item.acc}</span>
+                              <span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
+                                >
+                                  {item.st}
+                                </span>
+                              </span>
+                              <span className="text-[#645c50]">{item.upd}</span>
+                              <div
+                                className="flex items-center justify-center"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenDeleteSingle(item.id);
+                                  }}
+                                  aria-label={`Delete question ${item.id}`}
+                                  title={`Delete question ${item.id}`}
+                                  className="p-1.5 rounded-lg border border-transparent hover:border-[#e0533c]/40 hover:bg-[#fde8e8] text-[#8c8275] hover:text-[#e0533c] transition-all cursor-pointer active:translate-y-0.5"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           <AnimatePresence>
                             {isExpanded && (
@@ -1900,54 +2142,108 @@ export default function AdminTools({
                               >
                                 <div className="bg-[#faf6ee] border-y border-[#dcd3c4] p-4 text-xs sm:text-sm my-1 rounded-xl shadow-inner space-y-3">
                                   {/* Top Bar inside dropdown */}
-                                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#dcd3c4]">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                      <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-bold text-[11px]">
-                                        {item.paper}
-                                      </span>
-                                      <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#645c50] text-[11px] font-mono">
-                                        {item.cite}
-                                      </span>
-                                      <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-medium text-[11px]">
-                                        {item.topic}
-                                      </span>
-                                      <span className="px-2 py-0.5 rounded-md bg-[#fdfbf7] border border-[#dcd3c4] text-[#474238] font-medium text-[11px]">
-                                        {item.diff}
-                                      </span>
-                                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}>
-                                        {item.st}
-                                      </span>
-                                      <span className="text-[11px] font-bold text-[#645c50] ml-1">
-                                        Accuracy: <span className="text-[#201e1d] font-black">{item.acc}</span>
-                                      </span>
-                                    </div>
+                                  {isTeacherMode ? (
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#dcd3c4]">
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-bold text-[11px]">
+                                          {item.paper}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#645c50] text-[11px] font-mono">
+                                          {item.cite}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-medium text-[11px]">
+                                          {item.topic}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-[#fdfbf7] border border-[#dcd3c4] text-[#474238] font-medium text-[11px]">
+                                          {item.diff}
+                                        </span>
+                                        <span className="px-2.5 py-0.5 rounded-full bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] whitespace-nowrap">
+                                          🔒 Official Cambridge Content (Read-Only)
+                                        </span>
+                                        <span className="text-[11px] font-bold text-[#645c50] ml-1">
+                                          Accuracy: <span className="text-[#201e1d] font-black">{item.acc}</span>
+                                        </span>
+                                      </div>
 
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onOpenEditor?.(item.id);
-                                        }}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#201e1d] hover:bg-[#34302c] text-[#fdfbf7] font-bold text-xs shadow-[0_2px_0_0_#000] hover:shadow-[0_1px_0_0_#000] active:translate-y-0.5 transition-all cursor-pointer"
-                                      >
-                                        <Edit3 className="w-3.5 h-3.5" />
-                                        <span>Open Full Editor</span>
-                                        <span className="text-[10px] opacity-75">↗</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setExpandedQuestionId(null);
-                                        }}
-                                        className="p-1.5 rounded-lg border border-[#dcd3c4] hover:bg-[#eee7db] text-[#645c50] transition-colors cursor-pointer"
-                                        title="Collapse details"
-                                      >
-                                        <ChevronUp className="w-3.5 h-3.5" />
-                                      </button>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowFlagForm((prev) => !prev);
+                                          }}
+                                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs transition-all cursor-pointer active:translate-y-0.5 ${
+                                            annotation?.flaggedForAdmin
+                                              ? 'bg-[#fde8e8] border-[#e0533c] text-[#e0533c]'
+                                              : 'bg-[#f9f4ed] border-[#c0b6a5] text-[#201e1d] hover:bg-[#eee7db]'
+                                          }`}
+                                        >
+                                          <span>🚩 Flag for Admin</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedQuestionId(null);
+                                          }}
+                                          className="p-1.5 rounded-lg border border-[#dcd3c4] hover:bg-[#eee7db] text-[#645c50] transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold"
+                                          title="Collapse details"
+                                        >
+                                          <span>Collapse</span>
+                                          <ChevronUp className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
                                     </div>
-                                  </div>
+                                  ) : (
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#dcd3c4]">
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-bold text-[11px]">
+                                          {item.paper}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#645c50] text-[11px] font-mono">
+                                          {item.cite}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-medium text-[11px]">
+                                          {item.topic}
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-[#fdfbf7] border border-[#dcd3c4] text-[#474238] font-medium text-[11px]">
+                                          {item.diff}
+                                        </span>
+                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}>
+                                          {item.st}
+                                        </span>
+                                        <span className="text-[11px] font-bold text-[#645c50] ml-1">
+                                          Accuracy: <span className="text-[#201e1d] font-black">{item.acc}</span>
+                                        </span>
+                                      </div>
+
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onOpenEditor?.(item.id);
+                                          }}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#201e1d] hover:bg-[#34302c] text-[#fdfbf7] font-bold text-xs shadow-[0_2px_0_0_#000] hover:shadow-[0_1px_0_0_#000] active:translate-y-0.5 transition-all cursor-pointer"
+                                        >
+                                          <Edit3 className="w-3.5 h-3.5" />
+                                          <span>Open Full Editor</span>
+                                          <span className="text-[10px] opacity-75">↗</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedQuestionId(null);
+                                          }}
+                                          className="p-1.5 rounded-lg border border-[#dcd3c4] hover:bg-[#eee7db] text-[#645c50] transition-colors cursor-pointer"
+                                          title="Collapse details"
+                                        >
+                                          <ChevronUp className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
 
                                   {/* Question Stem */}
                                   <div className="bg-white rounded-xl border border-[#dcd3c4] p-3">
@@ -2038,6 +2334,164 @@ export default function AdminTools({
                                       </div>
                                     </div>
                                   )}
+
+                                  {/* Classroom Tags & Teacher Notes Panel (Editable by Educator) */}
+                                  {isTeacherMode && (
+                                    <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl p-3.5 space-y-3 mt-2">
+                                      <div className="flex items-center justify-between">
+                                        <h4 className="font-heading font-black text-xs sm:text-sm text-[#201e1d] flex items-center gap-1.5">
+                                          <span>🏷️</span> Classroom Tags & Teacher Notes (Editable by Educator)
+                                        </h4>
+                                      </div>
+
+                                      {/* Classroom Tags Section */}
+                                      <div className="space-y-2">
+                                        <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider">
+                                          Classroom Tags
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                          {annotation?.classroomTags && annotation.classroomTags.length > 0 ? (
+                                            annotation.classroomTags.map((tag) => (
+                                              <span
+                                                key={tag}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ffe1d0] text-[#8c491a] text-xs font-bold"
+                                              >
+                                                #{tag}
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleRemoveClassroomTag(item.id, tag)}
+                                                  className="hover:text-[#201e1d] ml-0.5 rounded-full p-0.5 cursor-pointer"
+                                                  title={`Remove ${tag}`}
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
+                                              </span>
+                                            ))
+                                          ) : (
+                                            <span className="text-xs text-[#8c8275] italic">No classroom tags added yet.</span>
+                                          )}
+                                        </div>
+
+                                        {/* Quick Preset Tags */}
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                          <span className="text-[10px] font-bold text-[#8c8275]">Quick Presets:</span>
+                                          {['Exam Focus', 'Homework', 'Common Misconception', 'Review in Class'].map((preset) => {
+                                            const hasTag = annotation?.classroomTags?.includes(preset);
+                                            return (
+                                              <button
+                                                key={preset}
+                                                type="button"
+                                                disabled={hasTag}
+                                                onClick={() => handleAddClassroomTag(item.id, preset)}
+                                                className="px-2 py-0.5 rounded-full border border-[#c0b6a5] bg-white hover:bg-[#eee7db] text-[11px] font-semibold text-[#474238] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                                              >
+                                                + {preset}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+
+                                        {/* Add Custom Tag Input */}
+                                        <div className="flex items-center gap-2 pt-1 max-w-sm">
+                                          <input
+                                            type="text"
+                                            value={tagInput}
+                                            onChange={(e) => setTagInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                if (tagInput.trim()) {
+                                                  handleAddClassroomTag(item.id, tagInput);
+                                                }
+                                              }
+                                            }}
+                                            placeholder="New tag (e.g. Set 1, Revision)..."
+                                            className="flex-1 px-3 py-1 rounded-lg bg-white border border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
+                                          />
+                                          <button
+                                            type="button"
+                                            disabled={!tagInput.trim()}
+                                            onClick={() => {
+                                              if (tagInput.trim()) {
+                                                handleAddClassroomTag(item.id, tagInput);
+                                              }
+                                            }}
+                                            className="px-3 py-1 rounded-lg bg-[#201e1d] text-[#fdfbf7] text-xs font-bold hover:bg-[#34302c] disabled:opacity-40 cursor-pointer"
+                                          >
+                                            Add Tag
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* Teacher Classroom Note Section */}
+                                      <div className="space-y-1.5 pt-1 border-t border-[#dcd3c4]">
+                                        <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider">
+                                          Teacher Classroom Note
+                                        </div>
+                                        <textarea
+                                          value={noteDraft}
+                                          onChange={(e) => setNoteDraft(e.target.value)}
+                                          rows={3}
+                                          placeholder="Add private teaching notes, class reminders, or worked hints for this question..."
+                                          className="w-full p-2.5 rounded-lg bg-white border border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139] leading-relaxed resize-y"
+                                        />
+                                        <div className="flex justify-end">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSaveTeacherNote(item.id, noteDraft)}
+                                            className="px-3.5 py-1.5 rounded-xl bg-[#c67139] text-[#f9f4ed] font-heading font-black text-xs hover:bg-[#b2622d] shadow-sm active:translate-y-0.5 cursor-pointer"
+                                          >
+                                            Save Note
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* Flag for Admin Section */}
+                                      {(showFlagForm || annotation?.flaggedForAdmin) && (
+                                        <div className="p-3 rounded-lg bg-[#fde8e8]/70 border border-[#e0533c]/40 space-y-2 mt-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="font-heading font-bold text-xs text-[#c0392b] flex items-center gap-1.5">
+                                              🚩 {annotation?.flaggedForAdmin ? 'Flagged for App Admin Review' : 'Flag Question for App Admin'}
+                                            </span>
+                                            {showFlagForm && (
+                                              <button
+                                                type="button"
+                                                onClick={() => setShowFlagForm(false)}
+                                                className="text-xs text-[#645c50] hover:text-[#201e1d] cursor-pointer"
+                                              >
+                                                Cancel
+                                              </button>
+                                            )}
+                                          </div>
+                                          {annotation?.flaggedForAdmin && (
+                                            <p className="text-xs text-[#7f1d1d] font-medium">
+                                              Reason: {annotation.flagReason || 'Flagged by educator for review'}
+                                            </p>
+                                          )}
+                                          {showFlagForm && (
+                                            <div className="space-y-2 pt-1">
+                                              <input
+                                                type="text"
+                                                value={flagReasonInput}
+                                                onChange={(e) => setFlagReasonInput(e.target.value)}
+                                                placeholder="Reason for flagging (e.g., diagram missing, typo in option B, syllabus mismatch)..."
+                                                className="w-full px-3 py-1.5 rounded-lg bg-white border border-[#e0533c]/50 text-xs text-[#201e1d] outline-none focus:border-[#e0533c]"
+                                              />
+                                              <div className="flex justify-end gap-2">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleFlagForAdmin(item.id, flagReasonInput)}
+                                                  className="px-3 py-1 rounded-lg bg-[#e0533c] text-white font-bold text-xs hover:bg-[#c0392b] cursor-pointer"
+                                                >
+                                                  Submit Flag to Admin
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </motion.div>
                             )}
@@ -2081,23 +2535,26 @@ export default function AdminTools({
           </div>
 
           {/* Bulk Agent Actions Card */}
-          <div className="mt-1.5 flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs shadow-xs">
-            <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
-            <span className="flex-1 leading-snug text-[#201e1d]">
-              <b>Bulk agent actions:</b> write explanations for items that have none · check
-              citations against source papers · find near-duplicates
-            </span>
-            <button
-              onClick={() => alert(`Agent scanning ${filteredBankItems.length} filtered questions in background...`)}
-              className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#728157] font-bold text-xs text-[#3d472b] hover:bg-[#ccdbb2] active:translate-y-0.5 whitespace-nowrap"
-            >
-              Run on filtered ({filteredBankItems.length})
-            </button>
-          </div>
+          {!isTeacherMode && (
+            <div className="mt-1.5 flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs shadow-xs">
+              <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
+              <span className="flex-1 leading-snug text-[#201e1d]">
+                <b>Bulk agent actions:</b> write explanations for items that have none · check
+                citations against source papers · find near-duplicates
+              </span>
+              <button
+                onClick={() => alert(`Agent scanning ${filteredBankItems.length} filtered questions in background...`)}
+                className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#728157] font-bold text-xs text-[#3d472b] hover:bg-[#ccdbb2] active:translate-y-0.5 whitespace-nowrap"
+              >
+                Run on filtered ({filteredBankItems.length})
+              </button>
+            </div>
+          )}
 
           {/* Floating Mass Actions Deck */}
-          <AnimatePresence>
-            {selectedIds.size > 0 && (
+          {!isTeacherMode && (
+            <AnimatePresence>
+              {selectedIds.size > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -2241,7 +2698,8 @@ export default function AdminTools({
                 </button>
               </motion.div>
             )}
-          </AnimatePresence>
+            </AnimatePresence>
+          )}
 
           {/* Confirmation Pop-up Modal */}
           <AnimatePresence>

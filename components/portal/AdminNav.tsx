@@ -327,7 +327,7 @@ export default function AdminNav({
           )}
 
           {/* Question Verification Section */}
-          {(isEnabled('bank') || isEnabled('flagged')) && (
+          {isEnabled('bank') && (
             <div className="flex flex-col gap-1">
               {!compact && (
                 <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
@@ -335,58 +335,14 @@ export default function AdminNav({
                 </span>
               )}
 
-              {isEnabled('bank') && (
-                <button
-                  type="button"
-                  onClick={() => handleNavClick('bank')}
-                  className={navItemClass('bank')}
-                  title="Question bank"
-                >
-                  {renderIcon(BookOpen, 'bank')}
-                  {!compact && <span className="flex-1 min-w-0 truncate">Question bank</span>}
-                </button>
-              )}
-
-              {isEnabled('flagged') && (
-                <button
-                  type="button"
-                  onClick={() => handleNavClick('flagged')}
-                  className={navItemClass('flagged')}
-                  title="Flagged questions"
-                >
-                  {renderIcon(Flag, 'flagged')}
-                  {!compact && (
-                    <>
-                      <span className="flex-1 min-w-0 truncate">Flagged questions</span>
-                      {flaggedCount > 0 && (
-                        <span className="w-5 h-5 rounded-full bg-[#ffc6a5] text-[#8c491a] text-[10px] font-black border border-[#201e1d]/25 flex items-center justify-center shrink-0">
-                          {flaggedCount}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* School Section */}
-          {isTeacher && isEnabled('school') && (
-            <div className="flex flex-col gap-1">
-              {!compact && (
-                <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
-                  School
-                </span>
-              )}
-
               <button
                 type="button"
-                onClick={() => handleNavClick('school')}
-                className={navItemClass('school')}
-                title="School & licence"
+                onClick={() => handleNavClick('bank')}
+                className={navItemClass('bank')}
+                title="Question bank"
               >
-                {renderIcon(Building2, 'school')}
-                {!compact && <span className="flex-1 min-w-0 truncate">School & licence</span>}
+                {renderIcon(BookOpen, 'bank')}
+                {!compact && <span className="flex-1 min-w-0 truncate">Question bank</span>}
               </button>
             </div>
           )}

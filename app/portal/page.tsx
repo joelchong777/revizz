@@ -372,10 +372,8 @@ function PortalContent() {
           <AdminTools
             key="assign"
             initialView="assign"
-            onOpenEditor={(qid) => {
-              setSelectedQuestionId(qid);
-              setActiveNav('editor');
-            }}
+            portalMode="teacher"
+            onOpenEditor={() => setActiveNav('bank')}
           />
         );
       case 'compiler':
@@ -537,10 +535,7 @@ function PortalContent() {
           <AdminTools
             key="bank"
             initialView="bank"
-            onOpenEditor={(qid) => {
-              setSelectedQuestionId(qid);
-              setActiveNav('editor');
-            }}
+            portalMode="teacher"
           />
         );
       case 'ingestion':
@@ -578,72 +573,40 @@ function PortalContent() {
           </div>
         );
       case 'flagged':
-        return <AdminCMS key="flagged" initialView="flagged" />;
       case 'editor':
-        return <AdminCMS key="editor" initialView="editor" questionId={selectedQuestionId} />;
       case 'school':
         return (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b-[1.5px] border-[#dcd3c4]">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-[#201e1d] font-heading tracking-tight">
-                  School & Licence Management 🏫
-                </h1>
-                <p className="text-sm font-medium text-[#645c50] mt-1">
-                  Manage institutional subscription, educator team seats, and student cohorts.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveNav('roster')}
-                  className="px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5"
-                >
-                  Manage Roster
-                </button>
-              </div>
+          <div className="rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] p-8 sm:p-12 shadow-offset-4 text-center space-y-6 max-w-2xl mx-auto my-8">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#fed7aa] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
+              🛡️
             </div>
-
-            {/* School Licence Card - Empty State */}
-            <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-8 sm:p-12 shadow-offset-4 text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-[#eee7db] border-2 border-[#201e1d] shadow-offset-2 flex items-center justify-center text-3xl">
-                🏫
-              </div>
-              <div className="space-y-2">
-                <span className="text-xs font-bold tracking-wider uppercase text-[#c67139]">Institutional License</span>
-                <h2 className="text-2xl font-black text-[#201e1d] font-heading">
-                  No School Licence Configured
-                </h2>
-                <p className="text-sm font-medium text-[#645c50] max-w-lg mx-auto">
-                  Your organization has not yet configured institutional license seats or registered cohorts.
-                </p>
-              </div>
-              <div className="pt-2 flex flex-wrap gap-3 justify-center">
-                <button
-                  type="button"
-                  onClick={() => alert('Contacting Revizz Institutional Sales...')}
-                  className="px-6 py-3 rounded-full bg-[#ffe1d0] text-[#201e1d] font-black text-sm border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5"
-                >
-                  Configure Enterprise License 🚀
-                </button>
-              </div>
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#c2410c]">Admin Access Required</span>
+              <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight">
+                {activeNav === 'flagged'
+                  ? 'Flag Moderation Queue Restricted to App Admin'
+                  : activeNav === 'editor'
+                  ? 'Direct Question Editing Restricted to App Admin'
+                  : 'Institutional Licence & Seat Quota Management Restricted to App Admin'}
+              </h1>
+              <p className="text-sm font-medium text-[#645c50] leading-relaxed max-w-lg mx-auto">
+                Direct Question Editing, Flag Moderation Queues, and Institutional Licence &amp; Seat Quota Management are restricted to the <b>App Admin Dashboard (/admin)</b> so educators have a focused classroom workspace.
+              </p>
             </div>
-
-            {/* Cohort Breakdown */}
-            <div className="rounded-[24px] border-2 border-[#201e1d] bg-[#f9f4ed] p-6 shadow-offset-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-heading text-lg font-black text-[#201e1d]">Registered Cohorts</h3>
-                <span className="text-xs font-bold text-[#645c50]">0 Cohorts</span>
-              </div>
-              <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-2 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5]">
-                <div className="text-3xl">👥</div>
-                <div className="font-heading text-sm font-black text-[#201e1d]">
-                  No cohorts registered
-                </div>
-                <p className="text-xs font-medium text-[#645c50] max-w-xs">
-                  Create classes and invite educators or students to begin tracking institutional progress.
-                </p>
-              </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/admin"
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#fed7aa] text-[#431407] font-black text-sm border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#fdba74] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2"
+              >
+                <span>Open in App Admin 🛠️</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setActiveNav('overview')}
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#f9f4ed] text-[#201e1d] font-bold text-sm border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#eee7db] transition-all active:translate-y-0.5"
+              >
+                Back to Teacher Overview
+              </button>
             </div>
           </div>
         );
