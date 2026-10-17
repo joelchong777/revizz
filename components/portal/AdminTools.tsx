@@ -1787,7 +1787,7 @@ export default function AdminTools({
                   </div>
                 )}
 
-                <div className="max-h-[580px] overflow-y-auto divide-y divide-[#eee7db] pr-1">
+                <div className="max-h-[720px] xl:max-h-[760px] overflow-y-auto divide-y divide-[#eee7db] pr-1">
                   {(isLoadingLive || questionsLoading) && bankQuestions.length === 0 ? (
                     <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
                       <RotateCw className="w-6 h-6 animate-spin text-[#c67139]" />
@@ -2081,7 +2081,7 @@ export default function AdminTools({
           </div>
 
           {/* Bulk Agent Actions Card */}
-          <div className="flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs">
+          <div className="mt-1.5 flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs shadow-xs">
             <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
             <span className="flex-1 leading-snug text-[#201e1d]">
               <b>Bulk agent actions:</b> write explanations for items that have none · check
