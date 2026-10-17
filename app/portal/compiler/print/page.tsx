@@ -119,16 +119,24 @@ function PrintPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-12 font-sans">
+    <div className="min-h-screen bg-gray-100 pb-12 font-sans print:bg-white print:p-0 print:m-0 print:min-h-0">
       {/* Top Action Bar (hidden during printing) */}
       <div className="no-print sticky top-0 z-50 bg-[#f7f4ee] border-b-2 border-[#201e1d] shadow-sm p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => router.push('/portal?nav=compiler')}
-          className="px-3.5 py-2 text-xs font-bold font-mono text-[#201e1d] bg-white border-2 border-[#201e1d] rounded-xl shadow-[2px_2px_0px_#201e1d] hover:bg-[#ffe1d0] hover:text-[#c67139] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back to Compiler
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={() => router.push('/portal?nav=compiler')}
+            className="px-3.5 py-2 text-xs font-bold font-mono text-[#201e1d] bg-white border-2 border-[#201e1d] rounded-xl shadow-[2px_2px_0px_#201e1d] hover:bg-[#ffe1d0] hover:text-[#c67139] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back to Compiler
+          </button>
+
+          {/* A4 Print Tip Helper Pill */}
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#645c50] bg-[#eee7db] px-3 py-1.5 rounded-full border border-[#dcd3c4]">
+            <span aria-hidden="true">💡</span>
+            <span>Print tip: Choose Paper size: A4 and Margins: Default in your browser&apos;s print dialog.</span>
+          </div>
+        </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1 bg-[#eee7db] p-1 rounded-xl border border-[#dcd3c4]">
@@ -186,7 +194,7 @@ function PrintPageContent() {
       </div>
 
       {/* Printable Exam Paper Area */}
-      <div className="mt-8">
+      <div className="mt-8 print:mt-0 print:p-0">
         <PrintableExamLayout
           config={config}
           questions={questions}

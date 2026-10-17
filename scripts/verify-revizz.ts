@@ -3291,6 +3291,198 @@ async function runSuite13() {
     assertEqual(educator.role, 'Teacher (Read-Only Bank)', 'Toggled role back to Teacher');
   });
 
+  // -----------------------------------------------------------------------------
+  // [Suite 11] Test Compiler A4 Print Layout & Pagination Integrity
+  // -----------------------------------------------------------------------------
+  console.log('\n\x1b[1m\x1b[34m[Suite 11] Test Compiler A4 Print Layout & Pagination Integrity\x1b[0m');
+
+  test('Static Code Contract: PrintableExamLayout.tsx enforces strict A4 page sizing and print styling', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const layoutPath = path.resolve(process.cwd(), 'components/portal/compiler/PrintableExamLayout.tsx');
+    assertEqual(fs.existsSync(layoutPath), true, 'components/portal/compiler/PrintableExamLayout.tsx exists');
+
+    const content = fs.readFileSync(layoutPath, 'utf8');
+
+    // 1. @page size: A4 or size: A4 portrait
+    assert(
+      content.includes('size: A4') || content.includes('size: A4 portrait'),
+      'PrintableExamLayout.tsx contains @page { size: A4 } or @page { size: A4 portrait }'
+    );
+    assert(
+      content.includes('margin: 15mm') || content.includes('margin: 12mm 15mm') || content.includes('margin: 10mm'),
+      'PrintableExamLayout.tsx defines mm-based print margins in @page'
+    );
+
+    // 2. Body background in print media
+    assert(
+      content.includes('background: white') || content.includes('background: white !important'),
+      'PrintableExamLayout.tsx forces white background in print media'
+    );
+  });
+
+  test('Static Code Contract: PrintableExamLayout.tsx question items prevent mid-question page slicing', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const layoutPath = path.resolve(process.cwd(), 'components/portal/compiler/PrintableExamLayout.tsx');
+    const content = fs.readFileSync(layoutPath, 'utf8');
+
+    // 1. Question item break-inside: avoid or page-break-inside: avoid
+    assert(
+      content.includes("breakInside: 'avoid'") ||
+      content.includes('breakInside: "avoid"') ||
+      content.includes("pageBreakInside: 'avoid'") ||
+      content.includes('pageBreakInside: "avoid"') ||
+      content.includes('break-inside: avoid') ||
+      content.includes('page-break-inside: avoid'),
+      'Question items enforce break-inside: avoid or page-break-inside: avoid'
+    );
+
+    // 2. Options container / individual options breakInside: avoid
+    assert(
+      content.includes('breakInside') || content.includes('pageBreakInside'),
+      'Question items or options prevent awkward page break slicing'
+    );
+  });
+
+  test('Static Code Contract: PrintableExamLayout.tsx cover page and bubble sheet pagination boundaries', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const layoutPath = path.resolve(process.cwd(), 'components/portal/compiler/PrintableExamLayout.tsx');
+    const content = fs.readFileSync(layoutPath, 'utf8');
+
+    // 1. Cover page break-after: page or pageBreakAfter: 'always'
+    assert(
+      content.includes("pageBreakAfter: 'always'") ||
+      content.includes('pageBreakAfter: "always"') ||
+      content.includes("breakAfter: 'page'") ||
+      content.includes('breakAfter: "page"') ||
+      content.includes('break-after: page'),
+      'Cover page contains break-after: page or page-break-after: always'
+    );
+
+    // 2. Cover page uses pageBreakInside: 'avoid' or breakInside: 'avoid'
+    assert(
+      content.includes("pageBreakInside: 'avoid'") ||
+      content.includes('pageBreakInside: "avoid"') ||
+      content.includes("breakInside: 'avoid'") ||
+      content.includes('breakInside: "avoid"'),
+      'Cover page uses pageBreakInside: avoid or breakInside: avoid'
+    );
+
+    // 3. Bubble sheet contains break-before: page or pageBreakBefore: 'always'
+    assert(
+      content.includes("pageBreakBefore: 'always'") ||
+      content.includes('pageBreakBefore: "always"') ||
+      content.includes("breakBefore: 'page'") ||
+      content.includes('breakBefore: "page"') ||
+      content.includes('break-before: page'),
+      'Bubble sheet answer sheet enforces break-before: page or pageBreakBefore: always'
+    );
+  });
+
+  test('Static Code Contract: PrintableExamLayout.tsx teacher mark scheme blank page prevention and table header repeat', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const layoutPath = path.resolve(process.cwd(), 'components/portal/compiler/PrintableExamLayout.tsx');
+    const content = fs.readFileSync(layoutPath, 'utf8');
+
+    // Extract the showMarkScheme branch
+    const showMarkSchemeIndex = content.indexOf('if (showMarkScheme)');
+    assert(showMarkSchemeIndex !== -1, 'PrintableExamLayout.tsx handles showMarkScheme branch');
+
+    const markSchemeBranch = content.slice(showMarkSchemeIndex, content.indexOf('return (', showMarkSchemeIndex + 50) + 400);
+
+    // 1. Root element of showMarkScheme does NOT contain pageBreakBefore: 'always' (preventing blank first page)
+    assert(
+      !markSchemeBranch.includes("pageBreakBefore: 'always'") &&
+      !markSchemeBranch.includes('pageBreakBefore: "always"') &&
+      !markSchemeBranch.includes("breakBefore: 'page'") &&
+      !markSchemeBranch.includes('breakBefore: "page"'),
+      'Teacher mark scheme root element does NOT contain pageBreakBefore: always (prevents blank first page)'
+    );
+
+    // 2. Teacher mark scheme table contains display: table-header-group
+    assert(
+      content.includes("display: 'table-header-group'") ||
+      content.includes('display: "table-header-group"') ||
+      content.includes('display: table-header-group') ||
+      content.includes('table-header-group'),
+      'Teacher mark scheme table contains display: table-header-group to repeat headers across pages'
+    );
+  });
+
+  test('Static Code Contract: PrintableExamLayout.tsx question diagram images have constrained max height <= 220px', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const layoutPath = path.resolve(process.cwd(), 'components/portal/compiler/PrintableExamLayout.tsx');
+    const content = fs.readFileSync(layoutPath, 'utf8');
+
+    // Look for image tag with q.imageUrl
+    assert(content.includes('q.imageUrl'), 'PrintableExamLayout.tsx renders question diagrams for q.imageUrl');
+
+    // Diagram max-height must be <= 220px to comfortably fit on A4
+    const match = content.match(/max-h-\[(\d+)px\]/);
+    if (match) {
+      const height = parseInt(match[1], 10);
+      assert(
+        height <= 220,
+        `Diagram max-h-[${height}px] is constrained to <= 220px for A4 fit`
+      );
+    } else {
+      const hasConstrainedClass =
+        content.includes('max-h-48') ||
+        content.includes('max-h-52') ||
+        content.includes('max-h-44') ||
+        content.includes('max-h-40');
+      assert(
+        hasConstrainedClass || content.includes('maxHeight: 220') || content.includes('maxHeight: 200'),
+        'Diagram images have constrained max height <= 220px'
+      );
+    }
+
+    // Must NOT contain old unconstrained max-h-[300px]
+    assert(
+      !content.includes('max-h-[300px]'),
+      'PrintableExamLayout.tsx no longer uses unconstrained max-h-[300px]'
+    );
+  });
+
+  test('Static Code Contract: app/portal/compiler/print/page.tsx toolbar no-print and print overrides', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const printPagePath = path.resolve(process.cwd(), 'app/portal/compiler/print/page.tsx');
+    assertEqual(fs.existsSync(printPagePath), true, 'app/portal/compiler/print/page.tsx exists');
+
+    const content = fs.readFileSync(printPagePath, 'utf8');
+
+    // 1. Toolbar has no-print
+    assert(
+      content.includes('no-print'),
+      'app/portal/compiler/print/page.tsx header toolbar contains no-print'
+    );
+
+    // 2. Parent wrappers contain print overrides (print:bg-white or print:p-0)
+    assert(
+      content.includes('print:bg-white') || content.includes('print:p-0'),
+      'app/portal/compiler/print/page.tsx specifies print overrides (print:bg-white or print:p-0) on parent wrappers'
+    );
+  });
+
+  test('Static Code Contract: app/portal/compiler/print/page.tsx provides A4 print tip and guidance for users', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const printPagePath = path.resolve(process.cwd(), 'app/portal/compiler/print/page.tsx');
+    const content = fs.readFileSync(printPagePath, 'utf8');
+
+    // A4 print tip or guidance for users
+    assert(
+      content.includes('A4') &&
+      (content.includes('Print tip') || content.includes('print tip') || content.includes('tip') || content.includes('Paper size')),
+      'app/portal/compiler/print/page.tsx contains A4 print tip or guidance for users'
+    );
+  });
+
   // Summary Output
   console.log('\n========================================================');
   console.log(`   TOTAL TESTS: ${totalTests}`);
