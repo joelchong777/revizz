@@ -7,7 +7,7 @@ import { getReviewPileCount, subscribeMasteryChanges, getFirstTryCorrectIds } fr
 import { playPop } from '@/lib/audio';
 import { TopicMasteryList } from './TopicMasteryList';
 import { SyllabusTopic, Question } from '@/lib/questions';
-import { useAuth } from '@/lib/auth';
+import { useAuth, isDemoStudentSession } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { fetchSubjectsFromDb, getSubjectEmoji, DbSubject, FALLBACK_SUBJECTS } from '@/lib/subjects';
 
@@ -26,12 +26,24 @@ export function StartFlow({
   questions,
   topics,
 }: StartFlowProps) {
-  const { userProfile } = useAuth();
+  const { userProfile, isDemo: authIsDemo } = useAuth();
+  const isDemo = Boolean(
+    authIsDemo ||
+    isDemoStudentSession(userProfile) ||
+    userProfile?.id === 'demo-student-local' ||
+    userProfile?.display_name === 'Demo Student'
+  );
   const [subjects, setSubjects] = useState<DbSubject[]>(FALLBACK_SUBJECTS);
   const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>('0455');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'review'>('standard');
+
+  useEffect(() => {
+    if (isDemo && selectedMode === 'review') {
+      setSelectedMode('standard');
+    }
+  }, [isDemo, selectedMode]);
   const [roundLength, setRoundLength] = useState<3 | 5 | 10 | 'endless'>(5);
   const [diagramFilter, setDiagramFilter] = useState<DiagramFilter>('mixed');
   const [isTimed, setIsTimed] = useState<boolean>(true);
@@ -178,6 +190,7 @@ export function StartFlow({
     playPop();
 
     if (selectedMode === 'review') {
+      if (isDemo) return;
       onStartReview();
       return;
     }
@@ -203,6 +216,9 @@ export function StartFlow({
   };
 
   const handleModeSelect = (mode: 'standard' | 'topic' | 'review') => {
+    if (mode === 'review' && isDemo) {
+      return;
+    }
     playPop();
     setSelectedMode(mode);
   };
@@ -392,35 +408,70 @@ export function StartFlow({
           {/* Mode 3: Review Pile */}
           <button
             type="button"
+            disabled={isDemo}
             onClick={() => handleModeSelect('review')}
+            title={
+              isDemo
+                ? 'Review pile is a saved feature for logged-in accounts. Sign in with Google to save your mistake pile!'
+                : undefined
+            }
             className={cn(
-              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
-              selectedMode === 'review'
-                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
-                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+              'flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition-all',
+              isDemo
+                ? 'opacity-70 bg-neutral-100/60 border-neutral-300 text-neutral-500 cursor-not-allowed'
+                : selectedMode === 'review'
+                ? 'bg-accent-2-200 border-text shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5 cursor-pointer'
+                : 'bg-white/80 border-text shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer'
             )}
           >
-            <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
-              🧠
+            <span
+              className={cn(
+                'w-10 h-10 flex-none rounded-full border-2 flex items-center justify-center text-lg',
+                isDemo
+                  ? 'bg-neutral-200/60 border-neutral-300 text-neutral-400'
+                  : 'bg-neutral-100 border-text'
+              )}
+            >
+              {isDemo ? '🔒' : '🧠'}
             </span>
             <span className="flex flex-col gap-0.5 flex-1 min-w-0">
-              <span className="font-heading text-[17px] text-text leading-tight">
+              <span
+                className={cn(
+                  'font-heading text-[17px] leading-tight',
+                  isDemo ? 'text-neutral-500' : 'text-text'
+                )}
+              >
                 Review pile
               </span>
-              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
-                Spaced repetition of questions you missed
+              <span
+                className={cn(
+                  'text-[13px] font-medium leading-snug',
+                  isDemo ? 'text-neutral-500' : 'text-neutral-800'
+                )}
+              >
+                {isDemo
+                  ? 'Requires a logged-in account to save your mistake pile'
+                  : 'Spaced repetition of questions you missed'}
               </span>
             </span>
             <div className="flex items-center gap-2 flex-shrink-0">
-              {reviewCount > 0 && (
-                <span className="bg-accent text-neutral-100 px-2 py-0.5 rounded-full text-xs font-bold border-2 border-text">
-                  {reviewCount}
+              {isDemo ? (
+                <span className="bg-neutral-200 text-neutral-600 px-2.5 py-0.5 rounded-full text-xs font-bold border border-neutral-300 whitespace-nowrap">
+                  🔒 Log In to Save
                 </span>
-              )}
-              {selectedMode === 'review' && (
-                <span className="w-6 h-6 rounded-full bg-text text-neutral-100 flex items-center justify-center flex-shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                </span>
+              ) : (
+                <>
+                  {reviewCount > 0 && (
+                    <span className="bg-accent text-neutral-100 px-2 py-0.5 rounded-full text-xs font-bold border-2 border-text">
+                      {reviewCount}
+                    </span>
+                  )}
+                  {selectedMode === 'review' && (
+                    <span className="w-6 h-6 rounded-full bg-text text-neutral-100 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </button>

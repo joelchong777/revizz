@@ -20,7 +20,12 @@ import {
 import { getReviewPileIds } from '../lib/mastery';
 
 export default function HomePage() {
-  const { userProfile, loading: authLoading } = useAuth();
+  const { userProfile, loading: authLoading, isDemo } = useAuth();
+  const isDemoSession = Boolean(
+    isDemo ||
+    userProfile?.id === 'demo-student-local' ||
+    userProfile?.display_name === 'Demo Student'
+  );
   const game = useQuizGame();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [topics, setTopics] = useState<SyllabusTopic[]>([]);
@@ -101,7 +106,7 @@ export default function HomePage() {
   };
 
   const handleStartReviewPile = () => {
-    if (questions.length === 0) return;
+    if (isDemoSession || questions.length === 0) return;
     const pileIds = new Set(getReviewPileIds());
     const reviewQuestions = questions.filter((q) => pileIds.has(q.id));
     if (reviewQuestions.length === 0) return;
@@ -150,6 +155,17 @@ export default function HomePage() {
 
   const handlePlayAgain = () => {
     if (lastRoundConfig && lastRoundQuestions.length > 0) {
+      if (lastRoundConfig.sourceType === 'review' && isDemoSession) {
+        handleStartStandard({
+          subject: 'Economics 0455',
+          sourceType: 'topic',
+          sourceValue: 'all',
+          roundLength: 5,
+          isTimed: true,
+          diagramFilter: 'mixed',
+        });
+        return;
+      }
       handleStartRound(lastRoundConfig, lastRoundQuestions);
     } else {
       handleStartStandard({

@@ -60,7 +60,12 @@ export interface MissedQuestionItem {
 }
 
 export function useQuizGame() {
-  const { userProfile, setUserProfile } = useAuth();
+  const { userProfile, setUserProfile, isDemo } = useAuth();
+  const isDemoSession = Boolean(
+    isDemo ||
+    userProfile?.id === 'demo-student-local' ||
+    userProfile?.display_name === 'Demo Student'
+  );
   
   const [gameState, setGameState] = useState<GameState>('setup');
   const [config, setConfig] = useState<QuizRoundConfig | null>(null);
@@ -213,13 +218,14 @@ export function useQuizGame() {
     const currentQ = questions[currentQuestionIndex];
     if (currentQ) {
       const shouldIncrement = !hasQueuedMistakeRef.current;
-      if (shouldAddToReview && shouldIncrement) addToReviewPile(currentQ.id);
+      const canSaveToReview = !isDemoSession && Boolean(userProfile?.email);
+      if (shouldAddToReview && shouldIncrement && canSaveToReview) addToReviewPile(currentQ.id);
       recordMissed(currentQ, 'timeout', currentQuestionIndex + 1);
       saveAttempt(currentQ, 'timeout', xpAwarded, newStreak, shouldIncrement);
       hasQueuedMistakeRef.current = true;
     }
     playBuzzer();
-  }, [questions, currentQuestionIndex, currentStreak, recordMissed]);
+  }, [questions, currentQuestionIndex, currentStreak, recordMissed, isDemoSession, userProfile?.email]);
 
   // Timer logic
   useEffect(() => {
@@ -310,7 +316,9 @@ export function useQuizGame() {
         if (!hasQueuedMistakeRef.current) {
           hasQueuedMistakeRef.current = true;
           recordMissed(currentQ, 'retry-correct', qNum);
-          addToReviewPile(currentQ.id);
+          if (!isDemoSession && Boolean(userProfile?.email)) {
+            addToReviewPile(currentQ.id);
+          }
           saveAttempt(currentQ, 'first-wrong', 0, 0);
         }
 
@@ -343,7 +351,7 @@ export function useQuizGame() {
         const shouldIncrementMistakes = !hasQueuedMistakeRef.current;
         saveAttempt(currentQ, 'wrong', xpAwarded, 0, shouldIncrementMistakes);
 
-        if (shouldIncrementMistakes) {
+        if (shouldIncrementMistakes && !isDemoSession && Boolean(userProfile?.email)) {
           addToReviewPile(currentQ.id);
         }
         hasQueuedMistakeRef.current = true;

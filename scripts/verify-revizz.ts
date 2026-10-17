@@ -39,6 +39,8 @@ import {
 import {
   formatDisplayName,
   checkIsSchoolAccount,
+  isDemoStudentSession,
+  DEFAULT_DEMO_STUDENT_PROFILE,
 } from '../lib/auth';
 
 import { CAMBRIDGE_QUESTIONS, Question } from '../lib/questions';
@@ -3518,6 +3520,47 @@ async function runSuite13() {
       content.includes('Clear search'),
       'components/TopicMasteryList.tsx contains "Clear search" action in empty state'
     );
+  });
+
+  test('Demo Review Pile Guard Contract: Demo student does not have review pile enabled, logged-in profile has it enabled', () => {
+    // 1. Demo Student session checks
+    const demoProfile = { ...DEFAULT_DEMO_STUDENT_PROFILE };
+    assert(isDemoStudentSession(demoProfile) === true, 'DEFAULT_DEMO_STUDENT_PROFILE is recognized as demo session');
+    assert(!demoProfile.email, 'Demo student session has no verified email');
+    
+    // Evaluation: review pile is disabled for demo session
+    const isDemoReviewPileEnabled = !isDemoStudentSession(demoProfile) && Boolean(demoProfile.email);
+    assert(isDemoReviewPileEnabled === false, 'Demo student must have review pile disabled');
+
+    // 2. Logged-in Google Student session checks
+    const loggedInProfile = {
+      id: 'google-user-12345',
+      display_name: 'Student Learner',
+      email: 'student@example.com',
+      is_school_account: false,
+      total_xp: 350,
+      current_streak: 3,
+      opt_in_leaderboard: true,
+      role: 'student' as const,
+    };
+    assert(isDemoStudentSession(loggedInProfile) === false, 'Logged-in user is not a demo session');
+    assert(Boolean(loggedInProfile.email), 'Logged-in user has verified email');
+
+    // Evaluation: review pile is enabled for logged in account
+    const isLoggedInReviewPileEnabled = !isDemoStudentSession(loggedInProfile) && Boolean(loggedInProfile.email);
+    assert(isLoggedInReviewPileEnabled === true, 'Logged-in account must have review pile enabled');
+
+    // 3. Static verification of components/StartFlow.tsx, hooks/useQuizGame.ts, and app/page.tsx
+    const fs = require('fs');
+    const path = require('path');
+    const startFlowContent = fs.readFileSync(path.resolve(process.cwd(), 'components/StartFlow.tsx'), 'utf8');
+    const quizGameContent = fs.readFileSync(path.resolve(process.cwd(), 'hooks/useQuizGame.ts'), 'utf8');
+    const pageContent = fs.readFileSync(path.resolve(process.cwd(), 'app/page.tsx'), 'utf8');
+
+    assert(startFlowContent.includes('disabled={isDemo}'), 'StartFlow.tsx disables review pile button for demo user');
+    assert(startFlowContent.includes('🔒 Log In to Save'), 'StartFlow.tsx renders locked tag for demo user');
+    assert(quizGameContent.includes('!isDemoSession && Boolean(userProfile?.email)'), 'useQuizGame.ts guards addToReviewPile calls');
+    assert(pageContent.includes('if (isDemoSession || questions.length === 0) return;'), 'page.tsx guards handleStartReviewPile');
   });
 
   // Summary Output
