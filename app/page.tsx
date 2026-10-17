@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { StartFlow } from '../components/StartFlow';
 import { QuestionCard } from '../components/QuestionCard';
 import { RoundSummary } from '../components/RoundSummary';
+import { StudentAuthGate } from '../components/StudentAuthGate';
+import { useAuth } from '@/lib/auth';
 import { useQuizGame, Question, QuizRoundConfig } from '../hooks/useQuizGame';
 import {
   fetchQuestionsFromDb,
@@ -18,6 +20,7 @@ import {
 import { getReviewPileIds } from '../lib/mastery';
 
 export default function HomePage() {
+  const { userProfile, loading: authLoading } = useAuth();
   const game = useQuizGame();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [topics, setTopics] = useState<SyllabusTopic[]>([]);
@@ -160,6 +163,35 @@ export default function HomePage() {
     }
   };
 
+  // 1. Sleek loading skeleton while checking auth session
+  if (authLoading && !userProfile) {
+    return (
+      <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
+        <div className="w-full max-w-[460px] bg-neutral-100 border-4 border-text shadow-[6px_6px_0_#201e1d] rounded-3xl sm:rounded-[32px] p-8 text-center space-y-4 animate-pulse">
+          <div className="w-12 h-12 mx-auto rounded-full bg-accent-200 border-2 border-text shadow-offset-2 flex items-center justify-center text-xl">
+            ✨
+          </div>
+          <div className="h-6 w-48 mx-auto bg-neutral-200 rounded-lg border border-text/20" />
+          <div className="h-4 w-64 mx-auto bg-neutral-200 rounded-lg border border-text/10" />
+          <div className="pt-4 space-y-3">
+            <div className="h-14 w-full bg-neutral-200 rounded-2xl border-2 border-text/30" />
+            <div className="h-14 w-full bg-neutral-200 rounded-2xl border-2 border-text/30" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // 2. Student Auth Gate when unauthenticated
+  if (!userProfile) {
+    return (
+      <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
+        <StudentAuthGate />
+      </main>
+    );
+  }
+
+  // 3. Question bank loading
   if (loading) {
     return (
       <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">

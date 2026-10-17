@@ -17,6 +17,8 @@ const TARGET_FILES = [
   'components/Header.tsx',
   'components/portal/compiler/TestCompilerHub.tsx',
   'components/portal/TeacherAnalytics.tsx',
+  'components/StartFlow.tsx',
+  'components/StudentAuthGate.tsx',
   'lib/auth.ts',
 ];
 

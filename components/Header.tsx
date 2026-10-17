@@ -174,8 +174,18 @@ export function Header({
 
   const flameFill = displayStreak >= 3 ? '#c67139' : '#a19786';
 
-  const userName = userProfile?.display_name || 'Guest Learner';
-  const userInitials = userProfile?.display_name
+  const isDemo =
+    userProfile?.id === 'demo-student-local' ||
+    userProfile?.display_name === 'Demo Student' ||
+    Boolean(userProfile?.id?.startsWith('demo-'));
+
+  const userName = isDemo
+    ? 'Demo Student'
+    : userProfile?.display_name || 'Guest Learner';
+
+  const userInitials = isDemo
+    ? 'DS'
+    : userProfile?.display_name
     ? userProfile.display_name
         .split(' ')
         .map((w) => w[0])
@@ -184,6 +194,14 @@ export function Header({
         .slice(0, 2)
         .toUpperCase()
     : 'GL';
+
+  const userBadge = isDemo
+    ? 'Demo Mode'
+    : userProfile?.is_school_account
+    ? 'School Member'
+    : userProfile?.email
+    ? 'Google Account'
+    : 'Revizz Learner';
   const isDev = process.env.NODE_ENV === 'development';
   const isAdmin = userProfile?.role === 'admin' || isDev;
 
@@ -341,7 +359,13 @@ export function Header({
                 }
               }}
               className="flex items-center gap-2 mr-auto min-w-0 cursor-pointer group"
-              title={userProfile ? 'View Profile & Leaderboard' : 'Sign in to save progress'}
+              title={
+                isDemo
+                  ? 'Demo Mode • Click to sign in or view stats'
+                  : userProfile
+                  ? 'View Profile & Leaderboard'
+                  : 'Sign in to save progress'
+              }
             >
               <span className="w-8 h-8 flex-none rounded-full bg-accent-2-300 border-2 border-text flex items-center justify-center font-bold text-xs text-text group-hover:scale-105 transition-transform">
                 {userInitials}
@@ -364,7 +388,7 @@ export function Header({
                     <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
-                  {userProfile?.is_school_account ? ((userProfile as any).school_name || 'School Member') : 'Revizz Learner'}
+                  {userBadge}
                 </span>
               </div>
             </div>

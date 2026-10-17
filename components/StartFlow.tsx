@@ -167,7 +167,12 @@ export function StartFlow({
       name: 'No Subject',
       icon: null,
     };
-  const firstName = userProfile?.display_name ? userProfile.display_name.split(' ')[0] : 'Alex';
+  const firstName =
+    userProfile?.display_name &&
+    userProfile.display_name !== 'Demo Student' &&
+    userProfile.display_name !== 'Guest Learner'
+      ? userProfile.display_name.split(' ')[0]
+      : null;
 
   const handleStart = () => {
     playPop();
@@ -222,7 +227,7 @@ export function StartFlow({
       {/* Title Header */}
       <div>
         <h1 className="font-heading text-3xl sm:text-4xl text-text leading-tight mb-1">
-          Ready, {firstName}?
+          Ready{firstName ? `, ${firstName}` : ' to Revise'}?
         </h1>
         <p className="text-[15px] text-neutral-700 font-semibold m-0">
           Pick a subject, set the rules, go.
