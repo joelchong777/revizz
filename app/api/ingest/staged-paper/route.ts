@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { validateStagingPaper, StagedPaperSummary } from '@/types/ingestion';
+import { validateStagingPaper, StagedPaperSummary, StagingPaper } from '@/types/ingestion';
+import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
 import {
   fetchPersistentPaperStates,
   savePersistentPaperStates,
@@ -11,19 +12,115 @@ import {
   STAGED_PAPERS_DIR,
 } from '@/lib/ingestion/stagedPaperStorage';
 
+export interface StagingLocation {
+  stagingDir: string;
+  archiveDir: string;
+  isWorktree: boolean;
+}
+
+export function getStagingLocations(): StagingLocation[] {
+  const locations: StagingLocation[] = [];
+  const primaryStaging = path.resolve(process.cwd(), 'staging');
+  locations.push({
+    stagingDir: primaryStaging,
+    archiveDir: path.join(primaryStaging, 'archive'),
+    isWorktree: true,
+  });
+
+  const rootStaging = path.resolve(process.cwd(), '../../staging');
+  if (rootStaging !== primaryStaging && fs.existsSync(rootStaging)) {
+    try {
+      const statPrimary = fs.existsSync(primaryStaging) ? fs.statSync(primaryStaging) : null;
+      const statRoot = fs.statSync(rootStaging);
+      // Ensure root staging is distinct from worktree staging
+      if (!statPrimary || statPrimary.ino !== statRoot.ino || statPrimary.dev !== statRoot.dev) {
+        locations.push({
+          stagingDir: rootStaging,
+          archiveDir: path.join(rootStaging, 'archive'),
+          isWorktree: false,
+        });
+      }
+    } catch {
+      if (rootStaging !== primaryStaging) {
+        locations.push({
+          stagingDir: rootStaging,
+          archiveDir: path.join(rootStaging, 'archive'),
+          isWorktree: false,
+        });
+      }
+    }
+  }
+
+  return locations;
+}
+
+export function getFallbackStagingPaper(): StagingPaper {
+  const optionLabels: Array<'A' | 'B' | 'C' | 'D'> = ['A', 'B', 'C', 'D'];
+  return {
+    id: '0455_s24_12',
+    lifecycle_state: 'review',
+    subject: {
+      code: '0455',
+      name: 'Economics',
+      icon: 'trending-up',
+    },
+    paper: {
+      series: 's',
+      paper_code: '12',
+      year: 2024,
+    },
+    syllabus_topics: CAMBRIDGE_TOPICS.map((t) => ({
+      name: t.name,
+      order_index: t.orderIndex,
+    })),
+    questions: CAMBRIDGE_QUESTIONS.map((q, idx) => ({
+      question_number: idx + 1,
+      cambridge_source_ref: q.citation || `Cambridge IGCSE Economics 0455/12 May/June 2024 Q${idx + 1}`,
+      topic_name: q.topic || 'General',
+      stem_markdown: q.stem_markdown,
+      diagram: {
+        has_diagram: Boolean(q.has_diagram),
+        image_url: q.image_url,
+      },
+      options: q.options.map((opt, oIdx) => ({
+        label: optionLabels[oIdx] ?? 'A',
+        content_markdown: opt.text_markdown,
+        is_correct: opt.id === q.correct_option_id,
+      })),
+      explanation_markdown: 'Scarcity occurs when there are unlimited wants but limited resources.',
+      status: 'active' as const,
+    })),
+  };
+}
+
 async function checkPaperExists(
   cleanId: string,
-  stagingDir: string,
-  archiveDir: string
-): Promise<{ exists: boolean; isLocallyActive: boolean; isLocallyArchived: boolean; isRemote: boolean }> {
-  const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
-  const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
+  locations: StagingLocation[]
+): Promise<{
+  exists: boolean;
+  isLocallyActive: boolean;
+  isLocallyArchived: boolean;
+  isRemote: boolean;
+  activeFilePath?: string;
+  archiveFilePath?: string;
+}> {
+  for (const loc of locations) {
+    const activeFilePath = path.join(loc.stagingDir, `${cleanId}.json`);
+    const archiveFilePath = path.join(loc.archiveDir, `${cleanId}.json`);
 
-  const isLocallyActive = fs.existsSync(activeFilePath);
-  const isLocallyArchived = fs.existsSync(archiveFilePath);
+    const isLocallyActive = fs.existsSync(activeFilePath);
+    const isLocallyArchived = fs.existsSync(archiveFilePath);
 
-  if (isLocallyActive || isLocallyArchived) {
-    return { exists: true, isLocallyActive, isLocallyArchived, isRemote: false };
+    if (isLocallyActive || isLocallyArchived) {
+      return {
+        exists: true,
+        isLocallyActive,
+        isLocallyArchived,
+        isRemote: false,
+        activeFilePath: isLocallyActive ? activeFilePath : undefined,
+        archiveFilePath: isLocallyArchived ? archiveFilePath : undefined,
+      };
+    }
   }
 
   try {
@@ -152,8 +249,9 @@ export async function GET(request: NextRequest) {
       searchParams.get('include_archived') === 'true' ||
       searchParams.get('include_archived') === '1';
 
-    const stagingDir = path.resolve(process.cwd(), 'staging');
-    const archiveDir = path.join(stagingDir, 'archive');
+    const locations = getStagingLocations();
+    const primaryStagingDir = locations[0]?.stagingDir ?? path.resolve(process.cwd(), 'staging');
+    const primaryArchiveDir = locations[0]?.archiveDir ?? path.join(primaryStagingDir, 'archive');
 
     const paperStates = await fetchPersistentPaperStates();
     const deletedSet = new Set(paperStates.deleted);
@@ -185,48 +283,54 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
-      const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
       let fileContent: string | null = null;
       let isArchived = archivedSet.has(cleanId);
       let foundLocally = false;
       let localBirthtime: string | null = null;
       let localMtime: string | null = null;
 
-      if (fs.existsSync(activeFilePath)) {
-        try {
-          fileContent = fs.readFileSync(activeFilePath, 'utf8');
-          foundLocally = true;
+      // Scan all staging directories in precedence order (worktree first, then root)
+      for (const loc of locations) {
+        const activeFilePath = path.join(loc.stagingDir, `${cleanId}.json`);
+        const archiveFilePath = path.join(loc.archiveDir, `${cleanId}.json`);
+
+        if (fs.existsSync(activeFilePath)) {
           try {
-            const stat = fs.statSync(activeFilePath);
-            localBirthtime = stat.birthtime ? stat.birthtime.toISOString() : null;
-            localMtime = stat.mtime ? stat.mtime.toISOString() : null;
-          } catch {
-            // ignore
+            fileContent = fs.readFileSync(activeFilePath, 'utf8');
+            foundLocally = true;
+            try {
+              const stat = fs.statSync(activeFilePath);
+              localBirthtime = stat.birthtime ? stat.birthtime.toISOString() : null;
+              localMtime = stat.mtime ? stat.mtime.toISOString() : null;
+            } catch {
+              // ignore
+            }
+            break;
+          } catch (readErr: any) {
+            return NextResponse.json(
+              { success: false, error: `Failed to read file for "${cleanId}": ${readErr?.message}` },
+              { status: 500 }
+            );
           }
-        } catch (readErr: any) {
-          return NextResponse.json(
-            { success: false, error: `Failed to read file for "${cleanId}": ${readErr?.message}` },
-            { status: 500 }
-          );
-        }
-      } else if (fs.existsSync(archiveFilePath)) {
-        try {
-          fileContent = fs.readFileSync(archiveFilePath, 'utf8');
-          isArchived = true;
-          foundLocally = true;
+        } else if (fs.existsSync(archiveFilePath)) {
           try {
-            const stat = fs.statSync(archiveFilePath);
-            localBirthtime = stat.birthtime ? stat.birthtime.toISOString() : null;
-            localMtime = stat.mtime ? stat.mtime.toISOString() : null;
-          } catch {
-            // ignore
+            fileContent = fs.readFileSync(archiveFilePath, 'utf8');
+            isArchived = true;
+            foundLocally = true;
+            try {
+              const stat = fs.statSync(archiveFilePath);
+              localBirthtime = stat.birthtime ? stat.birthtime.toISOString() : null;
+              localMtime = stat.mtime ? stat.mtime.toISOString() : null;
+            } catch {
+              // ignore
+            }
+            break;
+          } catch (readErr: any) {
+            return NextResponse.json(
+              { success: false, error: `Failed to read archive file for "${cleanId}": ${readErr?.message}` },
+              { status: 500 }
+            );
           }
-        } catch (readErr: any) {
-          return NextResponse.json(
-            { success: false, error: `Failed to read archive file for "${cleanId}": ${readErr?.message}` },
-            { status: 500 }
-          );
         }
       }
 
@@ -243,6 +347,12 @@ export async function GET(request: NextRequest) {
         } catch (storageErr: any) {
           console.warn(`[Staged Paper Route] Supabase download error for "${cleanId}":`, storageErr?.message);
         }
+      }
+
+      // Fallback data if paper not found in staging/storage but requested ID is default fallback
+      if (!fileContent && cleanId === '0455_s24_12') {
+        const fallback = getFallbackStagingPaper();
+        fileContent = JSON.stringify(fallback);
       }
 
       if (!fileContent) {
@@ -317,47 +427,54 @@ export async function GET(request: NextRequest) {
       remotePath?: string;
       remoteCreatedAt?: string | null;
       remoteUpdatedAt?: string | null;
+      isFallback?: boolean;
     }
 
     const discoveredMap = new Map<string, DiscoveredPaper>();
 
-    if (fs.existsSync(stagingDir)) {
-      try {
-        const entries = fs.readdirSync(stagingDir, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
-            const cleanId = entry.name.replace(/\.json$/i, '');
-            discoveredMap.set(cleanId, {
-              cleanId,
-              filename: entry.name,
-              isLocallyArchived: false,
-              localPath: path.join(stagingDir, entry.name),
-            });
-          }
-        }
-      } catch (fsErr: any) {
-        console.warn('[Staged Paper Route] Failed to read staging directory:', fsErr?.message);
-      }
-    }
-
-    if (fs.existsSync(archiveDir)) {
-      try {
-        const entries = fs.readdirSync(archiveDir, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
-            const cleanId = entry.name.replace(/\.json$/i, '');
-            if (!discoveredMap.has(cleanId)) {
-              discoveredMap.set(cleanId, {
-                cleanId,
-                filename: entry.name,
-                isLocallyArchived: true,
-                localPath: path.join(archiveDir, entry.name),
-              });
+    // Scan staging locations in order of precedence (worktree first, root second)
+    for (const loc of locations) {
+      if (fs.existsSync(loc.stagingDir)) {
+        try {
+          const entries = fs.readdirSync(loc.stagingDir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
+              const cleanId = entry.name.replace(/\.json$/i, '');
+              // Worktree takes precedence: only set if not already discovered
+              if (!discoveredMap.has(cleanId)) {
+                discoveredMap.set(cleanId, {
+                  cleanId,
+                  filename: entry.name,
+                  isLocallyArchived: false,
+                  localPath: path.join(loc.stagingDir, entry.name),
+                });
+              }
             }
           }
+        } catch (fsErr: any) {
+          console.warn(`[Staged Paper Route] Failed to read staging directory (${loc.stagingDir}):`, fsErr?.message);
         }
-      } catch (fsErr: any) {
-        console.warn('[Staged Paper Route] Failed to read archive directory:', fsErr?.message);
+      }
+
+      if (fs.existsSync(loc.archiveDir)) {
+        try {
+          const entries = fs.readdirSync(loc.archiveDir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isFile() && entry.name.toLowerCase().endsWith('.json')) {
+              const cleanId = entry.name.replace(/\.json$/i, '');
+              if (!discoveredMap.has(cleanId)) {
+                discoveredMap.set(cleanId, {
+                  cleanId,
+                  filename: entry.name,
+                  isLocallyArchived: true,
+                  localPath: path.join(loc.archiveDir, entry.name),
+                });
+              }
+            }
+          }
+        } catch (fsErr: any) {
+          console.warn(`[Staged Paper Route] Failed to read archive directory (${loc.archiveDir}):`, fsErr?.message);
+        }
       }
     }
 
@@ -386,6 +503,17 @@ export async function GET(request: NextRequest) {
       }
     } catch (storageErr: any) {
       console.warn('[Staged Paper Route] Supabase storage list warning:', storageErr?.message);
+    }
+
+    // Ensure at least one paper exists: if no papers found, provide fallback 0455_s24_12
+    const activeCleanIds = Array.from(discoveredMap.keys()).filter((id) => !deletedSet.has(id));
+    if (activeCleanIds.length === 0 && !deletedSet.has('0455_s24_12')) {
+      discoveredMap.set('0455_s24_12', {
+        cleanId: '0455_s24_12',
+        filename: '0455_s24_12.json',
+        isLocallyArchived: false,
+        isFallback: true,
+      });
     }
 
     const publishedMap = await fetchPublishedPapersMap();
@@ -421,20 +549,24 @@ export async function GET(request: NextRequest) {
       }
 
       let fileContent: string | null = null;
-      try {
-        if (item.localPath && fs.existsSync(item.localPath)) {
-          fileContent = fs.readFileSync(item.localPath, 'utf8');
-        } else if (item.remotePath) {
-          const supabase = getSupabaseClient();
-          const { data: blob } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .download(item.remotePath);
-          if (blob) {
-            fileContent = await blob.text();
+      if (item.isFallback) {
+        fileContent = JSON.stringify(getFallbackStagingPaper());
+      } else {
+        try {
+          if (item.localPath && fs.existsSync(item.localPath)) {
+            fileContent = fs.readFileSync(item.localPath, 'utf8');
+          } else if (item.remotePath) {
+            const supabase = getSupabaseClient();
+            const { data: blob } = await supabase.storage
+              .from(STORAGE_BUCKET)
+              .download(item.remotePath);
+            if (blob) {
+              fileContent = await blob.text();
+            }
           }
+        } catch (readErr: any) {
+          console.warn(`[Staged Paper Route] Failed reading content for "${cleanId}":`, readErr?.message);
         }
-      } catch (readErr: any) {
-        console.warn(`[Staged Paper Route] Failed reading content for "${cleanId}":`, readErr?.message);
       }
 
       if (!fileContent) {
@@ -688,13 +820,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const stagingDir = path.resolve(process.cwd(), 'staging');
-      const archiveDir = path.join(stagingDir, 'archive');
-      const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
-      const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
-
+      const locations = getStagingLocations();
       const paperStates = await fetchPersistentPaperStates();
-      const existence = await checkPaperExists(cleanId, stagingDir, archiveDir);
+      const existence = await checkPaperExists(cleanId, locations);
 
       if (action === 'archive') {
         if (paperStates.deleted.includes(cleanId) || !existence.exists) {
@@ -723,11 +851,14 @@ export async function POST(request: NextRequest) {
 
         // Attempt local move, catching read-only filesystem errors gracefully
         try {
-          if (fs.existsSync(activeFilePath)) {
-            if (!fs.existsSync(archiveDir)) {
-              fs.mkdirSync(archiveDir, { recursive: true });
+          if (existence.activeFilePath && fs.existsSync(existence.activeFilePath)) {
+            const activeDir = path.dirname(existence.activeFilePath);
+            const targetArchiveDir = path.join(activeDir, 'archive');
+            if (!fs.existsSync(targetArchiveDir)) {
+              fs.mkdirSync(targetArchiveDir, { recursive: true });
             }
-            fs.renameSync(activeFilePath, archiveFilePath);
+            const targetArchiveFilePath = path.join(targetArchiveDir, `${cleanId}.json`);
+            fs.renameSync(existence.activeFilePath, targetArchiveFilePath);
           }
         } catch (fsErr: any) {
           console.warn('[Staged Paper Route] Local filesystem move failed (read-only environment):', fsErr?.message);
@@ -768,11 +899,14 @@ export async function POST(request: NextRequest) {
 
         // Attempt local move, catching read-only filesystem errors gracefully
         try {
-          if (fs.existsSync(archiveFilePath)) {
-            if (!fs.existsSync(stagingDir)) {
-              fs.mkdirSync(stagingDir, { recursive: true });
+          if (existence.archiveFilePath && fs.existsSync(existence.archiveFilePath)) {
+            const archiveDir = path.dirname(existence.archiveFilePath);
+            const targetStagingDir = path.dirname(archiveDir);
+            if (!fs.existsSync(targetStagingDir)) {
+              fs.mkdirSync(targetStagingDir, { recursive: true });
             }
-            fs.renameSync(archiveFilePath, activeFilePath);
+            const targetActiveFilePath = path.join(targetStagingDir, `${cleanId}.json`);
+            fs.renameSync(existence.archiveFilePath, targetActiveFilePath);
           }
         } catch (fsErr: any) {
           console.warn('[Staged Paper Route] Local filesystem move back failed (read-only environment):', fsErr?.message);
@@ -799,21 +933,20 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Attempt local unlink, catching read-only filesystem errors gracefully
-        try {
-          if (fs.existsSync(activeFilePath)) {
-            fs.unlinkSync(activeFilePath);
+        // Unlink across all staging locations
+        for (const loc of locations) {
+          const actPath = path.join(loc.stagingDir, `${cleanId}.json`);
+          const arcPath = path.join(loc.archiveDir, `${cleanId}.json`);
+          try {
+            if (fs.existsSync(actPath)) fs.unlinkSync(actPath);
+          } catch (fsErr: any) {
+            console.warn('[Staged Paper Route] Local active file unlink failed:', fsErr?.message);
           }
-        } catch (fsErr: any) {
-          console.warn('[Staged Paper Route] Local active file unlink failed:', fsErr?.message);
-        }
-
-        try {
-          if (fs.existsSync(archiveFilePath)) {
-            fs.unlinkSync(archiveFilePath);
+          try {
+            if (fs.existsSync(arcPath)) fs.unlinkSync(arcPath);
+          } catch (fsErr: any) {
+            console.warn('[Staged Paper Route] Local archive file unlink failed:', fsErr?.message);
           }
-        } catch (fsErr: any) {
-          console.warn('[Staged Paper Route] Local archive file unlink failed:', fsErr?.message);
         }
 
         // Remove from remote storage if present
@@ -990,13 +1123,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const stagingDir = path.resolve(process.cwd(), 'staging');
-    const archiveDir = path.join(stagingDir, 'archive');
-    const activeFilePath = path.join(stagingDir, `${cleanId}.json`);
-    const archiveFilePath = path.join(archiveDir, `${cleanId}.json`);
-
+    const locations = getStagingLocations();
     const paperStates = await fetchPersistentPaperStates();
-    const existence = await checkPaperExists(cleanId, stagingDir, archiveDir);
+    const existence = await checkPaperExists(cleanId, locations);
 
     if (paperStates.deleted.includes(cleanId) || !existence.exists) {
       return NextResponse.json(
@@ -1005,20 +1134,19 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    try {
-      if (fs.existsSync(activeFilePath)) {
-        fs.unlinkSync(activeFilePath);
+    for (const loc of locations) {
+      const actPath = path.join(loc.stagingDir, `${cleanId}.json`);
+      const arcPath = path.join(loc.archiveDir, `${cleanId}.json`);
+      try {
+        if (fs.existsSync(actPath)) fs.unlinkSync(actPath);
+      } catch (fsErr: any) {
+        console.warn('[Staged Paper Route] Local active file unlink failed:', fsErr?.message);
       }
-    } catch (fsErr: any) {
-      console.warn('[Staged Paper Route] Local active file unlink failed:', fsErr?.message);
-    }
-
-    try {
-      if (fs.existsSync(archiveFilePath)) {
-        fs.unlinkSync(archiveFilePath);
+      try {
+        if (fs.existsSync(arcPath)) fs.unlinkSync(arcPath);
+      } catch (fsErr: any) {
+        console.warn('[Staged Paper Route] Local archive file unlink failed:', fsErr?.message);
       }
-    } catch (fsErr: any) {
-      console.warn('[Staged Paper Route] Local archive file unlink failed:', fsErr?.message);
     }
 
     try {

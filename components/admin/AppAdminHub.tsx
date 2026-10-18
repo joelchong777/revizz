@@ -10,6 +10,7 @@ import IngestionHistoryHub from '@/components/admin/IngestionHistoryHub';
 import PortalMenuManager from '@/components/admin/PortalMenuManager';
 import AdminSettingsHub, { SettingsSubTab } from '@/components/admin/AdminSettingsHub';
 import AdsManagerHub from '@/components/admin/AdsManagerHub';
+import WholePaperViewer from '@/components/admin/WholePaperViewer';
 import { useQuestions } from '@/lib/questions';
 import type { StagingQuestion } from '@/types/ingestion';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
@@ -99,6 +100,9 @@ export default function AppAdminHub({
   switch (activeTab) {
     case 'ingestion':
       return renderIngestion();
+
+    case 'papers':
+      return <WholePaperViewer />;
 
     case 'diagnostics':
       return (

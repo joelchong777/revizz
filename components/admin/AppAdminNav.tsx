@@ -212,6 +212,23 @@ export default function AppAdminNav({
 
               <button
                 type="button"
+                onClick={() => handleNavClick('papers')}
+                className={navItemClass('papers')}
+                title="Whole Paper Viewer"
+              >
+                {renderIcon(BookOpen, 'papers')}
+                {!compact && (
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Whole Papers</span>
+                    <span className="px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#8c491a] font-mono text-[9px] font-black border border-[#201e1d]/20 shrink-0">
+                      NEW
+                    </span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handleNavClick('diagnostics')}
                 className={navItemClass('diagnostics')}
                 title="Ingestion Diagnostics"

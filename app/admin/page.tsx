@@ -12,6 +12,7 @@ import { useQuestions } from '@/lib/questions';
 const TAB_TITLES: Record<string, string> = {
   ingestion: 'Ingestion Studio',
   history: 'Ingestion History',
+  papers: 'Ingested Paper Viewer',
   diagnostics: 'Diagnostics Lab',
   bank: 'Question Bank',
   flagged: 'Flagged Reports',
@@ -79,7 +80,7 @@ function AdminContent() {
       } else if (normalized === 'portal-menu') {
         setActiveTab('settings');
         setSubTab('portal-menu');
-      } else if (['ingestion', 'history', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads'].includes(normalized)) {
+      } else if (['ingestion', 'history', 'papers', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }
@@ -462,7 +463,7 @@ function AdminContent() {
         {/* Scrollable Main Area */}
         <main
           className={
-            activeTab === "ingestion"
+            activeTab === "ingestion" || activeTab === "papers"
               ? "p-3 sm:p-4 lg:p-6 max-w-[1800px] mx-auto w-full flex-1"
               : "p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1"
           }
