@@ -995,7 +995,7 @@ export default function AdminTools({
     return Array.from(new Set([...list, ...fromBank]));
   }, [dbTopics, bankQuestions]);
 
-  const pageSize = 20;
+  const pageSize = 100;
   const totalPages = Math.max(1, Math.ceil(filteredBankItems.length / pageSize));
   const bankPage = Math.min(Math.max(1, bankFilters.page || 1), totalPages);
 
