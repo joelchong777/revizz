@@ -404,22 +404,34 @@ export function QuestionCard({
                 </span>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => setIsZoomOpen(true)}
-                className="w-full flex justify-center focus:outline-none cursor-zoom-in bg-transparent border-0 p-0 relative"
-                aria-label="Enlarge diagram"
-              >
-                <img
-                  src={diagramUrl}
-                  alt={altDescription}
-                  onError={() => setImageError(true)}
-                  className="max-h-[280px] sm:max-h-[340px] w-auto max-w-full object-contain cursor-zoom-in rounded-xl transition-transform duration-150 group-hover:scale-[1.01]"
-                />
-                <span className="absolute bottom-2 right-2 px-2.5 py-1 rounded-full bg-neutral-100/95 border-2 border-text shadow-offset-2 text-xs font-bold text-text flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
-                  🔍 Zoom
-                </span>
-              </button>
+              <div className="w-full flex flex-col items-center">
+                <button
+                  type="button"
+                  onClick={() => setIsZoomOpen(true)}
+                  className="w-full flex justify-center focus:outline-none cursor-zoom-in bg-transparent border-0 p-0"
+                  aria-label="Enlarge diagram"
+                >
+                  <img
+                    src={diagramUrl}
+                    alt={altDescription}
+                    onError={() => setImageError(true)}
+                    className="max-h-[280px] sm:max-h-[340px] w-auto max-w-full object-contain cursor-zoom-in rounded-xl transition-transform duration-150 group-hover:scale-[1.01]"
+                  />
+                </button>
+                <div className="w-full flex items-center justify-between pt-2 px-1">
+                  <span className="text-[11px] font-bold text-text/60 select-none hidden sm:inline">
+                    Click diagram to enlarge
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsZoomOpen(true)}
+                    className="ml-auto px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 border-2 border-text shadow-offset-2 text-xs font-bold text-text flex items-center gap-1 transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none select-none"
+                    aria-label="Enlarge diagram"
+                  >
+                    <span>🔍</span> Zoom
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
