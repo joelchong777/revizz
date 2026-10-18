@@ -464,8 +464,83 @@ export function QuestionCard({
           initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-          className="w-full"
+          className="flex flex-col gap-2.5 w-full"
         >
+          {/* Top Celebratory Correct Banner Card */}
+          <div
+            data-testid="correct-answer-banner"
+            className="flex items-center justify-between gap-3 p-3.5 px-4 rounded-2xl bg-accent-2-300 border-2 border-text shadow-offset-3"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black shadow-offset-2 flex-shrink-0">
+                🎉
+              </span>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="font-heading text-lg sm:text-xl text-text leading-tight">
+                  Correct! Spot on 🎉
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
+                  Option {correctLetter} · First-try mastery
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {currentStreak > 0 && (
+                <span className="px-2.5 py-1 rounded-full bg-accent-300 border-2 border-text font-heading text-xs sm:text-sm text-text shadow-offset-2">
+                  🔥 {currentStreak}
+                </span>
+              )}
+              <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2">
+                +{gainedXP} XP
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onNext}
+            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
+          >
+            <span>
+              {questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}
+            </span>
+            <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
+          </button>
+        </motion.div>
+      )}
+
+      {/* Celebratory Banner on Retry Correct */}
+      {isRetryCorrect && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+          className="flex flex-col gap-2.5 w-full"
+          data-testid="retry-correct-banner"
+        >
+          <div className="flex items-center justify-between gap-3 p-3.5 px-4 rounded-2xl bg-accent-2-200 border-2 border-text shadow-offset-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black shadow-offset-2 flex-shrink-0">
+                👍
+              </span>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="font-heading text-lg sm:text-xl text-text leading-tight">
+                  Correct on retry! 👍
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
+                  Option {correctLetter} · Added to Review Pile
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2">
+                +{gainedXP} XP
+              </span>
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={onNext}
@@ -485,6 +560,7 @@ export function QuestionCard({
           const isCorrect = opt.id === question.correct_option_id;
           const isPicked = selectedOptionId === opt.id;
           const isFirstWrongPick = firstWrongOptionId === opt.id;
+          const isCorrectPick = isResolved && isCorrect && isPicked;
 
           const showCheck = isResolved && isCorrect;
           const showX = (isRetry && isFirstWrongPick) || (isResolved && isPicked && !isCorrect);
@@ -494,7 +570,11 @@ export function QuestionCard({
           let chipBg = 'bg-white text-text';
 
           if (showCheck) {
-            cardStyles = 'bg-accent-2-300 shadow-offset-3 font-black text-text cursor-default';
+            if (isCorrectPick) {
+              cardStyles = 'bg-accent-2-300 ring-4 ring-accent-2-500/40 shadow-offset-4 font-black text-text cursor-default';
+            } else {
+              cardStyles = 'bg-accent-2-300 shadow-offset-3 font-black text-text cursor-default';
+            }
             chipBg = 'bg-accent-2-600 text-neutral-100';
           } else if (showX) {
             cardStyles = 'bg-accent-200 shadow-none opacity-70 cursor-default';
@@ -544,21 +624,42 @@ export function QuestionCard({
               </span>
 
               {/* Status Stamp / Hotkey Tag */}
-              <div className="flex-none pt-0.5">
+              <div className="flex-none flex items-center gap-1.5 pt-0.5">
                 {showCheck ? (
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="#728157"
-                    stroke="#f9f4ed"
-                    strokeWidth="2.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <motion.div
+                    initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+                    className="flex items-center gap-1.5"
                   >
-                    <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
-                    <path d="m8 12 3 3 5-6" />
-                  </svg>
+                    {isCorrectPick ? (
+                      <span
+                        data-testid="correct-option-pill"
+                        className="px-2.5 py-0.5 rounded-full bg-accent-2-600 text-neutral-100 border-2 border-text font-heading text-[11px] sm:text-xs tracking-wide uppercase shadow-offset-2 whitespace-nowrap"
+                      >
+                        ✓ Correct · +{gainedXP} XP
+                      </span>
+                    ) : (
+                      <span
+                        className="px-2 py-0.5 rounded-full bg-neutral-100 text-text border-2 border-text font-heading text-[11px] uppercase whitespace-nowrap"
+                      >
+                        Correct Answer
+                      </span>
+                    )}
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="#728157"
+                      stroke="#f9f4ed"
+                      strokeWidth="2.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" stroke="#201e1d" strokeWidth="2" />
+                      <path d="m8 12 3 3 5-6" />
+                    </svg>
+                  </motion.div>
                 ) : showX ? (
                   <svg
                     width="24"

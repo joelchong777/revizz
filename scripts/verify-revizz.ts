@@ -1060,6 +1060,20 @@ test('QuestionCard CTA: First-try correct popup CTA is positioned between questi
   assertEqual(content.includes('See results'), true, 'CTA includes See results label for final question');
 });
 
+test('QuestionCard Correct Feedback: Celebratory banner and selected correct option badge are rendered', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
+  const content = fs.readFileSync(cardPath, 'utf8');
+
+  assertEqual(content.includes('data-testid="correct-answer-banner"'), true, 'Celebratory correct answer banner exists above options');
+  assertEqual(content.includes('Correct! Spot on'), true, 'Celebratory banner includes clear correct headline');
+  assertEqual(content.includes('data-testid="retry-correct-banner"') || content.includes('data-testid=" retry-correct-banner"'), true, 'Retry correct banner exists for 2nd-try correct answers');
+  assertEqual(content.includes('data-testid="correct-option-pill"'), true, 'Selected correct option card renders a prominent CORRECT +XP pill badge');
+  assertEqual(content.includes('✓ Correct · +{gainedXP} XP'), true, 'Correct option pill displays checkmark and gained XP');
+  assertEqual(content.includes('isCorrectPick'), true, 'Distinguishes user-picked correct option from revealed correct option');
+});
+
 
 // -----------------------------------------------------------------------------
 // [Suite 10] Simplified Direct JSON Pipeline, Zero-Draft Contract & Supabase Bank
