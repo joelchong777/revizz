@@ -39,6 +39,9 @@ export function StartFlow({
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'review'>('standard');
+  const [selectedTopicId, setSelectedTopicId] = useState<string>('all');
+  const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState<boolean>(false);
+  const topicDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isDemo && selectedMode === 'review') {
@@ -74,6 +77,29 @@ export function StartFlow({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isDropdownOpen]);
+
+  useEffect(() => {
+    if (!isTopicDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (topicDropdownRef.current && !topicDropdownRef.current.contains(event.target as Node)) {
+        setIsTopicDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsTopicDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTopicDropdownOpen]);
 
   const effectiveTopics = topics || [];
   const effectiveQuestions = questions || [];
@@ -118,7 +144,12 @@ export function StartFlow({
           setDiagramFilter(parsed.diagramFilter);
         }
         if (parsed.sourceType === 'review') setSelectedMode('review');
-        else if (parsed.sourceType === 'topic') setSelectedMode('topic');
+        else if (parsed.sourceType === 'topic') {
+          setSelectedMode('topic');
+          if (parsed.sourceValue && typeof parsed.sourceValue === 'string') {
+            setSelectedTopicId(parsed.sourceValue);
+          }
+        }
         else setSelectedMode('standard');
         if (parsed.subject && typeof parsed.subject === 'string') {
           savedSubject = parsed.subject;
@@ -180,6 +211,18 @@ export function StartFlow({
       name: 'No Subject',
       icon: null,
     };
+
+  const subjectTopics = currentSubject.id
+    ? effectiveTopics.filter(
+        (t) => !(t as { subjectId?: string }).subjectId || (t as { subjectId?: string }).subjectId === currentSubject.id
+      )
+    : effectiveTopics;
+
+  const selectedTopic = subjectTopics.find((t) => t.id === selectedTopicId);
+  const topicQuestionCount = selectedTopic
+    ? effectiveQuestions.filter((q) => q.topic_id === selectedTopic.id).length
+    : 0;
+
   const firstName =
     userProfile?.display_name &&
     userProfile.display_name !== 'Demo Student' &&
@@ -200,7 +243,7 @@ export function StartFlow({
     const roundConfig: QuizRoundConfig = {
       subject: fullSubjectName,
       sourceType: selectedMode === 'topic' ? 'topic' : 'random',
-      sourceValue: selectedMode === 'topic' ? 'all' : 'random',
+      sourceValue: selectedMode === 'topic' ? selectedTopicId : 'random',
       roundLength,
       isTimed,
       diagramFilter,
@@ -213,6 +256,7 @@ export function StartFlow({
   const handleSubjectSelect = (code: string) => {
     playPop();
     setSelectedSubjectCode(code);
+    setSelectedTopicId('all');
     setIsDropdownOpen(false);
   };
 
@@ -396,7 +440,11 @@ export function StartFlow({
                 Topic practice
               </span>
               <span className="text-[13px] text-neutral-800 font-medium leading-snug">
-                Drill chapter by chapter, in syllabus order
+                {selectedMode === 'topic'
+                  ? selectedTopicId === 'all'
+                    ? 'All topics · in syllabus order'
+                    : `Drilling: ${subjectTopics.find((t) => t.id === selectedTopicId)?.name || 'Selected chapter'}`
+                  : 'Drill chapter by chapter, in syllabus order'}
               </span>
             </span>
             {selectedMode === 'topic' && (
@@ -478,6 +526,159 @@ export function StartFlow({
           </button>
         </div>
       </div>
+
+      {/* Topic Selection (Visible only in Topic Practice Mode) */}
+      {selectedMode === 'topic' && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+              Choose Topic
+            </h2>
+            <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold text-neutral-700">
+              {subjectTopics.length} syllabus topics
+            </span>
+          </div>
+
+          <div ref={topicDropdownRef} className="relative w-full">
+            {/* Dropdown Trigger */}
+            <button
+              type="button"
+              data-testid="topic-picker-trigger"
+              onClick={() => {
+                playPop();
+                setIsTopicDropdownOpen((prev) => !prev);
+              }}
+              aria-haspopup="listbox"
+              aria-expanded={isTopicDropdownOpen}
+              aria-label="Choose topic"
+              className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {selectedTopicId === 'all' || !selectedTopic ? (
+                  <>
+                    <span className="px-2 py-0.5 rounded-full bg-neutral-200 border border-text/30 text-xs font-bold flex-shrink-0">
+                      📚 All
+                    </span>
+                    <span className="font-heading text-base sm:text-lg text-text truncate">
+                      All Topics (Across Syllabus)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="px-2 py-0.5 rounded-full bg-accent-2-300 border border-text/30 text-xs font-bold flex-shrink-0">
+                      Ch {selectedTopic.orderIndex}
+                    </span>
+                    <span className="font-heading text-base sm:text-lg text-text truncate">
+                      {selectedTopic.name}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold">
+                  {selectedTopicId === 'all' || !selectedTopic
+                    ? `${effectiveQuestions.length} Qs`
+                    : `${topicQuestionCount} Qs`}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    'w-5 h-5 text-text transition-transform duration-200 flex-shrink-0',
+                    isTopicDropdownOpen && 'rotate-180'
+                  )}
+                />
+              </div>
+            </button>
+
+            {/* Dropdown Popover */}
+            {isTopicDropdownOpen && (
+              <div
+                role="listbox"
+                data-testid="topic-picker-menu"
+                className="absolute top-full left-0 right-0 mt-2 z-30 bg-neutral-100 border-2 border-text rounded-2xl shadow-offset-4 overflow-y-auto max-h-[300px] py-1.5 animate-in fade-in-50 zoom-in-95 duration-150"
+              >
+                {/* All Topics (Across Syllabus) option */}
+                <button
+                  type="button"
+                  role="option"
+                  data-testid="topic-option-all"
+                  aria-selected={selectedTopicId === 'all'}
+                  onClick={() => {
+                    playPop();
+                    setSelectedTopicId('all');
+                    setIsTopicDropdownOpen(false);
+                  }}
+                  className={cn(
+                    'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
+                    selectedTopicId === 'all'
+                      ? 'bg-accent-2-300 font-bold'
+                      : 'hover:bg-neutral-200/60'
+                  )}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="px-2 py-0.5 rounded-full bg-neutral-200 border border-text/30 text-xs font-bold flex-shrink-0">
+                      📚 All
+                    </span>
+                    <span className="font-heading text-base text-text truncate">
+                      All Topics (Across Syllabus)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold">
+                      {effectiveQuestions.length} Qs
+                    </span>
+                    {selectedTopicId === 'all' && (
+                      <Check className="w-5 h-5 text-text flex-shrink-0 stroke-[2.5]" />
+                    )}
+                  </div>
+                </button>
+
+                {/* Individual topics */}
+                {subjectTopics.map((t) => {
+                  const isSelected = selectedTopicId === t.id;
+                  const qCount = effectiveQuestions.filter((q) => q.topic_id === t.id).length;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      role="option"
+                      data-testid={`topic-option-${t.id}`}
+                      aria-selected={isSelected}
+                      onClick={() => {
+                        playPop();
+                        setSelectedTopicId(t.id);
+                        setIsTopicDropdownOpen(false);
+                      }}
+                      className={cn(
+                        'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
+                        isSelected
+                          ? 'bg-accent-2-300 font-bold'
+                          : 'hover:bg-neutral-200/60'
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="px-2 py-0.5 rounded-full bg-accent-2-200 border border-text/30 text-xs font-bold flex-shrink-0">
+                          Ch {t.orderIndex}
+                        </span>
+                        <span className="font-heading text-base text-text truncate">
+                          {t.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold">
+                          {qCount} Qs
+                        </span>
+                        {isSelected && (
+                          <Check className="w-5 h-5 text-text flex-shrink-0 stroke-[2.5]" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 3. Unified "Mission Rules" Deck */}
       <div className="flex flex-col gap-3.5 p-4 rounded-3xl bg-neutral-100/90 border-2 border-text shadow-offset-3">
