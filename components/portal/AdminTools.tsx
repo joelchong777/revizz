@@ -1881,19 +1881,16 @@ export default function AdminTools({
           {/* Bank Table */}
           <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[920px]">
+              <div className="min-w-[680px]">
                 {/* Table Header */}
                 {isTeacherMode ? (
-                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[2.6fr_1.1fr_1.2fr_0.7fr_0.7fr_110px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4] px-1">
+                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[1fr_260px_130px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4] px-1">
                     <span>Question & Classroom Tags</span>
-                    <span>Citation</span>
                     <span>Topic</span>
-                    <span>Difficulty</span>
-                    <span>1st try</span>
                     <span className="text-right pr-2">Classroom</span>
                   </div>
                 ) : (
-                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
+                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_1fr_240px_90px_44px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
                     <div className="flex items-center justify-center">
                       <input
                         type="checkbox"
@@ -1904,14 +1901,9 @@ export default function AdminTools({
                         className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
                       />
                     </div>
-                    <span>ID</span>
                     <span>Stem</span>
-                    <span>Citation</span>
                     <span>Topic</span>
-                    <span>Difficulty</span>
-                    <span>1st try</span>
                     <span>Status</span>
-                    <span>Updated</span>
                     <span className="text-center">Action</span>
                   </div>
                 )}
@@ -1981,7 +1973,7 @@ export default function AdminTools({
                               onClick={() =>
                                 setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
                               }
-                              className={`grid grid-cols-[2.6fr_1.1fr_1.2fr_0.7fr_0.7fr_110px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1.5 ${
+                              className={`grid grid-cols-[1fr_260px_130px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1.5 ${
                                 isExpanded
                                   ? 'bg-[#fbf8f2] border-l-4 border-[#201e1d] shadow-xs'
                                   : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
@@ -2029,14 +2021,9 @@ export default function AdminTools({
                                   </div>
                                 </div>
                               </div>
-                              <span className="text-[#645c50] truncate" title={item.cite}>
-                                {item.cite}
-                              </span>
                               <span className="text-[#474238] truncate" title={item.topic}>
                                 {item.topic}
                               </span>
-                              <span className="font-medium">{item.diff}</span>
-                              <span className="font-black text-[#201e1d]">{item.acc}</span>
                               <div
                                 className="flex items-center justify-end"
                                 onClick={(e) => e.stopPropagation()}
@@ -2057,7 +2044,7 @@ export default function AdminTools({
                               onClick={() =>
                                 setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
                               }
-                              className={`grid grid-cols-[38px_120px_2.3fr_1.1fr_1.1fr_0.7fr_0.6fr_0.8fr_0.6fr_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1 ${
+                              className={`grid grid-cols-[38px_1fr_240px_90px_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1 ${
                                 isSelected
                                   ? 'bg-[#ffe1d0]/50 border-l-4 border-[#c67139]'
                                   : isExpanded
@@ -2088,21 +2075,13 @@ export default function AdminTools({
                                 >
                                   <ChevronDown className="w-3.5 h-3.5" />
                                 </motion.div>
-                                <span className="font-mono font-bold text-[#201e1d] truncate" title={item.id}>
-                                  {item.id}
+                                <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
+                                  {item.stem}
                                 </span>
                               </div>
-                              <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
-                                {item.stem}
-                              </span>
-                              <span className="text-[#645c50] truncate" title={item.cite}>
-                                {item.cite}
-                              </span>
                               <span className="text-[#474238] truncate" title={item.topic}>
                                 {item.topic}
                               </span>
-                              <span className="font-medium">{item.diff}</span>
-                              <span className="font-black text-[#201e1d]">{item.acc}</span>
                               <span>
                                 <span
                                   className={`px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${item.stCls}`}
@@ -2110,7 +2089,6 @@ export default function AdminTools({
                                   {item.st}
                                 </span>
                               </span>
-                              <span className="text-[#645c50]">{item.upd}</span>
                               <div
                                 className="flex items-center justify-center"
                                 onClick={(e) => e.stopPropagation()}
