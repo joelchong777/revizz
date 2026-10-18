@@ -22,6 +22,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { useQuestions, Question, CAMBRIDGE_TOPICS } from '@/lib/questions';
+import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 import {
   CambridgeQuestionMeta,
   parseCambridgeQuestionMetadata,
@@ -779,7 +780,7 @@ export default function AdminCMS({
                         <div className="w-28 h-24 rounded-2xl bg-white border-[1.5px] border-[#201e1d] overflow-hidden flex flex-col items-center justify-center p-1.5 shadow-[2px_2px_0_#201e1d] shrink-0">
                           {!imageError ? (
                             <img
-                              src={imageUrl}
+                              src={resolveDiagramUrl(imageUrl) || imageUrl}
                               alt="Question Diagram Preview"
                               onError={() => setImageError(true)}
                               className="max-h-full max-w-full object-contain"
@@ -1061,7 +1062,7 @@ export default function AdminCMS({
                 {hasDiagram && imageUrl && (
                   <div className="w-full max-h-48 rounded-2xl bg-white border-[1.5px] border-[#201e1d] p-2 flex items-center justify-center overflow-hidden my-1 shadow-sm">
                     <img
-                      src={imageUrl}
+                      src={resolveDiagramUrl(imageUrl) || imageUrl}
                       alt="Question diagram"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = 'none';

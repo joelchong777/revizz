@@ -29,6 +29,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
+import { CompilerDiagramPreview } from './compiler/CompilerDiagramPreview';
+import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 import { 
   useQuestions, 
   useTopics, 
@@ -205,7 +207,7 @@ export function createInitialBankItems(questions: Question[]): QuestionBankItem[
       hasMath: features.hasMath,
       optionsText,
       options: parsedOptions,
-      imageUrl: q.image_url || (q.diagram as any)?.image_url || (q as any).diagram_metadata?.image_url,
+      imageUrl: resolveDiagramUrl(q.image_url || (q.diagram as any)?.image_url || (q as any).diagram_metadata?.image_url || (q as any).diagram_metadata?.storage_path) || q.image_url || (q.diagram as any)?.image_url || (q as any).diagram_metadata?.image_url,
       explanationMarkdown: (q as any).explanation_markdown || (q as any).explanation,
     };
   });
@@ -632,7 +634,7 @@ export default function AdminTools({
           hasMath: features.hasMath,
           optionsText,
           options: parsedOptions,
-          imageUrl: q.image_url || q.diagram_metadata?.image_url,
+          imageUrl: resolveDiagramUrl(q.image_url || q.diagram_metadata?.image_url || q.diagram_metadata?.storage_path) || q.image_url || q.diagram_metadata?.image_url,
           explanationMarkdown: q.explanation_markdown,
         };
       });
@@ -2241,10 +2243,10 @@ export default function AdminTools({
                                       <div className="text-[11px] font-bold text-[#8c8275] uppercase tracking-wider mb-2">
                                         Diagram / Figure
                                       </div>
-                                      <img
-                                        src={item.imageUrl}
-                                        alt={`Diagram for question ${item.id}`}
-                                        className="max-h-48 rounded-lg border border-[#dcd3c4] object-contain bg-white p-2"
+                                      <CompilerDiagramPreview
+                                        imageUrl={item.imageUrl}
+                                        citation={item.id}
+                                        maxThumbnailHeight="max-h-48"
                                       />
                                     </div>
                                   )}

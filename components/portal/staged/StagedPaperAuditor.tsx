@@ -25,6 +25,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
 import { playPop, playChime, playBuzzer } from '@/lib/audio';
+import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 
 export interface StagedPaperAuditorProps {
   paperId: string;
@@ -272,7 +273,8 @@ export function StagedPaperAuditor({
     );
   }
 
-  const diagramUrl = currentQuestion?.diagram?.image_url || (currentQuestion?.diagram?.storage_path ? currentQuestion.diagram.storage_path : null);
+  const rawUrl = currentQuestion?.diagram?.image_url || (currentQuestion?.diagram?.storage_path ? currentQuestion.diagram.storage_path : null);
+  const diagramUrl = resolveDiagramUrl(rawUrl) || rawUrl;
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] max-w-7xl mx-auto px-2 sm:px-4 py-2 gap-3 text-[#201e1d]">

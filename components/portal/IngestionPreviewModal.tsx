@@ -21,6 +21,7 @@ import "katex/dist/katex.min.css";
 
 import type { StagingQuestion } from "@/types/ingestion";
 import { sanitizeKaTeX } from "@/lib/ingestion/katexSanitizer";
+import { resolveDiagramUrl } from "@/lib/resolveDiagramUrl";
 import { IngestionLivePreview } from "./IngestionLivePreview";
 import { MarkdownErrorBoundary } from "@/components/ui/MarkdownErrorBoundary";
 
@@ -262,7 +263,7 @@ export default function IngestionPreviewModal({
                 <div className="rounded-2xl border-[1.5px] border-[#dcd3c4] bg-white p-3 flex flex-col items-center justify-center text-center gap-2">
                   {currentQuestion.diagram.image_url ? (
                     <img
-                      src={currentQuestion.diagram.image_url}
+                      src={resolveDiagramUrl(currentQuestion.diagram.image_url) || currentQuestion.diagram.image_url}
                       alt={`Diagram for Question ${currentQuestion.question_number || selectedIdx + 1}`}
                       className="max-h-64 object-contain rounded-xl"
                     />
