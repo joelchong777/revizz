@@ -6,7 +6,7 @@ if (typeof (globalThis as any).WebSocket === 'undefined') {
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
-import { StagingPaper } from '@/types/ingestion';
+import { StagingPaper, StagingQuestion, validateStagingPaper } from '@/types/ingestion';
 
 export interface StagedPaperStates {
   archived: string[]; // array of paper cleanIds
@@ -54,7 +54,9 @@ export async function fetchPersistentPaperStates(): Promise<StagedPaperStates> {
         ? parsed.archived.filter((id: any) => typeof id === 'string' && id.trim())
         : [],
       deleted: Array.isArray(parsed?.deleted)
-        ? parsed.deleted.filter((id: any) => typeof id === 'string' && id.trim())
+        ? parsed.deleted.filter(
+            (id: any) => typeof id === 'string' && id.trim() && id.trim() !== '0455_s24_12'
+          )
         : [],
     };
   } catch (err: any) {
@@ -66,7 +68,9 @@ export async function fetchPersistentPaperStates(): Promise<StagedPaperStates> {
 export async function savePersistentPaperStates(states: StagedPaperStates): Promise<boolean> {
   try {
     const supabase = getSupabaseClient();
-    const deletedList = Array.from(new Set(states.deleted || [])).filter(Boolean);
+    const deletedList = Array.from(new Set(states.deleted || []))
+      .filter(Boolean)
+      .filter((id) => id !== '0455_s24_12');
     const deletedSet = new Set(deletedList);
     const archivedList = Array.from(new Set(states.archived || []))
       .filter(Boolean)
@@ -219,3 +223,280 @@ export function getFallbackStagingPaper(customLocations?: StagingLocation[]): St
     ],
   };
 }
+
+export function generateCleanPaperId(
+  subjectCode: string | undefined | null,
+  series: string | undefined | null,
+  year: number | string | undefined | null,
+  paperCode: string | number | undefined | null
+): string {
+  const code = String(subjectCode || '0455').trim();
+  const s = String(series || 's').trim().toLowerCase();
+  const rawY = String(year || '24').trim();
+  const y = rawY.length === 4 ? rawY.slice(2) : rawY;
+  const p = String(paperCode || '12').trim().replace(/^paper\s*/i, '');
+  return `${code}_${s}${y}_${p}`;
+}
+
+export interface LiveSupabasePaperSummary {
+  paperRow: any;
+  cleanId: string;
+  subject: { code: string; name: string; icon: string };
+  paper: { year: number; series: string; paper_code: string };
+  questionsCount: number;
+  diagramsCount: number;
+  activeCount: number;
+  needsReviewCount: number;
+  withdrawnCount: number;
+  topicsCount: number;
+  topicBreakdown: { name: string; count: number }[];
+}
+
+export async function fetchLiveSupabasePapers(): Promise<LiveSupabasePaperSummary[]> {
+  try {
+    const supabase = getSupabaseClient();
+    const { data: papersData, error: papersErr } = await supabase
+      .from('papers')
+      .select('id, series, paper_code, year, subjects(id, code, name, icon)');
+
+    if (papersErr || !Array.isArray(papersData) || papersData.length === 0) {
+      if (papersErr) {
+        console.warn('[fetchLiveSupabasePapers] Supabase papers query warning:', papersErr.message);
+      }
+      return [];
+    }
+
+    const { data: questionsData, error: qErr } = await supabase
+      .from('questions')
+      .select('paper_id, id, diagram_metadata, image_url, status, topic_id, topics(name)');
+
+    if (qErr) {
+      console.warn('[fetchLiveSupabasePapers] Questions query warning:', qErr.message);
+    }
+
+    const qMap = new Map<string, Array<any>>();
+    if (Array.isArray(questionsData)) {
+      for (const q of questionsData) {
+        if (!q.paper_id) continue;
+        const list = qMap.get(q.paper_id) || [];
+        list.push(q);
+        qMap.set(q.paper_id, list);
+      }
+    }
+
+    const summaries: LiveSupabasePaperSummary[] = [];
+
+    for (const row of papersData) {
+      const subj = Array.isArray(row.subjects) ? row.subjects[0] : row.subjects;
+      const subjectCode = subj?.code || '0455';
+      const subjectName = subj?.name || 'Economics';
+      const subjectIcon = subj?.icon || 'trending-up';
+      const cleanId = generateCleanPaperId(subjectCode, row.series, row.year, row.paper_code);
+
+      const paperQuestions = qMap.get(row.id) || [];
+      const questionsCount = paperQuestions.length;
+
+      let diagramsCount = 0;
+      let activeCount = 0;
+      let needsReviewCount = 0;
+      let withdrawnCount = 0;
+      const topicCounts = new Map<string, number>();
+
+      for (const q of paperQuestions) {
+        const hasDiag = Boolean(q.diagram_metadata?.has_diagram || q.image_url);
+        if (hasDiag) diagramsCount++;
+
+        const s = (q.status || '').toLowerCase();
+        if (s.includes('withdrawn')) withdrawnCount++;
+        else if (s.includes('review')) needsReviewCount++;
+        else activeCount++;
+
+        const tName = q.topics?.name || 'General';
+        topicCounts.set(tName, (topicCounts.get(tName) || 0) + 1);
+      }
+
+      const topicBreakdown = Array.from(topicCounts.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+
+      summaries.push({
+        paperRow: row,
+        cleanId,
+        subject: {
+          code: subjectCode,
+          name: subjectName,
+          icon: subjectIcon,
+        },
+        paper: {
+          year: row.year,
+          series: row.series,
+          paper_code: String(row.paper_code),
+        },
+        questionsCount,
+        diagramsCount,
+        activeCount,
+        needsReviewCount,
+        withdrawnCount,
+        topicsCount: topicBreakdown.length,
+        topicBreakdown,
+      });
+    }
+
+    // Sort live papers by year desc, series, paper_code asc (e.g. 0455_w24_11, 0455_w24_12, 0455_w24_13)
+    summaries.sort((a, b) => {
+      if (b.paper.year !== a.paper.year) return b.paper.year - a.paper.year;
+      if (a.paper.series !== b.paper.series) return a.paper.series.localeCompare(b.paper.series);
+      return a.paper.paper_code.localeCompare(b.paper.paper_code);
+    });
+
+    return summaries;
+  } catch (err: any) {
+    console.warn('[fetchLiveSupabasePapers] Unexpected error:', err?.message);
+    return [];
+  }
+}
+
+export async function fetchLiveSupabasePaperDetail(
+  paperIdOrCleanId: string
+): Promise<{ paper: StagingPaper; publishedExamPaperId: string } | null> {
+  try {
+    const supabase = getSupabaseClient();
+    const clean = path.basename(paperIdOrCleanId).replace(/\.json$/i, '').trim();
+
+    // Query all papers from Supabase
+    const { data: papersData, error: papersErr } = await supabase
+      .from('papers')
+      .select('id, series, paper_code, year, subjects(id, code, name, icon)');
+
+    if (papersErr || !Array.isArray(papersData) || papersData.length === 0) {
+      return null;
+    }
+
+    // Match by UUID or clean ID (e.g. 0455_w24_11)
+    const matchedPaper = papersData.find((p) => {
+      if (p.id === clean || p.id === paperIdOrCleanId) return true;
+      const subj = Array.isArray(p.subjects) ? p.subjects[0] : p.subjects;
+      const candId = generateCleanPaperId(subj?.code, p.series, p.year, p.paper_code);
+      return candId.toLowerCase() === clean.toLowerCase();
+    });
+
+    if (!matchedPaper) {
+      return null;
+    }
+
+    const { data: dbQuestions, error: qErr } = await supabase
+      .from('questions')
+      .select('*, question_options(*), topics(*)')
+      .eq('paper_id', matchedPaper.id)
+      .order('question_number', { ascending: true });
+
+    if (qErr || !Array.isArray(dbQuestions) || dbQuestions.length === 0) {
+      console.warn(
+        `[fetchLiveSupabasePaperDetail] No questions found for paper ${matchedPaper.id}:`,
+        qErr?.message
+      );
+      return null;
+    }
+
+    const subj = Array.isArray(matchedPaper.subjects) ? matchedPaper.subjects[0] : matchedPaper.subjects;
+    const cleanId = generateCleanPaperId(
+      subj?.code,
+      matchedPaper.series,
+      matchedPaper.year,
+      matchedPaper.paper_code
+    );
+
+    const topicMap = new Map<string, { name: string; order_index: number }>();
+    for (const q of dbQuestions) {
+      if (q.topics && q.topics.name) {
+        if (!topicMap.has(q.topics.name)) {
+          topicMap.set(q.topics.name, {
+            name: q.topics.name,
+            order_index: q.topics.order_index ?? topicMap.size + 1,
+          });
+        }
+      }
+    }
+    const syllabus_topics = Array.from(topicMap.values());
+    if (syllabus_topics.length === 0) {
+      syllabus_topics.push({ name: 'General', order_index: 1 });
+    }
+
+    const questions: StagingQuestion[] = dbQuestions.map((dbQ) => {
+      const hasDiag = Boolean(dbQ.diagram_metadata?.has_diagram || dbQ.image_url);
+      const options = (dbQ.question_options || [])
+        .slice()
+        .sort((a: any, b: any) => String(a.label || '').localeCompare(String(b.label || '')))
+        .map((opt: any) => ({
+          label: (opt.label || 'A') as 'A' | 'B' | 'C' | 'D',
+          content_markdown: opt.content_markdown || '',
+          is_correct: Boolean(opt.is_correct),
+        }));
+
+      const distractorAnalysis: Record<string, string> = {};
+      for (const opt of dbQ.question_options || []) {
+        if (opt.distractor_reasoning && opt.label) {
+          distractorAnalysis[opt.label] = opt.distractor_reasoning;
+        }
+      }
+
+      const s = (dbQ.status || '').toLowerCase();
+      let status: 'active' | 'withdrawn' | 'needs_review' = 'active';
+      if (s.includes('withdrawn')) status = 'withdrawn';
+      else if (s.includes('review')) status = 'needs_review';
+
+      return {
+        question_number: dbQ.question_number,
+        cambridge_source_ref: dbQ.cambridge_source_ref || '',
+        topic_name: dbQ.topics?.name || 'General',
+        stem_markdown: dbQ.stem_markdown || '',
+        diagram: {
+          has_diagram: hasDiag,
+          image_url: dbQ.diagram_metadata?.image_url || dbQ.image_url || undefined,
+          bounding_box: dbQ.diagram_metadata?.bounding_box || undefined,
+          storage_path: dbQ.diagram_metadata?.storage_path || undefined,
+          alt_description: dbQ.diagram_metadata?.alt_description || undefined,
+        },
+        options,
+        explanation_markdown: dbQ.explanation_markdown || '',
+        status,
+        distractor_analysis:
+          Object.keys(distractorAnalysis).length > 0 ? distractorAnalysis : undefined,
+      };
+    });
+
+    const stagedPaper: StagingPaper = {
+      id: cleanId,
+      lifecycle_state: 'published',
+      source: 'database',
+      subject: {
+        code: subj?.code || '0455',
+        name: subj?.name || 'Economics',
+        icon: subj?.icon || 'trending-up',
+      },
+      paper: {
+        series: matchedPaper.series,
+        paper_code: String(matchedPaper.paper_code),
+        year: matchedPaper.year,
+      },
+      syllabus_topics,
+      questions,
+      ingested_at: (dbQuestions[0] as any)?.created_at || new Date().toISOString(),
+      updated_at: (dbQuestions[0] as any)?.created_at || new Date().toISOString(),
+      published_at: (dbQuestions[0] as any)?.created_at || new Date().toISOString(),
+    };
+
+    const validation = validateStagingPaper(stagedPaper, { allowPartialBatch: true });
+    return {
+      paper: validation.data || stagedPaper,
+      publishedExamPaperId: matchedPaper.id,
+    };
+  } catch (err: any) {
+    console.warn(
+      `[fetchLiveSupabasePaperDetail] Failed to load "${paperIdOrCleanId}":`,
+      err?.message
+    );
+    return null;
+  }
+}
+

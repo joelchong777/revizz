@@ -6,6 +6,8 @@ import {
   fetchPersistentPaperStates,
   savePersistentPaperStates,
   getSupabaseClient,
+  fetchLiveSupabasePapers,
+  fetchLiveSupabasePaperDetail,
   STORAGE_BUCKET,
   PAPER_STATES_PATH,
   STAGED_PAPERS_DIR,
@@ -197,7 +199,20 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      if (deletedSet.has(cleanId)) {
+      // Check if matching a live paper in Supabase (by UUID or clean ID e.g. 0455_w24_11)
+      const liveDbPaper = await fetchLiveSupabasePaperDetail(rawId);
+      if (liveDbPaper) {
+        return NextResponse.json({
+          success: true,
+          paper: liveDbPaper.paper,
+          is_published: true,
+          published_exam_paper_id: liveDbPaper.publishedExamPaperId,
+          is_archived: false,
+          source: 'database',
+        });
+      }
+
+      if (deletedSet.has(cleanId) && cleanId !== '0455_s24_12') {
         return NextResponse.json(
           { success: false, error: `Staged paper "${cleanId}" not found in staging directory.` },
           { status: 404 }
@@ -336,6 +351,7 @@ export async function GET(request: NextRequest) {
         is_published: isPublished,
         published_exam_paper_id: matchedPaper?.id || null,
         is_archived: isArchived,
+        source: isPublished ? 'database' : 'staging',
       });
     }
 
@@ -426,9 +442,37 @@ export async function GET(request: NextRequest) {
       console.warn('[Staged Paper Route] Supabase storage list warning:', storageErr?.message);
     }
 
+    // Query live published papers from Supabase papers table & question counts
+    const livePapersData = await fetchLiveSupabasePapers();
+    const livePaperSummaries: StagedPaperSummary[] = livePapersData.map((lp) => ({
+      id: lp.cleanId,
+      filename: `${lp.cleanId}.json`,
+      subject: lp.subject,
+      paper: lp.paper,
+      questionsCount: lp.questionsCount,
+      diagramsCount: lp.diagramsCount,
+      activeCount: lp.activeCount,
+      needsReviewCount: lp.needsReviewCount,
+      withdrawnCount: lp.withdrawnCount,
+      topicsCount: lp.topicsCount,
+      topicBreakdown: lp.topicBreakdown,
+      ingested_at: (lp.paperRow as any).created_at || null,
+      updated_at: (lp.paperRow as any).created_at || null,
+      published_at: (lp.paperRow as any).created_at || null,
+      source_qp_filename: null,
+      source_ms_filename: null,
+      lifecycle_state: 'published',
+      is_published: true,
+      published_exam_paper_id: lp.paperRow.id,
+      is_archived: false,
+      isValid: lp.questionsCount > 0,
+      source: 'database',
+    }));
+    const liveCleanIdSet = new Set(livePaperSummaries.map((p) => p.id));
+
     // Ensure at least one paper exists: if no papers found, provide fallback 0455_s24_12
-    const activeCleanIds = Array.from(discoveredMap.keys()).filter((id) => !deletedSet.has(id));
-    if (activeCleanIds.length === 0 && !deletedSet.has('0455_s24_12')) {
+    const activeCleanIds = Array.from(discoveredMap.keys()).filter((id) => !deletedSet.has(id) || id === '0455_s24_12');
+    if (activeCleanIds.length === 0 && livePaperSummaries.length === 0 && !deletedSet.has('0455_s24_12')) {
       discoveredMap.set('0455_s24_12', {
         cleanId: '0455_s24_12',
         filename: '0455_s24_12.json',
@@ -438,13 +482,17 @@ export async function GET(request: NextRequest) {
     }
 
     const publishedMap = await fetchPublishedPapersMap();
-    const papers: string[] = [];
-    const stagedPapers: StagedPaperSummary[] = [];
+    const stagedSummaries: StagedPaperSummary[] = [];
 
     const sortedCleanIds = Array.from(discoveredMap.keys()).sort((a, b) => a.localeCompare(b));
 
     for (const cleanId of sortedCleanIds) {
-      if (deletedSet.has(cleanId)) {
+      if (deletedSet.has(cleanId) && cleanId !== '0455_s24_12') {
+        continue;
+      }
+
+      // If already present as a live published paper in Supabase, live database paper takes priority!
+      if (liveCleanIdSet.has(cleanId)) {
         continue;
       }
 
@@ -454,8 +502,6 @@ export async function GET(request: NextRequest) {
       if (!includeArchived && isArchived) {
         continue;
       }
-
-      papers.push(cleanId);
 
       let localBirthtime: string | null = null;
       let localMtime: string | null = null;
@@ -505,7 +551,7 @@ export async function GET(request: NextRequest) {
         const updatedAt = localMtime || item.remoteUpdatedAt || ingestedAt || null;
         const publishedAt = isPublished ? updatedAt : null;
 
-        stagedPapers.push({
+        stagedSummaries.push({
           id: cleanId,
           filename: item.filename,
           questionsCount: 0,
@@ -525,6 +571,7 @@ export async function GET(request: NextRequest) {
           published_exam_paper_id: matchedPaper?.id || null,
           is_archived: isArchived,
           isValid: false,
+          source: isPublished ? 'database' : 'staging',
         });
         continue;
       }
@@ -578,7 +625,7 @@ export async function GET(request: NextRequest) {
         const updatedAt = parsedJson?.updated_at || localMtime || item.remoteUpdatedAt || ingestedAt || null;
         const publishedAt = parsedJson?.published_at || (isPublished ? updatedAt : null);
 
-        stagedPapers.push({
+        stagedSummaries.push({
           id: typeof parsedJson?.id === 'string' && parsedJson.id ? parsedJson.id : cleanId,
           filename: item.filename,
           subject: parsedJson?.subject
@@ -620,6 +667,7 @@ export async function GET(request: NextRequest) {
           published_exam_paper_id: publishedExamPaperId,
           is_archived: isArchived,
           isValid: questions.length > 0,
+          source: isPublished ? 'database' : 'staging',
         });
       } catch {
         const fallbackMeta = parseMetadataFromFilename(item.filename);
@@ -636,7 +684,7 @@ export async function GET(request: NextRequest) {
         const updatedAt = localMtime || item.remoteUpdatedAt || ingestedAt || null;
         const publishedAt = isPublished ? updatedAt : null;
 
-        stagedPapers.push({
+        stagedSummaries.push({
           id: cleanId,
           filename: item.filename,
           questionsCount: 0,
@@ -656,14 +704,19 @@ export async function GET(request: NextRequest) {
           published_exam_paper_id: matchedPaper?.id || null,
           is_archived: isArchived,
           isValid: false,
+          source: isPublished ? 'database' : 'staging',
         });
       }
     }
 
+    // Sort with live published papers first, followed by staged papers
+    const allStagedPapers: StagedPaperSummary[] = [...livePaperSummaries, ...stagedSummaries];
+    const papers: string[] = allStagedPapers.map((p) => p.id);
+
     return NextResponse.json({
       success: true,
       papers,
-      stagedPapers,
+      stagedPapers: allStagedPapers,
     });
   } catch (err: any) {
     return NextResponse.json(

@@ -1,7 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { validateStagingPaper } from '../types/ingestion';
-import { getStagingLocations, getFallbackStagingPaper } from '../lib/ingestion/stagedPaperStorage';
+import {
+  getStagingLocations,
+  getFallbackStagingPaper,
+  fetchLiveSupabasePapers,
+  fetchLiveSupabasePaperDetail,
+} from '../lib/ingestion/stagedPaperStorage';
+import { GET } from '../app/api/ingest/staged-paper/route';
+import { NextRequest } from 'next/server';
 
 interface TestResult {
   name: string;
@@ -177,6 +184,89 @@ async function runVerification() {
     }
   }
   assert(traversalBlocked, 'All malicious directory traversal and path injection patterns blocked');
+
+  // Test 5: Live Supabase Paper Integration & Dynamic Schema Mapping
+  console.log('\n[5] Verifying Live Supabase Paper Integration & Dynamic Schema Mapping...');
+  const livePapers = await fetchLiveSupabasePapers();
+  assert(livePapers.length >= 3, `Discovered at least 3 live published papers in Supabase (found: ${livePapers.length})`);
+
+  const expectedLiveIds = ['0455_w24_11', '0455_w24_12', '0455_w24_13'];
+  for (const expectedId of expectedLiveIds) {
+    const livePaper = livePapers.find((p) => p.cleanId === expectedId);
+    assert(Boolean(livePaper), `Live paper ${expectedId} discovered in live paper index`);
+    if (livePaper) {
+      assert(livePaper.questionsCount === 30, `${expectedId} has 30 live questions (found: ${livePaper.questionsCount})`);
+      assert(livePaper.diagramsCount > 0, `${expectedId} has diagrams (found: ${livePaper.diagramsCount})`);
+      assert(livePaper.topicsCount >= 5, `${expectedId} has syllabus topics breakdown (found: ${livePaper.topicsCount})`);
+    }
+  }
+
+  // Verify detail loading for 0455_w24_11
+  const detailPaper11 = await fetchLiveSupabasePaperDetail('0455_w24_11');
+  assert(Boolean(detailPaper11), 'fetchLiveSupabasePaperDetail("0455_w24_11") returned paper record');
+  if (detailPaper11) {
+    assert(detailPaper11.paper.id === '0455_w24_11', 'Mapped paper ID is 0455_w24_11');
+    assert(detailPaper11.paper.lifecycle_state === 'published', 'Paper lifecycle_state is published');
+    assert(detailPaper11.paper.source === 'database', 'Paper source is database');
+    assert(detailPaper11.paper.questions.length === 30, 'Paper contains exactly 30 questions');
+    assert(detailPaper11.publishedExamPaperId === 'f130c53c-4946-41ad-8171-78df5331fa5f', 'UUID matches publishedExamPaperId');
+
+    const valResult = validateStagingPaper(detailPaper11.paper, { allowPartialBatch: true });
+    assert(valResult.success === true, 'Supabase live paper conforms 100% to StagingPaper schema', valResult.errors?.join('; '));
+
+    const q1 = detailPaper11.paper.questions[0];
+    assert(q1.question_number === 1, 'Q1 has question_number 1');
+    assert(typeof q1.stem_markdown === 'string' && q1.stem_markdown.length > 0, 'Q1 has stem_markdown');
+    assert(q1.options.length === 4, 'Q1 has exactly 4 options');
+    const correctCount = q1.options.filter((o) => o.is_correct).length;
+    assert(correctCount === 1, 'Q1 has exactly one correct option');
+  }
+
+  // Verify loading by UUID
+  const detailByUUID = await fetchLiveSupabasePaperDetail('f130c53c-4946-41ad-8171-78df5331fa5f');
+  assert(Boolean(detailByUUID), 'fetchLiveSupabasePaperDetail by UUID returned paper record');
+  if (detailByUUID) {
+    assert(detailByUUID.paper.id === '0455_w24_11', 'Detail by UUID correctly resolves clean ID 0455_w24_11');
+  }
+
+  // Verify GET /api/ingest/staged-paper Route Live Behavior
+  console.log('\n[6] Verifying Staged Paper API Route Live Behavior...');
+  const reqList = new NextRequest('http://localhost:3000/api/ingest/staged-paper');
+  const resList = await GET(reqList);
+  assert(resList.status === 200, 'GET /api/ingest/staged-paper returns HTTP 200');
+  const listJson = await resList.json();
+  assert(listJson.success === true, 'API response reports success: true');
+  assert(Array.isArray(listJson.papers), 'API response contains papers array');
+  assert(Array.isArray(listJson.stagedPapers), 'API response contains stagedPapers array');
+
+  // Verify live papers are sorted first
+  const first3 = listJson.papers.slice(0, 3);
+  assert(
+    first3.includes('0455_w24_11') && first3.includes('0455_w24_12') && first3.includes('0455_w24_13'),
+    'Live published Supabase papers are sorted first in papers list'
+  );
+
+  const firstStagedSummary = listJson.stagedPapers[0];
+  assert(firstStagedSummary.source === 'database', 'First paper summary source is "database"');
+  assert(firstStagedSummary.is_published === true, 'First paper summary is_published is true');
+  assert(firstStagedSummary.lifecycle_state === 'published', 'First paper summary lifecycle_state is "published"');
+
+  // Verify single paper detail route
+  const reqDetail = new NextRequest('http://localhost:3000/api/ingest/staged-paper?id=0455_w24_11');
+  const resDetail = await GET(reqDetail);
+  assert(resDetail.status === 200, 'GET /api/ingest/staged-paper?id=0455_w24_11 returns HTTP 200');
+  const detailJson = await resDetail.json();
+  assert(detailJson.success === true, 'Detail response reports success: true');
+  assert(detailJson.source === 'database', 'Detail response reports source: "database"');
+  assert(detailJson.is_published === true, 'Detail response reports is_published: true');
+  assert(detailJson.paper?.questions?.length === 30, 'Detail response paper has 30 questions');
+
+  // Verify 0455_s24_12 is accessible
+  const reqS24 = new NextRequest('http://localhost:3000/api/ingest/staged-paper?id=0455_s24_12');
+  const resS24 = await GET(reqS24);
+  assert(resS24.status === 200, 'GET /api/ingest/staged-paper?id=0455_s24_12 returns HTTP 200');
+  const s24Json = await resS24.json();
+  assert(s24Json.success === true, '0455_s24_12 loads successfully and is never blocked');
 
   // Summary
   console.log('\n====================================================');

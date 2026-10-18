@@ -126,6 +126,7 @@ export const StagingPaperSchema = z.object({
   ingested_at: z.string().optional(),
   updated_at: z.string().optional(),
   published_at: z.string().optional(),
+  source: z.string().optional(),
 });
 export type StagingPaper = z.infer<typeof StagingPaperSchema>;
 
@@ -162,6 +163,7 @@ export interface StagedPaperSummary {
   published_exam_paper_id?: string | null;
   is_archived?: boolean;
   isValid?: boolean;
+  source?: 'database' | 'staging' | string;
 }
 
 /**

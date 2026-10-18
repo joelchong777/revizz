@@ -51,6 +51,7 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [publishedExamPaperId, setPublishedExamPaperId] = useState<string | null>(null);
   const [isArchived, setIsArchived] = useState<boolean>(false);
+  const [paperSource, setPaperSource] = useState<'database' | 'staging' | string>('staging');
   const [loadingPaper, setLoadingPaper] = useState<boolean>(false);
   const [paperError, setPaperError] = useState<string | null>(null);
 
@@ -99,7 +100,9 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
       if (found) {
         setSelectedPaperId(found.id);
       } else if (list.length > 0) {
-        setSelectedPaperId(list[0].id);
+        // Default to the first available paper with questions (e.g. 0455_w24_11 or 0455_m24_12)
+        const firstWithQuestions = list.find((p) => (p.questionsCount ?? 0) > 0) || list[0];
+        setSelectedPaperId(firstWithQuestions.id);
       }
     } catch (err: any) {
       console.error('[WholePaperViewer] Error fetching paper list:', err);
@@ -132,6 +135,7 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
       setIsPublished(Boolean(data.is_published));
       setPublishedExamPaperId(data.published_exam_paper_id || null);
       setIsArchived(Boolean(data.is_archived));
+      setPaperSource(data.source || data.paper?.source || (data.is_published ? 'database' : 'staging'));
 
       // Reset explanation toggles on paper change
       setExpandedExplanations({});
@@ -175,6 +179,10 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     });
     return counts;
   }, [questionsList]);
+
+  const selectedSummary = useMemo(() => {
+    return stagedPapers.find((p) => p.id === selectedPaperId);
+  }, [stagedPapers, selectedPaperId]);
 
   const topicsList = useMemo(() => {
     const set = new Set<string>();
@@ -297,10 +305,10 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
               <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#8c491a] shadow-xs">
                 CAMBRIDGE INGESTION ARCHIVE
               </span>
-              {isPublished ? (
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-xs font-mono font-black text-[#272e1b] flex items-center gap-1 shadow-xs">
+              {paperSource === 'database' || isPublished ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-[#d7f5ba] border border-[#201e1d] text-xs font-mono font-black text-[#1c3809] flex items-center gap-1.5 shadow-xs">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-800" />
-                  Live in Supabase
+                  Live Database Paper (Supabase PostgreSQL)
                 </span>
               ) : isArchived ? (
                 <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] border border-[#201e1d]/30 text-xs font-mono font-bold text-[#645c50]">
@@ -356,9 +364,36 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
         {/* Paper Selector Dropdown & Quick Details */}
         <div className="pt-2 border-t-2 border-[#201e1d]/15 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex-1 max-w-xl">
-            <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-              Select Ingested Cambridge Paper:
-            </label>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50]">
+                Select Cambridge Paper:
+              </label>
+              {selectedSummary && (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black border flex items-center gap-1 shadow-xs ${
+                    selectedSummary.is_published || selectedSummary.lifecycle_state === 'published' || selectedSummary.source === 'database'
+                      ? 'bg-[#d7f5ba] text-[#1c3809] border-[#201e1d]'
+                      : selectedSummary.is_archived
+                      ? 'bg-[#eee7db] text-[#645c50] border-[#201e1d]/40'
+                      : 'bg-[#fff0db] text-[#9a4200] border-[#201e1d]'
+                  }`}
+                >
+                  {selectedSummary.is_published || selectedSummary.lifecycle_state === 'published' || selectedSummary.source === 'database' ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                      LIVE IN DB
+                    </>
+                  ) : selectedSummary.is_archived ? (
+                    'ARCHIVED'
+                  ) : (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      STAGED
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
             <div className="relative">
               <select
                 value={selectedPaperId}
@@ -367,26 +402,20 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
                 className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-heading font-bold text-[#201e1d] shadow-[2px_2px_0_#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] appearance-none pr-9 cursor-pointer"
               >
                 {stagedPapers.length === 0 ? (
-                  <option value="">No staged papers found</option>
+                  <option value="">No papers found</option>
                 ) : (
                   stagedPapers.map((p) => {
-                    const subjectCode = p.subject?.code || '';
+                    const isLive = Boolean(p.is_published || p.lifecycle_state === 'published' || p.source === 'database');
+                    const statusPrefix = isLive ? '🟢 [LIVE IN DB]' : p.is_archived ? '📦 [ARCHIVED]' : '🟡 [STAGED]';
+                    const subjectCode = p.subject?.code || '0455';
                     const subjectName = p.subject?.name ? ` ${p.subject.name}` : '';
-                    const series = p.paper?.series ? ` ${p.paper.series.toUpperCase()}` : '';
-                    const year = p.paper?.year ? `${p.paper.year}` : '';
-                    const paperCode = p.paper?.paper_code ? ` P${p.paper.paper_code}` : '';
-                    const qCount = p.questionsCount !== undefined ? ` (${p.questionsCount} Qs)` : '';
-                    const statusStr = p.is_published ? ' [Live]' : p.is_archived ? ' [Archived]' : '';
+                    const seriesText = formatSeriesText(p.paper?.series, p.paper?.year);
+                    const paperCode = p.paper?.paper_code ? ` · Paper ${p.paper.paper_code}` : '';
+                    const qCount = p.questionsCount !== undefined ? ` · ${p.questionsCount} Qs` : '';
 
                     return (
                       <option key={p.id} value={p.id}>
-                        {p.id} — {subjectCode}
-                        {subjectName}
-                        {series}
-                        {year}
-                        {paperCode}
-                        {qCount}
-                        {statusStr}
+                        {statusPrefix} {p.id} — {subjectCode}{subjectName} · {seriesText}{paperCode}{qCount}
                       </option>
                     );
                   })
