@@ -372,7 +372,20 @@ export default function AppAdminHub({
       );
 
     case 'portal-menu':
-      return <PortalMenuManager />;
+      return (
+        <AdminSettingsHub
+          initialSubTab="portal-menu"
+          onSelectSubTab={(s) => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', 'settings');
+              url.searchParams.set('sub', s);
+              window.history.replaceState(null, '', url.toString());
+            }
+          }}
+          onSelectParentTab={onSelectTab}
+        />
+      );
 
     case 'ads':
       return <AdsManagerHub />;

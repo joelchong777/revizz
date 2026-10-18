@@ -15,7 +15,7 @@ const TAB_TITLES: Record<string, string> = {
   bank: 'Question Bank',
   flagged: 'Flagged Reports',
   editor: 'Question Editor',
-  settings: 'Platform Settings',
+  settings: 'Settings',
   system: 'System Overview',
   school: 'School Licences',
   'portal-menu': 'Portal Menu Manager',
@@ -73,7 +73,10 @@ function AdminContent() {
       } else if (normalized === 'school') {
         setActiveTab('settings');
         setSubTab('school');
-      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'portal-menu', 'ads'].includes(normalized)) {
+      } else if (normalized === 'portal-menu') {
+        setActiveTab('settings');
+        setSubTab('portal-menu');
+      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }
@@ -91,6 +94,9 @@ function AdminContent() {
     } else if (tab === 'school') {
       setActiveTab('settings');
       setSubTab('school');
+    } else if (tab === 'portal-menu') {
+      setActiveTab('settings');
+      setSubTab('portal-menu');
     } else {
       setActiveTab(tab);
       if (sub) {
@@ -100,7 +106,7 @@ function AdminContent() {
     setMobileNavOpen(false);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      if (tab === 'system' || tab === 'school') {
+      if (tab === 'system' || tab === 'school' || tab === 'portal-menu') {
         url.searchParams.set('tab', 'settings');
         url.searchParams.set('sub', tab);
       } else {

@@ -13,7 +13,6 @@ import {
   Home,
   X,
   ShieldCheck,
-  Menu,
   Sliders,
   Megaphone,
 } from 'lucide-react';
@@ -267,30 +266,20 @@ export default function AppAdminNav({
                 type="button"
                 onClick={() => handleNavClick('settings')}
                 className={navItemClass('settings')}
-                title="Platform Settings"
+                title="Settings"
               >
                 {renderIcon(Sliders, 'settings')}
                 {!compact && (
                   <>
-                    <span className="flex-1 min-w-0 truncate">Platform Settings</span>
+                    <span className="flex-1 min-w-0 truncate">Settings</span>
                     <span className="px-1.5 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-mono font-bold border border-[#201e1d]/25 shrink-0">
-                      5 Panels
+                      6 Panels
                     </span>
                   </>
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleNavClick('portal-menu')}
-                className={navItemClass('portal-menu')}
-                title="Portal Menu Manager"
-              >
-                {renderIcon(Menu, 'portal-menu')}
-                {!compact && (
-                  <span className="flex-1 min-w-0 truncate">Portal Menu Manager</span>
-                )}
-              </button>
+              {/* Note: portal-menu (Portal Menu Manager) has moved into the Settings hub (?tab=settings&sub=portal-menu) */}
 
               <button
                 type="button"

@@ -26,10 +26,12 @@ import {
   BookOpen,
   ArrowRight,
   Megaphone,
+  Menu,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
+import PortalMenuManager from '@/components/admin/PortalMenuManager';
 
-export type SettingsSubTab = 'school' | 'system' | 'ingestion' | 'gameplay' | 'auth';
+export type SettingsSubTab = 'school' | 'system' | 'ingestion' | 'gameplay' | 'auth' | 'portal-menu';
 
 export interface AdminSettingsHubProps {
   initialSubTab?: SettingsSubTab;
@@ -62,6 +64,7 @@ const TABS: { id: SettingsSubTab; label: string; icon: React.ElementType; badge:
   { id: 'ingestion', label: 'Ingestion & AI Engine', icon: Sparkles, badge: 'v2.5 Flash' },
   { id: 'gameplay', label: 'Curriculum & Quiz Rules', icon: Sliders, badge: '2-Try Active' },
   { id: 'auth', label: 'Auth & Security', icon: ShieldCheck, badge: 'Secured' },
+  { id: 'portal-menu', label: 'Portal Menu Manager', icon: Menu, badge: 'Nav Editor' },
 ];
 
 export default function AdminSettingsHub({
@@ -1498,6 +1501,11 @@ export default function AdminSettingsHub({
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* TAB 6: PORTAL MENU MANAGER */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'portal-menu' && <PortalMenuManager />}
 
       {/* Ads & Monetization Studio Cross-Link Banner */}
       <div className="p-5 sm:p-6 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
