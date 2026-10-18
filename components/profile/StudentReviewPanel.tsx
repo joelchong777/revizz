@@ -267,21 +267,21 @@ export function StudentReviewPanel({
     <div className="space-y-6">
       {/* 1. SUB-MODE SEGMENTED SWITCHER */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="inline-flex p-1 bg-neutral-200/80 border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0_0_#201e1d]">
+        <div className="inline-flex p-1.5 bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_0_#201e1d]">
           <button
             type="button"
             onClick={() => setMode('mistakes')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
               mode === 'mistakes'
-                ? 'bg-rose-500 text-white shadow-[1px_1px_0_0_#201e1d]'
-                : 'text-neutral-700 hover:text-neutral-900'
+                ? 'bg-[#FB7185] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading'
+                : 'text-[#201e1d] hover:bg-neutral-100 border-2 border-transparent'
             }`}
           >
             <span>🔥</span>
             <span>Mistakes to Review</span>
             <span
-              className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${
-                mode === 'mistakes' ? 'bg-white/30 text-white' : 'bg-neutral-300 text-neutral-800'
+              className={`text-[11px] px-2 py-0.5 rounded-full font-black border ${
+                mode === 'mistakes' ? 'bg-[#201e1d] text-[#FB7185] border-[#201e1d]' : 'bg-neutral-200 text-[#201e1d] border-[#201e1d]/30'
               }`}
             >
               {mistakeQuestionsList.length}
@@ -291,17 +291,17 @@ export function StudentReviewPanel({
           <button
             type="button"
             onClick={() => setMode('bookmarks')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
               mode === 'bookmarks'
-                ? 'bg-amber-400 text-amber-950 shadow-[1px_1px_0_0_#201e1d]'
-                : 'text-neutral-700 hover:text-neutral-900'
+                ? 'bg-[#FFDE59] text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading'
+                : 'text-[#201e1d] hover:bg-neutral-100 border-2 border-transparent'
             }`}
           >
             <span>⭐</span>
             <span>Bookmarked Questions</span>
             <span
-              className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${
-                mode === 'bookmarks' ? 'bg-amber-950/20 text-amber-950' : 'bg-neutral-300 text-neutral-800'
+              className={`text-[11px] px-2 py-0.5 rounded-full font-black border ${
+                mode === 'bookmarks' ? 'bg-[#201e1d] text-[#FFDE59] border-[#201e1d]' : 'bg-neutral-200 text-[#201e1d] border-[#201e1d]/30'
               }`}
             >
               {bookmarkQuestionsList.length}
@@ -314,9 +314,9 @@ export function StudentReviewPanel({
           type="button"
           onClick={handleStartReviewQuiz}
           disabled={filteredQuestions.length === 0}
-          className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#201e1d] font-black text-xs sm:text-sm transition-all cursor-pointer ${
+          className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-[#201e1d] font-heading text-xs sm:text-sm transition-all cursor-pointer ${
             filteredQuestions.length > 0
-              ? 'bg-accent-300 hover:bg-amber-300 text-[#201e1d] shadow-[3px_3px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_#201e1d]'
+              ? 'bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] shadow-[3px_3px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_#201e1d]'
               : 'bg-neutral-200 text-neutral-400 border-neutral-300 cursor-not-allowed shadow-none'
           }`}
         >
@@ -328,16 +328,16 @@ export function StudentReviewPanel({
 
       {/* 2. DEMO SESSION LOCK BANNER */}
       {isDemoSession && mode === 'mistakes' && (
-        <div className="bg-amber-50 border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-200 border-2 border-[#201e1d] flex items-center justify-center text-xl shrink-0 shadow-[1px_1px_0_0_#201e1d]">
+        <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-5 shadow-[4px_4px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] flex items-center justify-center text-xl shrink-0 shadow-[2px_2px_0_0_#201e1d]">
               🔒
             </div>
             <div>
-              <h3 className="font-black text-sm sm:text-base text-[#201e1d]">
+              <h3 className="font-heading text-base sm:text-lg text-[#201e1d]">
                 Log In to Save & Unlock Your Spaced Mistake Review Pile
               </h3>
-              <p className="text-xs font-bold text-neutral-600 mt-0.5 leading-relaxed">
+              <p className="text-xs font-medium text-neutral-600 mt-1 leading-relaxed">
                 Guest mistakes are stored temporarily in this browser session. Create or log in to your free account to sync your mistake queue across devices and unlock automated Leitner spaced repetition.
               </p>
             </div>
@@ -346,16 +346,16 @@ export function StudentReviewPanel({
           <button
             type="button"
             onClick={onOpenAuthModal}
-            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#201e1d] hover:bg-neutral-800 text-white rounded-xl text-xs font-black shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#201e1d] hover:bg-neutral-800 text-white rounded-xl text-xs font-heading shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
           >
-            <span>🔑 Log In or Sign Up to Sync</span>
+            <span>🔑 Log In to Sync</span>
             <span aria-hidden="true">→</span>
           </button>
         </div>
       )}
 
       {/* 3. FILTER & DRILL CONTROLS BAR */}
-      <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-4 shadow-[3px_3px_0_0_#201e1d] space-y-3">
+      <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] space-y-3.5">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -392,7 +392,7 @@ export function StudentReviewPanel({
               id="review-topic-filter"
               value={selectedTopicId}
               onChange={(e) => setSelectedTopicId(e.target.value)}
-              className="text-xs font-bold bg-neutral-100 border-2 border-[#201e1d] rounded-xl px-2.5 py-1.5 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-300 max-w-[180px] truncate"
+              className="text-xs font-bold bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-2 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFDE59] max-w-[180px] truncate"
             >
               <option value="all">All Topics ({availableTopicsInMode.length})</option>
               {availableTopicsInMode.map((t) => (
@@ -412,7 +412,7 @@ export function StudentReviewPanel({
               id="review-sort"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="text-xs font-bold bg-neutral-100 border-2 border-[#201e1d] rounded-xl px-2.5 py-1.5 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-300"
+              className="text-xs font-bold bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-2 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFDE59]"
             >
               <option value="recent">Most Recent</option>
               {mode === 'mistakes' && <option value="missed">Most Missed</option>}
@@ -423,15 +423,15 @@ export function StudentReviewPanel({
 
         {/* Severity Pills (Only for Mistakes Mode) */}
         {mode === 'mistakes' && (
-          <div className="flex items-center gap-1.5 pt-2 border-t border-neutral-100 flex-wrap">
+          <div className="flex items-center gap-2 pt-2.5 border-t-2 border-neutral-100 flex-wrap">
             <span className="text-xs font-bold text-neutral-500 mr-1">Severity:</span>
             <button
               type="button"
               onClick={() => setMistakeSeverity('all')}
-              className={`px-2.5 py-1 rounded-lg border text-xs font-black transition-all ${
+              className={`px-3 py-1 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 mistakeSeverity === 'all'
-                  ? 'bg-[#201e1d] text-white border-[#201e1d]'
-                  : 'bg-neutral-100 text-neutral-700 border-neutral-300 hover:border-[#201e1d]'
+                  ? 'bg-[#201e1d] text-white shadow-[1.5px_1.5px_0_0_#201e1d]'
+                  : 'bg-white text-neutral-700 hover:bg-neutral-100'
               }`}
             >
               All Mistakes ({mistakeQuestionsList.length})
@@ -439,10 +439,10 @@ export function StudentReviewPanel({
             <button
               type="button"
               onClick={() => setMistakeSeverity('2+')}
-              className={`px-2.5 py-1 rounded-lg border text-xs font-black transition-all ${
+              className={`px-3 py-1 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 mistakeSeverity === '2+'
-                  ? 'bg-rose-500 text-white border-[#201e1d]'
-                  : 'bg-rose-50 text-rose-800 border-rose-300 hover:border-[#201e1d]'
+                  ? 'bg-[#FB7185] text-white shadow-[1.5px_1.5px_0_0_#201e1d]'
+                  : 'bg-[#fff2eb] text-rose-900 hover:bg-[#FECDD3]'
               }`}
             >
               🔥 2+ Mistakes
@@ -450,10 +450,10 @@ export function StudentReviewPanel({
             <button
               type="button"
               onClick={() => setMistakeSeverity('3+')}
-              className={`px-2.5 py-1 rounded-lg border text-xs font-black transition-all ${
+              className={`px-3 py-1 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 mistakeSeverity === '3+'
-                  ? 'bg-rose-700 text-white border-[#201e1d]'
-                  : 'bg-rose-100 text-rose-900 border-rose-400 hover:border-[#201e1d]'
+                  ? 'bg-rose-700 text-white shadow-[1.5px_1.5px_0_0_#201e1d]'
+                  : 'bg-rose-100 text-rose-900 hover:bg-rose-200'
               }`}
             >
               🚨 3+ Critical Mistakes
@@ -485,23 +485,23 @@ export function StudentReviewPanel({
               return (
                 <div
                   key={q.id}
-                  className="bg-white border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] transition-all"
+                  className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-5 sm:p-6 shadow-[3px_3px_0_0_#201e1d] transition-all"
                 >
                   {/* Header Row */}
-                  <div className="flex items-center justify-between gap-2 flex-wrap pb-3 border-b border-neutral-100">
+                  <div className="flex items-center justify-between gap-2 flex-wrap pb-3.5 border-b-2 border-neutral-100">
                     <div className="flex items-center gap-2 flex-wrap">
                       {cleanCitation && (
-                        <span className="text-xs font-black bg-neutral-100 text-neutral-800 border border-neutral-300 rounded-md px-2 py-0.5">
+                        <span className="text-xs font-heading bg-neutral-100 text-neutral-800 border border-[#201e1d] rounded-lg px-2.5 py-0.5">
                           {cleanCitation}
                         </span>
                       )}
                       {q.topic && (
-                        <span className="text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-md px-2 py-0.5">
+                        <span className="text-xs font-bold bg-[#fff8db] text-amber-950 border border-[#201e1d] rounded-lg px-2.5 py-0.5">
                           {q.topic}
                         </span>
                       )}
                       {mistakeCount > 0 && (
-                        <span className="text-xs font-black bg-rose-100 text-rose-800 border border-rose-300 rounded-md px-2 py-0.5">
+                        <span className="text-xs font-black bg-[#FECDD3] text-rose-950 border border-[#201e1d] rounded-lg px-2.5 py-0.5">
                           🔥 {mistakeCount}× missed
                         </span>
                       )}
@@ -512,10 +512,10 @@ export function StudentReviewPanel({
                       <button
                         type="button"
                         onClick={() => handleToggleBookmark(q)}
-                        className={`px-2.5 py-1 rounded-xl border text-xs font-black flex items-center gap-1 transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-heading flex items-center gap-1 transition-all cursor-pointer ${
                           isBookmarked
-                            ? 'bg-amber-300 text-amber-950 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]'
-                            : 'bg-neutral-50 text-neutral-600 border-neutral-300 hover:border-[#201e1d]'
+                            ? 'bg-[#FFDE59] text-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d]'
+                            : 'bg-white text-neutral-700 hover:bg-neutral-100'
                         }`}
                         title={isBookmarked ? 'Remove bookmark' : 'Bookmark for revision'}
                       >
@@ -526,15 +526,15 @@ export function StudentReviewPanel({
                       <button
                         type="button"
                         onClick={() => toggleExpand(q.id)}
-                        className="px-3 py-1 rounded-xl border-2 border-[#201e1d] bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-black flex items-center gap-1 active:translate-y-0.5 transition-all cursor-pointer shadow-[1px_1px_0_0_#201e1d]"
+                        className="px-3.5 py-1.5 rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] hover:bg-neutral-200 text-[#201e1d] text-xs font-heading flex items-center gap-1 active:translate-y-0.5 transition-all cursor-pointer shadow-[1.5px_1.5px_0_0_#201e1d]"
                       >
                         <span>{isExpanded ? 'Collapse ▴' : 'Inspect Answer ▾'}</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* Stem Preview */}
-                  <div className="mt-3 text-sm font-medium text-neutral-900 leading-relaxed">
+                  {/* Stem Preview: Exam Paper Snippet Box */}
+                  <div className="mt-3.5 p-4 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d]/20 text-neutral-900 leading-relaxed font-normal">
                     <MarkdownErrorBoundary fallbackText={q.stem_markdown}>
                       <ReactMarkdown
                         remarkPlugins={[remarkMath]}
@@ -551,7 +551,7 @@ export function StudentReviewPanel({
                     <div className="mt-4 pt-4 border-t-2 border-neutral-100 space-y-4">
                       {/* Diagram if present */}
                       {resolvedDiagram && (
-                        <div className="p-3 bg-neutral-50 rounded-xl border-2 border-neutral-200 flex flex-col items-center">
+                        <div className="p-3 bg-neutral-50 rounded-2xl border-2 border-[#201e1d] flex flex-col items-center">
                           <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-2">
                             Question Diagram
                           </p>
@@ -559,7 +559,7 @@ export function StudentReviewPanel({
                           <img
                             src={resolvedDiagram}
                             alt="Question Diagram"
-                            className="max-h-72 object-contain rounded-lg border border-neutral-300 bg-white p-2"
+                            className="max-h-72 object-contain rounded-xl border-2 border-[#201e1d] bg-white p-2 shadow-xs"
                             loading="lazy"
                           />
                         </div>
@@ -570,7 +570,7 @@ export function StudentReviewPanel({
                         <p className="text-xs font-black uppercase tracking-wider text-neutral-500 mb-2">
                           Options & Answer Key
                         </p>
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-2.5">
                           {(q.options || []).map((opt, idx) => {
                             const isCorrect = opt.id === q.correct_option_id;
                             const optionLetter = ['A', 'B', 'C', 'D'][idx] || String.fromCharCode(65 + idx);
@@ -578,23 +578,23 @@ export function StudentReviewPanel({
                             return (
                               <div
                                 key={opt.id}
-                                className={`p-3 rounded-xl border-2 flex items-start gap-3 transition-colors ${
+                                className={`p-3.5 rounded-xl border-2 flex items-start gap-3 transition-colors ${
                                   isCorrect
-                                    ? 'bg-emerald-50 border-emerald-500 text-emerald-950 shadow-[1px_1px_0_0_#10b981]'
-                                    : 'bg-neutral-50/70 border-neutral-200 text-neutral-700'
+                                    ? 'bg-[#BBF7D0]/40 border-emerald-600 text-emerald-950 shadow-[2px_2px_0_0_#15803D]'
+                                    : 'bg-white border-[#201e1d]/30 text-neutral-800'
                                 }`}
                               >
                                 <span
-                                  className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0 border ${
+                                  className={`w-7 h-7 rounded-lg font-heading text-xs flex items-center justify-center shrink-0 border-2 ${
                                     isCorrect
-                                      ? 'bg-emerald-500 text-white border-emerald-600'
-                                      : 'bg-white text-neutral-700 border-neutral-300'
+                                      ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                                      : 'bg-neutral-100 text-[#201e1d] border-[#201e1d]'
                                   }`}
                                 >
                                   {optionLetter}
                                 </span>
 
-                                <div className="flex-1 text-xs sm:text-sm font-semibold">
+                                <div className="flex-1 text-xs sm:text-sm font-medium pt-0.5">
                                   <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
                                     <ReactMarkdown
                                       remarkPlugins={[remarkMath]}
@@ -606,7 +606,7 @@ export function StudentReviewPanel({
                                 </div>
 
                                 {isCorrect && (
-                                  <span className="shrink-0 text-[11px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                                  <span className="shrink-0 text-[11px] font-heading bg-emerald-700 text-white px-2.5 py-0.5 rounded-full border border-emerald-800">
                                     ✓ Correct Key
                                   </span>
                                 )}
@@ -618,9 +618,9 @@ export function StudentReviewPanel({
 
                       {/* Explanation */}
                       {(q.explanation_markdown || q.topic) && (
-                        <div className="p-3.5 bg-amber-50/80 rounded-xl border border-amber-300 text-amber-950">
-                          <p className="text-xs font-black text-amber-900 flex items-center gap-1.5 mb-1.5">
-                            <span>💡</span> Step-by-Step Explanation
+                        <div className="p-4 bg-[#fff8db] rounded-2xl border-2 border-[#201e1d] text-amber-950 shadow-[2px_2px_0_0_#201e1d]">
+                          <p className="text-xs font-heading text-amber-900 flex items-center gap-1.5 mb-2">
+                            <span>💡</span> Step-by-Step Mark Scheme Explanation
                           </p>
                           <div className="text-xs font-medium leading-relaxed">
                             <MarkdownErrorBoundary fallbackText={q.explanation_markdown || 'Key explanation unavailable.'}>
@@ -638,16 +638,16 @@ export function StudentReviewPanel({
                       )}
 
                       {/* Study Notes Input Field */}
-                      <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                      <div className="p-3.5 bg-neutral-100 rounded-2xl border-2 border-[#201e1d] space-y-2">
                         <div className="flex items-center justify-between">
                           <label
                             htmlFor={`note-${q.id}`}
-                            className="text-xs font-black text-neutral-700 flex items-center gap-1"
+                            className="text-xs font-heading text-[#201e1d] flex items-center gap-1.5"
                           >
                             <span>📝</span> Personal Study Note
                           </label>
                           {savedNoteSuccess[q.id] && (
-                            <span className="text-[11px] font-black text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md animate-fade-in">
+                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-400 px-2 py-0.5 rounded-md animate-fade-in">
                               ✓ Note Saved!
                             </span>
                           )}
@@ -661,12 +661,12 @@ export function StudentReviewPanel({
                               setEditingNotes((prev) => ({ ...prev, [q.id]: e.target.value }))
                             }
                             placeholder="Add your personal reminder, formula tip, or mnemonic for this question..."
-                            className="flex-1 text-xs font-medium bg-white border border-neutral-300 rounded-lg p-2 text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-300"
+                            className="flex-1 text-xs font-medium bg-white border-2 border-[#201e1d] rounded-xl p-2.5 text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#FFDE59]"
                           />
                           <button
                             type="button"
                             onClick={() => handleSaveNote(q.id)}
-                            className="self-end px-3 py-2 bg-neutral-800 hover:bg-neutral-900 text-white rounded-lg text-xs font-black shrink-0 transition-all cursor-pointer"
+                            className="self-end px-3.5 py-2.5 bg-[#201e1d] hover:bg-neutral-800 text-white rounded-xl text-xs font-heading shrink-0 transition-all cursor-pointer shadow-[1.5px_1.5px_0_0_#201e1d]"
                           >
                             Save Note
                           </button>
@@ -674,12 +674,12 @@ export function StudentReviewPanel({
                       </div>
 
                       {/* Action Buttons Row */}
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-neutral-100 flex-wrap">
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t-2 border-neutral-100 flex-wrap">
                         {mode === 'mistakes' ? (
                           <button
                             type="button"
                             onClick={() => handleResolveMistake(q.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-black transition-all cursor-pointer active:translate-y-0.5"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold transition-all cursor-pointer active:translate-y-0.5"
                           >
                             <span>✓ Mark Mastered & Remove from Pile</span>
                           </button>
@@ -687,7 +687,7 @@ export function StudentReviewPanel({
                           <button
                             type="button"
                             onClick={() => handleRemoveBookmark(q.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-black transition-all cursor-pointer active:translate-y-0.5"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition-all cursor-pointer active:translate-y-0.5"
                           >
                             <span>✕ Remove from Bookmarks</span>
                           </button>
@@ -696,7 +696,7 @@ export function StudentReviewPanel({
                         <button
                           type="button"
                           onClick={() => onStartCustomDrill([q.id], 'Single Question Drill')}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-[#201e1d] bg-accent-300 hover:bg-amber-300 text-[#201e1d] text-xs font-black shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 border-[#201e1d] bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] text-xs font-heading shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                         >
                           <span>Drill This Question</span>
                           <span aria-hidden="true">→</span>
@@ -709,23 +709,22 @@ export function StudentReviewPanel({
             })}
           </div>
         ) : (
-          /* Empty State */
-          <div className="bg-white border-2 border-dashed border-neutral-300 rounded-2xl p-8 sm:p-12 text-center shadow-[2px_2px_0_0_#201e1d]">
+          <div className="bg-[#FFFDF7] border-2 border-dashed border-[#201e1d] rounded-3xl p-8 sm:p-12 text-center shadow-[3px_3px_0_0_#201e1d]">
             {mode === 'mistakes' ? (
               mistakeQuestionsList.length === 0 ? (
                 <div>
                   <div className="text-4xl">🎉</div>
-                  <h3 className="text-base sm:text-lg font-black text-[#201e1d] mt-3">
+                  <h3 className="text-lg sm:text-xl font-heading text-[#201e1d] mt-3">
                     Review Pile is Clean!
                   </h3>
-                  <p className="text-xs sm:text-sm font-bold text-neutral-500 max-w-md mx-auto mt-1 leading-relaxed">
+                  <p className="text-xs sm:text-sm font-medium text-neutral-600 max-w-md mx-auto mt-1 leading-relaxed">
                     You have zero unresolved mistakes waiting in your queue. Whenever you make a mistake during a revision round, it will automatically enqueue here for targeted retrieval practice.
                   </p>
                 </div>
               ) : (
                 <div>
                   <div className="text-4xl">🔍</div>
-                  <h3 className="text-base sm:text-lg font-black text-[#201e1d] mt-3">
+                  <h3 className="text-lg sm:text-xl font-heading text-[#201e1d] mt-3">
                     No mistakes match your filter
                   </h3>
                   <p className="text-xs font-bold text-neutral-500 mt-1">
@@ -738,7 +737,7 @@ export function StudentReviewPanel({
                       setSelectedTopicId('all');
                       setMistakeSeverity('all');
                     }}
-                    className="mt-4 px-3.5 py-1.5 text-xs font-black rounded-xl bg-neutral-200 hover:bg-neutral-300 text-neutral-800 border border-[#201e1d] cursor-pointer"
+                    className="mt-4 px-4 py-2 text-xs font-heading rounded-xl bg-[#FFFDF7] hover:bg-neutral-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] cursor-pointer"
                   >
                     Reset Filters
                   </button>
@@ -747,17 +746,17 @@ export function StudentReviewPanel({
             ) : bookmarkQuestionsList.length === 0 ? (
               <div>
                 <div className="text-4xl">⭐</div>
-                <h3 className="text-base sm:text-lg font-black text-[#201e1d] mt-3">
+                <h3 className="text-lg sm:text-xl font-heading text-[#201e1d] mt-3">
                   No Bookmarked Questions Yet
                 </h3>
-                <p className="text-xs sm:text-sm font-bold text-neutral-500 max-w-md mx-auto mt-1 leading-relaxed">
+                <p className="text-xs sm:text-sm font-medium text-neutral-600 max-w-md mx-auto mt-1 leading-relaxed">
                   Tap the star icon on any tricky exam question during practice or test compilation to save it here for deep revision with personal study notes.
                 </p>
               </div>
             ) : (
               <div>
                 <div className="text-4xl">🔍</div>
-                <h3 className="text-base sm:text-lg font-black text-[#201e1d] mt-3">
+                <h3 className="text-lg sm:text-xl font-heading text-[#201e1d] mt-3">
                   No bookmarked questions match your filter
                 </h3>
                 <p className="text-xs font-bold text-neutral-500 mt-1">
@@ -769,7 +768,7 @@ export function StudentReviewPanel({
                     setSearchQuery('');
                     setSelectedTopicId('all');
                   }}
-                  className="mt-4 px-3.5 py-1.5 text-xs font-black rounded-xl bg-neutral-200 hover:bg-neutral-300 text-neutral-800 border border-[#201e1d] cursor-pointer"
+                  className="mt-4 px-4 py-2 text-xs font-heading rounded-xl bg-[#FFFDF7] hover:bg-neutral-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] cursor-pointer"
                 >
                   Reset Filters
                 </button>

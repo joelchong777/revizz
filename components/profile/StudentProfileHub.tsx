@@ -213,13 +213,13 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   // =========================================================================
   if (authLoading) {
     return (
-      <main className="min-h-screen bg-amber-50/60 py-12 px-4 flex items-center justify-center select-none">
-        <div className="w-full max-w-md p-8 rounded-3xl bg-white border-2 border-b-4 border-slate-200 shadow-chunky text-center space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 border-2 border-slate-800 flex items-center justify-center text-2xl animate-bounce">
+      <main className="min-h-screen bg-[#f5ead8] py-12 px-4 flex items-center justify-center select-none">
+        <div className="w-full max-w-md p-8 rounded-3xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] text-center space-y-4">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-3xl animate-bounce">
             🎓
           </div>
-          <h2 className="text-xl font-black text-slate-900">Loading Student Profile...</h2>
-          <p className="text-xs font-semibold text-slate-500">
+          <h2 className="text-xl font-heading text-[#201e1d]">Loading Student Profile...</h2>
+          <p className="text-xs font-bold text-neutral-600">
             Gathering Cambridge syllabus progress & mastery stats
           </p>
         </div>
@@ -229,7 +229,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
 
   if (!userProfile) {
     return (
-      <main className="min-h-screen bg-amber-50/60 py-12 px-4 flex items-center justify-center select-none">
+      <main className="min-h-screen bg-[#f5ead8] py-12 px-4 flex items-center justify-center select-none">
         <StudentAuthGate onSuccess={() => router.refresh()} />
       </main>
     );
@@ -261,21 +261,23 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   const recommendedTopic = statsSummary.weakestTopics?.[0] || statsSummary.topicStats?.[0];
 
   return (
-    <main className="min-h-screen bg-amber-50/60 py-6 sm:py-10 px-3 sm:px-6 select-none">
+    <main className="min-h-screen bg-[#f5ead8] py-6 sm:py-10 px-3 sm:px-6 select-none">
       <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {/* Top Bar: Back to Quiz Arena + Page Title + Quick Start Practice */}
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white border-2 border-b-4 border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300 font-extrabold text-xs sm:text-sm shadow-xs transition-all active:translate-y-0.5 active:border-b-2 duration-75"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] text-[#201e1d] hover:bg-neutral-100 font-bold text-xs sm:text-sm shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75"
             >
-              <ArrowLeft className="w-4 h-4 text-slate-600" />
+              <ArrowLeft className="w-4 h-4 text-[#201e1d]" />
               <span>Quiz Arena</span>
             </Link>
 
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>🎓</span>
+            <h1 className="text-2xl sm:text-3xl font-heading text-[#201e1d] tracking-tight flex items-center gap-2.5">
+              <span className="w-9 h-9 rounded-xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] inline-flex items-center justify-center text-lg shrink-0">
+                🎓
+              </span>
               <span>Student Profile Hub</span>
             </h1>
           </div>
@@ -283,9 +285,9 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
           <button
             type="button"
             onClick={() => router.push('/')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-brand-yellow hover:bg-yellow-400 text-slate-900 font-black text-xs sm:text-sm border-2 border-b-4 border-slate-900 shadow-chunky transition-all active:translate-y-0.5 active:border-b-2 active:shadow-none duration-75 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs sm:text-sm border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Zap className="w-4 h-4 fill-slate-900" />
+            <Zap className="w-4 h-4 fill-[#201e1d] text-[#201e1d]" />
             <span>Start Practice</span>
           </button>
         </header>
@@ -293,7 +295,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
         {/* Tactile 5-Tab Navigation Bar */}
         <nav
           data-testid="student-profile-tabs"
-          className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 p-1.5 rounded-3xl bg-slate-200/60 border-2 border-slate-300 shadow-inner"
+          className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 p-2 rounded-3xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d]"
           aria-label="Student profile sections"
         >
           {TAB_CONFIG.map((tab) => {
@@ -304,23 +306,23 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                 key={tab.key}
                 type="button"
                 onClick={() => handleTabChange(tab.key)}
-                className={`p-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-75 active:translate-y-0.5 active:border-b-2 active:shadow-none ${
+                className={`p-3 sm:py-3.5 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-75 cursor-pointer ${
                   isActive
-                    ? 'bg-brand-yellow text-slate-900 border-2 border-b-4 border-slate-900 shadow-chunky scale-[1.02]'
-                    : 'bg-white/80 hover:bg-white text-slate-700 border-2 border-b-4 border-slate-200 hover:border-slate-300'
+                    ? 'bg-[#FFDE59] text-[#201e1d] font-heading border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] scale-[1.01]'
+                    : 'bg-transparent hover:bg-neutral-200/60 text-[#201e1d] font-bold border-2 border-transparent hover:border-[#201e1d]/20 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
                 } ${tab.key === 'settings' ? 'col-span-2 sm:col-span-1' : ''}`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900 stroke-[2.5]' : 'text-slate-600'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#201e1d] stroke-[2.5]' : 'text-neutral-700'}`} />
                 <span className="hidden md:inline">{tab.label}</span>
                 <span className="inline md:hidden">{tab.shortLabel}</span>
 
                 {/* Badge count for Review tab */}
                 {tab.key === 'review' && reviewQueueTotal > 0 && (
                   <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-black border ${
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
                       isActive
-                        ? 'bg-slate-900 text-brand-yellow border-slate-900'
-                        : 'bg-brand-coral text-white border-rose-700'
+                        ? 'bg-[#201e1d] text-[#FFDE59] border-[#201e1d]'
+                        : 'bg-[#FB7185] text-white border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]'
                     }`}
                   >
                     {reviewQueueTotal}
@@ -337,58 +339,64 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
         {activeTab === 'overview' && (
           <div className="space-y-6 sm:space-y-8 animate-fadeIn">
             {/* Hero Identity & XP Rank Card */}
-            <section className="bg-white rounded-3xl border-2 border-b-4 border-slate-200 p-5 sm:p-7 shadow-chunky relative overflow-hidden">
+            <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d] relative overflow-hidden">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
                 <div className="flex items-center gap-4 sm:gap-5">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-amber-100 border-2 border-b-4 border-slate-800 flex items-center justify-center text-3xl sm:text-4xl shadow-chunky flex-shrink-0">
-                    {preferences.avatarEmoji || '🎓'}
+                  <div className="relative">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#FFDE59] border-2 border-[#201e1d] flex items-center justify-center text-3xl sm:text-4xl shadow-[3px_3px_0_0_#201e1d] flex-shrink-0">
+                      {preferences.avatarEmoji || '🎓'}
+                    </div>
+                    <span className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded-full bg-[#201e1d] text-[#FFDE59] text-[10px] font-black tracking-wider uppercase border border-white shadow-xs">
+                      Lvl {rank.level}
+                    </span>
                   </div>
+
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+                      <h2 className="text-xl sm:text-2xl font-heading text-[#201e1d]">
                         {preferences.displayNameOverride || userProfile.display_name || 'Cambridge Scholar'}
                       </h2>
                       {userProfile.is_school_account ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-400">
                           🎓 School Account
                         </span>
                       ) : !isDemoSession ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-brand-indigo/15 text-indigo-900 border border-indigo-200 flex items-center gap-1">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-300 flex items-center gap-1">
                           <Sparkles className="w-3 h-3 text-indigo-600" /> Verified Student
                         </span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
                           ⚡ Guest Session
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm font-extrabold text-slate-600 flex items-center gap-1.5">
+                    <p className="text-xs sm:text-sm font-bold text-neutral-600 flex items-center gap-1.5">
                       <span>{rank.badgeEmoji}</span>
-                      <span>Level {rank.level}</span>
-                      <span className="text-slate-400">•</span>
-                      <span>{rank.title}</span>
+                      <span className="font-heading text-[#201e1d]">{rank.title}</span>
+                      <span className="text-neutral-400">•</span>
+                      <span>Level {rank.level} of 7</span>
                     </p>
                   </div>
                 </div>
 
                 {/* Quick Stats Chips */}
                 <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-                  <div className="px-3.5 py-2 rounded-2xl bg-indigo-50 border-2 border-indigo-200 flex items-center gap-2 flex-1 md:flex-none justify-center">
+                  <div className="px-3.5 py-2 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center gap-2 flex-1 md:flex-none justify-center">
                     <Zap className="w-4 h-4 text-indigo-600 fill-indigo-500" />
-                    <span className="font-black text-xs sm:text-sm text-indigo-950">
+                    <span className="font-heading text-xs sm:text-sm text-[#201e1d]">
                       {userXp.toLocaleString()} XP
                     </span>
                   </div>
-                  <div className="px-3.5 py-2 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-center gap-2 flex-1 md:flex-none justify-center">
+                  <div className="px-3.5 py-2 rounded-2xl bg-[#fff8db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center gap-2 flex-1 md:flex-none justify-center">
                     <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span className="font-black text-xs sm:text-sm text-amber-950">
+                    <span className="font-heading text-xs sm:text-sm text-[#201e1d]">
                       {currentStreak} Day Streak
                     </span>
                   </div>
-                  <div className="px-3.5 py-2 rounded-2xl bg-emerald-50 border-2 border-emerald-300 flex items-center gap-2 flex-1 md:flex-none justify-center">
+                  <div className="px-3.5 py-2 rounded-2xl bg-[#f0fae1] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center gap-2 flex-1 md:flex-none justify-center">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="font-black text-xs sm:text-sm text-emerald-950">
+                    <span className="font-heading text-xs sm:text-sm text-[#201e1d]">
                       {statsSummary.overallMasteryPct}% Mastery
                     </span>
                   </div>
@@ -397,9 +405,9 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
 
               {/* Level XP Progress Bar */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-black text-slate-600">
-                  <span>Level {rank.level} Progress</span>
-                  <span>
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-600">
+                  <span className="font-heading text-[#201e1d]">Level {rank.level} Progress</span>
+                  <span className="font-bold">
                     {rank.level === 7
                       ? 'Max Level Reached! 👑'
                       : `${rank.currentXp - rank.currentLevelMinXp} / ${
@@ -407,9 +415,9 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                         } XP to Level ${rank.level + 1}`}
                   </span>
                 </div>
-                <div className="w-full h-3.5 rounded-full bg-slate-100 border-2 border-slate-300 overflow-hidden">
+                <div className="w-full h-4 rounded-full bg-neutral-100 border-2 border-[#201e1d] overflow-hidden p-0.5">
                   <div
-                    className="h-full bg-gradient-to-r from-brand-yellow via-amber-400 to-yellow-500 rounded-full transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-[#FFDE59] via-amber-400 to-[#F59E0B] rounded-full transition-all duration-500 shadow-inner"
                     style={{ width: `${rank.progressPct}%` }}
                   />
                 </div>
@@ -417,14 +425,14 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
 
               {/* Guest Session Save Progress Banner */}
               {isDemoSession && (
-                <div className="mt-6 p-4 rounded-2xl bg-amber-100/70 border-2 border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                <div className="mt-6 p-4 rounded-2xl bg-[#fff8db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">⚡</span>
                     <div>
-                      <span className="font-black text-sm text-amber-950 block">
+                      <span className="font-heading text-sm text-[#201e1d] block">
                         Guest Session Active
                       </span>
-                      <span className="text-xs text-amber-900 font-semibold">
+                      <span className="text-xs text-neutral-700 font-medium">
                         Create a free student account to sync XP, streaks, and mistake piles across devices.
                       </span>
                     </div>
@@ -432,9 +440,9 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                   <button
                     type="button"
                     onClick={() => setAuthModalOpen(true)}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs border border-slate-950 shadow-xs transition-all active:translate-y-0.5 duration-75 flex items-center justify-center gap-1.5"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#201e1d] hover:bg-neutral-800 text-white font-heading text-xs border border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-brand-yellow" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#FFDE59]" />
                     <span>Sign In to Save Progress</span>
                   </button>
                 </div>
@@ -444,30 +452,30 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             {/* 2-Column Bento Row: Daily Goal & Consistency + Exam Countdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
               {/* Daily Goal & 7-Day Consistency Card */}
-              <section className="bg-white rounded-3xl border-2 border-b-4 border-slate-200 p-5 sm:p-6 shadow-chunky flex flex-col justify-between">
+              <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-teal-100 border-2 border-slate-800 flex items-center justify-center text-teal-800">
+                      <div className="w-10 h-10 rounded-2xl bg-[#99F6E4] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#0F766E]">
                         <Target className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-base text-slate-900">Daily Question Target</h3>
-                        <p className="text-xs text-slate-500 font-semibold">Consistent daily revision</p>
+                        <h3 className="font-heading text-base text-[#201e1d]">Daily Question Target</h3>
+                        <p className="text-xs text-neutral-500 font-medium">Consistent daily revision habit</p>
                       </div>
                     </div>
-                    <span className="text-xs font-black px-2.5 py-1 rounded-full bg-teal-50 text-teal-900 border border-teal-200">
+                    <span className="text-xs font-black px-2.5 py-1 rounded-full bg-teal-100 text-teal-900 border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]">
                       {dailyGoal.questionsAnsweredToday} / {dailyGoal.dailyGoal} Qs
                     </span>
                   </div>
 
                   {/* Progress Bar */}
                   <div className="space-y-1.5 mb-5">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                    <div className="flex items-center justify-between text-xs font-bold text-neutral-600">
                       <span>Today's Progress</span>
-                      <span className="font-extrabold">{dailyGoal.progressPct}%</span>
+                      <span className="font-heading text-[#201e1d]">{dailyGoal.progressPct}%</span>
                     </div>
-                    <div className="w-full h-3 rounded-full bg-slate-100 border-2 border-slate-300 overflow-hidden">
+                    <div className="w-full h-3.5 rounded-full bg-neutral-100 border-2 border-[#201e1d] overflow-hidden p-0.5">
                       <div
                         className="h-full bg-gradient-to-r from-teal-400 to-emerald-500 rounded-full transition-all duration-300"
                         style={{ width: `${dailyGoal.progressPct}%` }}
@@ -477,8 +485,8 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
 
                   {/* 7-Day Consistency Strip */}
                   <div className="space-y-2">
-                    <span className="block text-xs font-black uppercase tracking-wider text-slate-500">
-                      7-Day Consistency
+                    <span className="block text-xs font-black uppercase tracking-wider text-neutral-500">
+                      7-Day Consistency Strip
                     </span>
                     <div className="grid grid-cols-7 gap-1.5">
                       {dailyGoal.activeDaysLast7.map((day) => {
@@ -489,13 +497,13 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                             key={day.dateStr}
                             className={`p-2 rounded-xl text-center border-2 transition-all ${
                               day.active
-                                ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-black shadow-xs'
-                                : 'bg-slate-50 border-slate-200 text-slate-400 font-semibold'
-                            } ${isToday ? 'ring-2 ring-brand-teal' : ''}`}
+                                ? 'bg-[#BBF7D0] border-[#201e1d] text-[#15803D] font-black shadow-[2px_2px_0_0_#201e1d]'
+                                : 'bg-neutral-100 border-neutral-300 text-neutral-400 font-bold'
+                            } ${isToday ? 'ring-2 ring-[#14B8A6] ring-offset-1' : ''}`}
                           >
                             <span className="block text-[10px] uppercase font-black">{day.dayShort}</span>
                             <span className="block text-xs font-extrabold mt-0.5">
-                              {day.count > 0 ? day.count : '—'}
+                              {day.count > 0 ? (day.active ? `🔥 ${day.count}` : day.count) : '—'}
                             </span>
                           </div>
                         );
@@ -505,7 +513,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                 </div>
 
                 {dailyGoal.isGoalMet && (
-                  <div className="mt-4 p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center gap-2">
+                  <div className="mt-4 p-2.5 rounded-xl bg-emerald-50 border-2 border-emerald-500 text-emerald-900 font-bold text-xs flex items-center gap-2 shadow-[1px_1px_0_0_#201e1d]">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                     <span>Daily target reached! Keep up the great revision habit.</span>
                   </div>
@@ -513,62 +521,62 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
               </section>
 
               {/* Cambridge Exam Countdown Card */}
-              <section className="bg-white rounded-3xl border-2 border-b-4 border-slate-200 p-5 sm:p-6 shadow-chunky flex flex-col justify-between">
+              <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-brand-coral/20 border-2 border-slate-800 flex items-center justify-center text-rose-700">
+                      <div className="w-10 h-10 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#E11D48]">
                         <Clock className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-base text-slate-900">Cambridge Countdown</h3>
-                        <p className="text-xs text-slate-500 font-semibold">Target exam series</p>
+                        <h3 className="font-heading text-base text-[#201e1d]">Cambridge Countdown</h3>
+                        <p className="text-xs text-neutral-500 font-medium">Target exam series</p>
                       </div>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => handleTabChange('settings')}
-                      className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs border border-slate-300 transition-all flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-xl bg-[#FFFDF7] hover:bg-neutral-100 text-[#201e1d] font-bold text-xs border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <span>Edit ✎</span>
                     </button>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-amber-50/70 border-2 border-amber-200 mb-4 flex items-center justify-between">
+                  <div className="p-4 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] mb-4 flex items-center justify-between">
                     <div>
-                      <span className="text-xs font-bold text-slate-500 block">Primary Target</span>
-                      <span className="font-extrabold text-slate-900 text-sm block">
+                      <span className="text-xs font-bold text-neutral-500 block">Primary Target</span>
+                      <span className="font-heading text-[#201e1d] text-base block">
                         {preferences.primarySubject}
                       </span>
-                      <span className="text-xs font-semibold text-slate-600 block mt-0.5">
+                      <span className="text-xs font-bold text-neutral-600 block mt-0.5">
                         {examCountdown.seriesLabel}
                       </span>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight block">
+                      <span className="text-4xl sm:text-5xl font-heading text-[#201e1d] tracking-tight block">
                         {examCountdown.daysRemaining}
                       </span>
-                      <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500 block">
                         Days to Paper 1
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200">
-                  <span className="text-xs font-semibold text-slate-500">Pacing Urgency</span>
+                <div className="flex items-center justify-between gap-2 pt-2 border-t-2 border-neutral-100">
+                  <span className="text-xs font-bold text-neutral-500">Pacing Urgency</span>
                   {examCountdown.urgencyTier === 'sprint' ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border border-rose-300 flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1">
                       🚨 Final Sprint Mode
                     </span>
                   ) : examCountdown.urgencyTier === 'focused' ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1">
                       ⚡ Revision Surge
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-teal-100 text-teal-900 border border-teal-300 flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black bg-teal-100 text-teal-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1">
                       🌱 Steady Momentum
                     </span>
                   )}
@@ -579,18 +587,18 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             {/* Quick Action Launchpad Grid (3 cards) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {/* Mistake Review Pile Card */}
-              <div className="bg-white rounded-3xl border-2 border-b-4 border-slate-200 p-5 shadow-chunky flex flex-col justify-between">
+              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-2xl bg-rose-100 border-2 border-slate-800 flex items-center justify-center text-xl mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3">
                     🧠
                   </div>
-                  <h4 className="font-black text-base text-slate-900 mb-1">Mistake Review Pile</h4>
-                  <p className="text-xs text-slate-500 font-medium mb-3">
+                  <h4 className="font-heading text-base text-[#201e1d] mb-1">Mistake Review Pile</h4>
+                  <p className="text-xs text-neutral-600 font-medium mb-3">
                     Questions where you made prior mistakes, scheduled via Leitner spaced repetition.
                   </p>
-                  <div className="text-2xl font-black text-slate-900 mb-4">
+                  <div className="text-2xl font-heading text-[#201e1d] mb-4">
                     {statsSummary.reviewPileQuestionCount}{' '}
-                    <span className="text-xs font-extrabold text-slate-500">Questions Due</span>
+                    <span className="text-xs font-bold text-neutral-500">Questions Due</span>
                   </div>
                 </div>
 
@@ -598,7 +606,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                   <button
                     type="button"
                     onClick={() => setAuthModalOpen(true)}
-                    className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs border-2 border-b-3 border-slate-300 transition-all flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Lock className="w-3.5 h-3.5" />
                     <span>Log In to Unlock</span>
@@ -608,14 +616,14 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                     <button
                       type="button"
                       onClick={() => router.push('/?drill=review')}
-                      className="w-full py-2.5 rounded-2xl bg-brand-yellow hover:bg-yellow-400 text-slate-900 font-black text-xs border-2 border-b-3 border-slate-900 shadow-xs transition-all active:translate-y-0.5 duration-75 flex items-center justify-center gap-1"
+                      className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer"
                     >
                       <span>Drill Mistakes Now →</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleTabChange('review')}
-                      className="w-full py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-extrabold text-xs border border-slate-300 transition-all"
+                      className="w-full py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-xs border border-[#201e1d] transition-all cursor-pointer"
                     >
                       Inspect Queue
                     </button>
@@ -624,7 +632,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                   <button
                     type="button"
                     onClick={() => handleTabChange('review')}
-                    className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs border-2 border-b-3 border-slate-300 transition-all"
+                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all cursor-pointer"
                   >
                     Review Queue Clean ✓
                   </button>
@@ -632,45 +640,45 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
               </div>
 
               {/* Bookmarked Questions Card */}
-              <div className="bg-white rounded-3xl border-2 border-b-4 border-slate-200 p-5 shadow-chunky flex flex-col justify-between">
+              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-2xl bg-amber-100 border-2 border-slate-800 flex items-center justify-center text-xl mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3">
                     ⭐
                   </div>
-                  <h4 className="font-black text-base text-slate-900 mb-1">Bookmarked Questions</h4>
-                  <p className="text-xs text-slate-500 font-medium mb-3">
+                  <h4 className="font-heading text-base text-[#201e1d] mb-1">Bookmarked Questions</h4>
+                  <p className="text-xs text-neutral-600 font-medium mb-3">
                     Hand-picked questions with your personal memory notes for last-minute review.
                   </p>
-                  <div className="text-2xl font-black text-slate-900 mb-4">
+                  <div className="text-2xl font-heading text-[#201e1d] mb-4">
                     {statsSummary.bookmarkedQuestionCount}{' '}
-                    <span className="text-xs font-extrabold text-slate-500">Starred</span>
+                    <span className="text-xs font-bold text-neutral-500">Starred</span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => handleTabChange('review')}
-                  className="w-full py-2.5 rounded-2xl bg-brand-teal hover:bg-teal-600 text-white font-black text-xs border-2 border-b-3 border-teal-900 shadow-xs transition-all active:translate-y-0.5 duration-75 flex items-center justify-center gap-1"
+                  className="w-full py-2.5 rounded-2xl bg-[#14B8A6] hover:bg-[#0F766E] text-white font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>Open Saved Deck →</span>
                 </button>
               </div>
 
               {/* Recommended Topic Focus Card */}
-              <div className="bg-white rounded-3xl border-2 border-b-4 border-slate-200 p-5 shadow-chunky flex flex-col justify-between">
+              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
                 <div>
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-100 border-2 border-slate-800 flex items-center justify-center text-xl mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3">
                     🎯
                   </div>
-                  <h4 className="font-black text-base text-slate-900 mb-1">Recommended Topic Focus</h4>
-                  <p className="text-xs text-slate-500 font-medium mb-3">
+                  <h4 className="font-heading text-base text-[#201e1d] mb-1">Recommended Topic Focus</h4>
+                  <p className="text-xs text-neutral-600 font-medium mb-3">
                     Syllabus area with greatest opportunity for score improvement.
                   </p>
                   <div className="mb-4">
-                    <span className="font-extrabold text-slate-900 text-sm block line-clamp-1">
+                    <span className="font-bold text-[#201e1d] text-sm block line-clamp-1">
                       {recommendedTopic?.topicName || 'Syllabus Fundamentals'}
                     </span>
-                    <span className="text-xs font-black text-brand-indigo block mt-0.5">
+                    <span className="text-xs font-black text-indigo-700 block mt-0.5">
                       {recommendedTopic ? `${recommendedTopic.masteryPct}% Mastery` : 'Not Started'}
                     </span>
                   </div>
@@ -685,7 +693,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                       router.push('/');
                     }
                   }}
-                  className="w-full py-2.5 rounded-2xl bg-brand-yellow hover:bg-yellow-400 text-slate-900 font-black text-xs border-2 border-b-3 border-slate-900 shadow-xs transition-all active:translate-y-0.5 duration-75 flex items-center justify-center gap-1"
+                  className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>Practice Topic →</span>
                 </button>
@@ -693,19 +701,19 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             </div>
 
             {/* Recent Milestones & Activity Preview */}
-            <section className="bg-white rounded-3xl border-2 border-b-4 border-slate-200 p-5 sm:p-7 shadow-chunky">
+            <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d]">
               <div className="flex items-center justify-between gap-3 mb-5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 border-2 border-slate-800 flex items-center justify-center text-amber-800">
-                    <Award className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl">
+                    <Award className="w-5 h-5 text-amber-800" />
                   </div>
-                  <h3 className="font-black text-lg text-slate-900">Milestones & Recent Activity</h3>
+                  <h3 className="font-heading text-lg sm:text-xl text-[#201e1d]">Milestones & Recent Activity</h3>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => handleTabChange('achievements')}
-                  className="text-xs font-black text-brand-indigo hover:text-indigo-800 flex items-center gap-1"
+                  className="text-xs font-heading text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer"
                 >
                   <span>View All Badges →</span>
                 </button>
@@ -716,33 +724,33 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                 {previewAchievements.map((item) => (
                   <div
                     key={item.id}
-                    className={`p-3.5 rounded-2xl border-2 flex items-center gap-3 ${
+                    className={`p-3.5 rounded-2xl border-2 border-[#201e1d] flex items-center gap-3 transition-all ${
                       item.unlocked
-                        ? 'bg-amber-50/70 border-amber-300 shadow-xs'
-                        : 'bg-slate-50 border-slate-200 opacity-80'
+                        ? 'bg-[#fff8db] shadow-[2px_2px_0_0_#201e1d]'
+                        : 'bg-neutral-100/70 opacity-80'
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-300 flex items-center justify-center text-xl flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#201e1d] flex items-center justify-center text-xl flex-shrink-0 shadow-[1px_1px_0_0_#201e1d]">
                       {item.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="font-black text-xs text-slate-900 truncate">
+                        <span className="font-heading text-xs text-[#201e1d] truncate">
                           {item.title}
                         </span>
                         {item.unlocked && (
-                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-full">
-                            ✓ Unlocked
+                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-400 px-1.5 py-0.2 rounded-full">
+                            ✓
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 font-medium truncate">
+                      <p className="text-[11px] text-neutral-600 font-medium truncate">
                         {item.description}
                       </p>
                       {!item.unlocked && (
-                        <div className="w-full h-1.5 rounded-full bg-slate-200 mt-1.5 overflow-hidden">
+                        <div className="w-full h-1.5 rounded-full bg-neutral-200 border border-[#201e1d]/40 mt-1.5 overflow-hidden">
                           <div
-                            className="h-full bg-brand-teal rounded-full"
+                            className="h-full bg-[#14B8A6] rounded-full"
                             style={{ width: `${item.progressPct}%` }}
                           />
                         </div>
@@ -754,20 +762,20 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
 
               {/* Recent rounds mini list */}
               {recentRounds.length > 0 ? (
-                <div className="space-y-2 border-t border-slate-200 pt-4">
-                  <span className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                <div className="space-y-2 border-t-2 border-neutral-100 pt-4">
+                  <span className="block text-xs font-black uppercase tracking-wider text-neutral-500 mb-2">
                     Recent Practice Rounds
                   </span>
                   {recentRounds.map((round) => (
                     <div
                       key={round.id}
-                      className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold"
+                      className="p-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-between text-xs font-bold"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-md bg-white border border-slate-300 text-slate-700 font-black text-[11px]">
+                        <span className="px-2 py-0.5 rounded-md bg-white border border-[#201e1d] text-[#201e1d] font-heading text-[11px]">
                           {round.sourceLabel || round.sourceType}
                         </span>
-                        <span className="text-slate-500">
+                        <span className="text-neutral-500 font-medium">
                           {new Date(round.completedAt).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -775,17 +783,17 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-slate-800">
+                        <span className="text-[#201e1d]">
                           {round.correctFirstTry}/{round.totalQuestions} ({round.accuracyPct}%)
                         </span>
-                        <span className="text-indigo-600 font-black">+{round.xpEarned} XP</span>
+                        <span className="text-indigo-700 font-heading">+{round.xpEarned} XP</span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4 border-t border-slate-200">
-                  <p className="text-xs font-semibold text-slate-500">
+                <div className="text-center py-4 border-t-2 border-neutral-100">
+                  <p className="text-xs font-semibold text-neutral-500">
                     No completed practice rounds yet. Take your first quiz to begin tracking analytics!
                   </p>
                 </div>
