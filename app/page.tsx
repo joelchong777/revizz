@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { StartFlow } from '../components/StartFlow';
 import { QuestionCard } from '../components/QuestionCard';
 import { RoundSummary } from '../components/RoundSummary';
@@ -232,16 +231,8 @@ export default function HomePage() {
             No Questions Available
           </h1>
           <p className="text-sm font-medium text-[#645c50] leading-relaxed">
-            The question bank is completely empty right now. Once exam papers are uploaded and published in the Educator Portal, practice rounds will appear here!
+            The question bank is currently empty. Check back soon for new practice questions!
           </p>
-          <div className="pt-2">
-            <Link
-              href="/portal"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] shadow-[3px_3px_0_#201e1d] font-bold text-sm text-[#201e1d] hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-            >
-              Go to Educator Portal →
-            </Link>
-          </div>
         </div>
       </main>
     );

@@ -202,8 +202,6 @@ export function Header({
     : userProfile?.email
     ? 'Google Account'
     : 'Revizz Learner';
-  const isDev = process.env.NODE_ENV === 'development';
-  const isAdmin = userProfile?.role === 'admin' || isDev;
 
   return (
     <>
@@ -257,18 +255,6 @@ export function Header({
                 </svg>
               </span>
             </Link>
-
-            {/* Admin Pill (when isAdmin) */}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                title="App Administration"
-                className="px-2.5 py-1 rounded-full bg-accent-2-200 border-2 border-text shadow-offset-2 font-bold text-[11px] text-text hover:bg-accent-2-300 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center gap-1 cursor-pointer transition-all"
-              >
-                <span>Admin</span>
-                <span>🛠️</span>
-              </Link>
-            )}
 
             {/* Sound Toggle Button */}
             <button
