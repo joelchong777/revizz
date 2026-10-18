@@ -258,16 +258,6 @@ export function Header({
               </span>
             </Link>
 
-            {/* Educator Portal Pill */}
-            <Link
-              href="/portal"
-              title="Educator Portal"
-              className="px-2.5 py-1 rounded-full bg-accent-100 border-2 border-text shadow-offset-2 font-bold text-[11px] text-text hover:bg-accent-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center gap-1 cursor-pointer transition-all"
-            >
-              <span>Portal</span>
-              <span>🎓</span>
-            </Link>
-
             {/* Admin Pill (when isAdmin) */}
             {isAdmin && (
               <Link
