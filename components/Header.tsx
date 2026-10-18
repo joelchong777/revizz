@@ -230,38 +230,108 @@ export function Header({
           className
         )}
       >
-        <div className="max-w-[480px] mx-auto flex flex-col gap-2">
-          {/* Top Row: Brand Wordmark + Tactile Controls */}
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 mr-auto cursor-pointer group"
-              title="REVIZZ Home"
+        <div className="max-w-[540px] mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
+          {/* Left: REVIZZ Brand Wordmark + Star Badge */}
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 cursor-pointer group flex-shrink-0"
+            title="REVIZZ Home"
+          >
+            <span className="font-heading text-2xl sm:text-[26px] leading-none tracking-[0.03em] text-text font-normal">
+              REVIZZ
+            </span>
+            <span className="w-7 h-7 rounded-full bg-accent-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-xs -rotate-12 transition-transform group-hover:rotate-0 flex-shrink-0">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="#201e1d"
+                stroke="#201e1d"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              >
+                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+              </svg>
+            </span>
+          </Link>
+
+          {/* Right: Single Flex Row of Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Compact User Profile Avatar Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (userProfile) {
+                  setLeaderboardOpen(true);
+                } else {
+                  handleSignIn();
+                }
+              }}
+              title={
+                isDemo
+                  ? 'Demo Mode • Click to sign in or view stats'
+                  : userProfile
+                  ? `Signed in as ${userName} (${userBadge}) • View Profile & Leaderboard`
+                  : 'Sign in to save progress'
+              }
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-accent-2-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-xs sm:text-sm text-text hover:bg-accent-2-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex-shrink-0"
             >
-              <span className="font-heading text-2xl sm:text-[26px] leading-none tracking-[0.03em] text-text font-normal">
-                REVIZZ
-              </span>
-              <span className="w-7 h-7 rounded-full bg-accent-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-xs -rotate-12 transition-transform group-hover:rotate-0">
+              {userInitials}
+            </button>
+
+            {/* XP Pill */}
+            <motion.span
+              animate={xpControls}
+              title={`Total XP: ${displayXp}`}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-accent-200 border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none flex-shrink-0"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="#f6a06b"
+                stroke="#201e1d"
+                strokeWidth="2.5"
+                strokeLinejoin="round"
+                className="flex-shrink-0"
+              >
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span>{displayXp} XP</span>
+            </motion.span>
+
+            {/* Streak Pill */}
+            <motion.span
+              animate={streakControls}
+              title={`Current Streak: ${displayStreak}`}
+              className={cn(
+                'flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none flex-shrink-0',
+                streakBg
+              )}
+            >
+              <span className={cn('inline-flex flex-shrink-0', displayStreak >= 3 && 'animate-bounce')}>
                 <svg
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"
-                  fill="#201e1d"
+                  fill={flameFill}
                   stroke="#201e1d"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
                 </svg>
               </span>
-            </Link>
+              <span>{displayStreak}</span>
+            </motion.span>
 
             {/* Sound Toggle Button */}
             <button
               type="button"
               onClick={handleToggleSound}
               title={soundOn ? 'Mute sound effects' : 'Enable sound effects'}
-              className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text flex-shrink-0"
             >
               {soundOn ? (
                 <svg
@@ -301,7 +371,7 @@ export function Header({
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Leaderboard"
-              className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text flex-shrink-0"
             >
               <svg
                 width="16"
@@ -321,99 +391,6 @@ export function Header({
                 <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
               </svg>
             </button>
-          </div>
-
-          {/* Bottom Row: User Telemetry */}
-          <div className="flex items-center gap-2">
-            {/* User Profile Chip */}
-            <div
-              onClick={() => {
-                if (userProfile) {
-                  setLeaderboardOpen(true);
-                } else {
-                  handleSignIn();
-                }
-              }}
-              className="flex items-center gap-2 mr-auto min-w-0 cursor-pointer group"
-              title={
-                isDemo
-                  ? 'Demo Mode • Click to sign in or view stats'
-                  : userProfile
-                  ? 'View Profile & Leaderboard'
-                  : 'Sign in to save progress'
-              }
-            >
-              <span className="w-8 h-8 flex-none rounded-full bg-accent-2-300 border-2 border-text flex items-center justify-center font-bold text-xs text-text group-hover:scale-105 transition-transform">
-                {userInitials}
-              </span>
-              <div className="flex flex-col leading-tight min-w-0">
-                <span className="font-bold text-xs sm:text-sm text-text truncate">
-                  {userName}
-                </span>
-                <span className="flex items-center gap-1 text-[10px] text-accent-2-800 font-semibold whitespace-nowrap">
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                  {userBadge}
-                </span>
-              </div>
-            </div>
-
-            {/* XP Pill */}
-            <motion.span
-              animate={xpControls}
-              title={`Total XP: ${displayXp}`}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-200 border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="#f6a06b"
-                stroke="#201e1d"
-                strokeWidth="2.5"
-                strokeLinejoin="round"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span>{displayXp} XP</span>
-            </motion.span>
-
-            {/* Streak Pill */}
-            <motion.span
-              animate={streakControls}
-              title={`Current Streak: ${displayStreak}`}
-              className={cn(
-                'flex items-center gap-1 px-3 py-1 rounded-full border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none',
-                streakBg
-              )}
-            >
-              <span className={cn('inline-flex', displayStreak >= 3 && 'animate-bounce')}>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill={flameFill}
-                  stroke="#201e1d"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-                </svg>
-              </span>
-              <span>{displayStreak}</span>
-            </motion.span>
           </div>
         </div>
       </header>
