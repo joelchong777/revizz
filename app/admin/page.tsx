@@ -421,7 +421,7 @@ function AdminContent() {
       {/* Main Content Area */}
       <div className="min-w-0 flex flex-col min-h-screen">
         {/* Mobile Sticky Top Header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-2 border-[#201e1d] px-4 py-2.5 flex items-center justify-between gap-2 shadow-sm">
+        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-2 border-[#201e1d] px-4 py-2.5 flex items-center gap-2 shadow-sm">
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
@@ -441,71 +441,18 @@ function AdminContent() {
               </span>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/portal"
-              className="px-2.5 py-1 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-colors text-xs font-black flex items-center gap-1"
-              title="Teacher Portal"
-            >
-              <span>Teacher Portal 🎓</span>
-            </Link>
-          </div>
         </header>
 
         {/* Desktop Sticky Top Command Bar */}
-        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-2 border-[#201e1d] px-8 py-3 items-center justify-between shadow-xs">
-          <div className="flex items-center gap-4 min-w-0">
-            {/* Breadcrumb Title */}
-            <div className="flex items-center gap-2">
-              <span className="font-heading font-black text-lg text-[#201e1d]">
-                App Admin Console
-              </span>
-              <span className="text-[#645c50] font-mono text-base">/</span>
-              <span className="font-heading font-bold text-base text-[#201e1d]">
-                {TAB_TITLES[activeTab] || 'Ingestion Studio'}
-              </span>
-            </div>
-
-            {/* Telemetry Status */}
-            <div className="flex items-center gap-2 pl-4 border-l border-[#201e1d]/20 text-xs font-mono text-[#645c50]">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Ingestion Engine: v2.4
-              </span>
-              <span>·</span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
-                {questionsLoading ? (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Supabase DB: Syncing...
-                  </>
-                ) : (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Supabase DB: {questions.length} Live {questions.length === 1 ? 'Question' : 'Questions'}
-                  </>
-                )}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <Link
-              href="/portal"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-              title="Open Teacher Classroom Portal"
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Teacher Portal 🎓</span>
-            </Link>
-
-            <Link
-              href="/"
-              className="text-xs font-bold text-[#645c50] hover:text-[#201e1d] px-2 py-1 transition-colors"
-            >
-              Student Home ↗
-            </Link>
+        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-2 border-[#201e1d] px-8 py-3 items-center shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-heading font-black text-lg text-[#201e1d]">
+              App Admin Console
+            </span>
+            <span className="text-[#645c50] font-mono text-base">/</span>
+            <span className="font-heading font-bold text-base text-[#201e1d]">
+              {TAB_TITLES[activeTab] || 'Ingestion Studio'}
+            </span>
           </div>
         </header>
 
