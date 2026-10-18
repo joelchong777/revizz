@@ -22,6 +22,7 @@ export function Header({
 }: HeaderProps) {
   const { userProfile, loading, setUserProfile } = useAuth();
   const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<'account' | 'leaderboard'>('account');
   const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
   const [soundOn, setSoundOn] = useState<boolean>(false);
   const shouldReduceMotion = useReducedMotion();
@@ -295,6 +296,7 @@ export function Header({
               type="button"
               onClick={() => {
                 if (userProfile) {
+                  setModalTab('account');
                   setLeaderboardOpen(true);
                 } else {
                   handleSignIn();
@@ -324,6 +326,7 @@ export function Header({
             setUserProfile({ ...userProfile, ...updated });
           }
         }}
+        initialTab={modalTab}
       />
     </>
   );

@@ -554,7 +554,7 @@ export function AdSlotBanner({
     return (
       <div
         className={cn(
-          'flex w-full flex-col items-start justify-between gap-2 rounded-xl border-2 border-[#201e1d] px-3 py-2 text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] sm:flex-row sm:items-center sm:px-4 sm:py-2.5',
+          'flex w-full max-w-full min-w-0 overflow-hidden flex-col items-start justify-between gap-2 rounded-xl border-2 border-[#201e1d] px-3 py-2 text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] sm:flex-row sm:items-center sm:px-4 sm:py-2.5',
           theme.bg,
           className
         )}
@@ -575,7 +575,7 @@ export function AdSlotBanner({
           >
             {campaign.badgeText || 'SPONSORED'}
           </span>
-          <p className="truncate text-xs font-bold text-[#201e1d]">
+          <p className="min-w-0 flex-1 truncate text-xs font-bold text-[#201e1d]">
             {campaign.headline}
           </p>
         </div>
@@ -587,18 +587,18 @@ export function AdSlotBanner({
             rel={isExternal ? 'noopener noreferrer' : undefined}
             onClick={handleCtaClick}
             className={cn(
-              'flex items-center gap-1 rounded-lg border border-[#201e1d] px-2.5 py-1 text-xs font-black shadow-[1px_1px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none',
+              'flex shrink-0 items-center gap-1 rounded-lg border border-[#201e1d] px-2.5 py-1 text-xs font-black shadow-[1px_1px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none whitespace-nowrap',
               theme.button
             )}
           >
-            <span>{campaign.ctaText}</span>
-            <ExternalLink className="h-3 w-3" />
+            <span className="shrink-0">{campaign.ctaText}</span>
+            <ExternalLink className="h-3 w-3 shrink-0" />
           </a>
           {slotConfig.dismissible && (
             <button
               onClick={handleDismiss}
               aria-label="Dismiss Pill"
-              className="rounded-lg border border-[#201e1d] bg-white p-1 text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] transition-all hover:bg-slate-100 active:translate-y-0.5"
+              className="shrink-0 rounded-lg border border-[#201e1d] bg-white p-1 text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] transition-all hover:bg-slate-100 active:translate-y-0.5"
             >
               <X className="h-3 w-3" />
             </button>
@@ -698,22 +698,22 @@ export function AdSlotBanner({
   return (
     <div
       className={cn(
-        'w-full rounded-2xl border-2 border-[#201e1d] p-3.5 text-[#201e1d] shadow-[3px_3px_0_0_#201e1d] sm:p-4',
+        'w-full max-w-full min-w-0 overflow-hidden rounded-2xl border-2 border-[#201e1d] p-3.5 text-[#201e1d] shadow-[3px_3px_0_0_#201e1d] sm:p-4',
         theme.bg,
         className
       )}
     >
       <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <span
             className={cn(
-              'rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-[1px_1px_0_0_#201e1d]',
+              'shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-[1px_1px_0_0_#201e1d]',
               theme.badge
             )}
           >
             {campaign.badgeText || 'SPONSORED RESOURCE'}
           </span>
-          <span className="text-xs font-bold text-slate-600">
+          <span className="truncate text-xs font-bold text-slate-600">
             {campaign.sponsorName}
           </span>
         </div>
@@ -721,7 +721,7 @@ export function AdSlotBanner({
           <button
             onClick={handleDismiss}
             aria-label="Dismiss Banner"
-            className="rounded-lg border border-[#201e1d] bg-white p-1 text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] transition-all hover:bg-slate-100 active:translate-y-0.5"
+            className="shrink-0 rounded-lg border border-[#201e1d] bg-white p-1 text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] transition-all hover:bg-slate-100 active:translate-y-0.5"
           >
             <X className="h-3 w-3" />
           </button>
@@ -738,10 +738,10 @@ export function AdSlotBanner({
             />
           )}
           <div className="space-y-0.5 flex-1 min-w-0">
-            <h4 className="text-sm font-black tracking-tight text-[#201e1d] sm:text-base">
+            <h4 className="truncate text-sm font-black tracking-tight text-[#201e1d] sm:text-base">
               {campaign.headline}
             </h4>
-            <p className="text-xs text-slate-700">
+            <p className="line-clamp-2 text-xs text-slate-700">
               {campaign.bodyCopy}
             </p>
           </div>
@@ -753,12 +753,12 @@ export function AdSlotBanner({
           rel={isExternal ? 'noopener noreferrer' : undefined}
           onClick={handleCtaClick}
           className={cn(
-            'flex shrink-0 items-center gap-1.5 rounded-xl border-2 border-[#201e1d] px-3.5 py-1.5 text-xs font-black shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none sm:text-sm',
+            'flex shrink-0 items-center gap-1.5 rounded-xl border-2 border-[#201e1d] px-3.5 py-1.5 text-xs font-black shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none whitespace-nowrap sm:text-sm',
             theme.button
           )}
         >
-          <span>{campaign.ctaText}</span>
-          <ExternalLink className="h-3.5 w-3.5" />
+          <span className="shrink-0">{campaign.ctaText}</span>
+          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
         </a>
       </div>
     </div>
