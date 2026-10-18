@@ -12,6 +12,7 @@ export interface CitationTagPill {
 export interface CompilerFilterOptions {
   search?: string;
   topicId?: string;
+  topicIds?: string[];
   series?: string;
   selection?: SelectionFilter;
   selectedQuestionIds?: string[];
@@ -250,6 +251,7 @@ export function filterAndSortQuestions(
   const {
     search = '',
     topicId = 'all',
+    topicIds,
     series = 'all',
     selection = 'all',
     selectedQuestionIds = [],
@@ -273,8 +275,15 @@ export function filterAndSortQuestions(
     if (!matchSearch) return false;
 
     // 2. Topic filter
-    if (topicId !== 'all' && q.topic_id !== topicId) {
-      return false;
+    if (topicIds && topicIds.length > 0 && !topicIds.includes('all')) {
+      if (!q.topic_id || !topicIds.includes(q.topic_id)) {
+        return false;
+      }
+    } else if (topicId && topicId !== 'all') {
+      const ids = topicId.split(',').filter(Boolean);
+      if (!q.topic_id || !ids.includes(q.topic_id)) {
+        return false;
+      }
     }
 
     // 3. Exam Series / Year filter
@@ -329,7 +338,10 @@ export function countActiveFilters(
 ): number {
   let count = 0;
   if (options.search && options.search.trim().length > 0) count++;
-  if (options.topicId && options.topicId !== 'all') count++;
+  const hasTopicFilter =
+    (options.topicIds && options.topicIds.length > 0 && !options.topicIds.includes('all')) ||
+    (options.topicId && options.topicId !== 'all');
+  if (hasTopicFilter) count++;
   if (options.series && options.series !== 'all') count++;
   if (options.selection && options.selection !== 'all') count++;
   if (options.withDiagramsOnly) count++;
