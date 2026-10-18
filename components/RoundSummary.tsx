@@ -10,6 +10,7 @@ import 'katex/dist/katex.min.css';
 import { MissedQuestionItem } from '../hooks/useQuizGame';
 import { playFanfare, playPop } from '../lib/audio';
 import { cn } from '@/lib/utils';
+import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 
 interface RoundSummaryProps {
   totalXP: number;
@@ -250,6 +251,11 @@ export function RoundSummary({
           </>
         )}
       </div>
+
+      <AdSlotBanner
+        slotId="round_summary_card"
+        className="my-1"
+      />
 
       {/* 4. Action Buttons Hierarchy */}
       <div className="flex flex-col gap-3 pt-2">

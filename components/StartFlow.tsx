@@ -10,6 +10,7 @@ import { SyllabusTopic, Question } from '@/lib/questions';
 import { useAuth, isDemoStudentSession } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { fetchSubjectsFromDb, getSubjectEmoji, DbSubject, FALLBACK_SUBJECTS } from '@/lib/subjects';
+import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 
 interface StartFlowProps {
   onStart: (config: QuizRoundConfig) => void;
@@ -655,6 +656,12 @@ export function StartFlow({
           ? `START REVIEW · ${reviewCount} Qs 🧠`
           : `START ROUND · ${roundLength === 'endless' ? '∞' : roundLength + ' Qs'} 🚀`}
       </button>
+
+      <AdSlotBanner
+        slotId="start_flow_banner"
+        subjectCode={currentSubject.code}
+        className="mt-1"
+      />
 
       {/* Topic Mastery Drawer Modal */}
       {isMasteryOpen && (

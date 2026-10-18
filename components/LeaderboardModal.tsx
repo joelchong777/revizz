@@ -6,6 +6,7 @@ import { signOut, signInWithGoogle, isDemoStudentSession, isProviderNotEnabledEr
 import { UserProfile } from '../types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Badge } from './ui/badge';
+import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 
 interface LeaderboardModalProps {
   isOpen: boolean;
@@ -158,6 +159,10 @@ export default function LeaderboardModal({ isOpen, onClose, userProfile, onProfi
             ) : (
               <p className="text-center text-gray-500 py-4">No one on the leaderboard yet!</p>
             )}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-slate-200">
+            <AdSlotBanner slotId="leaderboard_footer" />
           </div>
         </div>
       </DialogContent>

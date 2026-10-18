@@ -10,6 +10,7 @@ import 'katex/dist/katex.min.css';
 import { Question, resolveDiagramUrl } from '@/lib/questions';
 import { cn } from '@/lib/utils';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
+import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 
 interface QuestionCardProps {
   question: Question;
@@ -670,6 +671,14 @@ export function QuestionCard({
           End endless round
         </button>
       )}
+
+      <AdSlotBanner
+        slotId="question_card_footer"
+        subjectCode={subject}
+        isTimedMode={isTimed}
+        questionIndex={questionNumber - 1}
+        className="mt-2"
+      />
 
       {/* Diagram Zoom Lightbox Modal */}
       {isZoomOpen && diagramUrl && mounted

@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Menu,
   Sliders,
+  Megaphone,
 } from 'lucide-react';
 
 export interface AppAdminNavProps {
@@ -288,6 +289,23 @@ export default function AppAdminNav({
                 {renderIcon(Menu, 'portal-menu')}
                 {!compact && (
                   <span className="flex-1 min-w-0 truncate">Portal Menu Manager</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleNavClick('ads')}
+                className={navItemClass('ads')}
+                title="Ads & Monetization"
+              >
+                {renderIcon(Megaphone, 'ads')}
+                {!compact && (
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Ads & Monetization</span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#201e1d] text-[10px] font-mono font-bold border border-[#201e1d]/25 shrink-0">
+                      Studio
+                    </span>
+                  </>
                 )}
               </button>
             </nav>

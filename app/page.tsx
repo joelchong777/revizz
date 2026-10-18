@@ -5,6 +5,7 @@ import { StartFlow } from '../components/StartFlow';
 import { QuestionCard } from '../components/QuestionCard';
 import { RoundSummary } from '../components/RoundSummary';
 import { StudentAuthGate } from '../components/StudentAuthGate';
+import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 import { useAuth } from '@/lib/auth';
 import { useQuizGame, Question, QuizRoundConfig } from '../hooks/useQuizGame';
 import {
@@ -255,6 +256,13 @@ export default function HomePage() {
   if (game.gameState === 'playing' && game.currentQuestion) {
     return (
       <main className="min-h-screen pt-2 sm:pt-6">
+        <AdSlotBanner
+          slotId="between_questions_interstitial"
+          subjectCode={game.config?.subject}
+          isTimedMode={game.config?.isTimed || false}
+          questionIndex={game.currentQuestionIndex}
+          className="max-w-2xl mx-auto px-4 mb-3"
+        />
         <QuestionCard
           question={game.currentQuestion}
           questionNumber={game.currentQuestionIndex + 1}

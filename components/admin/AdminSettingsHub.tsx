@@ -25,6 +25,7 @@ import {
   Layers,
   BookOpen,
   ArrowRight,
+  Megaphone,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 
@@ -1497,6 +1498,47 @@ export default function AdminSettingsHub({
           </div>
         </div>
       )}
+
+      {/* Ads & Monetization Studio Cross-Link Banner */}
+      <div className="p-5 sm:p-6 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-offset-1 shrink-0">
+              <Megaphone className="w-4 h-4" />
+            </span>
+            <h3 className="font-heading font-black text-base sm:text-lg text-[#201e1d]">
+              Ads &amp; Monetization Studio
+            </h3>
+            <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-mono font-bold text-[#201e1d]">
+              Live Controls
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-2xl">
+            Configure smart placement presets, Google AdSense IDs, frequency caps, and cognitive-load guardrails across student practice and leaderboard surfaces.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-bold text-[#474238]">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#eee7db] border border-[#201e1d]/20">
+              🌱 Student-Friendly Presets
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#eee7db] border border-[#201e1d]/20">
+              🛡️ Timed Exam Guardrails
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#eee7db] border border-[#201e1d]/20">
+              ⚡ Live Placement Simulator
+            </span>
+          </div>
+        </div>
+        <div className="shrink-0 flex items-center">
+          <button
+            type="button"
+            onClick={() => onSelectParentTab?.('ads')}
+            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] text-[#201e1d] font-heading font-black text-xs sm:text-sm shadow-offset-2 hover:bg-[#ffc6a5] transition-all flex items-center justify-center gap-2 active:translate-y-0.5 cursor-pointer"
+          >
+            <span>Open Ads Studio</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

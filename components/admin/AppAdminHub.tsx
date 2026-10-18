@@ -8,6 +8,7 @@ import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
 import PortalMenuManager from '@/components/admin/PortalMenuManager';
 import AdminSettingsHub, { SettingsSubTab } from '@/components/admin/AdminSettingsHub';
+import AdsManagerHub from '@/components/admin/AdsManagerHub';
 import { useQuestions } from '@/lib/questions';
 import type { StagingQuestion } from '@/types/ingestion';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
@@ -372,6 +373,9 @@ export default function AppAdminHub({
 
     case 'portal-menu':
       return <PortalMenuManager />;
+
+    case 'ads':
+      return <AdsManagerHub />;
 
     default:
       return renderIngestion();
