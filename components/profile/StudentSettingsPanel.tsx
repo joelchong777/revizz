@@ -326,7 +326,7 @@ export function StudentSettingsPanel({
           <label className="block text-xs font-black uppercase tracking-wider text-neutral-500 mb-2.5">
             Primary Revision Subject
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             {SUBJECT_OPTIONS.map((subj) => {
               const isSelected = preferences.primarySubject === subj;
               return (
@@ -528,7 +528,7 @@ export function StudentSettingsPanel({
           <label className="block text-xs font-black uppercase tracking-wider text-neutral-500 mb-2.5">
             Default Diagram Filter
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-2.5 sm:gap-3">
             {DIAGRAM_FILTER_OPTIONS.map((opt) => {
               const isSelected = preferences.defaultDiagramFilter === opt.value;
               return (
@@ -536,7 +536,7 @@ export function StudentSettingsPanel({
                   key={opt.value}
                   type="button"
                   onClick={() => onUpdatePreferences({ defaultDiagramFilter: opt.value })}
-                  className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 overflow-hidden ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 overflow-hidden ${
                     isSelected
                       ? 'bg-[#FEF08A] border-[#201e1d] text-[#201e1d] shadow-[3px_3px_0_0_#201e1d]'
                       : 'bg-[#F9F4ED] border-[#201e1d]/30 text-[#201e1d] hover:border-[#201e1d] hover:bg-white'
@@ -661,7 +661,7 @@ export function StudentSettingsPanel({
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(true)}
-                className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2.5 min-h-[44px] rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4 text-rose-600" />
                 <span>Reset Local Study Data</span>
@@ -676,14 +676,14 @@ export function StudentSettingsPanel({
                   <button
                     type="button"
                     onClick={handleExecuteReset}
-                    className="flex-1 sm:flex-none shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] cursor-pointer"
+                    className="flex-1 sm:flex-none shrink-0 whitespace-nowrap px-3.5 py-2 min-h-[40px] rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] cursor-pointer"
                   >
                     Yes, Clear
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowResetConfirm(false)}
-                    className="flex-1 sm:flex-none shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-white text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] hover:bg-neutral-50 cursor-pointer"
+                    className="flex-1 sm:flex-none shrink-0 whitespace-nowrap px-3.5 py-2 min-h-[40px] rounded-xl bg-white text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] hover:bg-neutral-50 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -696,7 +696,7 @@ export function StudentSettingsPanel({
               type="button"
               disabled={signingOut}
               onClick={handleSignOut}
-              className="w-full sm:w-auto shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-100 text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto shrink-0 whitespace-nowrap px-5 py-2.5 min-h-[44px] rounded-xl bg-white hover:bg-neutral-100 text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <LogOut className="w-4 h-4 text-[#201e1d]" />
               <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>

@@ -72,101 +72,101 @@ export function StudentStatsPanel({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
           {/* Card 1: Overall Syllabus Mastery */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Syllabus Mastery
                 </p>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 truncate">
+                <div className="text-xl sm:text-2xl font-heading text-[#201e1d] mt-0.5 truncate">
                   {statsSummary.overallMasteryPct}%
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FEF08A] border-2 border-[#201e1d] flex items-center justify-center text-lg sm:text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 🎯
               </div>
             </div>
 
-            <div className="mt-3">
-              <div className="w-full bg-neutral-100 h-3 rounded-full border border-[#201e1d] overflow-hidden p-0.5">
+            <div className="mt-2.5">
+              <div className="w-full bg-neutral-100 h-2.5 rounded-full border border-[#201e1d] overflow-hidden p-0.5">
                 <div
                   className="bg-emerald-500 h-full rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(0, statsSummary.overallMasteryPct))}%` }}
                 />
               </div>
-              <p className="text-[11px] font-bold text-neutral-600 mt-1.5 truncate">
+              <p className="text-[10px] sm:text-[11px] font-bold text-neutral-600 mt-1.5 truncate">
                 {statsSummary.totalFirstTryCorrect} of {statsSummary.totalQuestionsInBank} 1st-try correct
               </p>
             </div>
           </div>
 
           {/* Card 2: Total XP Earned */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Total XP Earned
                 </p>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-indigo-700 mt-1 truncate">
+                <div className="text-xl sm:text-2xl font-heading text-indigo-700 mt-0.5 truncate">
                   +{userXp.toLocaleString()}
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#C7D2FE] border-2 border-[#201e1d] flex items-center justify-center text-lg sm:text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 ⚡
               </div>
             </div>
 
-            <div className="mt-3 pt-2 border-t-2 border-neutral-100">
-              <p className="text-[11px] font-bold text-neutral-600 flex items-center gap-1 truncate">
-                <span>Earned from revision & drills</span>
+            <div className="mt-2.5 pt-2 border-t-2 border-neutral-100">
+              <p className="text-[10px] sm:text-[11px] font-bold text-neutral-600 flex items-center gap-1 truncate">
+                <span>Earned from drills & rounds</span>
               </p>
             </div>
           </div>
 
           {/* Card 3: Current & Best Streak */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
-                  Current & Best Streak
+                  Current Streak
                 </p>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 flex items-center gap-1.5 truncate">
+                <div className="text-xl sm:text-2xl font-heading text-[#201e1d] mt-0.5 flex items-center gap-1.5 truncate">
                   <span className="text-amber-500 shrink-0">🔥</span> <span>{currentStreak}</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#FDE68A] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDE68A] border-2 border-[#201e1d] flex items-center justify-center text-lg sm:text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 🏆
               </div>
             </div>
 
-            <div className="mt-3 pt-2 border-t-2 border-neutral-100">
-              <p className="text-[11px] font-bold text-neutral-600 truncate">
-                Best round peak: <span className="text-amber-700 font-heading">{statsSummary.bestRoundStreak} in a row</span>
+            <div className="mt-2.5 pt-2 border-t-2 border-neutral-100">
+              <p className="text-[10px] sm:text-[11px] font-bold text-neutral-600 truncate">
+                Best round: <span className="text-amber-700 font-heading">{statsSummary.bestRoundStreak} in a row</span>
               </p>
             </div>
           </div>
 
           {/* Card 4: Average Round Accuracy */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Round Accuracy
                 </p>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 truncate">
+                <div className="text-xl sm:text-2xl font-heading text-[#201e1d] mt-0.5 truncate">
                   {statsSummary.averageRoundAccuracyPct}%
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#99F6E4] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#99F6E4] border-2 border-[#201e1d] flex items-center justify-center text-lg sm:text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 📊
               </div>
             </div>
 
-            <div className="mt-3 pt-2 border-t-2 border-neutral-100">
-              <p className="text-[11px] font-bold text-neutral-600 truncate">
-                Across {statsSummary.roundsCompleted} completed round{statsSummary.roundsCompleted === 1 ? '' : 's'}
+            <div className="mt-2.5 pt-2 border-t-2 border-neutral-100">
+              <p className="text-[10px] sm:text-[11px] font-bold text-neutral-600 truncate">
+                Across {statsSummary.roundsCompleted} round{statsSummary.roundsCompleted === 1 ? '' : 's'}
               </p>
             </div>
           </div>
@@ -175,57 +175,57 @@ export function StudentStatsPanel({
           <button
             type="button"
             onClick={onOpenReviewTab}
-            className="text-left bg-[#FFFDF7] hover:bg-rose-50/50 border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_#201e1d] cursor-pointer group overflow-hidden"
+            className="text-left bg-[#FFFDF7] hover:bg-rose-50/50 border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_#201e1d] cursor-pointer group overflow-hidden min-h-[44px]"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700 truncate">
                   Review Queue
                 </p>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-rose-950 mt-1 flex items-center gap-1.5 truncate">
+                <div className="text-xl sm:text-2xl font-heading text-rose-950 mt-0.5 flex items-center gap-1.5 truncate">
                   <span className="shrink-0">🧠</span> <span>{statsSummary.reviewPileQuestionCount}</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] group-hover:scale-105 transition-transform shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FECDD3] border-2 border-[#201e1d] flex items-center justify-center text-lg sm:text-xl shadow-[1.5px_1.5px_0_0_#201e1d] group-hover:scale-105 transition-transform shrink-0">
                 🔥
               </div>
             </div>
 
-            <div className="mt-3 pt-2 border-t-2 border-rose-100 flex items-center justify-between gap-1">
-              <span className="text-[11px] font-black text-rose-800 truncate">
-                {statsSummary.reviewPileQuestionCount > 0 ? 'Questions need revision' : 'Pile is clean!'}
+            <div className="mt-2.5 pt-2 border-t-2 border-rose-100 flex items-center justify-between gap-1">
+              <span className="text-[10px] sm:text-[11px] font-black text-rose-800 truncate">
+                {statsSummary.reviewPileQuestionCount > 0 ? 'Needs revision' : 'Pile is clean!'}
               </span>
-              <span className="text-xs font-heading text-rose-800 group-hover:translate-x-0.5 transition-transform shrink-0 whitespace-nowrap">
+              <span className="text-[11px] sm:text-xs font-heading text-rose-800 group-hover:translate-x-0.5 transition-transform shrink-0 whitespace-nowrap">
                 Open →
               </span>
             </div>
           </button>
 
           {/* Card 6: Topics Mastered Breakdown */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
-                  Topic Progression
+                  Mastered Topics
                 </p>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 truncate">
+                <div className="text-xl sm:text-2xl font-heading text-[#201e1d] mt-0.5 truncate">
                   {statsSummary.masteredTopicsCount}{' '}
-                  <span className="text-xs sm:text-sm font-bold text-neutral-500 font-sans">Mastered</span>
+                  <span className="text-xs font-bold text-neutral-500 font-sans">Topics</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#BBF7D0] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#BBF7D0] border-2 border-[#201e1d] flex items-center justify-center text-lg sm:text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 👑
               </div>
             </div>
 
-            <div className="mt-3 pt-2 border-t-2 border-neutral-100 flex items-center gap-1.5 text-[11px] font-bold text-neutral-600 flex-wrap">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-[#201e1d] font-bold shrink-0">
+            <div className="mt-2.5 pt-2 border-t-2 border-neutral-100 flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-neutral-600 flex-wrap">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-[#201e1d] font-bold shrink-0">
                 👑 {statsSummary.masteredTopicsCount}
               </span>
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-teal-50 text-teal-900 border border-[#201e1d] font-bold shrink-0">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg bg-teal-50 text-teal-900 border border-[#201e1d] font-bold shrink-0">
                 ⚡ {statsSummary.proficientTopicsCount}
               </span>
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-orange-50 text-orange-900 border border-[#201e1d] font-bold shrink-0">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg bg-orange-50 text-orange-900 border border-[#201e1d] font-bold shrink-0">
                 🌱 {statsSummary.noviceTopicsCount}
               </span>
             </div>
@@ -234,7 +234,7 @@ export function StudentStatsPanel({
       </div>
 
       {/* 2. STRENGTHS VS FOCUS AREAS SPLIT ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="flex flex-col gap-4 sm:gap-5">
         {/* Left: Top Strengths */}
         <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-5 shadow-[3px_3px_0_0_#201e1d]">
           <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b-2 border-neutral-100">
@@ -343,7 +343,7 @@ export function StudentStatsPanel({
                       <button
                         type="button"
                         onClick={() => onDrillTopic(topic.topicId)}
-                        className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-3 py-1 text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                        className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                       >
                         <span>Drill Now</span>
                         <span aria-hidden="true">→</span>
@@ -406,7 +406,7 @@ export function StudentStatsPanel({
                 if (e.key === 'Escape') setSearchQuery('');
               }}
               placeholder="Search syllabus topics... (Esc to clear)"
-              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm font-bold bg-neutral-50 border-2 border-[#201e1d] rounded-xl text-[#201e1d] placeholder:text-neutral-400 placeholder:font-normal focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#FFDE59] transition-colors"
+              className="w-full pl-9 pr-8 py-2.5 min-h-[44px] text-xs sm:text-sm font-bold bg-neutral-50 border-2 border-[#201e1d] rounded-xl text-[#201e1d] placeholder:text-neutral-400 placeholder:font-normal focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#FFDE59] transition-colors"
             />
             {searchQuery && (
               <button
@@ -425,7 +425,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('all')}
-              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3.5 py-2 min-h-[40px] rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'all'
                   ? 'bg-[#201e1d] text-white shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-white text-neutral-700 hover:bg-neutral-100 shadow-[1px_1px_0_0_#201e1d]'
@@ -436,7 +436,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('master')}
-              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3.5 py-2 min-h-[40px] rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'master'
                   ? 'bg-[#FFDE59] text-[#201e1d] font-heading shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-[#fff8db] text-amber-900 hover:bg-[#FEF08A] shadow-[1px_1px_0_0_#201e1d]'
@@ -447,7 +447,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('proficient')}
-              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3.5 py-2 min-h-[40px] rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'proficient'
                   ? 'bg-[#14B8A6] text-white font-heading shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-[#f0fae1] text-teal-900 hover:bg-[#99F6E4] shadow-[1px_1px_0_0_#201e1d]'
@@ -458,7 +458,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('novice')}
-              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3.5 py-2 min-h-[40px] rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'novice'
                   ? 'bg-[#FB7185] text-white font-heading shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-[#fff2eb] text-orange-950 hover:bg-[#FECDD3] shadow-[1px_1px_0_0_#201e1d]'
@@ -472,7 +472,7 @@ export function StudentStatsPanel({
         {/* Topics List Grid */}
         <div className="mt-5">
           {filteredTopics.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-3.5 sm:gap-4">
               {filteredTopics.map((topic) => {
                 const badge = getMasteryBadge(topic.masteryPct);
                 return (
@@ -532,7 +532,7 @@ export function StudentStatsPanel({
                       <button
                         type="button"
                         onClick={() => onDrillTopic(topic.topicId)}
-                        className="w-full sm:w-auto shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                        className="w-full sm:w-auto shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                       >
                         <span>Practice Topic</span>
                         <span aria-hidden="true">→</span>

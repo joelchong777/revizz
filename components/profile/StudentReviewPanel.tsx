@@ -265,22 +265,22 @@ export function StudentReviewPanel({
 
   return (
     <div className="space-y-6">
-      {/* 1. SUB-MODE SEGMENTED SWITCHER */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="inline-flex p-1.5 bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_0_#201e1d] overflow-x-auto max-w-full">
+      {/* 1. SUB-MODE SEGMENTED SWITCHER & ACTION DOCK */}
+      <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_0_#201e1d] w-full">
           <button
             type="button"
             onClick={() => setMode('mistakes')}
-            className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`min-h-[44px] px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               mode === 'mistakes'
                 ? 'bg-[#FB7185] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading'
                 : 'text-[#201e1d] hover:bg-neutral-100 border-2 border-transparent'
             }`}
           >
             <span>🔥</span>
-            <span>Mistakes to Review</span>
+            <span className="truncate">Mistakes</span>
             <span
-              className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full font-black border ${
+              className={`shrink-0 text-[11px] px-1.5 py-0.5 rounded-full font-black border ${
                 mode === 'mistakes' ? 'bg-[#201e1d] text-[#FB7185] border-[#201e1d]' : 'bg-neutral-200 text-[#201e1d] border-[#201e1d]/30'
               }`}
             >
@@ -291,16 +291,16 @@ export function StudentReviewPanel({
           <button
             type="button"
             onClick={() => setMode('bookmarks')}
-            className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`min-h-[44px] px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               mode === 'bookmarks'
                 ? 'bg-[#FFDE59] text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading'
                 : 'text-[#201e1d] hover:bg-neutral-100 border-2 border-transparent'
             }`}
           >
             <span>⭐</span>
-            <span>Bookmarked Questions</span>
+            <span className="truncate">Bookmarks</span>
             <span
-              className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full font-black border ${
+              className={`shrink-0 text-[11px] px-1.5 py-0.5 rounded-full font-black border ${
                 mode === 'bookmarks' ? 'bg-[#201e1d] text-[#FFDE59] border-[#201e1d]' : 'bg-neutral-200 text-[#201e1d] border-[#201e1d]/30'
               }`}
             >
@@ -314,7 +314,7 @@ export function StudentReviewPanel({
           type="button"
           onClick={handleStartReviewQuiz}
           disabled={filteredQuestions.length === 0}
-          className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-[#201e1d] font-heading text-xs sm:text-sm transition-all cursor-pointer ${
+          className={`w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border-2 border-[#201e1d] font-heading text-sm sm:text-base transition-all cursor-pointer ${
             filteredQuestions.length > 0
               ? 'bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] shadow-[3px_3px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_#201e1d]'
               : 'bg-neutral-200 text-neutral-400 border-neutral-300 cursor-not-allowed shadow-none'
@@ -356,9 +356,9 @@ export function StudentReviewPanel({
 
       {/* 3. FILTER & DRILL CONTROLS BAR */}
       <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] space-y-3.5">
-        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div className="flex flex-col gap-3">
           {/* Search Input */}
-          <div className="relative flex-1">
+          <div className="relative w-full">
             <span className="absolute inset-y-0 left-3 flex items-center text-neutral-400 text-sm pointer-events-none">
               🔍
             </span>
@@ -369,8 +369,8 @@ export function StudentReviewPanel({
               onKeyDown={(e) => {
                 if (e.key === 'Escape') setSearchQuery('');
               }}
-              placeholder={`Search ${mode === 'mistakes' ? 'mistakes' : 'bookmarks'} by question, topic, or paper citation...`}
-              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm font-bold bg-neutral-50 border-2 border-[#201e1d] rounded-xl text-[#201e1d] placeholder:text-neutral-400 placeholder:font-normal focus:outline-none focus:bg-white focus:ring-2 focus:ring-accent-300"
+              placeholder={`Search ${mode === 'mistakes' ? 'mistakes' : 'bookmarks'}...`}
+              className="w-full pl-9 pr-8 py-2.5 min-h-[44px] text-xs sm:text-sm font-bold bg-neutral-50 border-2 border-[#201e1d] rounded-xl text-[#201e1d] placeholder:text-neutral-400 placeholder:font-normal focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#FFDE59]"
             />
             {searchQuery && (
               <button
@@ -383,80 +383,81 @@ export function StudentReviewPanel({
             )}
           </div>
 
-          {/* Topic Dropdown Filter */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="review-topic-filter" className="text-xs font-bold text-neutral-500 shrink-0">
-              Topic:
-            </label>
-            <select
-              id="review-topic-filter"
-              value={selectedTopicId}
-              onChange={(e) => setSelectedTopicId(e.target.value)}
-              className="text-xs font-bold bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-2 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFDE59] max-w-[180px] truncate"
-            >
-              <option value="all">All Topics ({availableTopicsInMode.length})</option>
-              {availableTopicsInMode.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Topic & Sort Selectors Row */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="flex flex-col gap-1 min-w-0">
+              <label htmlFor="review-topic-filter" className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                Topic
+              </label>
+              <select
+                id="review-topic-filter"
+                value={selectedTopicId}
+                onChange={(e) => setSelectedTopicId(e.target.value)}
+                className="w-full min-h-[42px] text-xs font-bold bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-2.5 py-2 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFDE59] truncate"
+              >
+                <option value="all">All Topics ({availableTopicsInMode.length})</option>
+                {availableTopicsInMode.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Sort Selector */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="review-sort" className="text-xs font-bold text-neutral-500 shrink-0">
-              Sort:
-            </label>
-            <select
-              id="review-sort"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="text-xs font-bold bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-2 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFDE59]"
-            >
-              <option value="recent">Most Recent</option>
-              {mode === 'mistakes' && <option value="missed">Most Missed</option>}
-              <option value="topic">Topic (A-Z)</option>
-            </select>
+            <div className="flex flex-col gap-1 min-w-0">
+              <label htmlFor="review-sort" className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                Sort By
+              </label>
+              <select
+                id="review-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="w-full min-h-[42px] text-xs font-bold bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-2.5 py-2 text-[#201e1d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFDE59]"
+              >
+                <option value="recent">Most Recent</option>
+                {mode === 'mistakes' && <option value="missed">Most Missed</option>}
+                <option value="topic">Topic (A-Z)</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Severity Pills (Only for Mistakes Mode) */}
         {mode === 'mistakes' && (
-          <div className="flex items-center gap-2 pt-2.5 border-t-2 border-neutral-100 flex-wrap">
-            <span className="text-xs font-bold text-neutral-500 mr-1 shrink-0">Severity:</span>
+          <div className="flex items-center gap-1.5 pt-2.5 border-t-2 border-neutral-100 flex-wrap">
+            <span className="text-[11px] font-bold text-neutral-500 mr-1 shrink-0 uppercase tracking-wider">Severity:</span>
             <button
               type="button"
               onClick={() => setMistakeSeverity('all')}
-              className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[38px] rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 mistakeSeverity === 'all'
                   ? 'bg-[#201e1d] text-white shadow-[1.5px_1.5px_0_0_#201e1d]'
-                  : 'bg-white text-neutral-700 hover:bg-neutral-100'
+                  : 'bg-white text-neutral-700 hover:bg-neutral-100 shadow-[1px_1px_0_0_#201e1d]'
               }`}
             >
-              All Mistakes ({mistakeQuestionsList.length})
+              All ({mistakeQuestionsList.length})
             </button>
             <button
               type="button"
               onClick={() => setMistakeSeverity('2+')}
-              className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[38px] rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 mistakeSeverity === '2+'
                   ? 'bg-[#FB7185] text-white shadow-[1.5px_1.5px_0_0_#201e1d]'
-                  : 'bg-[#fff2eb] text-rose-900 hover:bg-[#FECDD3]'
+                  : 'bg-[#fff2eb] text-rose-900 hover:bg-[#FECDD3] shadow-[1px_1px_0_0_#201e1d]'
               }`}
             >
-              🔥 2+ Mistakes
+              🔥 2+ Missed
             </button>
             <button
               type="button"
               onClick={() => setMistakeSeverity('3+')}
-              className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[38px] rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 mistakeSeverity === '3+'
                   ? 'bg-rose-700 text-white shadow-[1.5px_1.5px_0_0_#201e1d]'
-                  : 'bg-rose-100 text-rose-900 hover:bg-rose-200'
+                  : 'bg-rose-100 text-rose-900 hover:bg-rose-200 shadow-[1px_1px_0_0_#201e1d]'
               }`}
             >
-              🚨 3+ Critical Mistakes
+              🚨 3+ Critical
             </button>
           </div>
         )}
@@ -488,8 +489,8 @@ export function StudentReviewPanel({
                   className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-5 sm:p-6 shadow-[3px_3px_0_0_#201e1d] transition-all overflow-hidden"
                 >
                   {/* Header Row */}
-                  <div className="flex items-center justify-between gap-2 flex-wrap pb-3.5 border-b-2 border-neutral-100">
-                    <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3.5 border-b-2 border-neutral-100">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
                       {cleanCitation && (
                         <span className="shrink-0 text-xs font-heading bg-neutral-100 text-neutral-800 border border-[#201e1d] rounded-lg px-2.5 py-0.5">
                           {cleanCitation}
@@ -507,12 +508,12 @@ export function StudentReviewPanel({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                       {/* Star Bookmark Toggle */}
                       <button
                         type="button"
                         onClick={() => handleToggleBookmark(q)}
-                        className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-heading flex items-center gap-1 transition-all cursor-pointer ${
+                        className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl border-2 border-[#201e1d] text-xs font-heading flex items-center gap-1 transition-all cursor-pointer ${
                           isBookmarked
                             ? 'bg-[#FFDE59] text-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d]'
                             : 'bg-white text-neutral-700 hover:bg-neutral-100'
@@ -526,7 +527,7 @@ export function StudentReviewPanel({
                       <button
                         type="button"
                         onClick={() => toggleExpand(q.id)}
-                        className="shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] hover:bg-neutral-200 text-[#201e1d] text-xs font-heading flex items-center gap-1 active:translate-y-0.5 transition-all cursor-pointer shadow-[1.5px_1.5px_0_0_#201e1d]"
+                        className="shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] hover:bg-neutral-200 text-[#201e1d] text-xs font-heading flex items-center gap-1 active:translate-y-0.5 transition-all cursor-pointer shadow-[1.5px_1.5px_0_0_#201e1d]"
                       >
                         <span>{isExpanded ? 'Collapse ▴' : 'Inspect Answer ▾'}</span>
                       </button>

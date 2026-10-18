@@ -261,20 +261,20 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   const recommendedTopic = statsSummary.weakestTopics?.[0] || statsSummary.topicStats?.[0];
 
   return (
-    <main className="w-full py-3 sm:py-5 space-y-6 sm:space-y-8 select-none">
+    <main className="w-full max-w-[560px] mx-auto py-3 pb-16 flex flex-col gap-4 sm:gap-5 select-none">
       {/* Top Bar: Back to Quiz Arena + Page Title + Quick Start Practice */}
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
+      <header className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] text-[#201e1d] hover:bg-neutral-100 font-bold text-xs sm:text-sm shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 shrink-0 whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] text-[#201e1d] hover:bg-neutral-100 font-bold text-xs shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 shrink-0 whitespace-nowrap"
           >
             <ArrowLeft className="w-4 h-4 text-[#201e1d]" />
             <span>Quiz Arena</span>
           </Link>
 
-          <h1 className="text-2xl sm:text-3xl font-heading text-[#201e1d] tracking-tight flex items-center gap-2.5 truncate">
-            <span className="w-9 h-9 rounded-xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] inline-flex items-center justify-center text-lg shrink-0">
+          <h1 className="text-xl sm:text-2xl font-heading text-[#201e1d] tracking-tight flex items-center gap-2 truncate">
+            <span className="w-8 h-8 rounded-xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] inline-flex items-center justify-center text-base shrink-0">
               🎓
             </span>
             <span className="truncate">Student Profile Hub</span>
@@ -284,406 +284,397 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs sm:text-sm border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-2 cursor-pointer shrink-0 whitespace-nowrap"
+          className="w-full sm:w-auto px-4 py-2 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
         >
           <Zap className="w-4 h-4 fill-[#201e1d] text-[#201e1d]" />
           <span>Start Practice</span>
         </button>
       </header>
 
-        {/* Tactile 5-Tab Navigation Bar */}
-        <nav
-          data-testid="student-profile-tabs"
-          className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 p-2 rounded-3xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d]"
-          aria-label="Student profile sections"
-        >
-          {TAB_CONFIG.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => handleTabChange(tab.key)}
-                className={`p-3 sm:py-3.5 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-75 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#FFDE59] text-[#201e1d] font-heading border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] scale-[1.01]'
-                    : 'bg-transparent hover:bg-neutral-200/60 text-[#201e1d] font-bold border-2 border-transparent hover:border-[#201e1d]/20 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
-                } ${tab.key === 'settings' ? 'col-span-2 sm:col-span-1' : ''}`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#201e1d] stroke-[2.5]' : 'text-neutral-700'}`} />
-                <span className="hidden md:inline">{tab.label}</span>
-                <span className="inline md:hidden">{tab.shortLabel}</span>
+      {/* Tactile 5-Tab Navigation Dock */}
+      <nav
+        data-testid="student-profile-tabs"
+        className="grid grid-cols-5 gap-1 sm:gap-1.5 p-1.5 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d]"
+        aria-label="Student profile sections"
+      >
+        {TAB_CONFIG.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => handleTabChange(tab.key)}
+              className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs leading-tight transition-all duration-75 cursor-pointer ${
+                isActive
+                  ? 'bg-[#FFDE59] text-[#201e1d] font-heading border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
+                  : 'bg-transparent hover:bg-neutral-200/60 text-[#201e1d] font-bold border-2 border-transparent hover:border-[#201e1d]/20 active:translate-x-0.5 active:translate-y-0.5'
+              }`}
+            >
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#201e1d] stroke-[2.5]' : 'text-neutral-700'}`} />
+              <span className="truncate max-w-full text-center">{tab.shortLabel}</span>
 
-                {/* Badge count for Review tab */}
-                {tab.key === 'review' && reviewQueueTotal > 0 && (
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
-                      isActive
-                        ? 'bg-[#201e1d] text-[#FFDE59] border-[#201e1d]'
-                        : 'bg-[#FB7185] text-white border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]'
-                    }`}
-                  >
-                    {reviewQueueTotal}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* ===================================================================
-            TAB 1: Overview (Profile Home)
-           =================================================================== */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6 sm:space-y-8 animate-fadeIn">
-            {/* Hero Identity & XP Rank Card */}
-            <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d] relative overflow-hidden">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
-                <div className="flex items-center gap-4 sm:gap-5">
-                  <div className="relative">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#FFDE59] border-2 border-[#201e1d] flex items-center justify-center text-3xl sm:text-4xl shadow-[3px_3px_0_0_#201e1d] flex-shrink-0">
-                      {preferences.avatarEmoji || '🎓'}
-                    </div>
-                    <span className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded-full bg-[#201e1d] text-[#FFDE59] text-[10px] font-black tracking-wider uppercase border border-white shadow-xs">
-                      Lvl {rank.level}
-                    </span>
-                  </div>
-
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h2 className="text-xl sm:text-2xl font-heading text-[#201e1d]">
-                        {preferences.displayNameOverride || userProfile.display_name || 'Cambridge Scholar'}
-                      </h2>
-                      {userProfile.is_school_account ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-400">
-                          🎓 School Account
-                        </span>
-                      ) : !isDemoSession ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-300 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-indigo-600" /> Verified Student
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                          ⚡ Guest Session
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="text-xs sm:text-sm font-bold text-neutral-600 flex items-center gap-1.5">
-                      <span>{rank.badgeEmoji}</span>
-                      <span className="font-heading text-[#201e1d]">{rank.title}</span>
-                      <span className="text-neutral-400">•</span>
-                      <span>Level {rank.level} of 7</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Quick Stats Chips */}
-                <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-                  <div className="px-3.5 py-2 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center gap-2 flex-1 md:flex-none justify-center">
-                    <Zap className="w-4 h-4 text-indigo-600 fill-indigo-500" />
-                    <span className="font-heading text-xs sm:text-sm text-[#201e1d]">
-                      {userXp.toLocaleString()} XP
-                    </span>
-                  </div>
-                  <div className="px-3.5 py-2 rounded-2xl bg-[#fff8db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center gap-2 flex-1 md:flex-none justify-center">
-                    <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span className="font-heading text-xs sm:text-sm text-[#201e1d]">
-                      {currentStreak} Day Streak
-                    </span>
-                  </div>
-                  <div className="px-3.5 py-2 rounded-2xl bg-[#f0fae1] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center gap-2 flex-1 md:flex-none justify-center">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="font-heading text-xs sm:text-sm text-[#201e1d]">
-                      {statsSummary.overallMasteryPct}% Mastery
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Level XP Progress Bar */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-600">
-                  <span className="font-heading text-[#201e1d]">Level {rank.level} Progress</span>
-                  <span className="font-bold">
-                    {rank.level === 7
-                      ? 'Max Level Reached! 👑'
-                      : `${rank.currentXp - rank.currentLevelMinXp} / ${
-                          rank.nextLevelXp - rank.currentLevelMinXp
-                        } XP to Level ${rank.level + 1}`}
-                  </span>
-                </div>
-                <div className="w-full h-4 rounded-full bg-neutral-100 border-2 border-[#201e1d] overflow-hidden p-0.5">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#FFDE59] via-amber-400 to-[#F59E0B] rounded-full transition-all duration-500 shadow-inner"
-                    style={{ width: `${rank.progressPct}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Guest Session Save Progress Banner */}
-              {isDemoSession && (
-                <div className="mt-6 p-4 rounded-2xl bg-[#fff8db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-2xl shrink-0">⚡</span>
-                    <div className="min-w-0">
-                      <span className="font-heading text-sm text-[#201e1d] block">
-                        Guest Session Active
-                      </span>
-                      <span className="text-xs text-neutral-700 font-medium block">
-                        Create a free student account to sync XP, streaks, and mistake piles across devices.
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setAuthModalOpen(true)}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#201e1d] hover:bg-neutral-800 text-white font-heading text-xs border border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-[#FFDE59]" />
-                    <span>Sign In to Save Progress</span>
-                  </button>
-                </div>
+              {/* Badge count for Review tab */}
+              {tab.key === 'review' && reviewQueueTotal > 0 && (
+                <span
+                  className={`absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black border leading-tight ${
+                    isActive
+                      ? 'bg-[#201e1d] text-[#FFDE59] border-[#201e1d]'
+                      : 'bg-[#FB7185] text-white border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]'
+                  }`}
+                >
+                  {reviewQueueTotal}
+                </span>
               )}
-            </section>
+            </button>
+          );
+        })}
+      </nav>
 
-            {/* 2-Column Bento Row: Daily Goal & Consistency + Exam Countdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-              {/* Daily Goal & 7-Day Consistency Card */}
-              <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-2xl bg-[#99F6E4] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#0F766E]">
-                        <Target className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-heading text-base text-[#201e1d]">Daily Question Target</h3>
-                        <p className="text-xs text-neutral-500 font-medium">Consistent daily revision habit</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-black px-2.5 py-1 rounded-full bg-teal-100 text-teal-900 border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]">
-                      {dailyGoal.questionsAnsweredToday} / {dailyGoal.dailyGoal} Qs
-                    </span>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="space-y-1.5 mb-5">
-                    <div className="flex items-center justify-between text-xs font-bold text-neutral-600">
-                      <span>Today's Progress</span>
-                      <span className="font-heading text-[#201e1d]">{dailyGoal.progressPct}%</span>
-                    </div>
-                    <div className="w-full h-3.5 rounded-full bg-neutral-100 border-2 border-[#201e1d] overflow-hidden p-0.5">
-                      <div
-                        className="h-full bg-gradient-to-r from-teal-400 to-emerald-500 rounded-full transition-all duration-300"
-                        style={{ width: `${dailyGoal.progressPct}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 7-Day Consistency Strip */}
-                  <div className="space-y-2">
-                    <span className="block text-xs font-black uppercase tracking-wider text-neutral-500">
-                      7-Day Consistency Strip
-                    </span>
-                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                      {dailyGoal.activeDaysLast7.map((day) => {
-                        const isToday =
-                          new Date().toISOString().slice(0, 10) === day.dateStr;
-                        return (
-                          <div
-                            key={day.dateStr}
-                            title={`${day.count} questions on ${day.dayShort}`}
-                            className={`py-2 px-1 rounded-xl text-center border-2 transition-all overflow-hidden ${
-                              day.active
-                                ? 'bg-[#BBF7D0] border-[#201e1d] text-[#15803D] font-black shadow-[2px_2px_0_0_#201e1d]'
-                                : 'bg-neutral-100 border-neutral-300 text-neutral-400 font-bold'
-                            } ${isToday ? 'ring-2 ring-[#201e1d] ring-offset-1' : ''}`}
-                          >
-                            <span className="block text-[10px] uppercase font-black tracking-tight leading-none">{day.dayShort}</span>
-                            <span className="block text-[11px] font-extrabold mt-1 leading-none truncate">
-                              {day.active ? '🔥' : day.count > 0 ? day.count : '—'}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+      {/* ===================================================================
+          TAB 1: Overview (Profile Home)
+         =================================================================== */}
+      {activeTab === 'overview' && (
+        <div className="flex flex-col gap-4 sm:gap-5 animate-fadeIn">
+          {/* Hero Identity & XP Rank Card */}
+          <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-4 sm:p-5 shadow-[4px_4px_0_0_#201e1d] relative overflow-hidden">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="relative shrink-0">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#FFDE59] border-2 border-[#201e1d] flex items-center justify-center text-2xl sm:text-3xl shadow-[2px_2px_0_0_#201e1d]">
+                  {preferences.avatarEmoji || '🎓'}
                 </div>
+                <span className="absolute -bottom-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-[#201e1d] text-[#FFDE59] text-[9px] font-black tracking-wider uppercase border border-white shadow-xs">
+                  Lvl {rank.level}
+                </span>
+              </div>
 
-                {dailyGoal.isGoalMet && (
-                  <div className="mt-4 p-2.5 rounded-xl bg-emerald-50 border-2 border-emerald-500 text-emerald-900 font-bold text-xs flex items-center gap-2 shadow-[1px_1px_0_0_#201e1d]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <span>Daily target reached! Keep up the great revision habit.</span>
-                  </div>
-                )}
-              </section>
-
-              {/* Cambridge Exam Countdown Card */}
-              <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-10 h-10 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#E11D48] shrink-0">
-                        <Clock className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-heading text-base text-[#201e1d] truncate">Cambridge Countdown</h3>
-                        <p className="text-xs text-neutral-500 font-medium truncate">Target exam series</p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange('settings')}
-                      className="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-xl bg-[#FFFDF7] hover:bg-neutral-100 text-[#201e1d] font-bold text-xs border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>Edit ✎</span>
-                    </button>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-xs font-bold text-neutral-500 block">Primary Target</span>
-                      <span className="font-heading text-[#201e1d] text-base block truncate">
-                        {preferences.primarySubject}
-                      </span>
-                      <span className="text-xs font-bold text-neutral-600 block mt-0.5 truncate">
-                        {examCountdown.seriesLabel}
-                      </span>
-                    </div>
-
-                    <div className="shrink-0 sm:text-right sm:pl-3 sm:border-l-2 sm:border-[#201e1d]/15">
-                      <span className="text-3xl sm:text-4xl font-heading text-[#201e1d] tracking-tight block leading-none">
-                        {examCountdown.daysRemaining}
-                      </span>
-                      <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500 block whitespace-nowrap mt-1">
-                        Days to Paper 1
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 pt-2 border-t-2 border-neutral-100 flex-wrap">
-                  <span className="text-xs font-bold text-neutral-500 shrink-0 whitespace-nowrap">Pacing Urgency</span>
-                  {examCountdown.urgencyTier === 'sprint' ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 shrink-0 whitespace-nowrap">
-                      🚨 Final Sprint Mode
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                  <h2 className="text-lg sm:text-xl font-heading text-[#201e1d] truncate">
+                    {preferences.displayNameOverride || userProfile.display_name || 'Cambridge Scholar'}
+                  </h2>
+                  {userProfile.is_school_account ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-400 shrink-0 whitespace-nowrap">
+                      🎓 School Account
                     </span>
-                  ) : examCountdown.urgencyTier === 'focused' ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 shrink-0 whitespace-nowrap">
-                      ⚡ Revision Surge
+                  ) : !isDemoSession ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
+                      <Sparkles className="w-3 h-3 text-indigo-600" /> Verified Student
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-teal-100 text-teal-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 shrink-0 whitespace-nowrap">
-                      🌱 Steady Momentum
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shrink-0 whitespace-nowrap">
+                      ⚡ Guest Session
                     </span>
                   )}
                 </div>
-              </section>
+
+                <p className="text-xs font-bold text-neutral-600 flex items-center gap-1.5 truncate">
+                  <span>{rank.badgeEmoji}</span>
+                  <span className="font-heading text-[#201e1d] truncate">{rank.title}</span>
+                  <span className="text-neutral-400">•</span>
+                  <span className="shrink-0 whitespace-nowrap">Level {rank.level} of 7</span>
+                </p>
+              </div>
             </div>
 
-            {/* Quick Action Launchpad Grid (3 cards) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Mistake Review Pile Card */}
-              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="w-11 h-11 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3 shrink-0">
-                    🧠
-                  </div>
-                  <h4 className="font-heading text-base text-[#201e1d] mb-1">Mistake Review Pile</h4>
-                  <p className="text-xs text-neutral-600 font-medium mb-3">
-                    Questions where you made prior mistakes, scheduled via Leitner spaced repetition.
-                  </p>
-                  <div className="text-2xl font-heading text-[#201e1d] mb-4">
-                    {statsSummary.reviewPileQuestionCount}{' '}
-                    <span className="text-xs font-bold text-neutral-500">Questions Due</span>
+            {/* Compact 3-Column Stats Strip */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="px-2 py-2 rounded-xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col items-center justify-center text-center overflow-hidden">
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-950/70 truncate">Total XP</span>
+                <span className="font-heading text-xs sm:text-sm text-[#201e1d] truncate mt-0.5">
+                  +{userXp.toLocaleString()}
+                </span>
+              </div>
+              <div className="px-2 py-2 rounded-xl bg-[#fff8db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col items-center justify-center text-center overflow-hidden">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-950/70 truncate">Streak</span>
+                <span className="font-heading text-xs sm:text-sm text-[#201e1d] truncate mt-0.5">
+                  🔥 {currentStreak}d
+                </span>
+              </div>
+              <div className="px-2 py-2 rounded-xl bg-[#f0fae1] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col items-center justify-center text-center overflow-hidden">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-950/70 truncate">Mastery</span>
+                <span className="font-heading text-xs sm:text-sm text-[#201e1d] truncate mt-0.5">
+                  {statsSummary.overallMasteryPct}%
+                </span>
+              </div>
+            </div>
+
+            {/* Level XP Progress Bar */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-600">
+                <span className="font-heading text-[#201e1d]">Level {rank.level} Progress</span>
+                <span className="font-bold text-[11px] sm:text-xs truncate ml-2">
+                  {rank.level === 7
+                    ? 'Max Level Reached! 👑'
+                    : `${rank.currentXp - rank.currentLevelMinXp} / ${
+                        rank.nextLevelXp - rank.currentLevelMinXp
+                      } XP`}
+                </span>
+              </div>
+              <div className="w-full h-3 rounded-full bg-neutral-100 border-2 border-[#201e1d] overflow-hidden p-0.5">
+                <div
+                  className="h-full bg-gradient-to-r from-[#FFDE59] via-amber-400 to-[#F59E0B] rounded-full transition-all duration-500 shadow-inner"
+                  style={{ width: `${rank.progressPct}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Guest Session Save Progress Banner */}
+            {isDemoSession && (
+              <div className="mt-4 p-3.5 rounded-2xl bg-[#fff8db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 overflow-hidden">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className="text-xl shrink-0">⚡</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-heading text-xs text-[#201e1d] block">
+                      Guest Session Active
+                    </span>
+                    <span className="text-[11px] text-neutral-700 font-medium block leading-snug">
+                      Sign in to save your XP, streaks, and mistake review pile permanently.
+                    </span>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setAuthModalOpen(true)}
+                  className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-[#201e1d] hover:bg-neutral-800 text-white font-heading text-xs border border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#FFDE59]" />
+                  <span>Sign In to Save</span>
+                </button>
+              </div>
+            )}
+          </section>
 
+          {/* Daily Goal & 7-Day Consistency Card (Full-Width Vertical Stack) */}
+          <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-4 sm:p-5 shadow-[4px_4px_0_0_#201e1d] overflow-hidden">
+            <div className="flex items-center justify-between gap-2 mb-3.5">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-9 h-9 rounded-2xl bg-[#99F6E4] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#0F766E] shrink-0">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-heading text-sm sm:text-base text-[#201e1d] truncate">Daily Question Target</h3>
+                  <p className="text-[11px] text-neutral-500 font-medium truncate">Paced daily revision habit</p>
+                </div>
+              </div>
+              <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
+                {dailyGoal.questionsAnsweredToday} / {dailyGoal.dailyGoal} Qs
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-1 mb-4">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-600">
+                <span>Today's Progress</span>
+                <span className="font-heading text-[#201e1d]">{dailyGoal.progressPct}%</span>
+              </div>
+              <div className="w-full h-3 rounded-full bg-neutral-100 border-2 border-[#201e1d] overflow-hidden p-0.5">
+                <div
+                  className="h-full bg-gradient-to-r from-teal-400 to-emerald-500 rounded-full transition-all duration-300"
+                  style={{ width: `${dailyGoal.progressPct}%` }}
+                />
+              </div>
+            </div>
+
+            {/* 7-Day Consistency Strip */}
+            <div className="space-y-1.5">
+              <span className="block text-[11px] font-black uppercase tracking-wider text-neutral-500">
+                7-Day Consistency Strip
+              </span>
+              <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+                {dailyGoal.activeDaysLast7.map((day) => {
+                  const isToday =
+                    new Date().toISOString().slice(0, 10) === day.dateStr;
+                  return (
+                    <div
+                      key={day.dateStr}
+                      title={`${day.count} questions on ${day.dayShort}`}
+                      className={`py-2 px-1 rounded-xl text-center border-2 transition-all overflow-hidden ${
+                        day.active
+                          ? 'bg-[#BBF7D0] border-[#201e1d] text-[#15803D] font-black shadow-[2px_2px_0_0_#201e1d]'
+                          : 'bg-neutral-100 border-neutral-300 text-neutral-400 font-bold'
+                      } ${isToday ? 'ring-2 ring-[#201e1d] ring-offset-1' : ''}`}
+                    >
+                      <span className="block text-[10px] uppercase font-black tracking-tight leading-none">{day.dayShort}</span>
+                      <span className="block text-[11px] font-extrabold mt-1 leading-none truncate">
+                        {day.active ? '🔥' : day.count > 0 ? day.count : '—'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {dailyGoal.isGoalMet && (
+              <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 border-2 border-emerald-500 text-emerald-900 font-bold text-xs flex items-center gap-2 shadow-[1px_1px_0_0_#201e1d]">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>Daily target reached! Keep up the momentum.</span>
+              </div>
+            )}
+          </section>
+
+          {/* Cambridge Exam Countdown Card (Full-Width Vertical Stack) */}
+          <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-4 sm:p-5 shadow-[4px_4px_0_0_#201e1d] overflow-hidden">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-9 h-9 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#E11D48] shrink-0">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-heading text-sm sm:text-base text-[#201e1d] truncate">Cambridge Countdown</h3>
+                  <p className="text-[11px] text-neutral-500 font-medium truncate">Target exam pacing</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleTabChange('settings')}
+                className="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-xl bg-[#FFFDF7] hover:bg-neutral-100 text-[#201e1d] font-bold text-xs border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <span>Edit ✎</span>
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] mb-3 flex items-center justify-between gap-3 overflow-hidden">
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block">Primary Target</span>
+                <span className="font-heading text-[#201e1d] text-sm sm:text-base block truncate">
+                  {preferences.primarySubject}
+                </span>
+                <span className="text-xs font-bold text-neutral-600 block mt-0.5 truncate">
+                  {examCountdown.seriesLabel}
+                </span>
+              </div>
+
+              <div className="shrink-0 text-right pl-3 border-l-2 border-[#201e1d]/15">
+                <span className="text-2xl sm:text-3xl font-heading text-[#201e1d] tracking-tight block leading-none">
+                  {examCountdown.daysRemaining}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500 block whitespace-nowrap mt-1">
+                  Days to Paper 1
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-neutral-200 flex-wrap">
+              <span className="text-xs font-bold text-neutral-500 shrink-0 whitespace-nowrap">Pacing Urgency</span>
+              {examCountdown.urgencyTier === 'sprint' ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-900 border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
+                  🚨 Final Sprint Mode
+                </span>
+              ) : examCountdown.urgencyTier === 'focused' ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-900 border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
+                  ⚡ Revision Surge
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-teal-100 text-teal-900 border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
+                  🌱 Steady Momentum
+                </span>
+              )}
+            </div>
+          </section>
+
+          {/* Quick Action Launchpad (Tactile Horizontal Cards Stack) */}
+          <div className="flex flex-col gap-3">
+            {/* Mistake Review Pile Card */}
+            <div className="bg-[#FFFDF7] rounded-2xl border-2 border-[#201e1d] p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <div className="w-11 h-11 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl shrink-0">
+                  🧠
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-heading text-sm sm:text-base text-[#201e1d] truncate">Mistake Review Pile</h4>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-[#201e1d] shrink-0">
+                      {statsSummary.reviewPileQuestionCount} due
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600 font-medium mt-0.5 line-clamp-1">
+                    Questions where you made prior errors, scheduled via Leitner SRS.
+                  </p>
+                </div>
+              </div>
+
+              <div className="shrink-0 sm:self-center">
                 {isDemoSession ? (
                   <button
                     type="button"
                     onClick={() => setAuthModalOpen(true)}
-                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
                   >
                     <Lock className="w-3.5 h-3.5" />
                     <span>Log In to Unlock</span>
                   </button>
                 ) : statsSummary.reviewPileQuestionCount > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    <button
-                      type="button"
-                      onClick={() => router.push('/?drill=review')}
-                      className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
-                    >
-                      <span>Drill Mistakes Now →</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange('review')}
-                      className="w-full py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-xs border border-[#201e1d] transition-all cursor-pointer shrink-0 whitespace-nowrap"
-                    >
-                      Inspect Queue
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/?drill=review')}
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
+                  >
+                    <span>Drill Mistakes Now →</span>
+                  </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => handleTabChange('review')}
-                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all cursor-pointer shrink-0 whitespace-nowrap"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] transition-all cursor-pointer shrink-0 whitespace-nowrap"
                   >
                     Review Queue Clean ✓
                   </button>
                 )}
               </div>
+            </div>
 
-              {/* Bookmarked Questions Card */}
-              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="w-11 h-11 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3 shrink-0">
-                    ⭐
-                  </div>
-                  <h4 className="font-heading text-base text-[#201e1d] mb-1">Bookmarked Questions</h4>
-                  <p className="text-xs text-neutral-600 font-medium mb-3">
-                    Hand-picked questions with your personal memory notes for last-minute review.
-                  </p>
-                  <div className="text-2xl font-heading text-[#201e1d] mb-4">
-                    {statsSummary.bookmarkedQuestionCount}{' '}
-                    <span className="text-xs font-bold text-neutral-500">Starred</span>
-                  </div>
+            {/* Bookmarked Questions Card */}
+            <div className="bg-[#FFFDF7] rounded-2xl border-2 border-[#201e1d] p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <div className="w-11 h-11 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl shrink-0">
+                  ⭐
                 </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-heading text-sm sm:text-base text-[#201e1d] truncate">Bookmarked Questions</h4>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-[#201e1d] shrink-0">
+                      {statsSummary.bookmarkedQuestionCount} saved
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600 font-medium mt-0.5 line-clamp-1">
+                    Hand-picked questions with your personal study notes.
+                  </p>
+                </div>
+              </div>
 
+              <div className="shrink-0 sm:self-center">
                 <button
                   type="button"
                   onClick={() => handleTabChange('review')}
-                  className="w-full py-2.5 rounded-2xl bg-[#14B8A6] hover:bg-[#0F766E] text-white font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#14B8A6] hover:bg-[#0F766E] text-white font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <span>Open Saved Deck →</span>
                 </button>
               </div>
+            </div>
 
-              {/* Recommended Topic Focus Card */}
-              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="w-11 h-11 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3 shrink-0">
-                    🎯
-                  </div>
-                  <h4 className="font-heading text-base text-[#201e1d] mb-1">Recommended Topic Focus</h4>
-                  <p className="text-xs text-neutral-600 font-medium mb-3">
-                    Syllabus area with greatest opportunity for score improvement.
-                  </p>
-                  <div className="mb-4 min-w-0">
-                    <span className="font-bold text-[#201e1d] text-sm block truncate">
-                      {recommendedTopic?.topicName || 'Syllabus Fundamentals'}
-                    </span>
-                    <span className="text-xs font-black text-indigo-700 block mt-0.5">
-                      {recommendedTopic ? `${recommendedTopic.masteryPct}% Mastery` : 'Not Started'}
-                    </span>
-                  </div>
+            {/* Recommended Topic Focus Card */}
+            <div className="bg-[#FFFDF7] rounded-2xl border-2 border-[#201e1d] p-4 shadow-[3px_3px_0_0_#201e1d] flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <div className="w-11 h-11 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl shrink-0">
+                  🎯
                 </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-heading text-sm sm:text-base text-[#201e1d] truncate">Recommended Topic Focus</h4>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-900 border border-[#201e1d] shrink-0">
+                      {recommendedTopic ? `${recommendedTopic.masteryPct}%` : 'Pending'}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-neutral-700 mt-0.5 truncate">
+                    {recommendedTopic?.topicName || 'Syllabus Fundamentals'}
+                  </p>
+                </div>
+              </div>
 
+              <div className="shrink-0 sm:self-center">
                 <button
                   type="button"
                   onClick={() => {
@@ -693,12 +684,13 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                       router.push('/');
                     }
                   }}
-                  className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <span>Practice Topic →</span>
                 </button>
               </div>
             </div>
+          </div>
 
             {/* Recent Milestones & Activity Preview */}
             <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d]">

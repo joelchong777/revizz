@@ -176,7 +176,7 @@ export function StudentAchievementsActivityPanel({
             <span className="text-[11px] font-bold text-neutral-400">Continuous Revision Progression</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {RANK_LADDER.map((step) => {
               const isCurrent = step.level === rankInfo.level;
               const isAchieved = step.level <= rankInfo.level;
@@ -243,11 +243,11 @@ export function StudentAchievementsActivityPanel({
         </div>
 
         {/* Category Filter Pills */}
-        <div className="mt-4 flex items-center gap-2 flex-wrap">
+        <div className="mt-4 flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setSelectedCategory('all')}
-            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'all'
                 ? 'bg-[#201e1d] text-white border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -258,7 +258,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('streak')}
-            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'streak'
                 ? 'bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -269,7 +269,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('mastery')}
-            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'mastery'
                 ? 'bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -280,7 +280,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('precision')}
-            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'precision'
                 ? 'bg-[#BBF7D0] text-[#166534] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#BBF7D0] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -291,7 +291,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('volume')}
-            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'volume'
                 ? 'bg-[#C7D2FE] text-[#3730A3] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#C7D2FE] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -302,7 +302,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('review')}
-            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 min-h-[38px] rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'review'
                 ? 'bg-[#FECDD3] text-[#9F1239] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FECDD3] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -313,7 +313,7 @@ export function StudentAchievementsActivityPanel({
         </div>
 
         {/* Achievements Cards Grid */}
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
           {filteredAchievements.map((item) => {
             return (
               <div
@@ -393,7 +393,7 @@ export function StudentAchievementsActivityPanel({
         </div>
 
         {onlineAssignments && onlineAssignments.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-3.5 sm:gap-4">
             {onlineAssignments.map((assignment) => {
               return (
                 <div
@@ -432,7 +432,7 @@ export function StudentAchievementsActivityPanel({
                   <div className="mt-4 pt-3 border-t-2 border-[#201e1d]/10">
                     <Link
                       href={`/?assignmentId=${assignment.id}`}
-                      className="w-full shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-black rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                      className="w-full shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] text-xs font-black rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                     >
                       <span>Start Assigned Paper</span>
                       <span aria-hidden="true">→</span>
