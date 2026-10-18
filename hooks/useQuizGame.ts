@@ -9,6 +9,7 @@ import {
 import { calculateAttemptScore } from '../lib/scoring';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../lib/auth';
+import { recordCompletedRound } from '../lib/studentProfile';
 
 export type Question = {
   id: string;
@@ -97,6 +98,7 @@ export function useQuizGame() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const hasQueuedMistakeRef = useRef(false);
+  const hasRecordedRoundRef = useRef(false);
 
   const startRound = (newConfig: QuizRoundConfig, initialQuestions: Question[]) => {
     setConfig(newConfig);
@@ -104,6 +106,7 @@ export function useQuizGame() {
     setGameState('playing');
     setCurrentQuestionIndex(0);
     resetQuestionState();
+    hasRecordedRoundRef.current = false;
 
     // Reset stats
     setTotalXP(0);
@@ -368,6 +371,22 @@ export function useQuizGame() {
     const limit = isEndless ? questions.length : (config?.roundLength as number);
 
     if (currentQuestionIndex + 1 >= Math.min(limit, questions.length)) {
+      if (!hasRecordedRoundRef.current) {
+        hasRecordedRoundRef.current = true;
+        const totalAnswered = correctFirstTryCount + correctRetryCount + wrongCount;
+        recordCompletedRound({
+          subject: config?.subject || 'Economics 0455',
+          sourceType: config?.sourceType || 'topic',
+          sourceLabel: config?.sourceValue || 'General Revision',
+          totalQuestions: totalAnswered > 0 ? totalAnswered : (currentQuestionIndex + 1),
+          correctFirstTry: correctFirstTryCount,
+          correctRetry: correctRetryCount,
+          wrongCount,
+          xpEarned: totalXP,
+          peakStreak,
+          isTimed: Boolean(config?.isTimed),
+        });
+      }
       setGameState('finished');
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -377,6 +396,22 @@ export function useQuizGame() {
 
   const finishEarly = () => {
     if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    const totalAnswered = correctFirstTryCount + correctRetryCount + wrongCount;
+    if (totalAnswered > 0 && !hasRecordedRoundRef.current) {
+      hasRecordedRoundRef.current = true;
+      recordCompletedRound({
+        subject: config?.subject || 'Economics 0455',
+        sourceType: config?.sourceType || 'topic',
+        sourceLabel: config?.sourceValue || 'General Revision',
+        totalQuestions: totalAnswered,
+        correctFirstTry: correctFirstTryCount,
+        correctRetry: correctRetryCount,
+        wrongCount,
+        xpEarned: totalXP,
+        peakStreak,
+        isTimed: Boolean(config?.isTimed),
+      });
+    }
     setGameState('finished');
   };
 

@@ -180,6 +180,50 @@ export default function HomePage() {
     }
   };
 
+  // Handle direct drill deep-links from Student Profile Hub (?drill=custom, ?drill=topic, ?drill=review)
+  useEffect(() => {
+    if (typeof window === 'undefined' || loading || questions.length === 0 || game.gameState !== 'setup') {
+      return;
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const drill = searchParams.get('drill');
+    if (!drill) return;
+
+    if (drill === 'custom') {
+      const idsParam = searchParams.get('ids');
+      if (idsParam) {
+        const targetIds = new Set(
+          idsParam
+            .split(',')
+            .map((id) => id.trim())
+            .filter(Boolean)
+        );
+        const matchedQuestions = questions.filter((q) => targetIds.has(q.id));
+        if (matchedQuestions.length > 0) {
+          window.history.replaceState({}, '', '/');
+          const customConfig: QuizRoundConfig = {
+            subject: 'Economics 0455',
+            sourceType: 'review',
+            sourceValue: 'custom_drill',
+            roundLength: Math.min(30, Math.max(3, matchedQuestions.length)) as 3 | 5 | 10 | 30 | 'endless',
+            isTimed: false,
+          };
+          handleStartRound(customConfig, matchedQuestions);
+        }
+      }
+    } else if (drill === 'topic') {
+      const topicId = searchParams.get('topicId');
+      if (topicId) {
+        window.history.replaceState({}, '', '/');
+        handlePracticeTopic(topicId, topicId);
+      }
+    } else if (drill === 'review') {
+      window.history.replaceState({}, '', '/');
+      handleStartReviewPile();
+    }
+  }, [loading, questions, game.gameState]);
+
   // 1. Sleek loading skeleton while checking auth session
   if (authLoading && !userProfile) {
     return (

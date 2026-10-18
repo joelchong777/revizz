@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { fetchWeeklyLeaderboard, toggleLeaderboardOptIn, LeaderboardEntry } from '../lib/leaderboard';
 import { signOut, isDemoStudentSession } from '../lib/auth';
 import { UserProfile } from '../types';
@@ -174,6 +175,49 @@ export default function LeaderboardModal({
                     <div className="font-black text-sm sm:text-base text-[#201e1d] truncate mt-0.5">
                       {isDemo ? 'Guest' : 'Ranked'}
                     </div>
+                  </div>
+                </div>
+
+                {/* Student Profile Hub Navigation Card */}
+                <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-3 shadow-[2px_2px_0_0_#201e1d] space-y-2">
+                  <Link
+                    href="/profile"
+                    onClick={onClose}
+                    data-testid="open-profile-hub-btn"
+                    className="w-full bg-accent-300 hover:bg-amber-300 border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] rounded-xl py-2.5 px-3 font-black text-xs sm:text-sm text-[#201e1d] flex items-center justify-between transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  >
+                    <span>🏠 Open Full Student Profile Hub</span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Link
+                      href="/profile?tab=stats"
+                      onClick={onClose}
+                      className="p-2 rounded-lg border-2 border-[#201e1d] bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-[11px] text-center shadow-[1px_1px_0_0_#201e1d] active:translate-y-0.5 active:shadow-none transition-all"
+                    >
+                      📊 Stats & Mastery
+                    </Link>
+                    <Link
+                      href="/profile?tab=review"
+                      onClick={onClose}
+                      className="p-2 rounded-lg border-2 border-[#201e1d] bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-[11px] text-center shadow-[1px_1px_0_0_#201e1d] active:translate-y-0.5 active:shadow-none transition-all"
+                    >
+                      🧠 Questions to Review
+                    </Link>
+                    <Link
+                      href="/profile?tab=achievements"
+                      onClick={onClose}
+                      className="p-2 rounded-lg border-2 border-[#201e1d] bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-[11px] text-center shadow-[1px_1px_0_0_#201e1d] active:translate-y-0.5 active:shadow-none transition-all"
+                    >
+                      🏅 Badges & Activity
+                    </Link>
+                    <Link
+                      href="/profile?tab=settings"
+                      onClick={onClose}
+                      className="p-2 rounded-lg border-2 border-[#201e1d] bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-[11px] text-center shadow-[1px_1px_0_0_#201e1d] active:translate-y-0.5 active:shadow-none transition-all"
+                    >
+                      ⚙️ Profile Settings
+                    </Link>
                   </div>
                 </div>
 

@@ -11,6 +11,7 @@ import { Question, resolveDiagramUrl } from '@/lib/questions';
 import { cn } from '@/lib/utils';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
+import { isQuestionBookmarked, toggleQuestionBookmark } from '@/lib/studentProfile';
 
 interface QuestionCardProps {
   question: Question;
@@ -53,6 +54,11 @@ export function QuestionCard({
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    setIsBookmarked(isQuestionBookmarked(question.id));
+  }, [question.id]);
 
   useEffect(() => {
     setMounted(true);
@@ -311,6 +317,27 @@ export function QuestionCard({
             ? `Q${questionNumber} · ∞`
             : `${questionNumber} / ${totalQuestions}`}
         </span>
+
+        <button
+          type="button"
+          onClick={() => {
+            const next = toggleQuestionBookmark(question.id, {
+              subject,
+              topicId: question.topic_id,
+            });
+            setIsBookmarked(next);
+          }}
+          data-testid="bookmark-question-btn"
+          data-no-hotkey="true"
+          title={isBookmarked ? 'Remove bookmark' : 'Bookmark question'}
+          aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark question'}
+          className={cn(
+            'w-9 h-9 flex-none rounded-full border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text text-sm sm:text-base',
+            isBookmarked ? 'bg-accent-300' : 'bg-neutral-100'
+          )}
+        >
+          {isBookmarked ? '⭐' : '☆'}
+        </button>
       </div>
 
       {/* Second Row: Timer Pill + Streak Multiplier Chip */}
