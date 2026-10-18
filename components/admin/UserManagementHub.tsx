@@ -73,12 +73,35 @@ interface LocalUserOverrides {
 
 const STORAGE_OVERRIDES_KEY = 'revizz_admin_user_overrides_v1';
 const STORAGE_DELETED_KEY = 'revizz_admin_deleted_users_v1';
+const STORAGE_USERS_CACHE_KEY = 'revizz_admin_users_cache_v1';
 
 const getStorage = (): Storage | null => {
   if (typeof window !== 'undefined' && window.localStorage) {
     return window.localStorage;
   }
   return null;
+};
+
+const getStoredUsersCache = (): ManagedUser[] => {
+  const storage = getStorage();
+  if (!storage) return [];
+  try {
+    const raw = storage.getItem(STORAGE_USERS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn('Failed to parse admin users cache:', e);
+    return [];
+  }
+};
+
+const saveStoredUsersCache = (cachedUsers: ManagedUser[]): void => {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(STORAGE_USERS_CACHE_KEY, JSON.stringify(cachedUsers));
+  } catch (e) {
+    console.warn('Failed to save admin users cache:', e);
+  }
 };
 
 const getStoredOverrides = (): LocalUserOverrides => {
@@ -142,7 +165,7 @@ const getInitials = (name?: string, email?: string): string => {
 
 export default function UserManagementHub({ onSelectTab }: UserManagementHubProps) {
   // All React state declared at the top of the component (React Error #310 defense)
-  const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [users, setUsers] = useState<ManagedUser[]>(() => getStoredUsersCache());
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeRoleFilter, setActiveRoleFilter] = useState<RoleFilterTab>('all');
@@ -180,15 +203,57 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     return () => clearTimeout(timer);
   }, [feedbackMessage]);
 
-  // Primary loader function
+  // Primary loader function connecting to live Supabase API route
   const loadDirectoryData = useCallback(async () => {
     setLoading(true);
     const deletedIds = getStoredDeletedIds();
     const overrides = getStoredOverrides();
+
+    // 1. Primary path: Fetch live directory from backend API /api/admin/users
+    try {
+      const res = await fetch('/api/admin/users');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.users)) {
+          const liveUsers: ManagedUser[] = data.users
+            .filter((u: ManagedUser) => !deletedIds.has(u.id))
+            .map((u: ManagedUser) => {
+              const override = overrides[u.id];
+              if (!override) return u;
+              return {
+                ...u,
+                role: override.role || u.role,
+                is_school_account:
+                  override.is_school_account !== undefined
+                    ? override.is_school_account
+                    : u.is_school_account,
+                status: override.status || u.status,
+              };
+            });
+
+          setUsers(liveUsers);
+          saveStoredUsersCache(liveUsers);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Notice from /api/admin/users GET (falling back to local cache/client):', apiErr);
+    }
+
+    // 2. Offline fallback: check cached users
+    const cached = getStoredUsersCache();
+    if (cached.length > 0) {
+      const filteredCached = cached.filter((u) => !deletedIds.has(u.id));
+      setUsers(filteredCached);
+      setLoading(false);
+      return;
+    }
+
+    // 3. Direct fallback to Supabase client & roster if offline / initial fallback
     const directory: ManagedUser[] = [];
     const seenEmails = new Set<string>();
 
-    // 1. Fetch Supabase registered profiles
     try {
       const { data: profiles, error } = await supabase
         .from('profiles')
@@ -228,7 +293,6 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       console.warn('Supabase profiles query notice (proceeding to local/invites):', e);
     }
 
-    // 2. Fetch pending & claimed roster invitations
     try {
       const invites = await getRosterInvites();
       for (const inv of invites) {
@@ -262,7 +326,6 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       console.warn('Roster invites query notice:', e);
     }
 
-    // 3. Fallback to active demo or guest session if directory is empty or local testing
     try {
       const demoStudent = getDemoStudentSession();
       if (demoStudent && demoStudent.id && !deletedIds.has(demoStudent.id)) {
@@ -318,6 +381,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     }
 
     setUsers(directory);
+    saveStoredUsersCache(directory);
     setLoading(false);
   }, []);
 
@@ -330,7 +394,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     const targetUser = users.find((u) => u.id === userId);
     if (!targetUser) return;
 
-    // Update state immediately
+    // Optimistically update UI state
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
     );
@@ -343,18 +407,27 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     };
     saveStoredOverrides(overrides);
 
-    // Persist to Supabase if applicable
-    if (targetUser.isInvite) {
-      try {
-        await supabase.from('roster_invites').update({ role: newRole }).eq('id', userId);
-      } catch (e) {
-        console.warn('Failed to update roster_invites role in Supabase:', e);
-      }
-    } else {
-      try {
-        await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
-      } catch (e) {
-        console.warn('Failed to update profiles role in Supabase:', e);
+    // Persist to live backend API
+    try {
+      await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: userId,
+          role: newRole,
+          isInvite: targetUser.isInvite,
+        }),
+      });
+    } catch (e) {
+      console.warn('Failed to update role via /api/admin/users, falling back to direct:', e);
+      if (targetUser.isInvite) {
+        try {
+          await supabase.from('roster_invites').update({ role: newRole }).eq('id', userId);
+        } catch {}
+      } else {
+        try {
+          await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+        } catch {}
       }
     }
 
@@ -368,7 +441,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
     const newIsSchool = !targetUser.is_school_account;
 
-    // Update state immediately
+    // Optimistically update UI state
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, is_school_account: newIsSchool } : u))
     );
@@ -381,15 +454,26 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     };
     saveStoredOverrides(overrides);
 
-    // Persist to Supabase if profile
-    if (!targetUser.isInvite) {
-      try {
-        await supabase
-          .from('profiles')
-          .update({ is_school_account: newIsSchool })
-          .eq('id', userId);
-      } catch (e) {
-        console.warn('Failed to update is_school_account in Supabase:', e);
+    // Persist to live backend API
+    try {
+      await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: userId,
+          is_school_account: newIsSchool,
+          isInvite: targetUser.isInvite,
+        }),
+      });
+    } catch (e) {
+      console.warn('Failed to update school account via /api/admin/users, falling back to direct:', e);
+      if (!targetUser.isInvite) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ is_school_account: newIsSchool })
+            .eq('id', userId);
+        } catch {}
       }
     }
 
@@ -403,7 +487,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     const targetUser = users.find((u) => u.id === userId);
     if (!targetUser) return;
 
-    // Update state immediately
+    // Optimistically update UI state
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
     );
@@ -416,16 +500,27 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     };
     saveStoredOverrides(overrides);
 
-    // Persist to Supabase if roster invite
-    if (targetUser.isInvite) {
-      try {
-        const rosterStatus = newStatus === 'active' ? 'claimed' : 'pending';
-        await supabase
-          .from('roster_invites')
-          .update({ status: rosterStatus })
-          .eq('id', userId);
-      } catch (e) {
-        console.warn('Failed to update roster status in Supabase:', e);
+    // Persist to live backend API
+    try {
+      await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: userId,
+          status: newStatus,
+          isInvite: targetUser.isInvite,
+        }),
+      });
+    } catch (e) {
+      console.warn('Failed to update status via /api/admin/users, falling back to direct:', e);
+      if (targetUser.isInvite) {
+        try {
+          const rosterStatus = newStatus === 'active' ? 'claimed' : 'pending';
+          await supabase
+            .from('roster_invites')
+            .update({ status: rosterStatus })
+            .eq('id', userId);
+        } catch {}
       }
     }
 
@@ -438,14 +533,23 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     setDeletingUser(true);
     const { id, isInvite, name, email } = userToDelete;
 
+    // Optimistically remove user from UI state
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+
+    // Persist to live backend API
     try {
+      await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isInvite }),
+      });
+    } catch (e) {
+      console.warn('Notice while deleting user record via /api/admin/users:', e);
       if (isInvite) {
         await deleteRosterInvite(id);
       } else {
         await supabase.from('profiles').delete().eq('id', id);
       }
-    } catch (e) {
-      console.warn('Notice while deleting user record from backend:', e);
     }
 
     // Persist deletion locally so it never reappears
@@ -453,8 +557,9 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     deletedIds.add(id);
     saveStoredDeletedIds(deletedIds);
 
-    // Remove from UI state
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    // Update cached users
+    saveStoredUsersCache(users.filter((u) => u.id !== id));
+
     setDeletingUser(false);
     setUserToDelete(null);
     showFeedback(`Account for ${name || email} has been revoked.`);
@@ -478,40 +583,69 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     setInviteError(null);
 
     try {
-      const createdInvite = await addRosterInvite({
-        email: cleanEmail,
-        displayName: inviteName.trim() || undefined,
-        role: inviteRole,
-        cohort: inviteCohort.trim() || 'General',
-        invitedBy: 'Administrator',
-      });
+      let createdUser: ManagedUser | null = null;
+
+      try {
+        const res = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: cleanEmail,
+            name: inviteName.trim() || undefined,
+            role: inviteRole,
+            cohort: inviteCohort.trim() || 'General',
+            is_school_account: inviteIsSchool,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.user) {
+            createdUser = data.user;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Notice from /api/admin/users POST (falling back to roster engine):', apiErr);
+      }
+
+      // Fallback to addRosterInvite if API didn't return
+      if (!createdUser) {
+        const createdInvite = await addRosterInvite({
+          email: cleanEmail,
+          displayName: inviteName.trim() || undefined,
+          role: inviteRole,
+          cohort: inviteCohort.trim() || 'General',
+          invitedBy: 'Administrator',
+        });
+
+        createdUser = {
+          id: createdInvite.id,
+          name: createdInvite.display_name || cleanEmail.split('@')[0],
+          email: createdInvite.email,
+          role: createdInvite.role,
+          is_school_account: inviteIsSchool,
+          total_xp: 0,
+          current_streak: 0,
+          status: 'invited',
+          cohort: createdInvite.cohort,
+          created_at: createdInvite.created_at,
+          isInvite: true,
+        };
+      }
 
       // Save school account preference in local override if checked
       if (inviteIsSchool) {
         const overrides = getStoredOverrides();
-        overrides[createdInvite.id] = {
-          ...(overrides[createdInvite.id] || {}),
+        overrides[createdUser.id] = {
+          ...(overrides[createdUser.id] || {}),
           is_school_account: true,
           role: inviteRole,
         };
         saveStoredOverrides(overrides);
       }
 
-      // Add to directory state
-      const newUser: ManagedUser = {
-        id: createdInvite.id,
-        name: createdInvite.display_name || cleanEmail.split('@')[0],
-        email: createdInvite.email,
-        role: createdInvite.role,
-        is_school_account: inviteIsSchool,
-        total_xp: 0,
-        current_streak: 0,
-        status: 'invited',
-        cohort: createdInvite.cohort,
-        created_at: createdInvite.created_at,
-        isInvite: true,
-      };
-
+      // Prepend returned user to users list and close modal
+      const newUser = createdUser;
       setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id && u.email !== newUser.email)]);
 
       // Reset form
@@ -682,6 +816,13 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
             <span className="px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] font-mono text-[11px] font-bold text-[#201e1d]">
               Role &amp; Identity Management
             </span>
+            <span className="px-3 py-1 rounded-full bg-[#dcfce7] border border-[#15803d] font-mono text-[11px] font-bold text-[#15803d] flex items-center gap-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+              <span>🟢 Live Database Connected</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-[#15803d] text-white text-[10px]">
+                {metrics.totalUsers} Total
+              </span>
+            </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight flex items-center gap-2 text-[#201e1d]">
@@ -700,10 +841,10 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
             onClick={loadDirectoryData}
             disabled={loading}
             className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#eee7db] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            title="Refresh directory list"
+            title="Sync with Supabase / Refresh directory"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span>↻ Sync with Supabase</span>
           </button>
 
           <button

@@ -3854,6 +3854,72 @@ async function runSuite21() {
       'Allowed tabs array in app/admin/page.tsx includes users'
     );
   });
+
+  test('User Management: app/api/admin/users/route.ts exists and exports GET, POST, PATCH, DELETE handlers', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const routePath = path.resolve(process.cwd(), 'app/api/admin/users/route.ts');
+    assertEqual(fs.existsSync(routePath), true, 'app/api/admin/users/route.ts exists');
+
+    const content = fs.readFileSync(routePath, 'utf8');
+    assert(
+      content.includes('export async function GET'),
+      'app/api/admin/users/route.ts exports GET handler'
+    );
+    assert(
+      content.includes('export async function POST'),
+      'app/api/admin/users/route.ts exports POST handler'
+    );
+    assert(
+      content.includes('export async function PATCH'),
+      'app/api/admin/users/route.ts exports PATCH handler'
+    );
+    assert(
+      content.includes('export async function DELETE'),
+      'app/api/admin/users/route.ts exports DELETE handler'
+    );
+    assert(
+      content.includes('getSupabaseClient') && content.includes('createClient'),
+      'app/api/admin/users/route.ts initializes Supabase client'
+    );
+    assert(
+      content.includes("'profiles'") && content.includes("'roster_invites'"),
+      'app/api/admin/users/route.ts queries profiles and roster_invites tables'
+    );
+  });
+
+  test('User Management: UserManagementHub.tsx connects to live /api/admin/users backend API route', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const hubPath = path.resolve(process.cwd(), 'components/admin/UserManagementHub.tsx');
+    assertEqual(fs.existsSync(hubPath), true, 'components/admin/UserManagementHub.tsx exists');
+
+    const content = fs.readFileSync(hubPath, 'utf8');
+    assert(
+      content.includes("fetch('/api/admin/users')"),
+      'UserManagementHub calls fetch to /api/admin/users'
+    );
+    assert(
+      content.includes("method: 'PATCH'") && content.includes('/api/admin/users'),
+      'UserManagementHub sends PATCH requests to /api/admin/users'
+    );
+    assert(
+      content.includes("method: 'POST'") && content.includes('/api/admin/users'),
+      'UserManagementHub sends POST requests to /api/admin/users'
+    );
+    assert(
+      content.includes("method: 'DELETE'") && content.includes('/api/admin/users'),
+      'UserManagementHub sends DELETE requests to /api/admin/users'
+    );
+    assert(
+      content.includes('Live Database Connected'),
+      'UserManagementHub contains Live Database Connected status pill'
+    );
+    assert(
+      content.includes('↻ Sync with Supabase'),
+      'UserManagementHub contains manual sync with Supabase button'
+    );
+  });
 }
 
 async function main() {
