@@ -23,8 +23,16 @@ import {
   GripVertical,
   Send,
   Sparkles,
-  LayoutGrid
+  LayoutGrid,
+  Users,
+  Calendar,
+  Clock,
+  KeyRound,
+  RefreshCw,
+  Copy,
+  Plus
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -148,14 +156,67 @@ export default function TestCompilerHub() {
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assignCohort, setAssignCohort] = useState('10 Economics (0455)');
+  const [cohortList, setCohortList] = useState<string[]>(TARGET_COHORTS);
+  const [isCohortDropdownOpen, setIsCohortDropdownOpen] = useState(false);
+  const [isCustomCohortInputOpen, setIsCustomCohortInputOpen] = useState(false);
+  const [customCohortInput, setCustomCohortInput] = useState('');
+  const cohortDropdownRef = useRef<HTMLDivElement>(null);
+
   const [assignDueDate, setAssignDueDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
     return d.toISOString().split('T')[0];
   });
   const [assignDuration, setAssignDuration] = useState(45);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedRecentId, setCopiedRecentId] = useState<string | null>(null);
   const [publishedBanner, setPublishedBanner] = useState<{ testCode: string; cohortName: string } | null>(null);
   const [onlineAssignments, setOnlineAssignments] = useState<OnlineQuizAssignment[]>([]);
+
+  const generateTestCode = (code: string = subjectCode) => {
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `REV-${code}-${rand}`;
+  };
+
+  useEffect(() => {
+    if (isAssignModalOpen && !testCode) {
+      setTestCode(generateTestCode(subjectCode));
+    }
+  }, [isAssignModalOpen, subjectCode, testCode]);
+
+  const handleSetDueDateDays = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    setAssignDueDate(d.toISOString().split('T')[0]);
+  };
+
+  const handleCopyCode = async () => {
+    if (testCode) {
+      try {
+        await navigator.clipboard.writeText(testCode);
+        setCopiedCode(true);
+        setTimeout(() => setCopiedCode(false), 2000);
+      } catch {
+        // Fallback
+      }
+    }
+  };
+
+  // Close cohort dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (cohortDropdownRef.current && !cohortDropdownRef.current.contains(event.target as Node)) {
+        setIsCohortDropdownOpen(false);
+        setIsCustomCohortInputOpen(false);
+      }
+    }
+    if (isCohortDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCohortDropdownOpen]);
 
   useEffect(() => {
     setOnlineAssignments(listOnlineAssignments());
@@ -401,6 +462,7 @@ export default function TestCompilerHub() {
   };
 
   const handlePublishAssignment = () => {
+    const codeToUse = testCode.trim() || generateTestCode(subjectCode);
     const newAssignment: OnlineQuizAssignment = {
       id: Math.random().toString(36).substring(7),
       title: testTitle || `${subjectName} Assessment`,
@@ -410,7 +472,7 @@ export default function TestCompilerHub() {
       dueDate: assignDueDate,
       durationMinutes: assignDuration,
       questionIds: selectedQuestionIds,
-      testCode: testCode || `REV-${subjectCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      testCode: codeToUse,
       createdAt: new Date().toISOString(),
     };
     saveOnlineAssignment(newAssignment);
@@ -426,7 +488,10 @@ export default function TestCompilerHub() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isAutoModalOpen) {
+        if (isCohortDropdownOpen) {
+          setIsCohortDropdownOpen(false);
+          setIsCustomCohortInputOpen(false);
+        } else if (isAutoModalOpen) {
           setIsAutoModalOpen(false);
         } else if (isDraftsModalOpen) {
           setIsDraftsModalOpen(false);
@@ -437,7 +502,7 @@ export default function TestCompilerHub() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAutoModalOpen, isDraftsModalOpen, isAssignModalOpen]);
+  }, [isCohortDropdownOpen, isAutoModalOpen, isDraftsModalOpen, isAssignModalOpen]);
 
   return (
     <div className="flex flex-col gap-6 text-[#201e1d] font-body pb-12">
@@ -983,7 +1048,7 @@ export default function TestCompilerHub() {
                       aria-label="Filter by exam series or year"
                       value={selectedSeries}
                       onChange={(e) => setSelectedSeries(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all truncate"
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all truncate cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
                     >
                       <option value="all">All Series / Years</option>
                       {availableSeries.map((s) => (
@@ -1003,7 +1068,7 @@ export default function TestCompilerHub() {
                       aria-label="Sort questions"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortOption)}
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all truncate"
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all truncate cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
                     >
                       <option value="paper">Paper Order</option>
                       <option value="shortest">Shortest Stem</option>
@@ -1224,7 +1289,7 @@ export default function TestCompilerHub() {
                           if (testCode) setTestCode(`REV-${cat.code}`);
                         }
                       }}
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
                     >
                       {SUBJECT_CATALOG.map((s) => (
                         <option key={s.code} value={s.code}>
@@ -1517,13 +1582,15 @@ export default function TestCompilerHub() {
           <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] w-full max-w-sm flex flex-col gap-5">
             <h3 id="auto-generate-modal-title" className="font-heading text-xl font-black text-[#201e1d]">Auto-Generate Config</h3>
             <div className="flex flex-col gap-3">
-              <label htmlFor="auto-count-select" className="text-xs font-bold text-[#645c50]">Number of Questions</label>
+              <label htmlFor="auto-count-select" className="text-[11px] font-black uppercase tracking-wider text-[#201e1d]">
+                Number of Questions
+              </label>
               <select
                 id="auto-count-select"
                 aria-label="Number of Questions"
                 value={autoCount}
                 onChange={(e) => setAutoCount(Number(e.target.value))}
-                className="px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-sm font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-sm font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
               >
                 {[5, 10, 15, 20, 30].map((c) => (
                   <option key={c} value={c}>
@@ -1707,126 +1774,369 @@ export default function TestCompilerHub() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="assign-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
         >
-          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] w-full max-w-md flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#e3f4d7] border-2 border-[#201e1d] flex items-center justify-center text-[#556b2f]">
-                  <Send className="w-4 h-4" aria-hidden="true" />
+          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_#201e1d] w-full max-w-lg flex flex-col gap-4 max-h-[92vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#e3f4d7] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#201e1d] shrink-0">
+                  <Send className="w-5 h-5 text-[#201e1d]" aria-hidden="true" />
                 </div>
-                <h3 id="assign-modal-title" className="font-heading text-xl font-black text-[#201e1d]">
-                  Assign Online Quiz
-                </h3>
+                <div>
+                  <h3 id="assign-modal-title" className="font-heading text-lg sm:text-xl font-black text-[#201e1d] leading-tight">
+                    Assign Online Quiz
+                  </h3>
+                  <p className="text-[11px] font-medium text-[#645c50]">
+                    Publish for student cohort self-paced online completion
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAssignModalOpen(false)}
                 aria-label="Close assign online dialog"
                 title="Close dialog"
-                className="p-1 hover:bg-[#dcd3c4] rounded-full active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer"
+                className="w-8 h-8 rounded-full border-2 border-[#201e1d] bg-white shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#201e1d] hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all cursor-pointer shrink-0"
               >
-                <X className="w-5 h-5" aria-hidden="true" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="p-3 rounded-2xl bg-[#f0fae1] border border-[#8fa073] text-xs font-medium text-[#2b3a1a] flex flex-col gap-1">
-              <span className="font-black text-[#201e1d] text-sm">{testTitle}</span>
-              <div className="flex gap-2 text-[11px] text-[#556b2f] font-bold">
-                <span>{subjectCode} {subjectName}</span>
-                <span>•</span>
-                <span>{selectedQuestionIds.length} Questions</span>
-                <span>•</span>
-                <span>{selectedQuestionIds.length} Marks</span>
+            {/* Test Summary Card */}
+            <div className="p-3.5 rounded-2xl bg-[#f0fae1] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-heading font-black text-sm text-[#201e1d] line-clamp-1">
+                  {testTitle || `${subjectName} Assessment`}
+                </span>
+                <span className="px-2 py-0.5 rounded-lg bg-[#201e1d] text-white text-[10px] font-black uppercase tracking-wider shrink-0">
+                  {subjectCode} {subjectName}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl bg-white border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] text-[11px] font-black text-[#201e1d]">
+                  {selectedQuestionIds.length} Questions
+                </span>
+                <span className="px-2.5 py-1 rounded-xl bg-white border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] text-[11px] font-black text-[#201e1d]">
+                  {selectedQuestionIds.length} Marks
+                </span>
+                <span className="px-2.5 py-1 rounded-xl bg-[#e3f4d7] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] text-[11px] font-black text-[#2b3a1a]">
+                  ~{assignDuration > 0 ? `${assignDuration} Mins` : 'Untimed'}
+                </span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {/* Cohort selection */}
-              <div>
-                <label htmlFor="assign-cohort-select" className="block text-xs font-bold text-[#645c50] mb-1">
-                  Target Cohort
-                </label>
-                <select
-                  id="assign-cohort-select"
-                  aria-label="Target Cohort"
-                  value={assignCohort}
-                  onChange={(e) => setAssignCohort(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+            {/* Form Fields */}
+            <div className="flex flex-col gap-3.5">
+              {/* Target Cohort Custom Neobrutalist Dropdown */}
+              <div ref={cohortDropdownRef} className="relative">
+                <label
+                  id="assign-cohort-label"
+                  htmlFor="assign-cohort-select"
+                  className="text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1.5 flex items-center gap-1.5"
                 >
-                  {TARGET_COHORTS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  <Users className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
+                  <span>Target Cohort</span>
+                </label>
+                <button
+                  id="assign-cohort-select"
+                  type="button"
+                  role="combobox"
+                  aria-haspopup="listbox"
+                  aria-expanded={isCohortDropdownOpen}
+                  aria-labelledby="assign-cohort-label"
+                  onClick={() => setIsCohortDropdownOpen(!isCohortDropdownOpen)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs sm:text-sm font-bold text-[#201e1d] flex items-center justify-between cursor-pointer active:translate-x-[1px] active:translate-y-[1px] active:shadow-none hover:bg-[#fbf7f0] transition-all"
+                >
+                  <span className="truncate">{assignCohort}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 ml-2 transition-transform duration-200 shrink-0 ${
+                      isCohortDropdownOpen ? 'rotate-180' : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {isCohortDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      role="listbox"
+                      aria-labelledby="assign-cohort-label"
+                      className="absolute top-full mt-1.5 left-0 right-0 z-50 bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] rounded-2xl p-1.5 max-h-56 overflow-y-auto"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        {cohortList.map((cohort) => {
+                          const isSelected = cohort === assignCohort;
+                          return (
+                            <button
+                              key={cohort}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => {
+                                setAssignCohort(cohort);
+                                setIsCohortDropdownOpen(false);
+                                setIsCustomCohortInputOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 rounded-xl text-left text-xs sm:text-sm font-bold flex items-center justify-between transition-colors cursor-pointer hover:bg-[#ffe1d0] ${
+                                isSelected ? 'bg-[#faeee5] text-[#201e1d]' : 'text-[#201e1d]'
+                              }`}
+                            >
+                              <span className="truncate">{cohort}</span>
+                              {isSelected && (
+                                <Check
+                                  className="w-4 h-4 text-[#c67139] stroke-[2.5] shrink-0 ml-2"
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="pt-1.5 mt-1 border-t-2 border-[#201e1d]/10 px-1">
+                        {isCustomCohortInputOpen ? (
+                          <div className="flex items-center gap-1.5 py-0.5">
+                            <input
+                              type="text"
+                              placeholder="e.g. 10C Economics"
+                              value={customCohortInput}
+                              onChange={(e) => setCustomCohortInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const trimmed = customCohortInput.trim();
+                                  if (trimmed) {
+                                    if (!cohortList.includes(trimmed)) {
+                                      setCohortList((prev) => [...prev, trimmed]);
+                                    }
+                                    setAssignCohort(trimmed);
+                                    setCustomCohortInput('');
+                                    setIsCustomCohortInputOpen(false);
+                                    setIsCohortDropdownOpen(false);
+                                  }
+                                }
+                              }}
+                              className="flex-1 px-2.5 py-1.5 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] outline-none focus:ring-1 focus:ring-[#201e1d]"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const trimmed = customCohortInput.trim();
+                                if (trimmed) {
+                                  if (!cohortList.includes(trimmed)) {
+                                    setCohortList((prev) => [...prev, trimmed]);
+                                  }
+                                  setAssignCohort(trimmed);
+                                  setCustomCohortInput('');
+                                  setIsCustomCohortInputOpen(false);
+                                  setIsCohortDropdownOpen(false);
+                                }
+                              }}
+                              className="px-2.5 py-1.5 rounded-xl bg-[#201e1d] text-white font-black text-xs hover:bg-[#3d3835] active:translate-y-0.5 transition-all cursor-pointer shadow-[1px_1px_0_0_#201e1d]"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setIsCustomCohortInputOpen(true)}
+                            className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-black text-[#c67139] hover:bg-[#ffe1d0] flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
+                            <span>+ Enter Custom Cohort</span>
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Due Date & Time Limit */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="assign-due-date" className="block text-xs font-bold text-[#645c50] mb-1">
-                    Due Date
+                  <label
+                    htmlFor="assign-due-date"
+                    className="text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1.5 flex items-center gap-1.5"
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
+                    <span>Due Date</span>
                   </label>
                   <input
                     id="assign-due-date"
                     type="date"
                     value={assignDueDate}
                     onChange={(e) => setAssignDueDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs sm:text-sm font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
                   />
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    {[
+                      { label: 'Tomorrow', days: 1 },
+                      { label: '3 Days', days: 3 },
+                      { label: '1 Week', days: 7 }
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => handleSetDueDateDays(preset.days)}
+                        className="px-2 py-0.5 rounded-lg bg-white border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] text-[10px] font-bold text-[#201e1d] hover:bg-[#ffe1d0] active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-none transition-all cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
-                  <label htmlFor="assign-duration" className="block text-xs font-bold text-[#645c50] mb-1">
-                    Time Limit (mins)
+                  <label
+                    htmlFor="assign-duration"
+                    className="text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1.5 flex items-center gap-1.5"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
+                    <span>Time Limit (mins)</span>
                   </label>
                   <input
                     id="assign-duration"
                     type="number"
-                    min={1}
+                    min={0}
                     max={300}
-                    value={assignDuration}
-                    onChange={(e) => setAssignDuration(Number(e.target.value) || 0)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                    value={assignDuration === 0 ? '' : assignDuration}
+                    placeholder="Untimed"
+                    onChange={(e) => setAssignDuration(Math.max(0, Number(e.target.value) || 0))}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs sm:text-sm font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
                   />
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    {[15, 30, 45, 60].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => setAssignDuration(mins)}
+                        className={`px-2 py-0.5 rounded-lg border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] text-[10px] font-bold active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-none transition-all cursor-pointer ${
+                          assignDuration === mins
+                            ? 'bg-[#201e1d] text-white'
+                            : 'bg-white text-[#201e1d] hover:bg-[#ffe1d0]'
+                        }`}
+                      >
+                        {mins}m
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setAssignDuration(0)}
+                      className={`px-2 py-0.5 rounded-lg border border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] text-[10px] font-bold active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-none transition-all cursor-pointer ${
+                        assignDuration === 0
+                          ? 'bg-[#201e1d] text-white'
+                          : 'bg-white text-[#201e1d] hover:bg-[#ffe1d0]'
+                      }`}
+                    >
+                      Untimed
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Test Code */}
+              {/* Access Code / Test Code */}
               <div>
-                <label htmlFor="assign-test-code" className="block text-xs font-bold text-[#645c50] mb-1">
-                  Access Code / Test Code
+                <label
+                  htmlFor="assign-test-code"
+                  className="text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1.5 flex items-center gap-1.5"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
+                  <span>Access Code / Test Code</span>
                 </label>
-                <input
-                  id="assign-test-code"
-                  type="text"
-                  value={testCode}
-                  onChange={(e) => setTestCode(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold font-mono text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                />
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      id="assign-test-code"
+                      type="text"
+                      value={testCode}
+                      onChange={(e) => setTestCode(e.target.value.toUpperCase())}
+                      placeholder={`REV-${subjectCode}-XXXX`}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-mono font-black text-xs sm:text-sm tracking-wider uppercase text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTestCode(generateTestCode(subjectCode))}
+                    title="Roll a fresh access code"
+                    aria-label="Regenerate access code"
+                    className="p-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center justify-center shrink-0"
+                  >
+                    <RefreshCw className="w-4 h-4 text-[#201e1d]" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    title="Copy access code to clipboard"
+                    aria-label="Copy access code"
+                    className="px-3 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-bold text-xs text-[#201e1d] hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                  >
+                    {copiedCode ? (
+                      <>
+                        <Check className="w-4 h-4 text-[#556b2f] stroke-[2.5]" aria-hidden="true" />
+                        <span className="text-[#556b2f]">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 text-[#201e1d]" aria-hidden="true" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] font-medium text-[#645c50] mt-1.5">
+                  Students enter this access code on the home screen to begin.
+                </p>
               </div>
             </div>
 
             {/* Recent published assignments list */}
             {onlineAssignments.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-[#dcd3c4]">
-                <span className="text-[10px] font-black uppercase text-[#645c50] tracking-wider block mb-1.5">
+              <div className="mt-1 pt-3 border-t-2 border-[#201e1d]/10">
+                <span className="text-[10px] font-black uppercase text-[#645c50] tracking-wider block mb-2">
                   Recent Cohort Assignments ({onlineAssignments.length})
                 </span>
-                <div className="flex flex-col gap-1.5 max-h-28 overflow-y-auto no-scrollbar">
+                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-1">
                   {onlineAssignments.slice(0, 5).map((a) => (
                     <div
                       key={a.id}
-                      className="p-2 rounded-xl bg-white border border-[#dcd3c4] flex items-center justify-between text-xs"
+                      className="p-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-between text-xs gap-2"
                     >
-                      <div className="min-w-0">
-                        <div className="font-bold text-[#201e1d] truncate">{a.title}</div>
-                        <div className="text-[10px] text-[#645c50]">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-black text-[#201e1d] truncate">{a.title}</div>
+                        <div className="text-[10px] font-medium text-[#645c50] truncate">
                           {a.cohortName} • Due {a.dueDate}
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-[#eee7db] text-[10px] font-mono font-bold text-[#201e1d]">
-                        {a.testCode}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="px-2 py-0.5 rounded-lg bg-[#eee7db] border border-[#201e1d] text-[10px] font-mono font-black text-[#201e1d]">
+                          {a.testCode}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(a.testCode);
+                            setCopiedRecentId(a.id);
+                            setTimeout(() => setCopiedRecentId(null), 2000);
+                          }}
+                          title="Copy test code"
+                          aria-label={`Copy test code ${a.testCode}`}
+                          className="p-1.5 rounded-lg bg-white border border-[#201e1d] hover:bg-[#ffe1d0] active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center"
+                        >
+                          {copiedRecentId === a.id ? (
+                            <Check className="w-3.5 h-3.5 text-[#556b2f]" aria-hidden="true" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1834,20 +2144,20 @@ export default function TestCompilerHub() {
             )}
 
             {/* Buttons */}
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setIsAssignModalOpen(false)}
-                className="flex-1 py-2.5 rounded-full border-2 border-[#201e1d] font-bold text-xs hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white font-bold text-xs text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handlePublishAssignment}
-                className="flex-[2] py-2.5 rounded-full bg-[#728157] text-white font-black text-xs hover:bg-[#5f6c48] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center gap-1.5"
+                className="flex-[2] py-2.5 rounded-xl bg-[#728157] text-white font-black text-xs sm:text-sm hover:bg-[#5f6c48] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 transition-all cursor-pointer border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center gap-2"
               >
-                <Send className="w-3.5 h-3.5" aria-hidden="true" />
+                <Send className="w-4 h-4" aria-hidden="true" />
                 <span>Confirm & Publish</span>
               </button>
             </div>
