@@ -39,9 +39,8 @@ export function StartFlow({
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'review'>('standard');
-  const [selectedTopicId, setSelectedTopicId] = useState<string>('all');
-  const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState<boolean>(false);
-  const topicDropdownRef = useRef<HTMLDivElement>(null);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+  const [isTopicModalOpen, setIsTopicModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (isDemo && selectedMode === 'review') {
@@ -77,29 +76,6 @@ export function StartFlow({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isDropdownOpen]);
-
-  useEffect(() => {
-    if (!isTopicDropdownOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (topicDropdownRef.current && !topicDropdownRef.current.contains(event.target as Node)) {
-        setIsTopicDropdownOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsTopicDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isTopicDropdownOpen]);
 
   const effectiveTopics = topics || [];
   const effectiveQuestions = questions || [];
@@ -147,7 +123,12 @@ export function StartFlow({
         else if (parsed.sourceType === 'topic') {
           setSelectedMode('topic');
           if (parsed.sourceValue && typeof parsed.sourceValue === 'string') {
-            setSelectedTopicId(parsed.sourceValue);
+            if (parsed.sourceValue !== 'all') {
+              const ids = parsed.sourceValue.split(',').filter(Boolean);
+              if (ids.length > 0) {
+                setSelectedTopicIds(ids);
+              }
+            }
           }
         }
         else setSelectedMode('standard');
@@ -218,10 +199,39 @@ export function StartFlow({
       )
     : effectiveTopics;
 
-  const selectedTopic = subjectTopics.find((t) => t.id === selectedTopicId);
-  const topicQuestionCount = selectedTopic
-    ? effectiveQuestions.filter((q) => q.topic_id === selectedTopic.id).length
-    : 0;
+  useEffect(() => {
+    if (subjectTopics.length === 0) return;
+    setSelectedTopicIds((prev) => {
+      if (prev.length === 0) {
+        return subjectTopics.map((t) => t.id);
+      }
+      const valid = prev.filter((id) => subjectTopics.some((t) => t.id === id));
+      return valid.length > 0 ? valid : subjectTopics.map((t) => t.id);
+    });
+  }, [subjectTopics]);
+
+  useEffect(() => {
+    if (!isTopicModalOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (selectedTopicIds.length === 0) {
+          setSelectedTopicIds(subjectTopics.map((t) => t.id));
+        }
+        setIsTopicModalOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTopicModalOpen, selectedTopicIds, subjectTopics]);
+
+  const selectedTopicSet = new Set(selectedTopicIds);
+  const selectedQuestionsCount = effectiveQuestions.filter(
+    (q) => q.topic_id && selectedTopicSet.has(q.topic_id)
+  ).length;
 
   const firstName =
     userProfile?.display_name &&
@@ -240,10 +250,15 @@ export function StartFlow({
     }
 
     const fullSubjectName = `${currentSubject.name} ${currentSubject.code}`;
+    const topicSourceValue =
+      selectedTopicIds.length === 0 || selectedTopicIds.length === subjectTopics.length
+        ? 'all'
+        : selectedTopicIds.join(',');
+
     const roundConfig: QuizRoundConfig = {
       subject: fullSubjectName,
       sourceType: selectedMode === 'topic' ? 'topic' : 'random',
-      sourceValue: selectedMode === 'topic' ? selectedTopicId : 'random',
+      sourceValue: selectedMode === 'topic' ? topicSourceValue : 'random',
       roundLength,
       isTimed,
       diagramFilter,
@@ -256,7 +271,7 @@ export function StartFlow({
   const handleSubjectSelect = (code: string) => {
     playPop();
     setSelectedSubjectCode(code);
-    setSelectedTopicId('all');
+    setSelectedTopicIds([]);
     setIsDropdownOpen(false);
   };
 
@@ -266,6 +281,9 @@ export function StartFlow({
     }
     playPop();
     setSelectedMode(mode);
+    if (mode === 'topic') {
+      setIsTopicModalOpen(true);
+    }
   };
 
   const handleLengthSelect = (len: 3 | 5 | 10 | 'endless') => {
@@ -441,9 +459,9 @@ export function StartFlow({
               </span>
               <span className="text-[13px] text-neutral-800 font-medium leading-snug">
                 {selectedMode === 'topic'
-                  ? selectedTopicId === 'all'
-                    ? 'All topics · in syllabus order'
-                    : `Drilling: ${subjectTopics.find((t) => t.id === selectedTopicId)?.name || 'Selected chapter'}`
+                  ? selectedTopicIds.length === 0 || selectedTopicIds.length === subjectTopics.length
+                    ? 'All topics · syllabus order'
+                    : `${selectedTopicIds.length} topics selected (${selectedQuestionsCount} Qs)`
                   : 'Drill chapter by chapter, in syllabus order'}
               </span>
             </span>
@@ -527,156 +545,42 @@ export function StartFlow({
         </div>
       </div>
 
-      {/* Topic Selection (Visible only in Topic Practice Mode) */}
+      {/* Topic Selection Summary & Modal Trigger (Visible only in Topic Practice Mode) */}
       {selectedMode === 'topic' && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
-              Choose Topic
+              Choose Topics
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold text-neutral-700">
-              {subjectTopics.length} syllabus topics
+              {selectedTopicIds.length === 0 ? subjectTopics.length : selectedTopicIds.length} of {subjectTopics.length} syllabus topics
             </span>
           </div>
 
-          <div ref={topicDropdownRef} className="relative w-full">
-            {/* Dropdown Trigger */}
-            <button
-              type="button"
-              data-testid="topic-picker-trigger"
-              onClick={() => {
-                playPop();
-                setIsTopicDropdownOpen((prev) => !prev);
-              }}
-              aria-haspopup="listbox"
-              aria-expanded={isTopicDropdownOpen}
-              aria-label="Choose topic"
-              className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                {selectedTopicId === 'all' || !selectedTopic ? (
-                  <>
-                    <span className="px-2 py-0.5 rounded-full bg-neutral-200 border border-text/30 text-xs font-bold flex-shrink-0">
-                      📚 All
-                    </span>
-                    <span className="font-heading text-base sm:text-lg text-text truncate">
-                      All Topics (Across Syllabus)
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="px-2 py-0.5 rounded-full bg-accent-2-300 border border-text/30 text-xs font-bold flex-shrink-0">
-                      Ch {selectedTopic.orderIndex}
-                    </span>
-                    <span className="font-heading text-base sm:text-lg text-text truncate">
-                      {selectedTopic.name}
-                    </span>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold">
-                  {selectedTopicId === 'all' || !selectedTopic
-                    ? `${effectiveQuestions.length} Qs`
-                    : `${topicQuestionCount} Qs`}
-                </span>
-                <ChevronDown
-                  className={cn(
-                    'w-5 h-5 text-text transition-transform duration-200 flex-shrink-0',
-                    isTopicDropdownOpen && 'rotate-180'
-                  )}
-                />
-              </div>
-            </button>
-
-            {/* Dropdown Popover */}
-            {isTopicDropdownOpen && (
-              <div
-                role="listbox"
-                data-testid="topic-picker-menu"
-                className="absolute top-full left-0 right-0 mt-2 z-30 bg-neutral-100 border-2 border-text rounded-2xl shadow-offset-4 overflow-y-auto max-h-[300px] py-1.5 animate-in fade-in-50 zoom-in-95 duration-150"
-              >
-                {/* All Topics (Across Syllabus) option */}
-                <button
-                  type="button"
-                  role="option"
-                  data-testid="topic-option-all"
-                  aria-selected={selectedTopicId === 'all'}
-                  onClick={() => {
-                    playPop();
-                    setSelectedTopicId('all');
-                    setIsTopicDropdownOpen(false);
-                  }}
-                  className={cn(
-                    'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
-                    selectedTopicId === 'all'
-                      ? 'bg-accent-2-300 font-bold'
-                      : 'hover:bg-neutral-200/60'
-                  )}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="px-2 py-0.5 rounded-full bg-neutral-200 border border-text/30 text-xs font-bold flex-shrink-0">
-                      📚 All
-                    </span>
-                    <span className="font-heading text-base text-text truncate">
-                      All Topics (Across Syllabus)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold">
-                      {effectiveQuestions.length} Qs
-                    </span>
-                    {selectedTopicId === 'all' && (
-                      <Check className="w-5 h-5 text-text flex-shrink-0 stroke-[2.5]" />
-                    )}
-                  </div>
-                </button>
-
-                {/* Individual topics */}
-                {subjectTopics.map((t) => {
-                  const isSelected = selectedTopicId === t.id;
-                  const qCount = effectiveQuestions.filter((q) => q.topic_id === t.id).length;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      role="option"
-                      data-testid={`topic-option-${t.id}`}
-                      aria-selected={isSelected}
-                      onClick={() => {
-                        playPop();
-                        setSelectedTopicId(t.id);
-                        setIsTopicDropdownOpen(false);
-                      }}
-                      className={cn(
-                        'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
-                        isSelected
-                          ? 'bg-accent-2-300 font-bold'
-                          : 'hover:bg-neutral-200/60'
-                      )}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="px-2 py-0.5 rounded-full bg-accent-2-200 border border-text/30 text-xs font-bold flex-shrink-0">
-                          Ch {t.orderIndex}
-                        </span>
-                        <span className="font-heading text-base text-text truncate">
-                          {t.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold">
-                          {qCount} Qs
-                        </span>
-                        {isSelected && (
-                          <Check className="w-5 h-5 text-text flex-shrink-0 stroke-[2.5]" />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            data-testid="topic-picker-trigger"
+            onClick={() => {
+              playPop();
+              setIsTopicModalOpen(true);
+            }}
+            className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer select-none"
+          >
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 mr-2">
+              <span className="text-xl flex-shrink-0">📚</span>
+              <span className="font-heading text-sm sm:text-base text-text truncate">
+                {selectedTopicIds.length === 0 || selectedTopicIds.length === subjectTopics.length
+                  ? 'All Topics Selected'
+                  : `${selectedTopicIds.length} Topics Selected`}
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-neutral-200/90 border border-text/30 text-xs font-bold flex-shrink-0">
+                {selectedQuestionsCount} Qs
+              </span>
+            </div>
+            <span className="px-2.5 py-1 rounded-xl bg-accent-2-300 border border-text text-xs font-bold text-text flex items-center gap-1 flex-shrink-0 hover:brightness-95">
+              Edit Topics ✎
+            </span>
+          </button>
         </div>
       )}
 
@@ -863,6 +767,173 @@ export function StartFlow({
         subjectCode={currentSubject.code}
         className="mt-1"
       />
+
+      {/* Multi-Topic Selection Popup Modal */}
+      {isTopicModalOpen && (
+        <div
+          data-testid="topic-picker-modal"
+          onClick={() => {
+            if (selectedTopicIds.length === 0) {
+              setSelectedTopicIds(subjectTopics.map((t) => t.id));
+            }
+            setIsTopicModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 bg-neutral-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[480px] max-h-[85vh] overflow-y-auto p-5 sm:p-6 pb-6 rounded-3xl bg-bg border-2 border-text shadow-offset-6 flex flex-col gap-4 animate-in fade-in-50 zoom-in-95 duration-200 select-none"
+          >
+            {/* Header */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📚</span>
+                  <h3 className="font-heading text-xl sm:text-2xl text-text m-0">
+                    Topic Practice
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  data-testid="topic-modal-close"
+                  onClick={() => {
+                    playPop();
+                    if (selectedTopicIds.length === 0) {
+                      setSelectedTopicIds(subjectTopics.map((t) => t.id));
+                    }
+                    setIsTopicModalOpen(false);
+                  }}
+                  className="w-8 h-8 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text hover:bg-neutral-200"
+                  aria-label="Close topic selector"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Sub-header info and Quick Actions */}
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-text/10">
+                <span className="text-xs font-semibold text-neutral-700">
+                  {selectedTopicIds.length === 0 ? subjectTopics.length : selectedTopicIds.length} of {subjectTopics.length} topics selected · {selectedQuestionsCount} Qs
+                </span>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    type="button"
+                    data-testid="topic-select-all"
+                    onClick={() => {
+                      playPop();
+                      setSelectedTopicIds(subjectTopics.map((t) => t.id));
+                    }}
+                    className="px-2.5 py-1 rounded-xl border border-text/40 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-text cursor-pointer active:scale-95 transition-transform"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="topic-clear-all"
+                    onClick={() => {
+                      playPop();
+                      setSelectedTopicIds([]);
+                    }}
+                    className="px-2.5 py-1 rounded-xl border border-text/40 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-neutral-600 cursor-pointer active:scale-95 transition-transform"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Topic List */}
+            <div role="listbox" data-testid="topic-picker-menu" className="flex flex-col gap-2 max-h-[45vh] overflow-y-auto pr-1">
+              {subjectTopics.map((t) => {
+                const isSelected = selectedTopicIds.includes(t.id);
+                const qCount = effectiveQuestions.filter((q) => q.topic_id === t.id).length;
+
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="checkbox"
+                    data-testid={`topic-option-${t.id}`}
+                    aria-checked={isSelected}
+                    onClick={() => {
+                      playPop();
+                      setSelectedTopicIds((prev) =>
+                        prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]
+                      );
+                    }}
+                    className={cn(
+                      'w-full p-3 rounded-2xl border-2 text-left cursor-pointer transition-all flex items-center justify-between gap-3 select-none',
+                      isSelected
+                        ? 'bg-accent-2-300 border-text shadow-none translate-x-[2px] translate-y-[2px]'
+                        : 'bg-white/80 border-text shadow-offset-2 hover:bg-white'
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {/* Checkbox */}
+                      <span
+                        className={cn(
+                          'w-6 h-6 rounded-lg border-2 border-text flex items-center justify-center flex-shrink-0 transition-colors',
+                          isSelected ? 'bg-text text-neutral-100' : 'bg-white'
+                        )}
+                      >
+                        {isSelected && <Check className="w-4 h-4 stroke-[3]" />}
+                      </span>
+
+                      {/* Topic info */}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold flex-shrink-0">
+                          Ch {t.orderIndex}
+                        </span>
+                        <span className="font-heading text-sm sm:text-base text-text truncate">
+                          {t.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold flex-shrink-0">
+                      {qCount} Qs
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="pt-2 border-t border-text/10 flex flex-col gap-1.5">
+              <button
+                type="button"
+                data-testid="topic-modal-done"
+                onClick={() => {
+                  playPop();
+                  if (selectedTopicIds.length === 0) {
+                    setSelectedTopicIds(subjectTopics.map((t) => t.id));
+                  }
+                  setIsTopicModalOpen(false);
+                }}
+                className="w-full py-3.5 rounded-2xl bg-accent text-neutral-100 font-heading text-lg border-2 border-text shadow-offset-3 hover:bg-accent-600 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer flex items-center justify-center gap-2 transition-all"
+              >
+                Done · {selectedTopicIds.length === 0 ? subjectTopics.length : selectedTopicIds.length} Topics ({selectedTopicIds.length === 0 ? effectiveQuestions.length : selectedQuestionsCount} Qs)
+              </button>
+              {selectedTopicIds.length === 0 && (
+                <span className="text-[11px] font-semibold text-center text-neutral-600">
+                  Tip: No topics selected will automatically include all topics.
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Topic Mastery Drawer Modal */}
       {isMasteryOpen && (

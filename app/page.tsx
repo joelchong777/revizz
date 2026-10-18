@@ -80,7 +80,8 @@ export default function HomePage() {
     let pool = [...questions];
 
     if (config.sourceType === 'topic' && config.sourceValue !== 'all') {
-      const topicFiltered = pool.filter((q) => q.topic_id === config.sourceValue);
+      const targetTopicIds = new Set(config.sourceValue.split(',').filter(Boolean));
+      const topicFiltered = pool.filter((q) => q.topic_id && targetTopicIds.has(q.topic_id));
       if (topicFiltered.length > 0) pool = topicFiltered;
     }
 

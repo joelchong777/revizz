@@ -46,14 +46,15 @@ function filterPoolByConfig(questions: Question[], config: QuizRoundConfig): Que
   let pool = [...questions];
 
   if (config.sourceType === 'topic' && config.sourceValue !== 'all') {
-    const topicFiltered = pool.filter((q) => q.topic_id === config.sourceValue);
+    const targetTopicIds = new Set(config.sourceValue.split(',').filter(Boolean));
+    const topicFiltered = pool.filter((q) => q.topic_id && targetTopicIds.has(q.topic_id));
     if (topicFiltered.length > 0) pool = topicFiltered;
   }
 
   return pool;
 }
 
-// Test selecting 'all' in topic mode returns all questions
+// 2a. Test selecting 'all' in topic mode returns all questions
 const allConfig: QuizRoundConfig = {
   subject: 'Economics 0455',
   sourceType: 'topic',
@@ -69,7 +70,7 @@ assert.strictEqual(
 );
 console.log('  ✓ sourceValue: "all" retains full question pool');
 
-// Test selecting each individual topic
+// 2b. Test selecting each individual topic
 for (const topic of CAMBRIDGE_TOPICS) {
   const topicConfig: QuizRoundConfig = {
     subject: 'Economics 0455',
@@ -96,14 +97,58 @@ for (const topic of CAMBRIDGE_TOPICS) {
 }
 console.log('  ✓ Each individual topic ID filters strictly to matching questions');
 
-// 3. Verify revizz_last_config serialization/deserialization with sourceType: 'topic' and sourceValue: '<topic-id>'
+// 2c. Test multi-topic selection (e.g. Chapter 1 + Chapter 2)
+const multiTopicIds = [CAMBRIDGE_TOPICS[0].id, CAMBRIDGE_TOPICS[1].id];
+const multiConfig: QuizRoundConfig = {
+  subject: 'Economics 0455',
+  sourceType: 'topic',
+  sourceValue: multiTopicIds.join(','),
+  roundLength: 10,
+  isTimed: true,
+};
+const multiFiltered = filterPoolByConfig(CAMBRIDGE_QUESTIONS, multiConfig);
+const expectedMultiCount = CAMBRIDGE_QUESTIONS.filter(
+  (q) => q.topic_id === multiTopicIds[0] || q.topic_id === multiTopicIds[1]
+).length;
+
+assert.strictEqual(
+  multiFiltered.length,
+  expectedMultiCount,
+  `Multi-topic filter should return sum of questions (${expectedMultiCount}) for selected topics, got ${multiFiltered.length}`
+);
+const multiSet = new Set(multiTopicIds);
+for (const q of multiFiltered) {
+  assert(
+    q.topic_id && multiSet.has(q.topic_id),
+    `Question ${q.id} topic ${q.topic_id} should be within selected topics`
+  );
+}
+console.log(`  ✓ Multi-topic filter (2 chapters: Ch 1 & Ch 2) returns exactly ${multiFiltered.length} matching questions`);
+
+// 2d. Test multi-topic selection with 3 chapters (Ch 1, 3, 5)
+const threeTopicIds = [CAMBRIDGE_TOPICS[0].id, CAMBRIDGE_TOPICS[2].id, CAMBRIDGE_TOPICS[4].id];
+const threeConfig: QuizRoundConfig = {
+  subject: 'Economics 0455',
+  sourceType: 'topic',
+  sourceValue: threeTopicIds.join(','),
+  roundLength: 10,
+  isTimed: true,
+};
+const threeFiltered = filterPoolByConfig(CAMBRIDGE_QUESTIONS, threeConfig);
+const expectedThreeCount = CAMBRIDGE_QUESTIONS.filter(
+  (q) => q.topic_id && threeTopicIds.includes(q.topic_id)
+).length;
+assert.strictEqual(threeFiltered.length, expectedThreeCount);
+console.log(`  ✓ Multi-topic filter (3 chapters) returns exactly ${threeFiltered.length} matching questions`);
+
+// 3. Verify revizz_last_config serialization/deserialization
 console.log('3. Verifying revizz_last_config serialization/deserialization...');
 
-const selectedTopicId = CAMBRIDGE_TOPICS[1].id; // Chapter 2
+// Multi-topic config serialization
 const configToSave: QuizRoundConfig = {
   subject: 'Economics 0455',
   sourceType: 'topic',
-  sourceValue: selectedTopicId,
+  sourceValue: multiTopicIds.join(','),
   roundLength: 5,
   isTimed: true,
   diagramFilter: 'mixed',
@@ -113,47 +158,57 @@ const serialized = JSON.stringify(configToSave);
 const deserialized = JSON.parse(serialized);
 
 assert.strictEqual(deserialized.sourceType, 'topic');
-assert.strictEqual(deserialized.sourceValue, selectedTopicId);
+assert.strictEqual(deserialized.sourceValue, multiTopicIds.join(','));
 assert.strictEqual(deserialized.roundLength, 5);
 assert.strictEqual(deserialized.isTimed, true);
 
 // Simulate StartFlow.tsx restoration logic
 let restoredMode: string = 'standard';
-let restoredTopicId: string = 'all';
+let restoredTopicIds: string[] = [];
 
 if (deserialized.sourceType === 'review') restoredMode = 'review';
 else if (deserialized.sourceType === 'topic') {
   restoredMode = 'topic';
   if (deserialized.sourceValue && typeof deserialized.sourceValue === 'string') {
-    restoredTopicId = deserialized.sourceValue;
+    if (deserialized.sourceValue !== 'all') {
+      const ids = deserialized.sourceValue.split(',').filter(Boolean);
+      if (ids.length > 0) {
+        restoredTopicIds = ids;
+      }
+    }
   }
 } else {
   restoredMode = 'standard';
 }
 
 assert.strictEqual(restoredMode, 'topic', 'Mode should be restored to "topic"');
-assert.strictEqual(restoredTopicId, selectedTopicId, 'Topic ID should be restored to the saved topic ID');
-console.log('  ✓ Serialization & restoration accurately restores sourceType="topic" and sourceValue');
+assert.deepStrictEqual(restoredTopicIds, multiTopicIds, 'Topic IDs should be restored to the saved multi-topic array');
+console.log('  ✓ Serialization & restoration accurately restores multi-topic sourceValue');
 
-// 4. Verify Static Code Contract in components/StartFlow.tsx
-console.log('4. Verifying components/StartFlow.tsx code contracts...');
+// 4. Verify Static Code Contracts in components/StartFlow.tsx and app/page.tsx
+console.log('4. Verifying components/StartFlow.tsx & app/page.tsx code contracts...');
 const startFlowPath = path.resolve(__dirname, '../components/StartFlow.tsx');
 const startFlowSource = fs.readFileSync(startFlowPath, 'utf-8');
 
-assert(startFlowSource.includes('selectedTopicId'), 'StartFlow.tsx must manage selectedTopicId state');
-assert(startFlowSource.includes('isTopicDropdownOpen'), 'StartFlow.tsx must manage isTopicDropdownOpen state');
-assert(startFlowSource.includes('topicDropdownRef'), 'StartFlow.tsx must have topicDropdownRef');
+assert(startFlowSource.includes('selectedTopicIds'), 'StartFlow.tsx must manage selectedTopicIds array state');
+assert(startFlowSource.includes('isTopicModalOpen'), 'StartFlow.tsx must manage isTopicModalOpen state');
 assert(startFlowSource.includes('data-testid="topic-picker-trigger"'), 'StartFlow.tsx must have data-testid="topic-picker-trigger"');
+assert(startFlowSource.includes('data-testid="topic-picker-modal"'), 'StartFlow.tsx must have data-testid="topic-picker-modal"');
 assert(startFlowSource.includes('data-testid="topic-picker-menu"'), 'StartFlow.tsx must have data-testid="topic-picker-menu"');
-assert(startFlowSource.includes('data-testid="topic-option-all"'), 'StartFlow.tsx must have data-testid="topic-option-all"');
+assert(startFlowSource.includes('data-testid="topic-select-all"'), 'StartFlow.tsx must have data-testid="topic-select-all" button');
+assert(startFlowSource.includes('data-testid="topic-clear-all"'), 'StartFlow.tsx must have data-testid="topic-clear-all" button');
+assert(startFlowSource.includes('data-testid="topic-modal-done"'), 'StartFlow.tsx must have data-testid="topic-modal-done" button');
 assert(startFlowSource.includes('data-testid={`topic-option-${t.id}`}'), 'StartFlow.tsx must render topic-option-${t.id} test IDs');
-assert(startFlowSource.includes('Choose Topic'), 'StartFlow.tsx must render "Choose Topic" section header');
-assert(startFlowSource.includes('syllabus topics'), 'StartFlow.tsx must render syllabus topics badge');
-assert(startFlowSource.includes('All Topics (Across Syllabus)'), 'StartFlow.tsx must render "All Topics (Across Syllabus)"');
-assert(startFlowSource.includes('sourceValue: selectedMode === \'topic\' ? selectedTopicId : \'random\''), 'StartFlow.tsx handleStart must set sourceValue to selectedTopicId for topic mode');
+assert(startFlowSource.includes('Edit Topics ✎'), 'StartFlow.tsx trigger must show "Edit Topics ✎"');
 
-console.log('  ✓ All StartFlow.tsx code contracts and testids verified');
+// Verify app/page.tsx multi-topic support
+const pagePath = path.resolve(__dirname, '../app/page.tsx');
+const pageSource = fs.readFileSync(pagePath, 'utf-8');
+assert(pageSource.includes('targetTopicIds'), 'app/page.tsx must extract targetTopicIds Set from comma-separated sourceValue');
+assert(pageSource.includes('targetTopicIds.has(q.topic_id)'), 'app/page.tsx must filter questions by targetTopicIds Set');
+
+console.log('  ✓ All StartFlow.tsx and app/page.tsx code contracts and testids verified');
 
 console.log('\n========================================================');
-console.log('   ALL TOPIC SELECTION TESTS PASSED PERFECTLY! 🚀');
+console.log('   ALL MULTI-TOPIC SELECTION TESTS PASSED PERFECTLY! 🚀');
 console.log('========================================================\n');
