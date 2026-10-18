@@ -12,6 +12,7 @@ import {
   loadAdsConfig,
   getDefaultAdsConfig,
   subscribeAdsConfig,
+  syncAdsConfigFromServer,
   shouldRenderAdSlot,
   selectCampaignForSlot,
   recordAdImpression,
@@ -172,6 +173,16 @@ export function AdSlotBanner({
     }
   }, [previewConfig]);
 
+  // Initial server sync on mount when not in previewConfig mode
+  useEffect(() => {
+    if (previewConfig) return;
+    syncAdsConfigFromServer()
+      .then(serverCfg => {
+        if (serverCfg) setInternalConfig(serverCfg);
+      })
+      .catch(() => {});
+  }, [previewConfig]);
+
   // Subscribe to config changes in browser when not in isolated previewConfig mode
   useEffect(() => {
     if (previewConfig) return;
@@ -183,17 +194,22 @@ export function AdSlotBanner({
     };
   }, [previewConfig]);
 
-  // Track impression once per campaign per slot session
+  // Reset dismissal state whenever questionIndex or slotId changes to allow milestone intervals
+  useEffect(() => {
+    setIsDismissed(false);
+  }, [questionIndex, slotId]);
+
+  // Track impression once per campaign per slot session and question interval
   useEffect(() => {
     if (!shouldRender || !activeCampaign || previewMode) return;
 
-    const trackingKey = `${activeCampaign.id}:${slotId}`;
+    const trackingKey = `${activeCampaign.id}:${slotId}:${questionIndex ?? 'static'}`;
     if (impressionTrackedRef.current !== trackingKey) {
       impressionTrackedRef.current = trackingKey;
       recordAdImpression(activeCampaign.id, slotId);
       setSessionImpressions(prev => prev + 1);
     }
-  }, [shouldRender, activeCampaign, slotId, previewMode]);
+  }, [shouldRender, activeCampaign, slotId, questionIndex, previewMode]);
 
   // Handle external AdSense tag initialization if requested
   useEffect(() => {
@@ -268,6 +284,10 @@ export function AdSlotBanner({
   // RENDER VARIATION: External Google AdSense Placement Container
   // ---------------------------------------------------------------------------
   if (isAdSense) {
+    const pubId = activeConfig.adsensePublisherId || '';
+    const pubIdDisplay = pubId || 'Not configured (set in Placement Settings)';
+    const slotCode = campaign.adsenseSlotId || slotConfig.externalAdSenseSlotId || '';
+
     return (
       <div
         className={cn(
@@ -296,16 +316,16 @@ export function AdSlotBanner({
           <ins
             className="adsbygoogle block w-full"
             style={{ display: 'block', minHeight: '90px' }}
-            data-ad-client={activeConfig.adsensePublisherId || 'ca-pub-9482104829104812'}
-            data-ad-slot={campaign.adsenseSlotId || slotConfig.externalAdSenseSlotId || '1234567890'}
+            data-ad-client={pubId || undefined}
+            data-ad-slot={slotCode || undefined}
             data-ad-format="auto"
             data-full-width-responsive="true"
           />
-          {(!adsenseLoaded || previewMode) && (
+          {(!adsenseLoaded || previewMode || !pubId) && (
             <div className="flex select-none flex-col items-center gap-0.5 py-1 font-mono text-[11px] text-slate-500">
               <span className="font-bold text-slate-700">AdSense Display Container</span>
-              <span>Pub: {activeConfig.adsensePublisherId || 'ca-pub-9482104829104812'}</span>
-              <span>Slot: {campaign.adsenseSlotId || slotConfig.externalAdSenseSlotId || 'default-slot'}</span>
+              <span>Pub: {pubIdDisplay}</span>
+              <span>Slot: {slotCode || 'auto-assigned'}</span>
             </div>
           )}
         </div>
@@ -363,16 +383,17 @@ export function AdSlotBanner({
         </div>
 
         <div className="mt-4 flex flex-col items-stretch gap-2.5 pt-3 sm:flex-row sm:items-center">
-          {onContinue && (
-            <button
-              type="button"
-              onClick={onContinue}
-              className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-[#201e1d] bg-[#201e1d] px-4 py-2 text-xs font-black text-white shadow-[2px_2px_0_0_#201e1d] transition-all hover:bg-slate-800 active:translate-y-0.5 active:shadow-none sm:text-sm"
-            >
-              <span>Continue to Next Question</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              handleDismiss();
+              onContinue?.();
+            }}
+            className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-[#201e1d] bg-[#201e1d] px-4 py-2 text-xs font-black text-white shadow-[2px_2px_0_0_#201e1d] transition-all hover:bg-slate-800 active:translate-y-0.5 active:shadow-none sm:text-sm"
+          >
+            <span>Continue to Question</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
           <a
             href={campaign.targetUrl}
             target="_blank"

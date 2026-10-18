@@ -31,6 +31,7 @@ import {
   Target,
   Clock,
   BookOpen,
+  RotateCcw,
 } from 'lucide-react';
 
 import {
@@ -55,6 +56,8 @@ import {
   applySuggestedPlacement,
   applyPlacementPreset,
   computeAdsAnalyticsSummary,
+  resetCampaignTelemetry,
+  syncAdsConfigFromServer,
 } from '@/lib/ads';
 
 import AdSlotBanner from '@/components/ads/AdSlotBanner';
@@ -123,9 +126,16 @@ export default function AdsManagerHub() {
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'mobile'>('desktop');
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
 
-  // Load config on client mount and subscribe to changes
+  // Load config on client mount, sync with server API, and subscribe to changes
   useEffect(() => {
     setConfig(loadAdsConfig());
+    if (typeof window !== 'undefined') {
+      syncAdsConfigFromServer()
+        .then((remote) => {
+          if (remote) setConfig(remote);
+        })
+        .catch(() => {});
+    }
     const unsubscribe = subscribeAdsConfig(() => {
       setConfig(loadAdsConfig());
     });
@@ -151,11 +161,16 @@ export default function AdsManagerHub() {
     showFeedback(`Activated preset: "${title}"`);
   };
 
-  // Suggestion handler
+  // Suggestion handlers (enable / disable)
   const handleApplySuggestion = (suggestion: SuggestedAdPlacement) => {
     const updated = applySuggestedPlacement(config, suggestion.id);
     setConfig(updated);
     showFeedback(`Applied recommendation for ${suggestion.title}`);
+  };
+
+  const handleDisableSlot = (slotId: AdPlacementSlotId) => {
+    handleUpdateSlot(slotId, { enabled: false });
+    showFeedback(`Disabled ${SLOT_DISPLAY_INFO[slotId]?.name || slotId}`);
   };
 
   // Global config update
@@ -339,24 +354,44 @@ export default function AdsManagerHub() {
     showFeedback('Campaign deleted');
   };
 
-  const handleSimulateTelemetry = (campaignId: string, addImpressions: number, addClicks: number) => {
-    const updatedCampaigns = config.campaigns.map((c) => {
-      if (c.id === campaignId) {
-        return {
-          ...c,
-          impressions: (c.impressions || 0) + addImpressions,
-          clicks: (c.clicks || 0) + addClicks,
-        };
+  // Reset telemetry for a single campaign (real analytics)
+  const handleResetCampaignStats = (campaignId: string) => {
+    const updated = resetCampaignTelemetry(config, campaignId);
+    setConfig(updated);
+    showFeedback('Reset campaign telemetry to 0');
+  };
+
+  // Reset telemetry across all campaigns
+  const handleResetAllStats = () => {
+    if (typeof window !== 'undefined' && !window.confirm('Reset impressions and clicks to 0 across all campaigns?')) {
+      return;
+    }
+    const updated = resetCampaignTelemetry(config);
+    setConfig(updated);
+    showFeedback('Reset telemetry to 0 across all campaigns');
+  };
+
+  // Restore 3 Cambridge Reference Example Campaigns
+  const handleRestoreReferenceExamples = () => {
+    const defaultCampaigns = getDefaultAdsConfig().campaigns;
+    const mergedCampaigns = [...config.campaigns];
+
+    for (const ref of defaultCampaigns) {
+      const idx = mergedCampaigns.findIndex((c) => c.id === ref.id);
+      if (idx >= 0) {
+        mergedCampaigns[idx] = { ...ref };
+      } else {
+        mergedCampaigns.push({ ...ref });
       }
-      return c;
-    });
+    }
+
     const updatedConfig: AdsSystemConfig = {
       ...config,
-      campaigns: updatedCampaigns,
+      campaigns: mergedCampaigns,
     };
     setConfig(updatedConfig);
     saveAdsConfig(updatedConfig);
-    showFeedback(`Simulated +${addImpressions} impressions & +${addClicks} clicks`);
+    showFeedback('Restored 3 Cambridge reference example campaigns');
   };
 
   // Preview simulator resolved campaign
@@ -773,12 +808,22 @@ export default function AdsManagerHub() {
                     </div>
 
                     {/* Action Button */}
-                    <div className="pt-2 border-t-2 border-[#201e1d]/10">
+                    <div className="pt-2 border-t-2 border-[#201e1d]/10 flex items-center gap-2">
                       {isApplied ? (
-                        <div className="w-full py-2.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-center font-heading font-black text-xs text-[#201e1d] flex items-center justify-center gap-1.5 shadow-xs">
-                          <Check className="w-4 h-4 text-emerald-800" />
-                          <span>Active &amp; Applied ✓</span>
-                        </div>
+                        <>
+                          <div className="flex-1 py-2 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-center font-heading font-black text-xs text-[#201e1d] flex items-center justify-center gap-1 shadow-xs">
+                            <Check className="w-3.5 h-3.5 text-emerald-800" />
+                            <span>Active &amp; Applied ✓</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDisableSlot(item.slotId)}
+                            className="px-3 py-2 rounded-xl bg-[#fcfaf6] border-2 border-[#201e1d] hover:bg-[#ffe4e6] text-xs font-bold text-[#be123c] active:translate-y-0.5 shadow-offset-1 transition-all cursor-pointer whitespace-nowrap"
+                            title="Disable this placement slot"
+                          >
+                            Disable Slot
+                          </button>
+                        </>
                       ) : (
                         <button
                           type="button"
@@ -1158,7 +1203,7 @@ export default function AdsManagerHub() {
                         <span className="font-bold text-[#474238]">AdSense Slot ID:</span>
                         <input
                           type="text"
-                          placeholder="e.g. 8492018491 (optional)"
+                          placeholder="e.g. 1234567890 (optional)"
                           value={slot.externalAdSenseSlotId || ''}
                           onChange={(e) =>
                             handleUpdateSlot(slotId, { externalAdSenseSlotId: e.target.value })
@@ -1202,7 +1247,7 @@ export default function AdsManagerHub() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               {/* Filter */}
               <div className="flex items-center gap-1 bg-[#f9f4ed] p-1 rounded-xl border border-[#201e1d]/30 text-xs font-bold">
                 <button
@@ -1233,6 +1278,26 @@ export default function AdsManagerHub() {
                   Paused
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={handleRestoreReferenceExamples}
+                className="px-3 py-2 rounded-xl bg-[#f9f4ed] border-2 border-[#201e1d] font-heading font-black text-xs text-[#201e1d] shadow-offset-1 hover:bg-[#ffe1d0] active:translate-y-0.5 flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Restore the 3 Cambridge reference example partner campaigns"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>Restore 3 Reference Examples</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetAllStats}
+                className="px-3 py-2 rounded-xl bg-[#fcfaf6] border-2 border-[#201e1d] font-heading font-black text-xs text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 transition-all cursor-pointer shadow-offset-1"
+                title="Reset impressions and clicks to 0 across all campaigns"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset All Stats</span>
+              </button>
 
               <button
                 type="button"
@@ -1527,6 +1592,20 @@ export default function AdsManagerHub() {
                       <h4 className="font-heading font-black text-base text-[#201e1d]">
                         {campaign.title}
                       </h4>
+                      {(() => {
+                        const isReferenceExample =
+                          campaign.id === 'cambridge-igcse-revision-guide' ||
+                          campaign.id === 'past-paper-formula-sheet' ||
+                          campaign.id === 'stem-graphing-calculator-tool' ||
+                          campaign.badgeText?.includes('EXAMPLE');
+
+                        if (!isReferenceExample) return null;
+                        return (
+                          <span className="px-2 py-0.5 rounded-full bg-[#fef08a] text-[#854d0e] border border-[#ca8a04]/40 font-mono text-[10px] font-bold">
+                            Reference Example
+                          </span>
+                        );
+                      })()}
                       <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-[#eee7db] border border-[#201e1d]/30 font-bold">
                         {campaign.sponsorName}
                       </span>
@@ -1608,11 +1687,11 @@ export default function AdsManagerHub() {
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => handleSimulateTelemetry(campaign.id, 100, 5)}
-                        className="p-2 rounded-xl bg-[#eee7db] hover:bg-[#dcd3c4] border border-[#201e1d]/30 text-xs font-bold text-[#201e1d] transition-colors cursor-pointer"
-                        title="Simulate +100 impressions and +5 clicks for testing telemetry"
+                        onClick={() => handleResetCampaignStats(campaign.id)}
+                        className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#eee7db] border border-[#201e1d]/30 text-xs font-bold text-[#645c50] hover:text-[#201e1d] transition-colors cursor-pointer"
+                        title="Reset telemetry counters (impressions and clicks) to 0"
                       >
-                        +100/5⚡
+                        Reset (0)
                       </button>
                       <button
                         type="button"
@@ -1829,7 +1908,7 @@ export default function AdsManagerHub() {
                     type="button"
                     onClick={() =>
                       copyAdSenseSnippet(
-                        `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${config.adsensePublisherId || 'ca-pub-9482104829104812'}" crossorigin="anonymous"></script>`,
+                        `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${config.adsensePublisherId || 'ca-pub-XXXXXXXXXXXXXXXX'}" crossorigin="anonymous"></script>`,
                         'Header Script'
                       )
                     }
@@ -1842,7 +1921,7 @@ export default function AdsManagerHub() {
                 <pre className="p-3 rounded-lg bg-[#201e1d] text-[#f9f4ed] text-[11px] font-mono overflow-x-auto">
 {`<script
   async
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${config.adsensePublisherId || 'ca-pub-9482104829104812'}"
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${config.adsensePublisherId || 'ca-pub-XXXXXXXXXXXXXXXX'}"
   crossOrigin="anonymous"
 />`}
                 </pre>
@@ -1858,7 +1937,7 @@ export default function AdsManagerHub() {
                     type="button"
                     onClick={() =>
                       copyAdSenseSnippet(
-                        `<ins className="adsbygoogle" style={{ display: 'block' }} data-ad-client="${config.adsensePublisherId || 'ca-pub-9482104829104812'}" data-ad-slot="${config.slots[previewSlot]?.externalAdSenseSlotId || '8492018491'}" data-ad-format="auto" data-full-width-responsive="true"></ins>`,
+                        `<ins className="adsbygoogle" style={{ display: 'block' }} data-ad-client="${config.adsensePublisherId || 'ca-pub-XXXXXXXXXXXXXXXX'}" data-ad-slot="${config.slots[previewSlot]?.externalAdSenseSlotId || 'XXXXXXXXXX'}" data-ad-format="auto" data-full-width-responsive="true"></ins>`,
                         'Ad Container'
                       )
                     }
@@ -1872,8 +1951,8 @@ export default function AdsManagerHub() {
 {`<ins
   className="adsbygoogle"
   style={{ display: 'block' }}
-  data-ad-client="${config.adsensePublisherId || 'ca-pub-9482104829104812'}"
-  data-ad-slot="${config.slots[previewSlot]?.externalAdSenseSlotId || '8492018491'}"
+  data-ad-client="${config.adsensePublisherId || 'ca-pub-XXXXXXXXXXXXXXXX'}"
+  data-ad-slot="${config.slots[previewSlot]?.externalAdSenseSlotId || 'XXXXXXXXXX'}"
   data-ad-format="auto"
   data-full-width-responsive="true"
 />`}

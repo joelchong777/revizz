@@ -2,11 +2,11 @@
  * Revizz Ads & Monetization System QA & Verification Suite
  * 
  * Comprehensive automated test suite validating:
- * 1. Default Configuration & Smart Suggestions Contract
+ * 1. Default Configuration & Smart Suggestions Contract (Zero Fake Data & 3 Reference Examples)
  * 2. Placement Rules & Guardrails Decision Engine (shouldRenderAdSlot)
  * 3. Presets & Suggestion Application (applySuggestedPlacement, applyPlacementPreset)
  * 4. Campaign Selection & Telemetry (selectCampaignForSlot, computeAdsAnalyticsSummary)
- * 5. Static Component Wiring & Zero-Fake-Data Purge Verification
+ * 5. Static Component Wiring, Server API Route & Zero-Fake-Data Purge Verification
  * 
  * Run with: npx tsx scripts/verify-ads-system.ts
  */
@@ -59,7 +59,27 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
   assert(defaults.hideAdsForSchoolAccounts === true, 'Default hideAdsForSchoolAccounts must be true (school protection)');
   assert(defaults.hideAdsInTimedExamMode === true, 'Default hideAdsInTimedExamMode must be true (concentration protection)');
   assert(defaults.audienceFilter === 'free_and_demo_only', 'Default audienceFilter must be free_and_demo_only');
-  assert(typeof defaults.adsensePublisherId === 'string' && defaults.adsensePublisherId.length > 0, 'Default adsensePublisherId is configured');
+
+  // Zero-Fake-Data: adsensePublisherId must be clean empty string by default
+  assert(defaults.adsensePublisherId === '', 'Default adsensePublisherId must be empty string (zero fake publisher IDs)');
+
+  // Verify exactly 3 Cambridge reference example campaigns starting with 0 impressions/clicks
+  assert(defaults.campaigns.length === 3, `Default campaigns contains exactly 3 reference example campaigns (found ${defaults.campaigns.length})`);
+  defaults.campaigns.forEach((c) => {
+    assert(
+      c.impressions === 0 && c.clicks === 0,
+      `Campaign '${c.id}' starts with 0 impressions and 0 clicks (impressions=${c.impressions}, clicks=${c.clicks})`
+    );
+  });
+
+  // Verify initial computeAdsAnalyticsSummary on default clean state
+  const initialSummary = computeAdsAnalyticsSummary(defaults);
+  assert(initialSummary.totalImpressions === 0, 'Initial analytics starts at totalImpressions === 0');
+  assert(initialSummary.totalClicks === 0, 'Initial analytics starts at totalClicks === 0');
+  assert(initialSummary.overallCtr === 0, 'Initial analytics starts at overallCtr === 0');
+  assert(initialSummary.estimatedRpmUsd === 0, 'Initial analytics starts at estimatedRpmUsd === 0');
+  assert(initialSummary.activeCampaignCount === 3, 'Initial analytics activeCampaignCount matches 3 reference campaigns');
+  assert(initialSummary.enabledSlotCount === 3, 'Initial analytics enabledSlotCount matches 3 default enabled slots');
 
   // Verify all 5 slot IDs exist in config.slots
   assert(ALL_PLACEMENT_SLOT_IDS.length === 5, 'ALL_PLACEMENT_SLOT_IDS contains exactly 5 slots');
@@ -448,15 +468,15 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
 }
 
 // ============================================================================
-// SUITE 4: Campaign Selection & Telemetry
+// SUITE 4: Campaign Selection & Dynamic Telemetry
 // ============================================================================
 {
-  const assert = createGroup('4. Campaign Selection & Telemetry');
+  const assert = createGroup('4. Campaign Selection & Dynamic Telemetry');
   const config = getDefaultAdsConfig();
 
   // Test 4.1: Subject-aware matching
   {
-    // Campaign 2 is past-paper-formula-sheet targeting subjects ['0620', '0625', '0653', '0654']
+    // Campaign 2 is past-paper-formula-sheet targeting subjects ['0620', '0625', '0610', '0455']
     // on slot 'round_summary_card'
     const matchedPhysics = selectCampaignForSlot(config, 'round_summary_card', '0625');
     assert(!!matchedPhysics, 'Campaign matched for Physics (0625) on round_summary_card');
@@ -464,16 +484,16 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
       assert(matchedPhysics.id === 'past-paper-formula-sheet', 'Physics (0625) selects formula sheet campaign');
     }
 
-    // Math subject 0580 should match math visualizer
+    // Math subject 0580 should match daily sprint tracker
     const matchedMath = selectCampaignForSlot(config, 'start_flow_banner', '0580');
     assert(!!matchedMath, 'Campaign matched for Mathematics (0580) on start_flow_banner');
     if (matchedMath) {
-      assert(matchedMath.id === 'stem-graphing-calculator-tool', 'Math (0580) selects MathCraft visualizer');
+      assert(matchedMath.id === 'stem-graphing-calculator-tool', 'Math (0580) selects daily sprint tracker');
     }
 
-    // Generic subject with no specific match falls back to broad campaign
-    const matchedGeneric = selectCampaignForSlot(config, 'start_flow_banner', '0455');
-    assert(!!matchedGeneric, 'Universal campaign matched for Economics (0455)');
+    // Generic subject with no specific match falls back to universal campaign
+    const matchedGeneric = selectCampaignForSlot(config, 'start_flow_banner', '0478');
+    assert(!!matchedGeneric, 'Universal campaign matched for unlisted subject (0478)');
   }
 
   // Test 4.2: Paused and draft campaigns are never selected
@@ -499,19 +519,42 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
     assert(draftResult === null, 'selectCampaignForSlot returns null when all campaigns are drafts');
   }
 
-  // Test 4.3: computeAdsAnalyticsSummary
+  // Test 4.3: Dynamic Telemetry & Analytics Calculation (Zero Fake Pre-seeded Data)
   {
-    const summary = computeAdsAnalyticsSummary(config);
-    const expectedImpressions = config.campaigns.reduce((sum, c) => sum + c.impressions, 0);
-    const expectedClicks = config.campaigns.reduce((sum, c) => sum + c.clicks, 0);
-    const expectedCtr = Number(((expectedClicks / expectedImpressions) * 100).toFixed(2));
+    // Build dynamic test configuration with realistic test traffic
+    const dynamicTestConfig: AdsSystemConfig = {
+      ...config,
+      campaigns: [
+        {
+          ...config.campaigns[0],
+          status: 'active',
+          impressions: 1000,
+          clicks: 50,
+        },
+        {
+          ...config.campaigns[1],
+          status: 'active',
+          impressions: 0,
+          clicks: 0,
+        },
+        {
+          ...config.campaigns[2],
+          status: 'paused',
+          impressions: 0,
+          clicks: 0,
+        },
+      ],
+    };
 
-    assert(summary.totalImpressions === expectedImpressions, `totalImpressions accurately computed (${summary.totalImpressions})`);
-    assert(summary.totalClicks === expectedClicks, `totalClicks accurately computed (${summary.totalClicks})`);
-    assert(summary.overallCtr === expectedCtr, `overallCtr accurately computed (${summary.overallCtr}%)`);
-    assert(summary.activeCampaignCount === 3, `activeCampaignCount matches active items (${summary.activeCampaignCount})`);
-    assert(summary.enabledSlotCount === 3, `enabledSlotCount matches default enabled slots (${summary.enabledSlotCount})`);
-    assert(summary.estimatedRpmUsd > 0, `estimatedRpmUsd provides realistic non-zero value ($${summary.estimatedRpmUsd})`);
+    const dynamicSummary = computeAdsAnalyticsSummary(dynamicTestConfig);
+    // 50 clicks / 1000 impressions * 100 = 5.00%
+    // 50 clicks * $0.40 / 1000 * 1000 = $20.00 RPM
+    assert(dynamicSummary.totalImpressions === 1000, `totalImpressions accurately computed (expected 1000, got ${dynamicSummary.totalImpressions})`);
+    assert(dynamicSummary.totalClicks === 50, `totalClicks accurately computed (expected 50, got ${dynamicSummary.totalClicks})`);
+    assert(dynamicSummary.overallCtr === 5.0, `overallCtr accurately computed (expected 5.0%, got ${dynamicSummary.overallCtr}%)`);
+    assert(dynamicSummary.estimatedRpmUsd === 20.0, `estimatedRpmUsd accurately computed (expected $20.00, got $${dynamicSummary.estimatedRpmUsd})`);
+    assert(dynamicSummary.activeCampaignCount === 2, `activeCampaignCount matches 2 active campaigns (got ${dynamicSummary.activeCampaignCount})`);
+    assert(dynamicSummary.enabledSlotCount === 3, `enabledSlotCount matches default enabled slots (${dynamicSummary.enabledSlotCount})`);
 
     // Zero-data defense
     const emptyConfig: AdsSystemConfig = {
@@ -527,12 +570,65 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
 }
 
 // ============================================================================
-// SUITE 5: Static Component Wiring & Zero-Fake-Data Purge Verification
+// SUITE 5: Static Component Wiring, Server Route & Zero-Fake-Data Purge Verification
 // ============================================================================
 {
-  const assert = createGroup('5. Static Component Wiring & Zero-Fake-Data Purge');
+  const assert = createGroup('5. Static Component Wiring, Server Route & Zero-Fake-Data Purge');
   const baseDir = process.cwd();
 
+  // Test 5.1: Verify /api/ads/config/route.ts exists and exports GET, POST, DELETE
+  {
+    const routePath = path.resolve(baseDir, 'app/api/ads/config/route.ts');
+    const routeExists = fs.existsSync(routePath);
+    assert(routeExists, 'API route exists: app/api/ads/config/route.ts');
+
+    if (routeExists) {
+      const routeContent = fs.readFileSync(routePath, 'utf8');
+      assert(routeContent.includes('export async function GET'), 'app/api/ads/config/route.ts exports GET handler');
+      assert(routeContent.includes('export async function POST'), 'app/api/ads/config/route.ts exports POST handler');
+      assert(routeContent.includes('export async function DELETE'), 'app/api/ads/config/route.ts exports DELETE handler');
+    }
+  }
+
+  // Test 5.2: Verify zero occurrences of fake publisher ID and handleSimulateTelemetry
+  {
+    const STRICT_CHECK_FILES = [
+      'lib/ads.ts',
+      'components/ads/AdSlotBanner.tsx',
+      'components/admin/AdsManagerHub.tsx',
+    ];
+
+    const FORBIDDEN_STRINGS = [
+      'handleSimulateTelemetry',
+    ];
+
+    for (const relPath of STRICT_CHECK_FILES) {
+      const fullPath = path.resolve(baseDir, relPath);
+      if (fs.existsSync(fullPath)) {
+        const content = fs.readFileSync(fullPath, 'utf8');
+
+        for (const forbidden of FORBIDDEN_STRINGS) {
+          assert(
+            !content.includes(forbidden),
+            `File '${relPath}' does not contain forbidden string: "${forbidden}"`
+          );
+        }
+
+        // Check ca-pub fake string (allow only as sanitization check if preceded by clean/sanitize logic or none at all)
+        // If the string appears in active assignment / default:
+        const hasFakePubDefault = content.includes("'ca-pub-9482104829104812'") &&
+          !content.includes("=== 'ca-pub-9482104829104812'") &&
+          !content.includes("|| 'ca-pub-9482104829104812'");
+        
+        assert(
+          !hasFakePubDefault,
+          `File '${relPath}' has no active assignment to fake publisher 'ca-pub-9482104829104812'`
+        );
+      }
+    }
+  }
+
+  // Test 5.3: Component wiring & integration tokens
   const REQUIRED_COMPONENTS = [
     {
       file: 'components/ads/AdSlotBanner.tsx',

@@ -114,7 +114,7 @@ export function getDefaultAdsConfig(): AdsSystemConfig {
     hideAdsInTimedExamMode: true,
     audienceFilter: 'free_and_demo_only',
     globalFrequencyCapPerRound: 4,
-    adsensePublisherId: 'ca-pub-9482104829104812',
+    adsensePublisherId: '',
     slots: {
       start_flow_banner: {
         slotId: 'start_flow_banner',
@@ -185,56 +185,56 @@ export function getDefaultAdsConfig(): AdsSystemConfig {
     campaigns: [
       {
         id: 'cambridge-igcse-revision-guide',
-        title: 'Cambridge IGCSE Revision Companion',
-        sponsorName: 'Cambridge Study Network',
-        badgeText: 'SPONSORED · STUDY RESOURCE',
-        headline: 'Master Core & Extended Syllabus Topics',
+        title: 'Example 1: Cambridge IGCSE Revision Companion',
+        sponsorName: 'Revizz Study Guide (Example Reference)',
+        badgeText: 'EXAMPLE · STUDY RESOURCE',
+        headline: 'Master Core & Extended Cambridge Syllabus Topics',
         bodyCopy: 'Concise summary charts, examiner mark scheme breakdowns, and topic-by-topic checklists for Cambridge candidates.',
         ctaText: 'Explore Study Guide',
-        targetUrl: 'https://example.com/cambridge-revision',
+        targetUrl: '/portal',
         accentColor: 'peach',
         sourceType: 'native',
         status: 'active',
         targetSlots: ['start_flow_banner', 'round_summary_card'],
         targetSubjects: [],
-        impressions: 1420,
-        clicks: 78,
+        impressions: 0,
+        clicks: 0,
         createdAt: '2026-01-15T08:00:00.000Z',
       },
       {
         id: 'past-paper-formula-sheet',
-        title: 'Official Formula & Data Reference Cards',
-        sponsorName: 'OpenSTEM Initiative',
-        badgeText: 'RECOMMENDED · QUICK REFERENCE',
-        headline: 'High-Contrast Printable Science Formula Sheets',
-        bodyCopy: 'Physics and Chemistry equation sheets matching the latest Cambridge 0620 and 0625 syllabus standards.',
-        ctaText: 'Download PDF Cards',
-        targetUrl: 'https://example.com/stem-formula-sheets',
+        title: 'Example 2: Sciences Formula & Data Reference Pack',
+        sponsorName: 'Revizz Science Lab (Example Reference)',
+        badgeText: 'EXAMPLE · QUICK REFERENCE',
+        headline: 'High-Contrast Printable Science & Economics Formula Sheets',
+        bodyCopy: 'Physics (0625), Chemistry (0620), Biology (0610), and Economics (0455) equation & diagram sheets.',
+        ctaText: 'Open Reference Pack',
+        targetUrl: '/portal',
         accentColor: 'sage',
         sourceType: 'native',
         status: 'active',
         targetSlots: ['round_summary_card', 'between_questions_interstitial', 'leaderboard_footer'],
-        targetSubjects: ['0620', '0625', '0653', '0654'],
-        impressions: 980,
-        clicks: 52,
+        targetSubjects: ['0620', '0625', '0610', '0455'],
+        impressions: 0,
+        clicks: 0,
         createdAt: '2026-02-01T10:00:00.000Z',
       },
       {
         id: 'stem-graphing-calculator-tool',
-        title: 'Interactive Vector & Geometry Visualizer',
-        sponsorName: 'MathCraft Tools',
-        badgeText: 'FEATURED · TOOL',
-        headline: 'Interactive Cambridge Math Problem Visualizer',
-        bodyCopy: 'Visualize quadratic curves, trigonometry circle identities, and transformations directly in your browser.',
-        ctaText: 'Launch Visualizer',
-        targetUrl: 'https://example.com/math-visualizer',
+        title: 'Example 3: Daily Past-Paper Sprint & Mastery Tracker',
+        sponsorName: 'Revizz Exam Prep (Example Reference)',
+        badgeText: 'EXAMPLE · FEATURED TOOL',
+        headline: 'Build a First-Try Accuracy Streak & Unlock Gold Mastery Badges',
+        bodyCopy: 'Practice untimed topic drills and track syllabus mastery across every Cambridge paper.',
+        ctaText: 'View Topic Mastery',
+        targetUrl: '/',
         accentColor: 'sky',
         sourceType: 'native',
         status: 'active',
-        targetSlots: ['start_flow_banner', 'question_card_footer', 'leaderboard_footer'],
-        targetSubjects: ['0580', '0606', '0607'],
-        impressions: 630,
-        clicks: 29,
+        targetSlots: ['start_flow_banner', 'question_card_footer', 'leaderboard_footer', 'between_questions_interstitial'],
+        targetSubjects: ['0580', '0455', '0625'],
+        impressions: 0,
+        clicks: 0,
         createdAt: '2026-02-10T12:00:00.000Z',
       },
     ],
@@ -364,10 +364,27 @@ export function loadAdsConfig(): AdsSystemConfig {
       }
     }
 
-    // Defensively merge campaigns
-    const mergedCampaigns = Array.isArray(parsed.campaigns) && parsed.campaigns.length > 0
-      ? parsed.campaigns
-      : defaults.campaigns;
+    // Defensively merge campaigns and sanitize legacy pre-seeded fake telemetry or URLs
+    let mergedCampaigns = defaults.campaigns;
+    if (Array.isArray(parsed.campaigns) && parsed.campaigns.length > 0) {
+      mergedCampaigns = parsed.campaigns.map(c => {
+        // Sanitize legacy fake numbers (1420/980/630) or external example.com URLs from earlier drafts
+        if (
+          (c.id === 'cambridge-igcse-revision-guide' && (c.impressions === 1420 || c.targetUrl?.includes('example.com'))) ||
+          (c.id === 'past-paper-formula-sheet' && (c.impressions === 980 || c.targetUrl?.includes('example.com'))) ||
+          (c.id === 'stem-graphing-calculator-tool' && (c.impressions === 630 || c.targetUrl?.includes('example.com')))
+        ) {
+          const defaultMatch = defaults.campaigns.find(d => d.id === c.id);
+          return defaultMatch ? { ...defaultMatch } : { ...c, impressions: 0, clicks: 0 };
+        }
+        return c;
+      });
+    }
+
+    const cleanPubId =
+      parsed.adsensePublisherId === 'ca-pub-9482104829104812'
+        ? ''
+        : (parsed.adsensePublisherId ?? defaults.adsensePublisherId);
 
     return {
       globalAdsEnabled: typeof parsed.globalAdsEnabled === 'boolean' ? parsed.globalAdsEnabled : defaults.globalAdsEnabled,
@@ -375,7 +392,7 @@ export function loadAdsConfig(): AdsSystemConfig {
       hideAdsInTimedExamMode: typeof parsed.hideAdsInTimedExamMode === 'boolean' ? parsed.hideAdsInTimedExamMode : defaults.hideAdsInTimedExamMode,
       audienceFilter: parsed.audienceFilter || defaults.audienceFilter,
       globalFrequencyCapPerRound: typeof parsed.globalFrequencyCapPerRound === 'number' ? parsed.globalFrequencyCapPerRound : defaults.globalFrequencyCapPerRound,
-      adsensePublisherId: parsed.adsensePublisherId || defaults.adsensePublisherId,
+      adsensePublisherId: cleanPubId,
       slots: mergedSlots,
       campaigns: mergedCampaigns,
     };
@@ -386,18 +403,94 @@ export function loadAdsConfig(): AdsSystemConfig {
 }
 
 /**
- * Persists AdsSystemConfig to localStorage and dispatches change notification event.
+ * Persists AdsSystemConfig to localStorage, dispatches change notification event,
+ * and asynchronously syncs state to server-side API storage.
  */
 export function saveAdsConfig(config: AdsSystemConfig): AdsSystemConfig {
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       window.localStorage.setItem(ADS_CONFIG_STORAGE_KEY, JSON.stringify(config));
       window.dispatchEvent(new CustomEvent(ADS_CONFIG_CHANGE_EVENT, { detail: config }));
+      // Non-blocking sync to server persistence
+      fetch('/api/ads/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      }).catch(() => {});
     } catch (err) {
       console.error('[Revizz Ads Engine] Failed to save config to localStorage:', err);
     }
   }
   return config;
+}
+
+/**
+ * Resets impression and click telemetry to zero for a specific campaign or across all campaigns.
+ */
+export function resetCampaignTelemetry(config: AdsSystemConfig, campaignId?: string): AdsSystemConfig {
+  const updatedCampaigns = config.campaigns.map(c => {
+    if (!campaignId || c.id === campaignId) {
+      return {
+        ...c,
+        impressions: 0,
+        clicks: 0,
+      };
+    }
+    return c;
+  });
+
+  const updatedConfig: AdsSystemConfig = {
+    ...config,
+    campaigns: updatedCampaigns,
+  };
+
+  return saveAdsConfig(updatedConfig);
+}
+
+/**
+ * Synchronizes ads configuration from the server API route (/api/ads/config).
+ */
+export async function syncAdsConfigFromServer(): Promise<AdsSystemConfig> {
+  if (typeof window === 'undefined') {
+    return loadAdsConfig();
+  }
+
+  try {
+    const res = await fetch('/api/ads/config', { method: 'GET', cache: 'no-store' });
+    if (!res.ok) {
+      return loadAdsConfig();
+    }
+    const data = await res.json();
+    const serverConfig: AdsSystemConfig = data?.config || data;
+    if (serverConfig && typeof serverConfig === 'object' && serverConfig.slots) {
+      const defaults = getDefaultAdsConfig();
+      const cleanPubId =
+        serverConfig.adsensePublisherId === 'ca-pub-9482104829104812'
+          ? ''
+          : (serverConfig.adsensePublisherId ?? '');
+
+      const cleanConfig: AdsSystemConfig = {
+        ...defaults,
+        ...serverConfig,
+        adsensePublisherId: cleanPubId,
+        slots: {
+          ...defaults.slots,
+          ...serverConfig.slots,
+        },
+        campaigns: Array.isArray(serverConfig.campaigns) && serverConfig.campaigns.length > 0
+          ? serverConfig.campaigns
+          : defaults.campaigns,
+      };
+
+      window.localStorage.setItem(ADS_CONFIG_STORAGE_KEY, JSON.stringify(cleanConfig));
+      window.dispatchEvent(new CustomEvent(ADS_CONFIG_CHANGE_EVENT, { detail: cleanConfig }));
+      return cleanConfig;
+    }
+  } catch (err) {
+    console.debug('[Revizz Ads Engine] Could not sync config from server:', err);
+  }
+
+  return loadAdsConfig();
 }
 
 /**
