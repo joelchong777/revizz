@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { validateStagingPaper, StagedPaperSummary, StagingPaper } from '@/types/ingestion';
-import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS } from '@/lib/questions';
 import {
   fetchPersistentPaperStates,
   savePersistentPaperStates,
@@ -10,88 +9,10 @@ import {
   STORAGE_BUCKET,
   PAPER_STATES_PATH,
   STAGED_PAPERS_DIR,
+  StagingLocation,
+  getStagingLocations,
+  getFallbackStagingPaper,
 } from '@/lib/ingestion/stagedPaperStorage';
-
-export interface StagingLocation {
-  stagingDir: string;
-  archiveDir: string;
-  isWorktree: boolean;
-}
-
-export function getStagingLocations(): StagingLocation[] {
-  const locations: StagingLocation[] = [];
-  const primaryStaging = path.resolve(process.cwd(), 'staging');
-  locations.push({
-    stagingDir: primaryStaging,
-    archiveDir: path.join(primaryStaging, 'archive'),
-    isWorktree: true,
-  });
-
-  const rootStaging = path.resolve(process.cwd(), '../../staging');
-  if (rootStaging !== primaryStaging && fs.existsSync(rootStaging)) {
-    try {
-      const statPrimary = fs.existsSync(primaryStaging) ? fs.statSync(primaryStaging) : null;
-      const statRoot = fs.statSync(rootStaging);
-      // Ensure root staging is distinct from worktree staging
-      if (!statPrimary || statPrimary.ino !== statRoot.ino || statPrimary.dev !== statRoot.dev) {
-        locations.push({
-          stagingDir: rootStaging,
-          archiveDir: path.join(rootStaging, 'archive'),
-          isWorktree: false,
-        });
-      }
-    } catch {
-      if (rootStaging !== primaryStaging) {
-        locations.push({
-          stagingDir: rootStaging,
-          archiveDir: path.join(rootStaging, 'archive'),
-          isWorktree: false,
-        });
-      }
-    }
-  }
-
-  return locations;
-}
-
-export function getFallbackStagingPaper(): StagingPaper {
-  const optionLabels: Array<'A' | 'B' | 'C' | 'D'> = ['A', 'B', 'C', 'D'];
-  return {
-    id: '0455_s24_12',
-    lifecycle_state: 'review',
-    subject: {
-      code: '0455',
-      name: 'Economics',
-      icon: 'trending-up',
-    },
-    paper: {
-      series: 's',
-      paper_code: '12',
-      year: 2024,
-    },
-    syllabus_topics: CAMBRIDGE_TOPICS.map((t) => ({
-      name: t.name,
-      order_index: t.orderIndex,
-    })),
-    questions: CAMBRIDGE_QUESTIONS.map((q, idx) => ({
-      question_number: idx + 1,
-      cambridge_source_ref: q.citation || `Cambridge IGCSE Economics 0455/12 May/June 2024 Q${idx + 1}`,
-      topic_name: q.topic || 'General',
-      stem_markdown: q.stem_markdown,
-      diagram: {
-        has_diagram: Boolean(q.has_diagram),
-        image_url: q.image_url,
-      },
-      options: q.options.map((opt, oIdx) => ({
-        label: optionLabels[oIdx] ?? 'A',
-        content_markdown: opt.text_markdown,
-        is_correct: opt.id === q.correct_option_id,
-      })),
-      explanation_markdown: 'Scarcity occurs when there are unlimited wants but limited resources.',
-      status: 'active' as const,
-    })),
-  };
-}
 
 async function checkPaperExists(
   cleanId: string,

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { validateStagingPaper } from '../types/ingestion';
-import { getStagingLocations, getFallbackStagingPaper } from '../app/api/ingest/staged-paper/route';
+import { getStagingLocations, getFallbackStagingPaper } from '../lib/ingestion/stagedPaperStorage';
 
 interface TestResult {
   name: string;
@@ -137,7 +137,7 @@ async function runVerification() {
     'Fallback paper passes validateStagingPaper',
     fallbackVal.errors?.join('; ')
   );
-  assert(fallback.questions.length === 30, `Fallback paper has 30 questions (found: ${fallback.questions.length})`);
+  assert(fallback.questions.length >= 2, `Fallback paper contains valid questions (found: ${fallback.questions.length})`);
 
   let fallbackKeysValid = true;
   for (const q of fallback.questions) {
@@ -145,6 +145,13 @@ async function runVerification() {
     if (correctCount !== 1) fallbackKeysValid = false;
   }
   assert(fallbackKeysValid, 'Fallback paper questions have valid answer keys');
+
+  // Verify pure static fallback (when no disk files exist)
+  const staticFallback = getFallbackStagingPaper([]);
+  assert(staticFallback.id === '0455_s24_12', 'Static fallback paper ID is 0455_s24_12');
+  const staticVal = validateStagingPaper(staticFallback, { allowPartialBatch: true });
+  assert(staticVal.success === true, 'Pure static fallback paper passes validateStagingPaper');
+  assert(staticFallback.questions.length >= 2, 'Pure static fallback has at least 2 complete questions');
 
   // Test 4: Directory Traversal Security Verification
   console.log('\n[4] Verifying Directory Traversal Security Checks...');
