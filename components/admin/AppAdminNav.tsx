@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Sliders,
   Megaphone,
+  Users,
 } from 'lucide-react';
 
 export interface AppAdminNavProps {
@@ -297,6 +298,23 @@ export default function AppAdminNav({
               </div>
             )}
             <nav className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => handleNavClick('users')}
+                className={navItemClass('users')}
+                title="User Management"
+              >
+                {renderIcon(Users, 'users')}
+                {!compact && (
+                  <>
+                    <span className="flex-1 min-w-0 truncate">User Management</span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-mono font-bold border border-[#201e1d]/25 shrink-0">
+                      Roles
+                    </span>
+                  </>
+                )}
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleNavClick('settings')}

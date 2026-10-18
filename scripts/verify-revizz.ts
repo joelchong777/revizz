@@ -3768,9 +3768,98 @@ async function runSuite20() {
   });
 }
 
+async function runSuite21() {
+  console.log('\n\x1b[1m\x1b[34m[Suite 21] Admin User Management Hub Architecture\x1b[0m');
+
+  test('User Management: components/admin/UserManagementHub.tsx exists and contains directory, role toggle, and invite modal', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const hubPath = path.resolve(process.cwd(), 'components/admin/UserManagementHub.tsx');
+    assertEqual(fs.existsSync(hubPath), true, 'components/admin/UserManagementHub.tsx exists');
+
+    const content = fs.readFileSync(hubPath, 'utf8');
+    assert(
+      content.includes('User Management 👥'),
+      'UserManagementHub contains User Management 👥 header'
+    );
+    assert(
+      content.includes('USER OPERATIONS · ACCESS CONTROL'),
+      'UserManagementHub contains neobrutalist badge'
+    );
+    assert(
+      content.includes('handleUpdateRole') && content.includes('select'),
+      'UserManagementHub contains role update switcher'
+    );
+    assert(
+      content.includes('handleToggleSchoolAccount'),
+      'UserManagementHub contains school account toggle logic'
+    );
+    assert(
+      content.includes('addRosterInvite'),
+      'UserManagementHub integrates addRosterInvite from @/lib/roster'
+    );
+    assert(
+      content.includes('handleExportCSV'),
+      'UserManagementHub supports CSV export functionality'
+    );
+  });
+
+  test('User Management: AppAdminNav.tsx registers "users" tab with Users icon', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const navPath = path.resolve(process.cwd(), 'components/admin/AppAdminNav.tsx');
+    assertEqual(fs.existsSync(navPath), true, 'components/admin/AppAdminNav.tsx exists');
+
+    const content = fs.readFileSync(navPath, 'utf8');
+    assert(
+      content.includes('Users') && content.includes("handleNavClick('users')"),
+      'AppAdminNav imports Users icon and renders users nav button'
+    );
+    assert(
+      content.includes('User Management'),
+      'AppAdminNav labels users navigation button User Management'
+    );
+  });
+
+  test('User Management: AppAdminHub.tsx imports and routes "users" tab', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const hubPath = path.resolve(process.cwd(), 'components/admin/AppAdminHub.tsx');
+    assertEqual(fs.existsSync(hubPath), true, 'components/admin/AppAdminHub.tsx exists');
+
+    const content = fs.readFileSync(hubPath, 'utf8');
+    assert(
+      content.includes("import UserManagementHub from '@/components/admin/UserManagementHub';"),
+      'AppAdminHub imports UserManagementHub'
+    );
+    assert(
+      content.includes("case 'users':"),
+      'AppAdminHub contains case users'
+    );
+  });
+
+  test('User Management: app/admin/page.tsx registers users in TAB_TITLES and valid tabs', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const pagePath = path.resolve(process.cwd(), 'app/admin/page.tsx');
+    assertEqual(fs.existsSync(pagePath), true, 'app/admin/page.tsx exists');
+
+    const content = fs.readFileSync(pagePath, 'utf8');
+    assert(
+      content.includes("users: 'User Management'"),
+      'TAB_TITLES includes users: User Management'
+    );
+    assert(
+      content.includes("'users'") && content.includes('.includes(normalized)'),
+      'Allowed tabs array in app/admin/page.tsx includes users'
+    );
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
+  await runSuite21();
 
   // Summary Output
   console.log('\n========================================================');

@@ -22,6 +22,7 @@ const TAB_TITLES: Record<string, string> = {
   school: 'School Licences',
   'portal-menu': 'Portal Menu Manager',
   ads: 'Ads & Monetization',
+  users: 'User Management',
 };
 
 function AdminContent() {
@@ -80,7 +81,7 @@ function AdminContent() {
       } else if (normalized === 'portal-menu') {
         setActiveTab('settings');
         setSubTab('portal-menu');
-      } else if (['ingestion', 'history', 'papers', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads'].includes(normalized)) {
+      } else if (['ingestion', 'history', 'papers', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads', 'users'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }

@@ -11,6 +11,7 @@ import PortalMenuManager from '@/components/admin/PortalMenuManager';
 import AdminSettingsHub, { SettingsSubTab } from '@/components/admin/AdminSettingsHub';
 import AdsManagerHub from '@/components/admin/AdsManagerHub';
 import WholePaperViewer from '@/components/admin/WholePaperViewer';
+import UserManagementHub from '@/components/admin/UserManagementHub';
 import { useQuestions } from '@/lib/questions';
 import type { StagingQuestion } from '@/types/ingestion';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
@@ -376,6 +377,9 @@ export default function AppAdminHub({
 
     case 'ads':
       return <AdsManagerHub />;
+
+    case 'users':
+      return <UserManagementHub onSelectTab={onSelectTab} />;
 
     default:
       return renderIngestion();

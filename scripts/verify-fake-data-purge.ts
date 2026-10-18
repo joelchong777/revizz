@@ -13,6 +13,7 @@ import * as path from 'path';
 const TARGET_FILES = [
   'components/admin/AdminSettingsHub.tsx',
   'components/admin/AppAdminHub.tsx',
+  'components/admin/UserManagementHub.tsx',
   'components/portal/AdminNav.tsx',
   'components/Header.tsx',
   'components/portal/compiler/TestCompilerHub.tsx',
