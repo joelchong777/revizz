@@ -167,13 +167,6 @@ export function Header({
     }
   };
 
-  const streakBg =
-    displayStreak >= 3
-      ? 'bg-accent-300'
-      : 'bg-neutral-100';
-
-  const flameFill = displayStreak >= 3 ? '#c67139' : '#a19786';
-
   const isDemo =
     userProfile?.id === 'demo-student-local' ||
     userProfile?.display_name === 'Demo Student' ||
@@ -255,78 +248,9 @@ export function Header({
             </span>
           </Link>
 
-          {/* Right: Single Flex Row of Controls */}
+          {/* Right: Controls (Mute on left, User icon on right) */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            {/* Compact User Profile Avatar Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (userProfile) {
-                  setLeaderboardOpen(true);
-                } else {
-                  handleSignIn();
-                }
-              }}
-              title={
-                isDemo
-                  ? 'Demo Mode • Click to sign in or view stats'
-                  : userProfile
-                  ? `Signed in as ${userName} (${userBadge}) • View Profile & Leaderboard`
-                  : 'Sign in to save progress'
-              }
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-accent-2-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-xs sm:text-sm text-text hover:bg-accent-2-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex-shrink-0"
-            >
-              {userInitials}
-            </button>
-
-            {/* XP Pill */}
-            <motion.span
-              animate={xpControls}
-              title={`Total XP: ${displayXp}`}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-accent-200 border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none flex-shrink-0"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="#f6a06b"
-                stroke="#201e1d"
-                strokeWidth="2.5"
-                strokeLinejoin="round"
-                className="flex-shrink-0"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span>{displayXp} XP</span>
-            </motion.span>
-
-            {/* Streak Pill */}
-            <motion.span
-              animate={streakControls}
-              title={`Current Streak: ${displayStreak}`}
-              className={cn(
-                'flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full border-2 border-text shadow-offset-2 font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap select-none flex-shrink-0',
-                streakBg
-              )}
-            >
-              <span className={cn('inline-flex flex-shrink-0', displayStreak >= 3 && 'animate-bounce')}>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill={flameFill}
-                  stroke="#201e1d"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-                </svg>
-              </span>
-              <span>{displayStreak}</span>
-            </motion.span>
-
-            {/* Sound Toggle Button */}
+            {/* Sound Toggle (Mute) Button */}
             <button
               type="button"
               onClick={handleToggleSound}
@@ -366,30 +290,26 @@ export function Header({
               )}
             </button>
 
-            {/* Leaderboard Button */}
+            {/* Compact User Profile Avatar Button */}
             <button
               type="button"
-              onClick={() => setLeaderboardOpen(true)}
-              title="Leaderboard"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text flex-shrink-0"
+              onClick={() => {
+                if (userProfile) {
+                  setLeaderboardOpen(true);
+                } else {
+                  handleSignIn();
+                }
+              }}
+              title={
+                isDemo
+                  ? 'Demo Mode • Click to sign in or view stats'
+                  : userProfile
+                  ? `Signed in as ${userName} (${userBadge}) • View Profile & Leaderboard`
+                  : 'Sign in to save progress'
+              }
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-accent-2-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-xs sm:text-sm text-text hover:bg-accent-2-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex-shrink-0"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                <path d="M4 22h16" />
-                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-              </svg>
+              {userInitials}
             </button>
           </div>
         </div>
