@@ -24,6 +24,9 @@ export type ApplyPresetMode =
   | 'high_yield_monetization'
   | 'pause_all';
 
+export type AdCreativeMode = 'image_banner' | 'illustrated_card' | 'text_card';
+export type AdImageFit = 'cover' | 'contain';
+
 export interface AdPlacementSlotConfig {
   slotId: AdPlacementSlotId;
   label: string;
@@ -49,6 +52,11 @@ export interface AdCampaignItem {
   ctaText: string;
   targetUrl: string;
   imageUrl?: string;
+  mobileImageUrl?: string;
+  imageAlt?: string;
+  creativeMode?: AdCreativeMode;
+  imageFit?: AdImageFit;
+  showCaptionBarOnBanner?: boolean;
   accentColor: AdAccentColor;
   sourceType: 'native' | 'adsense';
   adsenseSlotId?: string;
@@ -192,6 +200,11 @@ export function getDefaultAdsConfig(): AdsSystemConfig {
         bodyCopy: 'Concise summary charts, examiner mark scheme breakdowns, and topic-by-topic checklists for Cambridge candidates.',
         ctaText: 'Explore Study Guide',
         targetUrl: '/portal',
+        imageUrl: '/ads/banner-cambridge-economics.svg',
+        imageAlt: 'Cambridge IGCSE 0455 Economics Revision Companion Banner',
+        creativeMode: 'image_banner',
+        imageFit: 'cover',
+        showCaptionBarOnBanner: true,
         accentColor: 'peach',
         sourceType: 'native',
         status: 'active',
@@ -210,6 +223,11 @@ export function getDefaultAdsConfig(): AdsSystemConfig {
         bodyCopy: 'Physics (0625), Chemistry (0620), Biology (0610), and Economics (0455) equation & diagram sheets.',
         ctaText: 'Open Reference Pack',
         targetUrl: '/portal',
+        imageUrl: '/ads/banner-sciences-formula-pack.svg',
+        imageAlt: 'IGCSE Sciences Formula & Data Reference Pack Banner',
+        creativeMode: 'image_banner',
+        imageFit: 'cover',
+        showCaptionBarOnBanner: false,
         accentColor: 'sage',
         sourceType: 'native',
         status: 'active',
@@ -228,6 +246,11 @@ export function getDefaultAdsConfig(): AdsSystemConfig {
         bodyCopy: 'Practice untimed topic drills and track syllabus mastery across every Cambridge paper.',
         ctaText: 'View Topic Mastery',
         targetUrl: '/',
+        imageUrl: '/ads/banner-daily-sprint-challenge.svg',
+        imageAlt: 'Daily Past-Paper Sprint & Mastery Tracker Graphic',
+        creativeMode: 'illustrated_card',
+        imageFit: 'cover',
+        showCaptionBarOnBanner: true,
         accentColor: 'sky',
         sourceType: 'native',
         status: 'active',
@@ -368,6 +391,7 @@ export function loadAdsConfig(): AdsSystemConfig {
     let mergedCampaigns = defaults.campaigns;
     if (Array.isArray(parsed.campaigns) && parsed.campaigns.length > 0) {
       mergedCampaigns = parsed.campaigns.map(c => {
+        let updated = { ...c };
         // Sanitize legacy fake numbers (1420/980/630) or external example.com URLs from earlier drafts
         if (
           (c.id === 'cambridge-igcse-revision-guide' && (c.impressions === 1420 || c.targetUrl?.includes('example.com'))) ||
@@ -375,9 +399,22 @@ export function loadAdsConfig(): AdsSystemConfig {
           (c.id === 'stem-graphing-calculator-tool' && (c.impressions === 630 || c.targetUrl?.includes('example.com')))
         ) {
           const defaultMatch = defaults.campaigns.find(d => d.id === c.id);
-          return defaultMatch ? { ...defaultMatch } : { ...c, impressions: 0, clicks: 0 };
+          updated = defaultMatch ? { ...defaultMatch } : { ...c, impressions: 0, clicks: 0 };
         }
-        return c;
+
+        // Backfill image banner properties if missing on reference campaigns
+        const defaultMatch = defaults.campaigns.find(d => d.id === c.id);
+        if (defaultMatch && (!updated.imageUrl || !updated.creativeMode)) {
+          updated.imageUrl = updated.imageUrl || defaultMatch.imageUrl;
+          updated.imageAlt = updated.imageAlt || defaultMatch.imageAlt;
+          updated.creativeMode = updated.creativeMode || defaultMatch.creativeMode;
+          updated.imageFit = updated.imageFit || defaultMatch.imageFit;
+          if (updated.showCaptionBarOnBanner === undefined) {
+            updated.showCaptionBarOnBanner = defaultMatch.showCaptionBarOnBanner;
+          }
+        }
+
+        return updated;
       });
     }
 
@@ -478,7 +515,20 @@ export async function syncAdsConfigFromServer(): Promise<AdsSystemConfig> {
           ...serverConfig.slots,
         },
         campaigns: Array.isArray(serverConfig.campaigns) && serverConfig.campaigns.length > 0
-          ? serverConfig.campaigns
+          ? serverConfig.campaigns.map(c => {
+              const defaultMatch = defaults.campaigns.find(d => d.id === c.id);
+              if (defaultMatch && (!c.imageUrl || !c.creativeMode)) {
+                return {
+                  ...c,
+                  imageUrl: c.imageUrl || defaultMatch.imageUrl,
+                  imageAlt: c.imageAlt || defaultMatch.imageAlt,
+                  creativeMode: c.creativeMode || defaultMatch.creativeMode,
+                  imageFit: c.imageFit || defaultMatch.imageFit,
+                  showCaptionBarOnBanner: c.showCaptionBarOnBanner !== undefined ? c.showCaptionBarOnBanner : defaultMatch.showCaptionBarOnBanner,
+                };
+              }
+              return c;
+            })
           : defaults.campaigns,
       };
 

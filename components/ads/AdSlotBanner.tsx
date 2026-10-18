@@ -9,6 +9,7 @@ import {
   AdCampaignItem,
   AdsSystemConfig,
   AdAccentColor,
+  AdCreativeMode,
   loadAdsConfig,
   getDefaultAdsConfig,
   subscribeAdsConfig,
@@ -279,6 +280,8 @@ export function AdSlotBanner({
   };
 
   const theme = ACCENT_STYLES[campaign.accentColor] || ACCENT_STYLES.peach;
+  const effectiveCreativeMode: AdCreativeMode =
+    campaign.creativeMode || (campaign.imageUrl ? 'image_banner' : 'text_card');
 
   // ---------------------------------------------------------------------------
   // RENDER VARIATION: External Google AdSense Placement Container
@@ -334,9 +337,129 @@ export function AdSlotBanner({
   }
 
   // ---------------------------------------------------------------------------
+  // RENDER VARIATION: Full Picture Graphic Banner (image_banner mode)
+  // ---------------------------------------------------------------------------
+  if (campaign.imageUrl && effectiveCreativeMode === 'image_banner') {
+    const isExternal = campaign.targetUrl.startsWith('http');
+
+    return (
+      <div
+        className={cn(
+          'w-full rounded-2xl border-2 border-[#201e1d] bg-[#FFFDF7] shadow-[3px_3px_0_0_#201e1d] overflow-hidden',
+          className
+        )}
+      >
+        <div className="relative w-full group overflow-hidden">
+          {/* Floating Top Badge Pill */}
+          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 pointer-events-none">
+            <span
+              className={cn(
+                'rounded-full border px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-[1px_1px_0_0_#201e1d]',
+                theme.badge
+              )}
+            >
+              {campaign.badgeText || 'SPONSORED'}
+            </span>
+          </div>
+
+          {/* Floating Dismiss Button */}
+          {slotConfig.dismissible && (
+            <div className="absolute top-2.5 right-2.5 z-10">
+              <button
+                type="button"
+                onClick={handleDismiss}
+                aria-label="Dismiss Advertisement"
+                className="rounded-lg border border-[#201e1d] bg-white/95 backdrop-blur-sm p-1 text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] transition-all hover:bg-white active:translate-y-0.5"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Clickable Graphic Banner */}
+          <a
+            href={campaign.targetUrl}
+            target={isExternal ? '_blank' : undefined}
+            rel={isExternal ? 'noopener noreferrer' : undefined}
+            onClick={handleCtaClick}
+            className="block group relative overflow-hidden"
+          >
+            <picture>
+              {campaign.mobileImageUrl && (
+                <source media="(max-width: 640px)" srcSet={campaign.mobileImageUrl} />
+              )}
+              <img
+                src={campaign.imageUrl}
+                alt={campaign.imageAlt || campaign.headline || campaign.title}
+                className={cn(
+                  'w-full block transition-transform duration-200 group-hover:scale-[1.01]',
+                  slotConfig.format === 'compact_pill' ? 'max-h-[110px]' : 'max-h-[240px]',
+                  campaign.imageFit === 'contain' ? 'object-contain bg-white' : 'object-cover'
+                )}
+              />
+            </picture>
+          </a>
+        </div>
+
+        {/* Optional Caption / Action Bar beneath Graphic */}
+        {campaign.showCaptionBarOnBanner !== false && slotConfig.format !== 'compact_pill' && (
+          <div className="px-3.5 py-2.5 border-t-2 border-[#201e1d] flex flex-wrap items-center justify-between gap-2.5 bg-[#FFFDF7]">
+            <div className="flex flex-col min-w-0 pr-2">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                {campaign.sponsorName}
+              </span>
+              <h4 className="text-xs sm:text-sm font-black text-[#201e1d] truncate">
+                {campaign.headline}
+              </h4>
+            </div>
+
+            <a
+              href={campaign.targetUrl}
+              target={isExternal ? '_blank' : undefined}
+              rel={isExternal ? 'noopener noreferrer' : undefined}
+              onClick={handleCtaClick}
+              className={cn(
+                'shrink-0 flex items-center gap-1.5 rounded-xl border-2 border-[#201e1d] px-3.5 py-1.5 text-xs font-black shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none',
+                theme.button
+              )}
+            >
+              <span>{campaign.ctaText}</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        )}
+
+        {/* Interstitial Action Bar */}
+        {slotConfig.format === 'interstitial' && (
+          <div className="px-4 py-3 bg-amber-50/90 border-t-2 border-[#201e1d] flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <span>Milestone break checkpoint</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                handleDismiss();
+                onContinue?.();
+              }}
+              className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-[#201e1d] bg-[#201e1d] px-4 py-2 text-xs font-black text-white shadow-[2px_2px_0_0_#201e1d] transition-all hover:bg-slate-800 active:translate-y-0.5 active:shadow-none sm:text-sm"
+            >
+              <span>Continue to Question</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // RENDER VARIATION: Between Questions Interstitial Micro-Break
   // ---------------------------------------------------------------------------
   if (slotConfig.format === 'interstitial') {
+    const isExternal = campaign.targetUrl.startsWith('http');
+    const hasImage = Boolean(campaign.imageUrl);
+
     return (
       <div
         className={cn(
@@ -365,24 +488,33 @@ export function AdSlotBanner({
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5">
-            <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-[1px_1px_0_0_#201e1d]', theme.badge)}>
-              {campaign.badgeText || 'SPONSORED'}
-            </span>
-            <span className="text-xs font-bold text-slate-600">
-              {campaign.sponsorName}
-            </span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+          {hasImage && (
+            <img
+              src={campaign.imageUrl}
+              alt={campaign.imageAlt || campaign.headline}
+              className="w-full sm:w-44 h-28 sm:h-32 rounded-xl border-2 border-[#201e1d] object-cover shrink-0 shadow-[2px_2px_0_0_#201e1d]"
+            />
+          )}
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className={cn('rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-[1px_1px_0_0_#201e1d]', theme.badge)}>
+                {campaign.badgeText || 'SPONSORED'}
+              </span>
+              <span className="text-xs font-bold text-slate-600">
+                {campaign.sponsorName}
+              </span>
+            </div>
+            <h4 className="text-base font-extrabold tracking-tight text-[#201e1d] sm:text-lg">
+              {campaign.headline}
+            </h4>
+            <p className="text-xs text-slate-700 sm:text-sm">
+              {campaign.bodyCopy}
+            </p>
           </div>
-          <h4 className="text-base font-extrabold tracking-tight text-[#201e1d] sm:text-lg">
-            {campaign.headline}
-          </h4>
-          <p className="text-xs text-slate-700 sm:text-sm">
-            {campaign.bodyCopy}
-          </p>
         </div>
 
-        <div className="mt-4 flex flex-col items-stretch gap-2.5 pt-3 sm:flex-row sm:items-center">
+        <div className="mt-4 flex flex-col items-stretch gap-2.5 pt-3 sm:flex-row sm:items-center border-t border-[#201e1d]/15">
           <button
             type="button"
             onClick={() => {
@@ -396,8 +528,8 @@ export function AdSlotBanner({
           </button>
           <a
             href={campaign.targetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            target={isExternal ? '_blank' : undefined}
+            rel={isExternal ? 'noopener noreferrer' : undefined}
             onClick={handleCtaClick}
             className={cn(
               'flex items-center justify-center gap-1.5 rounded-xl border-2 border-[#201e1d] px-4 py-2 text-xs font-black shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none sm:text-sm',
@@ -416,6 +548,9 @@ export function AdSlotBanner({
   // RENDER VARIATION: Compact Pill (Leaderboard & Question Footer)
   // ---------------------------------------------------------------------------
   if (slotConfig.format === 'compact_pill') {
+    const isExternal = campaign.targetUrl.startsWith('http');
+    const hasImage = Boolean(campaign.imageUrl);
+
     return (
       <div
         className={cn(
@@ -425,6 +560,13 @@ export function AdSlotBanner({
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
+          {hasImage && (
+            <img
+              src={campaign.imageUrl}
+              alt={campaign.imageAlt || campaign.headline}
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border-2 border-[#201e1d] object-cover shrink-0 shadow-[1px_1px_0_0_#201e1d]"
+            />
+          )}
           <span
             className={cn(
               'shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-[1px_1px_0_0_#201e1d]',
@@ -441,8 +583,8 @@ export function AdSlotBanner({
         <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
           <a
             href={campaign.targetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            target={isExternal ? '_blank' : undefined}
+            rel={isExternal ? 'noopener noreferrer' : undefined}
             onClick={handleCtaClick}
             className={cn(
               'flex items-center gap-1 rounded-lg border border-[#201e1d] px-2.5 py-1 text-xs font-black shadow-[1px_1px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none',
@@ -470,6 +612,9 @@ export function AdSlotBanner({
   // RENDER VARIATION: Native Card (Round Summary Celebration Screen)
   // ---------------------------------------------------------------------------
   if (slotConfig.format === 'native_card') {
+    const isExternal = campaign.targetUrl.startsWith('http');
+    const hasImage = Boolean(campaign.imageUrl);
+
     return (
       <div
         className={cn(
@@ -503,13 +648,22 @@ export function AdSlotBanner({
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <h3 className="text-base font-black tracking-tight text-[#201e1d] sm:text-lg">
-            {campaign.headline}
-          </h3>
-          <p className="text-xs leading-relaxed text-slate-700 sm:text-sm">
-            {campaign.bodyCopy}
-          </p>
+        <div className="flex flex-col sm:flex-row items-start gap-4">
+          {hasImage && (
+            <img
+              src={campaign.imageUrl}
+              alt={campaign.imageAlt || campaign.headline}
+              className="w-full sm:w-48 h-32 rounded-xl border-2 border-[#201e1d] object-cover shrink-0 shadow-[2px_2px_0_0_#201e1d]"
+            />
+          )}
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <h3 className="text-base font-black tracking-tight text-[#201e1d] sm:text-lg">
+              {campaign.headline}
+            </h3>
+            <p className="text-xs leading-relaxed text-slate-700 sm:text-sm">
+              {campaign.bodyCopy}
+            </p>
+          </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-[#201e1d]/15">
@@ -519,8 +673,8 @@ export function AdSlotBanner({
           </div>
           <a
             href={campaign.targetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            target={isExternal ? '_blank' : undefined}
+            rel={isExternal ? 'noopener noreferrer' : undefined}
             onClick={handleCtaClick}
             className={cn(
               'flex items-center gap-1.5 rounded-xl border-2 border-[#201e1d] px-4 py-2 text-xs font-black shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none sm:text-sm',
@@ -538,6 +692,9 @@ export function AdSlotBanner({
   // ---------------------------------------------------------------------------
   // RENDER VARIATION: Standard Banner (Start Flow Banner / General Placement)
   // ---------------------------------------------------------------------------
+  const isExternal = campaign.targetUrl.startsWith('http');
+  const hasImage = Boolean(campaign.imageUrl);
+
   return (
     <div
       className={cn(
@@ -571,20 +728,29 @@ export function AdSlotBanner({
         )}
       </div>
 
-      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-        <div className="space-y-0.5">
-          <h4 className="text-sm font-black tracking-tight text-[#201e1d] sm:text-base">
-            {campaign.headline}
-          </h4>
-          <p className="text-xs text-slate-700">
-            {campaign.bodyCopy}
-          </p>
+      <div className="flex flex-col items-start justify-between gap-3.5 sm:flex-row sm:items-center">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 flex-1 min-w-0">
+          {hasImage && (
+            <img
+              src={campaign.imageUrl}
+              alt={campaign.imageAlt || campaign.headline}
+              className="w-full sm:w-40 h-24 rounded-xl border-2 border-[#201e1d] object-cover shrink-0 shadow-[2px_2px_0_0_#201e1d]"
+            />
+          )}
+          <div className="space-y-0.5 flex-1 min-w-0">
+            <h4 className="text-sm font-black tracking-tight text-[#201e1d] sm:text-base">
+              {campaign.headline}
+            </h4>
+            <p className="text-xs text-slate-700">
+              {campaign.bodyCopy}
+            </p>
+          </div>
         </div>
 
         <a
           href={campaign.targetUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          target={isExternal ? '_blank' : undefined}
+          rel={isExternal ? 'noopener noreferrer' : undefined}
           onClick={handleCtaClick}
           className={cn(
             'flex shrink-0 items-center gap-1.5 rounded-xl border-2 border-[#201e1d] px-3.5 py-1.5 text-xs font-black shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-y-0.5 active:shadow-none sm:text-sm',

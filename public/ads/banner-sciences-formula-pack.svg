@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320">
+  <defs>
+    <pattern id="science-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.5" fill="#C3E6D0" opacity="0.8"/>
+    </pattern>
+    <filter id="sci-shadow-hard" x="0" y="0" width="140%" height="140%">
+      <feDropShadow dx="4" dy="4" stdDeviation="0" flood-color="#201e1d" flood-opacity="1"/>
+    </filter>
+    <filter id="sci-shadow-btn" x="0" y="0" width="140%" height="140%">
+      <feDropShadow dx="3" dy="3" stdDeviation="0" flood-color="#201e1d" flood-opacity="1"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="320" fill="#F2F8F5"/>
+  <rect width="1200" height="320" fill="url(#science-dots)"/>
+
+  <!-- Left Accent Bar -->
+  <rect x="0" y="0" width="16" height="320" fill="#198754"/>
+
+  <!-- Content Section (Left/Center) -->
+  <g transform="translate(48, 38)">
+    <!-- Badge Pill -->
+    <g>
+      <rect x="0" y="0" width="250" height="32" rx="16" fill="#D1E7DD" stroke="#201e1d" stroke-width="2.5" filter="url(#sci-shadow-btn)"/>
+      <circle cx="18" cy="16" r="6" fill="#198754" stroke="#201e1d" stroke-width="1.5"/>
+      <text x="34" y="21" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="900" fill="#0F5132" letter-spacing="1.2">0610 · 0620 · 0625 SCIENCES</text>
+    </g>
+
+    <!-- Main Headline -->
+    <text x="0" y="82" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="900" fill="#201e1d" letter-spacing="-0.5">
+      PRINTABLE IGCSE FORMULA &amp;
+    </text>
+    <text x="0" y="126" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="900" fill="#198754" letter-spacing="-0.5">
+      DATA REFERENCE PACK
+    </text>
+
+    <!-- Subtitle / Descriptive Copy -->
+    <text x="0" y="166" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#4B5563">
+      Physics equations (v = fλ, V = IR), Chemistry mole triangles, and Periodic Table constants.
+    </text>
+
+    <!-- Feature Tags -->
+    <g transform="translate(0, 194)">
+      <rect x="0" y="0" width="138" height="26" rx="8" fill="#FFFFFF" stroke="#201e1d" stroke-width="1.8"/>
+      <text x="12" y="17" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#201e1d">⚡ Physics (0625)</text>
+
+      <rect x="150" y="0" width="155" height="26" rx="8" fill="#FFFFFF" stroke="#201e1d" stroke-width="1.8"/>
+      <text x="12" y="17" transform="translate(150, 0)" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#201e1d">🧪 Chemistry (0620)</text>
+
+      <rect x="317" y="0" width="138" height="26" rx="8" fill="#FFFFFF" stroke="#201e1d" stroke-width="1.8"/>
+      <text x="12" y="17" transform="translate(317, 0)" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#201e1d">🧬 Biology (0610)</text>
+    </g>
+
+    <!-- CTA Button -->
+    <g transform="translate(470, 185)">
+      <rect x="0" y="0" width="210" height="46" rx="14" fill="#198754" stroke="#201e1d" stroke-width="2.5" filter="url(#sci-shadow-btn)"/>
+      <text x="32" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="900" fill="#FFFFFF" letter-spacing="0.5">
+        DOWNLOAD PACK →
+      </text>
+    </g>
+  </g>
+
+  <!-- Right Visual Illustration: Science Lab Equations & Diagram Cards -->
+  <g transform="translate(770, 28)">
+    <!-- Chemistry Mole Triangle Card -->
+    <g transform="translate(0, 12)">
+      <rect x="0" y="0" width="190" height="230" rx="18" fill="#FFFFFF" stroke="#201e1d" stroke-width="2.5" filter="url(#sci-shadow-hard)"/>
+      <rect x="0" y="0" width="190" height="32" rx="18" fill="#D1E7DD"/>
+      <rect x="0" y="16" width="190" height="16" fill="#D1E7DD"/>
+      <line x1="0" y1="32" x2="190" y2="32" stroke="#201e1d" stroke-width="2"/>
+      <text x="24" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="900" fill="#0F5132">MOLE TRIANGLE</text>
+
+      <!-- Triangle Graphic -->
+      <polygon points="95,50 25,175 165,175" fill="#E8F5E9" stroke="#201e1d" stroke-width="2.5"/>
+      <line x1="60" y1="120" x2="130" y2="120" stroke="#201e1d" stroke-width="2.5"/>
+      <line x1="95" y1="120" x2="95" y2="175" stroke="#201e1d" stroke-width="2.5"/>
+
+      <!-- Labels inside triangle -->
+      <text x="95" y="98" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#201e1d" text-anchor="middle">Mass (m)</text>
+      <text x="60" y="152" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#198754" text-anchor="middle">Moles (n)</text>
+      <text x="130" y="152" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#2563EB" text-anchor="middle">Mr</text>
+      <text x="95" y="152" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#201e1d" text-anchor="middle">×</text>
+
+      <text x="95" y="206" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#4B5563" text-anchor="middle">m = n × Mr (g)</text>
+    </g>
+
+    <!-- Physics Wave & Circuit Card -->
+    <g transform="translate(205, 12)">
+      <rect x="0" y="0" width="190" height="230" rx="18" fill="#FFFFFF" stroke="#201e1d" stroke-width="2.5" filter="url(#sci-shadow-hard)"/>
+      <rect x="0" y="0" width="190" height="32" rx="18" fill="#FEF3C7"/>
+      <rect x="0" y="16" width="190" height="16" fill="#FEF3C7"/>
+      <line x1="0" y1="32" x2="190" y2="32" stroke="#201e1d" stroke-width="2"/>
+      <text x="24" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="900" fill="#92400E">PHYSICS WAVES</text>
+
+      <!-- Sine Wave Curve -->
+      <path d="M 25 110 Q 55 60, 85 110 T 145 110" fill="none" stroke="#2563EB" stroke-width="3" stroke-linecap="round"/>
+      <line x1="20" y1="110" x2="170" y2="110" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+      <!-- Wavelength lambda line -->
+      <line x1="55" y1="52" x2="115" y2="52" stroke="#EA580C" stroke-width="2"/>
+      <polyline points="59,48 55,52 59,56" fill="none" stroke="#EA580C" stroke-width="2"/>
+      <polyline points="111,48 115,52 111,56" fill="none" stroke="#EA580C" stroke-width="2"/>
+      <text x="85" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="900" fill="#EA580C" text-anchor="middle">λ (Wavelength)</text>
+
+      <!-- Circuit symbol -->
+      <rect x="40" y="145" width="110" height="42" rx="8" fill="#F8FAFC" stroke="#201e1d" stroke-width="1.8"/>
+      <text x="95" y="171" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#201e1d" text-anchor="middle">v = f × λ</text>
+
+      <text x="95" y="206" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#4B5563" text-anchor="middle">Speed = Freq × λ</text>
+    </g>
+  </g>
+</svg>

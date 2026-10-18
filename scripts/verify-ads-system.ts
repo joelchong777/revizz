@@ -5,8 +5,9 @@
  * 1. Default Configuration & Smart Suggestions Contract (Zero Fake Data & 3 Reference Examples)
  * 2. Placement Rules & Guardrails Decision Engine (shouldRenderAdSlot)
  * 3. Presets & Suggestion Application (applySuggestedPlacement, applyPlacementPreset)
- * 4. Campaign Selection & Telemetry (selectCampaignForSlot, computeAdsAnalyticsSummary)
- * 5. Static Component Wiring, Server API Route & Zero-Fake-Data Purge Verification
+ * 4. Campaign Selection & Dynamic Telemetry (selectCampaignForSlot, computeAdsAnalyticsSummary)
+ * 5. Picture / Graphic Banner Ads Creative Suite (SVG Assets, Creative Modes & UI Wiring)
+ * 6. Static Component Wiring, Server API Route & Zero-Fake-Data Purge Verification
  * 
  * Run with: npx tsx scripts/verify-ads-system.ts
  */
@@ -570,13 +571,116 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
 }
 
 // ============================================================================
-// SUITE 5: Static Component Wiring, Server Route & Zero-Fake-Data Purge Verification
+// SUITE 5: Picture / Graphic Banner Ads Creative Suite
 // ============================================================================
 {
-  const assert = createGroup('5. Static Component Wiring, Server Route & Zero-Fake-Data Purge');
+  const assert = createGroup('5. Picture / Graphic Banner Ads Creative Suite');
+  const baseDir = process.cwd();
+  const defaults = getDefaultAdsConfig();
+
+  // Test 5.1: Verify creativeMode & imageUrl on the 3 reference example campaigns
+  {
+    const c1 = defaults.campaigns.find(c => c.id === 'cambridge-igcse-revision-guide');
+    assert(!!c1, "Campaign 'cambridge-igcse-revision-guide' exists");
+    if (c1) {
+      assert(c1.creativeMode === 'image_banner', "Campaign 'cambridge-igcse-revision-guide' creativeMode is 'image_banner'");
+      assert(c1.imageUrl === '/ads/banner-cambridge-economics.svg', "Campaign 'cambridge-igcse-revision-guide' imageUrl is '/ads/banner-cambridge-economics.svg'");
+      assert(typeof c1.imageAlt === 'string' && c1.imageAlt.length > 0, "Campaign 'cambridge-igcse-revision-guide' has accessible imageAlt");
+    }
+
+    const c2 = defaults.campaigns.find(c => c.id === 'past-paper-formula-sheet');
+    assert(!!c2, "Campaign 'past-paper-formula-sheet' exists");
+    if (c2) {
+      assert(c2.creativeMode === 'image_banner', "Campaign 'past-paper-formula-sheet' creativeMode is 'image_banner'");
+      assert(c2.imageUrl === '/ads/banner-sciences-formula-pack.svg', "Campaign 'past-paper-formula-sheet' imageUrl is '/ads/banner-sciences-formula-pack.svg'");
+      assert(typeof c2.imageAlt === 'string' && c2.imageAlt.length > 0, "Campaign 'past-paper-formula-sheet' has accessible imageAlt");
+    }
+
+    const c3 = defaults.campaigns.find(c => c.id === 'stem-graphing-calculator-tool');
+    assert(!!c3, "Campaign 'stem-graphing-calculator-tool' exists");
+    if (c3) {
+      assert(c3.creativeMode === 'illustrated_card', "Campaign 'stem-graphing-calculator-tool' creativeMode is 'illustrated_card'");
+      assert(c3.imageUrl === '/ads/banner-daily-sprint-challenge.svg', "Campaign 'stem-graphing-calculator-tool' imageUrl is '/ads/banner-daily-sprint-challenge.svg'");
+      assert(typeof c3.imageAlt === 'string' && c3.imageAlt.length > 0, "Campaign 'stem-graphing-calculator-tool' has accessible imageAlt");
+    }
+  }
+
+  // Test 5.2: Verify 3 SVG banner asset files exist on disk in public/ads/
+  {
+    const REQUIRED_SVG_ASSETS = [
+      {
+        path: 'public/ads/banner-cambridge-economics.svg',
+        expectedKeyword: 'economics',
+      },
+      {
+        path: 'public/ads/banner-sciences-formula-pack.svg',
+        expectedKeyword: 'formula',
+      },
+      {
+        path: 'public/ads/banner-daily-sprint-challenge.svg',
+        expectedKeyword: 'sprint',
+      },
+    ];
+
+    for (const asset of REQUIRED_SVG_ASSETS) {
+      const fullPath = path.resolve(baseDir, asset.path);
+      const fileExists = fs.existsSync(fullPath);
+      assert(fileExists, `SVG asset file exists on disk: ${asset.path}`);
+
+      if (fileExists) {
+        const stats = fs.statSync(fullPath);
+        assert(stats.size > 500, `SVG asset '${asset.path}' is non-trivial (${stats.size} bytes)`);
+
+        const content = fs.readFileSync(fullPath, 'utf8');
+        assert(content.includes('<svg') && content.includes('</svg>'), `SVG asset '${asset.path}' is a valid SVG document`);
+        assert(
+          content.toLowerCase().includes(asset.expectedKeyword.toLowerCase()),
+          `SVG asset '${asset.path}' includes themed keyword: "${asset.expectedKeyword}"`
+        );
+      }
+    }
+  }
+
+  // Test 5.3: Verify AdSlotBanner.tsx picture / graphic banner support
+  {
+    const bannerPath = path.resolve(baseDir, 'components/ads/AdSlotBanner.tsx');
+    assert(fs.existsSync(bannerPath), 'AdSlotBanner.tsx exists for graphic banner testing');
+
+    if (fs.existsSync(bannerPath)) {
+      const content = fs.readFileSync(bannerPath, 'utf8');
+      assert(content.includes('image_banner'), "AdSlotBanner.tsx handles 'image_banner' creative mode");
+      assert(content.includes('creativeMode'), 'AdSlotBanner.tsx evaluates creativeMode logic');
+      assert(content.includes('<picture>') || content.includes('<picture'), 'AdSlotBanner.tsx renders responsive <picture> container');
+      assert(content.includes('<img'), 'AdSlotBanner.tsx renders graphic banner <img> elements');
+      assert(content.includes('campaign.imageUrl'), 'AdSlotBanner.tsx references campaign.imageUrl');
+      assert(content.includes('campaign.mobileImageUrl'), 'AdSlotBanner.tsx supports mobileImageUrl responsive source');
+    }
+  }
+
+  // Test 5.4: Verify AdsManagerHub.tsx graphic creative configuration & file upload support
+  {
+    const hubPath = path.resolve(baseDir, 'components/admin/AdsManagerHub.tsx');
+    assert(fs.existsSync(hubPath), 'AdsManagerHub.tsx exists for creative controls testing');
+
+    if (fs.existsSync(hubPath)) {
+      const content = fs.readFileSync(hubPath, 'utf8');
+      assert(content.includes('creativeMode'), 'AdsManagerHub.tsx manages campaign creativeMode state');
+      assert(content.includes('imageUrl'), 'AdsManagerHub.tsx manages campaign imageUrl state');
+      assert(content.includes('mobileImageUrl'), 'AdsManagerHub.tsx manages campaign mobileImageUrl state');
+      assert(content.includes('imageFit'), 'AdsManagerHub.tsx manages campaign imageFit property');
+      assert(content.includes('readAsDataURL'), 'AdsManagerHub.tsx supports local graphic banner upload (readAsDataURL)');
+    }
+  }
+}
+
+// ============================================================================
+// SUITE 6: Static Component Wiring, Server Route & Zero-Fake-Data Purge Verification
+// ============================================================================
+{
+  const assert = createGroup('6. Static Component Wiring, Server Route & Zero-Fake-Data Purge');
   const baseDir = process.cwd();
 
-  // Test 5.1: Verify /api/ads/config/route.ts exists and exports GET, POST, DELETE
+  // Test 6.1: Verify /api/ads/config/route.ts exists and exports GET, POST, DELETE
   {
     const routePath = path.resolve(baseDir, 'app/api/ads/config/route.ts');
     const routeExists = fs.existsSync(routePath);
@@ -590,7 +694,7 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
     }
   }
 
-  // Test 5.2: Verify zero occurrences of fake publisher ID and handleSimulateTelemetry
+  // Test 6.2: Verify zero occurrences of fake publisher ID and handleSimulateTelemetry
   {
     const STRICT_CHECK_FILES = [
       'lib/ads.ts',
@@ -615,7 +719,6 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
         }
 
         // Check ca-pub fake string (allow only as sanitization check if preceded by clean/sanitize logic or none at all)
-        // If the string appears in active assignment / default:
         const hasFakePubDefault = content.includes("'ca-pub-9482104829104812'") &&
           !content.includes("=== 'ca-pub-9482104829104812'") &&
           !content.includes("|| 'ca-pub-9482104829104812'");
@@ -628,7 +731,7 @@ function createGroup(name: string): (passed: boolean, message: string) => void {
     }
   }
 
-  // Test 5.3: Component wiring & integration tokens
+  // Test 6.3: Component wiring & integration tokens
   const REQUIRED_COMPONENTS = [
     {
       file: 'components/ads/AdSlotBanner.tsx',
@@ -745,6 +848,6 @@ console.log('='.repeat(80));
 if (failedAssertions > 0) {
   process.exit(1);
 } else {
-  console.log('\n🎉 ALL ADS SYSTEM CONTRACTS, GUARDRAILS, PRESETS & WIRING VERIFIED!\n');
+  console.log('\n🎉 ALL ADS SYSTEM CONTRACTS, GUARDRAILS, GRAPHIC BANNERS & WIRING VERIFIED!\n');
   process.exit(0);
 }

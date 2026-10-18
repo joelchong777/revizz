@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320">
+  <defs>
+    <pattern id="econ-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#F0D9D0" stroke-width="1.2" opacity="0.6"/>
+    </pattern>
+    <filter id="shadow-hard" x="0" y="0" width="140%" height="140%">
+      <feDropShadow dx="4" dy="4" stdDeviation="0" flood-color="#201e1d" flood-opacity="1"/>
+    </filter>
+    <filter id="shadow-btn" x="0" y="0" width="140%" height="140%">
+      <feDropShadow dx="3" dy="3" stdDeviation="0" flood-color="#201e1d" flood-opacity="1"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="320" fill="#FFF3EE"/>
+  <rect width="1200" height="320" fill="url(#econ-grid)"/>
+
+  <!-- Left Accent Bar -->
+  <rect x="0" y="0" width="16" height="320" fill="#EA580C"/>
+
+  <!-- Content Section (Left/Center) -->
+  <g transform="translate(48, 38)">
+    <!-- Badge Pill -->
+    <g>
+      <rect x="0" y="0" width="220" height="32" rx="16" fill="#FFDFC6" stroke="#201e1d" stroke-width="2.5" filter="url(#shadow-btn)"/>
+      <circle cx="18" cy="16" r="6" fill="#EA580C" stroke="#201e1d" stroke-width="1.5"/>
+      <text x="34" y="21" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="900" fill="#9A3412" letter-spacing="1.2">IGCSE 0455 ECONOMICS</text>
+    </g>
+
+    <!-- Main Headline -->
+    <text x="0" y="82" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="900" fill="#201e1d" letter-spacing="-0.5">
+      MASTER SUPPLY, DEMAND &amp;
+    </text>
+    <text x="0" y="126" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="900" fill="#EA580C" letter-spacing="-0.5">
+      MACRO DIAGRAMS
+    </text>
+
+    <!-- Subtitle / Descriptive Copy -->
+    <text x="0" y="166" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#4B5563">
+      Step-by-step equilibrium shifts, PED formula shortcuts, and 30-mark examiner evaluation checklists.
+    </text>
+
+    <!-- Feature Tags -->
+    <g transform="translate(0, 194)">
+      <rect x="0" y="0" width="130" height="26" rx="8" fill="#FFFFFF" stroke="#201e1d" stroke-width="1.8"/>
+      <text x="12" y="17" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#201e1d">✓ Micro &amp; Macro</text>
+
+      <rect x="142" y="0" width="140" height="26" rx="8" fill="#FFFFFF" stroke="#201e1d" stroke-width="1.8"/>
+      <text x="154" y="17" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#201e1d">✓ Verified Curves</text>
+
+      <rect x="294" y="0" width="150" height="26" rx="8" fill="#FFFFFF" stroke="#201e1d" stroke-width="1.8"/>
+      <text x="306" y="17" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#201e1d">✓ Free Past Paper Key</text>
+    </g>
+
+    <!-- CTA Button -->
+    <g transform="translate(470, 185)">
+      <rect x="0" y="0" width="220" height="46" rx="14" fill="#EA580C" stroke="#201e1d" stroke-width="2.5" filter="url(#shadow-btn)"/>
+      <text x="32" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="900" fill="#FFFFFF" letter-spacing="0.5">
+        OPEN STUDY GUIDE →
+      </text>
+    </g>
+  </g>
+
+  <!-- Right Visual Illustration: Neobrutalist Supply & Demand Chart Card -->
+  <g transform="translate(800, 32)">
+    <!-- Outer Card Frame with 3D Neobrutalist Shadow -->
+    <rect x="0" y="0" width="350" height="256" rx="20" fill="#FFFFFF" stroke="#201e1d" stroke-width="3" filter="url(#shadow-hard)"/>
+
+    <!-- Card Header Strip -->
+    <rect x="0" y="0" width="350" height="38" rx="20" fill="#FFDFC6"/>
+    <rect x="0" y="20" width="350" height="18" fill="#FFDFC6"/>
+    <line x1="0" y1="38" x2="350" y2="38" stroke="#201e1d" stroke-width="2.5"/>
+
+    <!-- Window controls -->
+    <circle cx="22" cy="19" r="5" fill="#EF4444" stroke="#201e1d" stroke-width="1.2"/>
+    <circle cx="38" cy="19" r="5" fill="#F59E0B" stroke="#201e1d" stroke-width="1.2"/>
+    <circle cx="54" cy="19" r="5" fill="#10B981" stroke="#201e1d" stroke-width="1.2"/>
+    <text x="80" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="800" fill="#201e1d">MARKET EQUILIBRIUM MODEL</text>
+
+    <!-- Graph Axes -->
+    <!-- Y Axis: Price -->
+    <line x1="56" y1="210" x2="56" y2="60" stroke="#201e1d" stroke-width="2.5"/>
+    <polygon points="56,54 52,64 60,64" fill="#201e1d"/>
+    <text x="32" y="72" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#201e1d">Price (P)</text>
+
+    <!-- X Axis: Quantity -->
+    <line x1="56" y1="210" x2="310" y2="210" stroke="#201e1d" stroke-width="2.5"/>
+    <polygon points="316,210 306,206 306,214" fill="#201e1d"/>
+    <text x="235" y="232" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="900" fill="#201e1d">Quantity (Q)</text>
+
+    <!-- Demand Curve (D) -->
+    <line x1="75" y1="75" x2="275" y2="195" stroke="#2563EB" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="275" cy="195" r="4" fill="#2563EB"/>
+    <text x="284" y="200" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#2563EB">D</text>
+
+    <!-- Supply Curve (S) -->
+    <line x1="75" y1="195" x2="275" y2="75" stroke="#EA580C" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="275" cy="75" r="4" fill="#EA580C"/>
+    <text x="284" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="900" fill="#EA580C">S</text>
+
+    <!-- Equilibrium Point & Dashed Guides -->
+    <!-- Intersection at (175, 135) -->
+    <line x1="56" y1="135" x2="175" y2="135" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="4 4"/>
+    <line x1="175" y1="135" x2="175" y2="210" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="4 4"/>
+
+    <circle cx="175" cy="135" r="7" fill="#F59E0B" stroke="#201e1d" stroke-width="2.5"/>
+    <text x="186" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#201e1d">E (P*, Q*)</text>
+
+    <!-- Axis Labels Pe and Qe -->
+    <text x="32" y="140" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" fill="#EA580C">P*</text>
+    <text x="168" y="228" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" fill="#2563EB">Q*</text>
+  </g>
+</svg>

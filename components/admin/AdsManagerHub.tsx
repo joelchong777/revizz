@@ -32,6 +32,8 @@ import {
   Clock,
   BookOpen,
   RotateCcw,
+  Image as ImageIcon,
+  Upload,
 } from 'lucide-react';
 
 import {
@@ -58,6 +60,8 @@ import {
   computeAdsAnalyticsSummary,
   resetCampaignTelemetry,
   syncAdsConfigFromServer,
+  AdCreativeMode,
+  AdImageFit,
 } from '@/lib/ads';
 
 import AdSlotBanner from '@/components/ads/AdSlotBanner';
@@ -231,6 +235,30 @@ export default function AdsManagerHub() {
     return config.campaigns.filter((c) => c.status === campaignFilter);
   }, [config.campaigns, campaignFilter]);
 
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2.5 * 1024 * 1024) {
+      alert('Image file is too large (max 2.5MB). Please choose a smaller image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setCampaignFormData((prev) => ({
+          ...prev,
+          imageUrl: dataUrl,
+          imageAlt: prev.imageAlt || file.name.replace(/\.[^/.]+$/, ''),
+        }));
+        showFeedback(`Uploaded banner file: ${file.name}`);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const startCreateCampaign = () => {
     setIsCreatingCampaign(true);
     setEditingCampaignId(null);
@@ -243,6 +271,12 @@ export default function AdsManagerHub() {
       bodyCopy: '',
       ctaText: 'Explore Resource',
       targetUrl: 'https://',
+      imageUrl: '/ads/banner-cambridge-economics.svg',
+      mobileImageUrl: '',
+      imageAlt: 'Cambridge Economics Revision Guide',
+      creativeMode: 'image_banner',
+      imageFit: 'cover',
+      showCaptionBarOnBanner: true,
       accentColor: 'peach',
       sourceType: 'native',
       status: 'active',
@@ -276,6 +310,11 @@ export default function AdsManagerHub() {
       ctaText: campaignFormData.ctaText?.trim() || 'Learn More',
       targetUrl: campaignFormData.targetUrl?.trim() || 'https://',
       imageUrl: campaignFormData.imageUrl?.trim() || undefined,
+      mobileImageUrl: campaignFormData.mobileImageUrl?.trim() || undefined,
+      imageAlt: campaignFormData.imageAlt?.trim() || undefined,
+      creativeMode: campaignFormData.creativeMode || 'image_banner',
+      imageFit: campaignFormData.imageFit || 'cover',
+      showCaptionBarOnBanner: campaignFormData.showCaptionBarOnBanner !== false,
       accentColor: campaignFormData.accentColor || 'peach',
       sourceType: campaignFormData.sourceType || 'native',
       adsenseSlotId: campaignFormData.adsenseSlotId?.trim() || undefined,
@@ -1384,6 +1423,279 @@ export default function AdsManagerHub() {
                     />
                   </div>
 
+                  {/* Creative Format / Display Mode Selector */}
+                  <div className="space-y-1 sm:col-span-3">
+                    <label className="font-heading font-black text-xs text-[#201e1d] block">
+                      Creative Format / Display Mode
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCampaignFormData({ ...campaignFormData, creativeMode: 'image_banner' })
+                        }
+                        className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                          (campaignFormData.creativeMode || 'image_banner') === 'image_banner'
+                            ? 'bg-[#ffe1d0] border-[#201e1d] shadow-offset-1 font-bold'
+                            : 'bg-white border-[#201e1d]/30 text-[#645c50]'
+                        }`}
+                      >
+                        <div className="font-heading font-black text-xs text-[#201e1d] flex items-center gap-1.5">
+                          <span>🖼️ Full Picture Banner</span>
+                        </div>
+                        <p className="text-[11px] text-[#645c50] mt-0.5">
+                          Advertiser graphic with optional caption &amp; CTA
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCampaignFormData({ ...campaignFormData, creativeMode: 'illustrated_card' })
+                        }
+                        className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                          campaignFormData.creativeMode === 'illustrated_card'
+                            ? 'bg-[#ffe1d0] border-[#201e1d] shadow-offset-1 font-bold'
+                            : 'bg-white border-[#201e1d]/30 text-[#645c50]'
+                        }`}
+                      >
+                        <div className="font-heading font-black text-xs text-[#201e1d] flex items-center gap-1.5">
+                          <span>🎨 Illustrated Card</span>
+                        </div>
+                        <p className="text-[11px] text-[#645c50] mt-0.5">
+                          Picture artwork + headline, body copy &amp; CTA
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCampaignFormData({ ...campaignFormData, creativeMode: 'text_card' })
+                        }
+                        className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                          campaignFormData.creativeMode === 'text_card'
+                            ? 'bg-[#ffe1d0] border-[#201e1d] shadow-offset-1 font-bold'
+                            : 'bg-white border-[#201e1d]/30 text-[#645c50]'
+                        }`}
+                      >
+                        <div className="font-heading font-black text-xs text-[#201e1d] flex items-center gap-1.5">
+                          <span>📝 Text &amp; Badge Card</span>
+                        </div>
+                        <p className="text-[11px] text-[#645c50] mt-0.5">
+                          Neobrutalist typography card with CTA button
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dedicated Advertiser Banner Graphic & Upload Panel */}
+                  <div className="p-4 rounded-2xl bg-white border-2 border-[#201e1d] shadow-offset-1 space-y-3 sm:col-span-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#201e1d]/15">
+                      <div className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg bg-[#ffe1d0] border border-[#201e1d] flex items-center justify-center text-[#201e1d]">
+                          <ImageIcon className="w-4 h-4" />
+                        </span>
+                        <div>
+                          <h4 className="font-heading font-black text-xs text-[#201e1d]">
+                            Advertiser Banner Graphic &amp; Artwork
+                          </h4>
+                          <p className="text-[10px] text-[#645c50]">
+                            Upload an advertiser&apos;s banner file (PNG/JPG/SVG/WebP) or choose a built-in preset
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Direct file upload button */}
+                      <label className="px-3 py-1.5 rounded-xl bg-[#eee7db] hover:bg-[#dcd3c4] border border-[#201e1d] text-xs font-bold text-[#201e1d] transition-colors cursor-pointer flex items-center gap-1.5 self-start sm:self-auto shadow-xs">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload Banner File</span>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                          onChange={handleImageFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    {/* Quick built-in presets */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-[#645c50] block">
+                        Quick Built-in Artwork Presets:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCampaignFormData({
+                              ...campaignFormData,
+                              imageUrl: '/ads/banner-cambridge-economics.svg',
+                              imageAlt: 'Cambridge Economics Revision Guide',
+                            })
+                          }
+                          className="px-2.5 py-1 rounded-lg bg-[#f9f4ed] hover:bg-[#ffe1d0] border border-[#201e1d]/30 text-[11px] font-bold text-[#201e1d] transition-colors cursor-pointer"
+                        >
+                          📊 Economics Banner
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCampaignFormData({
+                              ...campaignFormData,
+                              imageUrl: '/ads/banner-sciences-formula-pack.svg',
+                              imageAlt: 'Cambridge Science Formula Sheets',
+                            })
+                          }
+                          className="px-2.5 py-1 rounded-lg bg-[#f9f4ed] hover:bg-[#ffe1d0] border border-[#201e1d]/30 text-[11px] font-bold text-[#201e1d] transition-colors cursor-pointer"
+                        >
+                          🧪 Sciences Banner
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCampaignFormData({
+                              ...campaignFormData,
+                              imageUrl: '/ads/banner-daily-sprint-challenge.svg',
+                              imageAlt: 'Daily Past-Paper Sprint & Mastery',
+                            })
+                          }
+                          className="px-2.5 py-1 rounded-lg bg-[#f9f4ed] hover:bg-[#ffe1d0] border border-[#201e1d]/30 text-[11px] font-bold text-[#201e1d] transition-colors cursor-pointer"
+                        >
+                          ⚡ Sprint Artwork
+                        </button>
+                        {campaignFormData.imageUrl && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCampaignFormData({
+                                ...campaignFormData,
+                                imageUrl: '',
+                                mobileImageUrl: '',
+                              })
+                            }
+                            className="px-2.5 py-1 rounded-lg bg-[#fff1f2] hover:bg-[#ffe4e6] border border-[#be123c]/40 text-[11px] font-bold text-[#be123c] transition-colors cursor-pointer"
+                          >
+                            ✕ Clear Image
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {/* Desktop image URL */}
+                      <div className="space-y-1">
+                        <label className="font-heading font-black text-xs text-[#201e1d]">
+                          Desktop Banner Image URL / Path
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="/ads/banner-example.svg or https://... (or upload file above)"
+                          value={campaignFormData.imageUrl || ''}
+                          onChange={(e) =>
+                            setCampaignFormData({ ...campaignFormData, imageUrl: e.target.value })
+                          }
+                          className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-[#201e1d] focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Mobile image URL */}
+                      <div className="space-y-1">
+                        <label className="font-heading font-black text-xs text-[#201e1d]">
+                          Optional Mobile Banner Image URL
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Optional mobile square/portrait variant"
+                          value={campaignFormData.mobileImageUrl || ''}
+                          onChange={(e) =>
+                            setCampaignFormData({ ...campaignFormData, mobileImageUrl: e.target.value })
+                          }
+                          className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-[#201e1d] focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Alt Text */}
+                      <div className="space-y-1">
+                        <label className="font-heading font-black text-xs text-[#201e1d]">
+                          Image Alt Text (Accessibility)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Description of the advertiser graphic"
+                          value={campaignFormData.imageAlt || ''}
+                          onChange={(e) =>
+                            setCampaignFormData({ ...campaignFormData, imageAlt: e.target.value })
+                          }
+                          className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Image Fit */}
+                      <div className="space-y-1">
+                        <label className="font-heading font-black text-xs text-[#201e1d]">
+                          Image Sizing Fit
+                        </label>
+                        <select
+                          value={campaignFormData.imageFit || 'cover'}
+                          onChange={(e) =>
+                            setCampaignFormData({
+                              ...campaignFormData,
+                              imageFit: e.target.value as AdImageFit,
+                            })
+                          }
+                          className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl px-3 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none"
+                        >
+                          <option value="cover">Cover (Fill container seamlessly)</option>
+                          <option value="contain">Contain (Fit full graphic without crop)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Caption bar toggle */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="caption-bar-toggle"
+                        checked={campaignFormData.showCaptionBarOnBanner !== false}
+                        onChange={(e) =>
+                          setCampaignFormData({
+                            ...campaignFormData,
+                            showCaptionBarOnBanner: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 rounded border-[#201e1d] text-[#201e1d] focus:ring-0 cursor-pointer"
+                      />
+                      <label
+                        htmlFor="caption-bar-toggle"
+                        className="text-xs font-bold text-[#474238] cursor-pointer"
+                      >
+                        Show bottom caption &amp; CTA button bar beneath picture banner (uncheck for pure picture banner)
+                      </label>
+                    </div>
+
+                    {/* Live Thumbnail Preview */}
+                    {campaignFormData.imageUrl && (
+                      <div className="pt-2 border-t border-[#201e1d]/15">
+                        <span className="text-[10px] font-bold text-[#645c50] block mb-1">
+                          Banner Image Live Preview:
+                        </span>
+                        <div className="relative w-full max-w-md h-28 rounded-xl border-2 border-[#201e1d] overflow-hidden bg-[#201e1d]/5 shadow-xs flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={campaignFormData.imageUrl}
+                            alt={campaignFormData.imageAlt || 'Banner preview'}
+                            className={`w-full h-full ${
+                              campaignFormData.imageFit === 'contain' ? 'object-contain' : 'object-cover'
+                            }`}
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Headline */}
                   <div className="space-y-1 sm:col-span-2">
                     <label className="font-heading font-black text-xs text-[#201e1d]">
@@ -1575,85 +1887,103 @@ export default function AdsManagerHub() {
                   key={campaign.id}
                   className="p-5 rounded-2xl bg-white border-2 border-[#201e1d] shadow-offset-2 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                 >
-                  <div className="space-y-2 max-w-2xl">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`w-3 h-3 rounded-full border border-[#201e1d] ${
-                          campaign.accentColor === 'sage'
-                            ? 'bg-[#ccdbb2]'
-                            : campaign.accentColor === 'sky'
-                            ? 'bg-[#bae6fd]'
-                            : campaign.accentColor === 'amber'
-                            ? 'bg-[#fde68a]'
-                            : 'bg-[#ffe1d0]'
-                        }`}
-                        title={`Accent: ${campaign.accentColor}`}
-                      />
-                      <h4 className="font-heading font-black text-base text-[#201e1d]">
-                        {campaign.title}
-                      </h4>
-                      {(() => {
-                        const isReferenceExample =
-                          campaign.id === 'cambridge-igcse-revision-guide' ||
-                          campaign.id === 'past-paper-formula-sheet' ||
-                          campaign.id === 'stem-graphing-calculator-tool' ||
-                          campaign.badgeText?.includes('EXAMPLE');
-
-                        if (!isReferenceExample) return null;
-                        return (
-                          <span className="px-2 py-0.5 rounded-full bg-[#fef08a] text-[#854d0e] border border-[#ca8a04]/40 font-mono text-[10px] font-bold">
-                            Reference Example
-                          </span>
-                        );
-                      })()}
-                      <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-[#eee7db] border border-[#201e1d]/30 font-bold">
-                        {campaign.sponsorName}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border border-[#201e1d]/30 ${
-                          campaign.status === 'active'
-                            ? 'bg-[#ccdbb2] text-[#14421b]'
-                            : 'bg-[#ffe4e6] text-[#be123c]'
-                        }`}
-                      >
-                        {campaign.status.toUpperCase()}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 text-[10px] font-mono font-bold">
-                        {campaign.sourceType}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-[#645c50] line-clamp-1">
-                      <strong>Headline:</strong> {campaign.headline} &bull; <em>{campaign.bodyCopy}</em>
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
-                      <span className="font-bold text-[#645c50]">Slots:</span>
-                      {campaign.targetSlots.map((s) => (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 max-w-3xl min-w-0">
+                    {campaign.imageUrl && (
+                      <div className="w-full sm:w-36 h-20 rounded-xl border-2 border-[#201e1d] overflow-hidden bg-[#f9f4ed] shrink-0 shadow-xs flex items-center justify-center">
+                        <img
+                          src={campaign.imageUrl}
+                          alt={campaign.imageAlt || campaign.title}
+                          className={`w-full h-full ${campaign.imageFit === 'contain' ? 'object-contain p-1' : 'object-cover'}`}
+                        />
+                      </div>
+                    )}
+                    <div className="space-y-2 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
-                          key={s}
-                          className="px-1.5 py-0.5 rounded-md bg-[#eee7db] border border-[#201e1d]/20 font-mono text-[10px]"
-                        >
-                          {s}
+                          className={`w-3 h-3 rounded-full border border-[#201e1d] ${
+                            campaign.accentColor === 'sage'
+                              ? 'bg-[#ccdbb2]'
+                              : campaign.accentColor === 'sky'
+                              ? 'bg-[#bae6fd]'
+                              : campaign.accentColor === 'amber'
+                              ? 'bg-[#fde68a]'
+                              : 'bg-[#ffe1d0]'
+                          }`}
+                          title={`Accent: ${campaign.accentColor}`}
+                        />
+                        <h4 className="font-heading font-black text-base text-[#201e1d]">
+                          {campaign.title}
+                        </h4>
+                        <span className="px-2 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/30 font-mono text-[10px] font-bold text-[#201e1d]">
+                          {campaign.creativeMode === 'image_banner' || (!campaign.creativeMode && campaign.imageUrl)
+                            ? '🖼️ Picture Banner'
+                            : campaign.creativeMode === 'illustrated_card'
+                            ? '🎨 Illustrated Card'
+                            : '📝 Text Card'}
                         </span>
-                      ))}
-                      {campaign.targetSubjects.length > 0 ? (
-                        <>
-                          <span className="font-bold text-[#645c50] ml-2">Subjects:</span>
-                          {campaign.targetSubjects.map((sub) => (
-                            <span
-                              key={sub}
-                              className="px-1.5 py-0.5 rounded-md bg-[#f2f8f5] border border-[#201e1d]/20 font-mono text-[10px] font-bold text-[#146C43]"
-                            >
-                              {sub}
+                        {(() => {
+                          const isReferenceExample =
+                            campaign.id === 'cambridge-igcse-revision-guide' ||
+                            campaign.id === 'past-paper-formula-sheet' ||
+                            campaign.id === 'stem-graphing-calculator-tool' ||
+                            campaign.badgeText?.includes('EXAMPLE');
+
+                          if (!isReferenceExample) return null;
+                          return (
+                            <span className="px-2 py-0.5 rounded-full bg-[#fef08a] text-[#854d0e] border border-[#ca8a04]/40 font-mono text-[10px] font-bold">
+                              Reference Example
                             </span>
-                          ))}
-                        </>
-                      ) : (
-                        <span className="px-1.5 py-0.5 rounded-md bg-[#f9f4ed] border border-[#201e1d]/20 font-mono text-[10px] text-[#645c50] ml-2">
-                          Universal Delivery
+                          );
+                        })()}
+                        <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-[#eee7db] border border-[#201e1d]/30 font-bold">
+                          {campaign.sponsorName}
                         </span>
-                      )}
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border border-[#201e1d]/30 ${
+                            campaign.status === 'active'
+                              ? 'bg-[#ccdbb2] text-[#14421b]'
+                              : 'bg-[#ffe4e6] text-[#be123c]'
+                          }`}
+                        >
+                          {campaign.status.toUpperCase()}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 text-[10px] font-mono font-bold">
+                          {campaign.sourceType}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-[#645c50] line-clamp-1">
+                        <strong>Headline:</strong> {campaign.headline} &bull; <em>{campaign.bodyCopy}</em>
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                        <span className="font-bold text-[#645c50]">Slots:</span>
+                        {campaign.targetSlots.map((s) => (
+                          <span
+                            key={s}
+                            className="px-1.5 py-0.5 rounded-md bg-[#eee7db] border border-[#201e1d]/20 font-mono text-[10px]"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                        {campaign.targetSubjects.length > 0 ? (
+                          <>
+                            <span className="font-bold text-[#645c50] ml-2">Subjects:</span>
+                            {campaign.targetSubjects.map((sub) => (
+                              <span
+                                key={sub}
+                                className="px-1.5 py-0.5 rounded-md bg-[#f2f8f5] border border-[#201e1d]/20 font-mono text-[10px] font-bold text-[#146C43]"
+                              >
+                                {sub}
+                              </span>
+                            ))}
+                          </>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded-md bg-[#f9f4ed] border border-[#201e1d]/20 font-mono text-[10px] text-[#645c50] ml-2">
+                            Universal Delivery
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
