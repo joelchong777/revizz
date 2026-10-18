@@ -395,3 +395,16 @@
   - Pushed atomically via `git push origin feat/ingestion-header-clean:main` (commit `faf5c70`).
   - Triggered and verified live Vercel production deployment (`https://revizz-sand.vercel.app`).
   - Completed clean worktree teardown and pruned the feature branch.
+
+## Reflection Log Entry - 2026-10-18 (Teacher Portal Question Bank Diagram Supabase CDN Resolution & Lightbox Zoom)
+
+- **Date**: 2026-10-18
+- **Topic**: Teacher Portal Question Bank Diagram CDN Resolution & Lightbox Zoom Upgrade
+- **Context & Problem**:
+  - In the Teacher Portal Question Bank (`/portal?tab=bank`), expanding question rows with diagrams (e.g. `Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q29`) displayed a broken image icon.
+  - Root Cause: Question items loaded from Supabase contain relative URLs such as `image_url: "/questions/0455_2024_w_11_q29.png"`. In `AdminTools.tsx`, `imageUrl` was rendered directly into raw `<img src={item.imageUrl} />` without canonical resolution. On production Vercel (`revizz-sand.vercel.app`), local asset paths 404 because Cambridge past paper diagrams are stored in Supabase Storage CDN (`question-diagrams` public bucket).
+- **Architectural Solution**:
+  - Canonical CDN Resolution (`lib/resolveDiagramUrl.ts`): Integrated `resolveDiagramUrl` across `AdminTools.tsx` (`createInitialBankItems` and `fetchLiveQuestions`), `AdminCMS.tsx`, `IngestionPreviewModal.tsx`, and `StagedPaperAuditor.tsx`. All relative paths and plain filenames are now canonicalized to `https://dmvahcaxixvhgxidmkqs.supabase.co/storage/v1/object/public/question-diagrams/<filename>`.
+  - Upgraded Question Bank Preview: Replaced the raw `<img>` tag in `AdminTools.tsx` with `CompilerDiagramPreview`, giving educators full tactile zoom lightbox functionality (Escape/click-to-close) and graceful failure/retry handling.
+- **Verification**:
+  - Ran `npm run wt verify fix-portal-diagram` (TypeScript check 0 errors, 139/139 test assertions passing across all 19 test suites, Codebase Atlas synchronized).
