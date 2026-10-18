@@ -184,7 +184,7 @@ export function StudentAchievementsActivityPanel({
               return (
                 <div
                   key={step.level}
-                  className={`p-3 rounded-2xl border-2 flex flex-col items-center text-center transition-all ${
+                  className={`p-3 rounded-2xl border-2 flex flex-col items-center text-center transition-all overflow-hidden ${
                     isCurrent
                       ? 'bg-[#FEF08A] border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] -translate-y-0.5 ring-2 ring-[#201e1d]/20'
                       : isAchieved
@@ -203,12 +203,12 @@ export function StudentAchievementsActivityPanel({
                     {step.minXp.toLocaleString()} XP
                   </span>
                   {isCurrent && (
-                    <span className="mt-1.5 text-[9px] font-black uppercase tracking-wider bg-[#201e1d] text-white rounded-md px-1.5 py-0.5 shadow-[1px_1px_0_0_#201e1d]">
+                    <span className="mt-1.5 text-[9px] font-black uppercase tracking-wider bg-[#201e1d] text-white rounded-md px-1.5 py-0.5 shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
                       Current
                     </span>
                   )}
                   {!isCurrent && isAchieved && (
-                    <span className="mt-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 rounded-md px-1.5 py-0.2">
+                    <span className="mt-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 rounded-md px-1.5 py-0.5 shrink-0 whitespace-nowrap">
                       ✓ Done
                     </span>
                   )}
@@ -234,7 +234,7 @@ export function StudentAchievementsActivityPanel({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 bg-[#FEF08A] border-2 border-[#201e1d] rounded-2xl px-4 py-1.5 font-heading font-black text-xs sm:text-sm text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] self-start sm:self-auto">
+          <div className="flex items-center gap-2 bg-[#FEF08A] border-2 border-[#201e1d] rounded-2xl px-4 py-1.5 font-heading font-black text-xs sm:text-sm text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] shrink-0 whitespace-nowrap self-start sm:self-auto">
             <span>Unlocked:</span>
             <span className="text-amber-900">{unlockedCount}</span>
             <span className="text-[#201e1d]/40">/</span>
@@ -247,7 +247,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('all')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'all'
                 ? 'bg-[#201e1d] text-white border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -258,7 +258,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('streak')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'streak'
                 ? 'bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -269,7 +269,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('mastery')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'mastery'
                 ? 'bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FEF08A] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -280,7 +280,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('precision')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'precision'
                 ? 'bg-[#BBF7D0] text-[#166534] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#BBF7D0] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -291,7 +291,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('volume')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'volume'
                 ? 'bg-[#C7D2FE] text-[#3730A3] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#C7D2FE] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -302,7 +302,7 @@ export function StudentAchievementsActivityPanel({
           <button
             type="button"
             onClick={() => setSelectedCategory('review')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black border-2 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
               selectedCategory === 'review'
                 ? 'bg-[#FECDD3] text-[#9F1239] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                 : 'bg-white hover:bg-[#FECDD3] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
@@ -318,7 +318,7 @@ export function StudentAchievementsActivityPanel({
             return (
               <div
                 key={item.id}
-                className={`rounded-2xl p-4 sm:p-5 border-2 flex flex-col justify-between transition-all ${
+                className={`rounded-2xl p-4 sm:p-5 border-2 flex flex-col justify-between transition-all overflow-hidden ${
                   item.unlocked
                     ? 'bg-[#FFFDF7] border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] hover:-translate-y-0.5'
                     : 'bg-[#F9FAFB] border-dashed border-neutral-300 text-neutral-500 opacity-75'
@@ -327,7 +327,7 @@ export function StudentAchievementsActivityPanel({
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div
-                      className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center text-2xl ${
+                      className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center text-2xl shrink-0 ${
                         item.unlocked
                           ? 'bg-[#FEF08A] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                           : 'bg-neutral-200 border-neutral-300 grayscale opacity-60'
@@ -337,11 +337,11 @@ export function StudentAchievementsActivityPanel({
                     </div>
 
                     {item.unlocked ? (
-                      <span className="text-[10px] font-black uppercase tracking-wider bg-[#DCFCE7] text-[#166534] border-2 border-[#201e1d] rounded-full px-2.5 py-0.5 shadow-[1px_1px_0_0_#201e1d]">
+                      <span className="shrink-0 whitespace-nowrap text-[10px] font-black uppercase tracking-wider bg-[#DCFCE7] text-[#166534] border-2 border-[#201e1d] rounded-full px-2.5 py-0.5 shadow-[1px_1px_0_0_#201e1d]">
                         ✓ Unlocked
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-neutral-600 rounded-full px-2 py-0.5 flex items-center gap-1">
+                      <span className="shrink-0 whitespace-nowrap text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-neutral-600 rounded-full px-2 py-0.5 flex items-center gap-1">
                         <span>🔒</span> Locked
                       </span>
                     )}
@@ -387,7 +387,7 @@ export function StudentAchievementsActivityPanel({
               Assigned Online Papers
             </h3>
           </div>
-          <span className="text-xs font-black text-neutral-600 bg-[#F9F4ED] border border-[#201e1d]/20 rounded-lg px-2.5 py-1">
+          <span className="shrink-0 whitespace-nowrap text-xs font-black text-neutral-600 bg-[#F9F4ED] border border-[#201e1d]/20 rounded-lg px-2.5 py-1">
             Teacher Homework & Mocks
           </span>
         </div>
@@ -398,15 +398,15 @@ export function StudentAchievementsActivityPanel({
               return (
                 <div
                   key={assignment.id}
-                  className="bg-[#F9F4ED] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between hover:shadow-[4px_4px_0_0_#201e1d] transition-all"
+                  className="bg-[#F9F4ED] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between hover:shadow-[4px_4px_0_0_#201e1d] transition-all overflow-hidden"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-xs font-black bg-[#201e1d] text-white px-2.5 py-0.5 rounded-lg shadow-[1px_1px_0_0_#201e1d]">
+                      <span className="shrink-0 whitespace-nowrap text-xs font-black bg-[#201e1d] text-white px-2.5 py-0.5 rounded-lg shadow-[1px_1px_0_0_#201e1d]">
                         {assignment.subjectCode} · {assignment.subjectName}
                       </span>
                       {assignment.dueDate && (
-                        <span className="text-[11px] font-black text-amber-950 bg-[#FEF08A] border border-[#201e1d] px-2 py-0.5 rounded-md shadow-[1px_1px_0_0_#201e1d]">
+                        <span className="shrink-0 whitespace-nowrap text-[11px] font-black text-amber-950 bg-[#FEF08A] border border-[#201e1d] px-2 py-0.5 rounded-md shadow-[1px_1px_0_0_#201e1d]">
                           Due {assignment.dueDate}
                         </span>
                       )}
@@ -432,7 +432,7 @@ export function StudentAchievementsActivityPanel({
                   <div className="mt-4 pt-3 border-t-2 border-[#201e1d]/10">
                     <Link
                       href={`/?assignmentId=${assignment.id}`}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-black rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                      className="w-full shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-black rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                     >
                       <span>Start Assigned Paper</span>
                       <span aria-hidden="true">→</span>
@@ -464,7 +464,7 @@ export function StudentAchievementsActivityPanel({
               Recent Quiz Round History
             </h3>
           </div>
-          <span className="text-xs font-black text-neutral-600 bg-[#F9F4ED] border border-[#201e1d]/20 rounded-lg px-2.5 py-1">
+          <span className="shrink-0 whitespace-nowrap text-xs font-black text-neutral-600 bg-[#F9F4ED] border border-[#201e1d]/20 rounded-lg px-2.5 py-1">
             Round Telemetry
           </span>
         </div>
@@ -478,22 +478,22 @@ export function StudentAchievementsActivityPanel({
               return (
                 <div
                   key={round.id}
-                  className="bg-[#F9F4ED] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[2px_2px_0_0_#201e1d] hover:shadow-[3px_3px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all"
+                  className="bg-[#F9F4ED] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[2px_2px_0_0_#201e1d] hover:shadow-[3px_3px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all overflow-hidden"
                 >
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                      <span className="text-xs font-black bg-[#201e1d] text-white px-2.5 py-0.5 rounded-lg shadow-[1px_1px_0_0_#201e1d]">
+                      <span className="shrink-0 whitespace-nowrap text-xs font-black bg-[#201e1d] text-white px-2.5 py-0.5 rounded-lg shadow-[1px_1px_0_0_#201e1d]">
                         {round.subject || 'Economics 0455'}
                       </span>
-                      <span className="text-xs font-black bg-[#E5E7EB] text-neutral-800 border border-[#201e1d]/30 px-2 py-0.5 rounded-lg">
+                      <span className="shrink-0 whitespace-nowrap text-xs font-black bg-[#E5E7EB] text-neutral-800 border border-[#201e1d]/30 px-2 py-0.5 rounded-lg">
                         {round.sourceLabel || round.sourceType}
                       </span>
                       {round.isTimed && (
-                        <span className="text-xs font-bold text-neutral-700 bg-white border border-[#201e1d]/30 px-2 py-0.5 rounded-lg">
+                        <span className="shrink-0 whitespace-nowrap text-xs font-bold text-neutral-700 bg-white border border-[#201e1d]/30 px-2 py-0.5 rounded-lg">
                           ⏱️ Timed
                         </span>
                       )}
-                      <span className="text-xs font-bold text-neutral-400">
+                      <span className="shrink-0 whitespace-nowrap text-xs font-bold text-neutral-400">
                         {formatTimestamp(round.completedAt)}
                       </span>
                     </div>
@@ -525,7 +525,7 @@ export function StudentAchievementsActivityPanel({
 
                   <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
                     <span
-                      className={`text-xs sm:text-sm font-heading font-black px-3 py-1.5 rounded-xl border-2 shadow-[2px_2px_0_0_#201e1d] ${
+                      className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-heading font-black px-3 py-1.5 rounded-xl border-2 shadow-[2px_2px_0_0_#201e1d] ${
                         isHighScore
                           ? 'bg-[#BBF7D0] text-[#166534] border-[#201e1d]'
                           : isMidScore
@@ -537,7 +537,7 @@ export function StudentAchievementsActivityPanel({
                     </span>
 
                     {round.xpEarned > 0 && (
-                      <span className="text-xs sm:text-sm font-heading font-black bg-[#EEF2FF] text-indigo-950 border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] px-3 py-1.5 rounded-xl">
+                      <span className="shrink-0 whitespace-nowrap text-xs sm:text-sm font-heading font-black bg-[#EEF2FF] text-indigo-950 border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] px-3 py-1.5 rounded-xl">
                         +{round.xpEarned} XP
                       </span>
                     )}
@@ -551,7 +551,7 @@ export function StudentAchievementsActivityPanel({
                 <button
                   type="button"
                   onClick={() => setShowAllRounds(!showAllRounds)}
-                  className="px-5 py-2.5 text-xs font-black rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-[#201e1d] transition-all cursor-pointer"
+                  className="shrink-0 whitespace-nowrap px-5 py-2.5 text-xs font-black rounded-xl bg-white hover:bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-[#201e1d] transition-all cursor-pointer"
                 >
                   {showAllRounds
                     ? 'Show Fewer Rounds ▴'
@@ -570,7 +570,7 @@ export function StudentAchievementsActivityPanel({
             <button
               type="button"
               onClick={onStartPractice}
-              className="mt-4 px-6 py-2.5 text-xs font-heading font-black rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer inline-flex items-center gap-2"
+              className="shrink-0 whitespace-nowrap mt-4 px-6 py-2.5 text-xs font-heading font-black rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer inline-flex items-center gap-2"
             >
               <span>Start a Quiz Round</span>
               <span aria-hidden="true">→</span>

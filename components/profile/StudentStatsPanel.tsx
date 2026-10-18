@@ -74,17 +74,17 @@ export function StudentStatsPanel({
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
           {/* Card 1: Overall Syllabus Mastery */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Syllabus Mastery
                 </p>
-                <div className="text-3xl sm:text-4xl font-heading text-[#201e1d] mt-1">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 truncate">
                   {statsSummary.overallMasteryPct}%
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d]">
+              <div className="w-10 h-10 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 🎯
               </div>
             </div>
@@ -103,17 +103,17 @@ export function StudentStatsPanel({
           </div>
 
           {/* Card 2: Total XP Earned */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Total XP Earned
                 </p>
-                <div className="text-3xl sm:text-4xl font-heading text-indigo-700 mt-1">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-indigo-700 mt-1 truncate">
                   +{userXp.toLocaleString()}
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d]">
+              <div className="w-10 h-10 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 ⚡
               </div>
             </div>
@@ -126,17 +126,17 @@ export function StudentStatsPanel({
           </div>
 
           {/* Card 3: Current & Best Streak */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Current & Best Streak
                 </p>
-                <div className="text-3xl sm:text-4xl font-heading text-[#201e1d] mt-1 flex items-center gap-1.5">
-                  <span className="text-amber-500">🔥</span> {currentStreak}
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 flex items-center gap-1.5 truncate">
+                  <span className="text-amber-500 shrink-0">🔥</span> <span>{currentStreak}</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#FDE68A] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d]">
+              <div className="w-10 h-10 rounded-2xl bg-[#FDE68A] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 🏆
               </div>
             </div>
@@ -149,17 +149,17 @@ export function StudentStatsPanel({
           </div>
 
           {/* Card 4: Average Round Accuracy */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Round Accuracy
                 </p>
-                <div className="text-3xl sm:text-4xl font-heading text-[#201e1d] mt-1">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 truncate">
                   {statsSummary.averageRoundAccuracyPct}%
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#99F6E4] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d]">
+              <div className="w-10 h-10 rounded-2xl bg-[#99F6E4] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 📊
               </div>
             </div>
@@ -175,57 +175,57 @@ export function StudentStatsPanel({
           <button
             type="button"
             onClick={onOpenReviewTab}
-            className="text-left bg-[#FFFDF7] hover:bg-rose-50/50 border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_#201e1d] cursor-pointer group"
+            className="text-left bg-[#FFFDF7] hover:bg-rose-50/50 border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_0_#201e1d] cursor-pointer group overflow-hidden"
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700 truncate">
                   Review Queue
                 </p>
-                <div className="text-3xl sm:text-4xl font-heading text-rose-950 mt-1 flex items-center gap-1.5">
-                  <span>🧠</span> {statsSummary.reviewPileQuestionCount}
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-rose-950 mt-1 flex items-center gap-1.5 truncate">
+                  <span className="shrink-0">🧠</span> <span>{statsSummary.reviewPileQuestionCount}</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] group-hover:scale-105 transition-transform shrink-0">
                 🔥
               </div>
             </div>
 
-            <div className="mt-3 pt-2 border-t-2 border-rose-100 flex items-center justify-between">
-              <span className="text-[11px] font-black text-rose-800">
+            <div className="mt-3 pt-2 border-t-2 border-rose-100 flex items-center justify-between gap-1">
+              <span className="text-[11px] font-black text-rose-800 truncate">
                 {statsSummary.reviewPileQuestionCount > 0 ? 'Questions need revision' : 'Pile is clean!'}
               </span>
-              <span className="text-xs font-heading text-rose-800 group-hover:translate-x-0.5 transition-transform">
+              <span className="text-xs font-heading text-rose-800 group-hover:translate-x-0.5 transition-transform shrink-0 whitespace-nowrap">
                 Open →
               </span>
             </div>
           </button>
 
           {/* Card 6: Topics Mastered Breakdown */}
-          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500">
+          <div className="bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 truncate">
                   Topic Progression
                 </p>
-                <div className="text-3xl sm:text-4xl font-heading text-[#201e1d] mt-1">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-heading text-[#201e1d] mt-1 truncate">
                   {statsSummary.masteredTopicsCount}{' '}
-                  <span className="text-sm font-bold text-neutral-500 font-sans">Mastered</span>
+                  <span className="text-xs sm:text-sm font-bold text-neutral-500 font-sans">Mastered</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#BBF7D0] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d]">
+              <div className="w-10 h-10 rounded-2xl bg-[#BBF7D0] border-2 border-[#201e1d] flex items-center justify-center text-xl shadow-[1.5px_1.5px_0_0_#201e1d] shrink-0">
                 👑
               </div>
             </div>
 
             <div className="mt-3 pt-2 border-t-2 border-neutral-100 flex items-center gap-1.5 text-[11px] font-bold text-neutral-600 flex-wrap">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-[#201e1d] font-bold">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-[#201e1d] font-bold shrink-0">
                 👑 {statsSummary.masteredTopicsCount}
               </span>
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-teal-50 text-teal-900 border border-[#201e1d] font-bold">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-teal-50 text-teal-900 border border-[#201e1d] font-bold shrink-0">
                 ⚡ {statsSummary.proficientTopicsCount}
               </span>
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-orange-50 text-orange-900 border border-[#201e1d] font-bold">
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-orange-50 text-orange-900 border border-[#201e1d] font-bold shrink-0">
                 🌱 {statsSummary.noviceTopicsCount}
               </span>
             </div>
@@ -242,7 +242,7 @@ export function StudentStatsPanel({
               <span className="text-xl">👑</span>
               <h3 className="font-heading text-base sm:text-lg text-[#201e1d]">Strongest Topics</h3>
             </div>
-            <span className="text-xs font-bold text-emerald-900 bg-emerald-100 border border-emerald-400 rounded-xl px-2.5 py-0.5">
+            <span className="shrink-0 whitespace-nowrap text-xs font-bold text-emerald-900 bg-emerald-100 border border-emerald-400 rounded-xl px-2.5 py-0.5">
               High Mastery
             </span>
           </div>
@@ -257,11 +257,11 @@ export function StudentStatsPanel({
                     className="p-3.5 rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[1.5px_1.5px_0_0_#201e1d]"
                   >
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="font-heading text-xs sm:text-sm text-[#201e1d] line-clamp-1">
+                      <span className="font-heading text-xs sm:text-sm text-[#201e1d] min-w-0 flex-1 truncate">
                         {topic.topicName}
                       </span>
                       <span
-                        className={`text-[11px] font-black px-2 py-0.5 rounded-full shrink-0 border border-[#201e1d] ${badge.chipClass}`}
+                        className={`text-[11px] font-black px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap border border-[#201e1d] ${badge.chipClass}`}
                       >
                         {badge.icon} {topic.masteryPct}%
                       </span>
@@ -299,7 +299,7 @@ export function StudentStatsPanel({
               <span className="text-xl">🎯</span>
               <h3 className="font-heading text-base sm:text-lg text-[#201e1d]">Priority Focus</h3>
             </div>
-            <span className="text-xs font-bold text-amber-900 bg-amber-100 border border-amber-400 rounded-xl px-2.5 py-0.5">
+            <span className="shrink-0 whitespace-nowrap text-xs font-bold text-amber-900 bg-amber-100 border border-amber-400 rounded-xl px-2.5 py-0.5">
               Needs Practice
             </span>
           </div>
@@ -314,11 +314,11 @@ export function StudentStatsPanel({
                     className="p-3.5 rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[1.5px_1.5px_0_0_#201e1d]"
                   >
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="font-heading text-xs sm:text-sm text-[#201e1d] line-clamp-1">
+                      <span className="font-heading text-xs sm:text-sm text-[#201e1d] min-w-0 flex-1 truncate">
                         {topic.topicName}
                       </span>
                       <span
-                        className={`text-[11px] font-black px-2 py-0.5 rounded-full shrink-0 border border-[#201e1d] ${badge.chipClass}`}
+                        className={`text-[11px] font-black px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap border border-[#201e1d] ${badge.chipClass}`}
                       >
                         {badge.icon} {topic.masteryPct}%
                       </span>
@@ -332,7 +332,7 @@ export function StudentStatsPanel({
                     </div>
 
                     <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-neutral-200">
-                      <div className="text-[11px] font-bold text-neutral-600">
+                      <div className="text-[11px] font-bold text-neutral-600 min-w-0 flex-1 truncate mr-2">
                         {topic.reviewMistakeCount > 0 ? (
                           <span className="text-rose-700 font-black">🔥 {topic.reviewMistakeCount} in review pile</span>
                         ) : (
@@ -343,7 +343,7 @@ export function StudentStatsPanel({
                       <button
                         type="button"
                         onClick={() => onDrillTopic(topic.topicId)}
-                        className="inline-flex items-center gap-1 px-3 py-1 text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                        className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-3 py-1 text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                       >
                         <span>Drill Now</span>
                         <span aria-hidden="true">→</span>
@@ -425,7 +425,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('all')}
-              className={`px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'all'
                   ? 'bg-[#201e1d] text-white shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-white text-neutral-700 hover:bg-neutral-100 shadow-[1px_1px_0_0_#201e1d]'
@@ -436,7 +436,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('master')}
-              className={`px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'master'
                   ? 'bg-[#FFDE59] text-[#201e1d] font-heading shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-[#fff8db] text-amber-900 hover:bg-[#FEF08A] shadow-[1px_1px_0_0_#201e1d]'
@@ -447,7 +447,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('proficient')}
-              className={`px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'proficient'
                   ? 'bg-[#14B8A6] text-white font-heading shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-[#f0fae1] text-teal-900 hover:bg-[#99F6E4] shadow-[1px_1px_0_0_#201e1d]'
@@ -458,7 +458,7 @@ export function StudentStatsPanel({
             <button
               type="button"
               onClick={() => setTierFilter('novice')}
-              className={`px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl border-2 border-[#201e1d] text-xs font-bold transition-all cursor-pointer ${
                 tierFilter === 'novice'
                   ? 'bg-[#FB7185] text-white font-heading shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-[#fff2eb] text-orange-950 hover:bg-[#FECDD3] shadow-[1px_1px_0_0_#201e1d]'
@@ -478,16 +478,16 @@ export function StudentStatsPanel({
                 return (
                   <div
                     key={topic.topicId}
-                    className="bg-[#f9f4ed] hover:bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between transition-all"
+                    className="bg-[#f9f4ed] hover:bg-[#FFFDF7] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_0_#201e1d] flex flex-col justify-between transition-all overflow-hidden"
                   >
                     <div>
                       {/* Topic Header Row */}
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="font-heading text-base sm:text-lg text-[#201e1d] leading-snug">
+                        <h4 className="font-heading text-base sm:text-lg text-[#201e1d] leading-snug min-w-0 flex-1">
                           {topic.topicName}
                         </h4>
                         <span
-                          className={`text-xs font-black px-2.5 py-0.5 rounded-full shrink-0 border border-[#201e1d] ${badge.chipClass}`}
+                          className={`text-xs font-black px-2.5 py-0.5 rounded-full shrink-0 whitespace-nowrap border border-[#201e1d] ${badge.chipClass}`}
                         >
                           {badge.icon} {badge.label} · {topic.masteryPct}%
                         </span>
@@ -532,7 +532,7 @@ export function StudentStatsPanel({
                       <button
                         type="button"
                         onClick={() => onDrillTopic(topic.topicId)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                        className="w-full sm:w-auto shrink-0 whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-heading rounded-xl bg-[#FFDE59] hover:bg-[#FACC15] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-[#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                       >
                         <span>Practice Topic</span>
                         <span aria-hidden="true">→</span>

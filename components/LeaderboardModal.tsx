@@ -99,8 +99,8 @@ export default function LeaderboardModal({
               onClick={() => setActiveTab('account')}
               className={
                 activeTab === 'account'
-                  ? 'flex-1 flex items-center justify-center gap-1.5 bg-[#201e1d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
-                  : 'flex-1 flex items-center justify-center gap-1.5 bg-white text-[#201e1d] border-2 border-[#201e1d] hover:bg-[#FEF08A] shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
+                  ? 'flex-1 shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 bg-[#201e1d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
+                  : 'flex-1 shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 bg-white text-[#201e1d] border-2 border-[#201e1d] hover:bg-[#FEF08A] shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
               }
             >
               <span>👤</span>
@@ -111,8 +111,8 @@ export default function LeaderboardModal({
               onClick={() => setActiveTab('leaderboard')}
               className={
                 activeTab === 'leaderboard'
-                  ? 'flex-1 flex items-center justify-center gap-1.5 bg-[#201e1d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
-                  : 'flex-1 flex items-center justify-center gap-1.5 bg-white text-[#201e1d] border-2 border-[#201e1d] hover:bg-[#FEF08A] shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
+                  ? 'flex-1 shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 bg-[#201e1d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
+                  : 'flex-1 shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 bg-white text-[#201e1d] border-2 border-[#201e1d] hover:bg-[#FEF08A] shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none font-heading font-black text-xs sm:text-sm py-2 px-3 rounded-xl transition-all cursor-pointer'
               }
             >
               <span>🏆</span>
@@ -135,15 +135,15 @@ export default function LeaderboardModal({
                     </h3>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       {isSchool ? (
-                        <span className="bg-[#EEF2FF] border border-[#201e1d] text-indigo-950 font-black text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-[1px_1px_0_0_#201e1d] shrink-0">
+                        <span className="bg-[#EEF2FF] border border-[#201e1d] text-indigo-950 font-black text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
                           🎓 School Account
                         </span>
                       ) : isDemo ? (
-                        <span className="bg-[#FEF08A] border border-[#201e1d] text-amber-950 font-black text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-[1px_1px_0_0_#201e1d] shrink-0">
+                        <span className="bg-[#FEF08A] border border-[#201e1d] text-amber-950 font-black text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
                           ⚡ Guest Session · Unsaved
                         </span>
                       ) : (
-                        <span className="bg-[#DCFCE7] border border-[#201e1d] text-emerald-950 font-black text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-[1px_1px_0_0_#201e1d] shrink-0">
+                        <span className="bg-[#DCFCE7] border border-[#201e1d] text-emerald-950 font-black text-[11px] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
                           ✨ Verified Student
                         </span>
                       )}
@@ -158,20 +158,20 @@ export default function LeaderboardModal({
 
                 {/* Stats Summary Grid */}
                 <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                  <div className="bg-[#FEF08A] border-2 border-[#201e1d] rounded-2xl p-2.5 text-center shadow-[2px_2px_0_0_#201e1d]">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-amber-950/70">Total XP</div>
+                  <div className="bg-[#FEF08A] border-2 border-[#201e1d] rounded-2xl p-2.5 text-center shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-amber-950/70 truncate">Total XP</div>
                     <div className="font-heading font-black text-sm sm:text-base text-[#201e1d] truncate mt-0.5">
                       +{userProfile?.total_xp || 0} XP
                     </div>
                   </div>
-                  <div className="bg-[#FED7AA] border-2 border-[#201e1d] rounded-2xl p-2.5 text-center shadow-[2px_2px_0_0_#201e1d]">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-amber-950/70">Streak</div>
+                  <div className="bg-[#FED7AA] border-2 border-[#201e1d] rounded-2xl p-2.5 text-center shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-amber-950/70 truncate">Streak</div>
                     <div className="font-heading font-black text-sm sm:text-base text-[#201e1d] truncate mt-0.5">
                       🔥 {userProfile?.current_streak || 0}
                     </div>
                   </div>
-                  <div className="bg-[#C7D2FE] border-2 border-[#201e1d] rounded-2xl p-2.5 text-center shadow-[2px_2px_0_0_#201e1d]">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-indigo-950/70">Status</div>
+                  <div className="bg-[#C7D2FE] border-2 border-[#201e1d] rounded-2xl p-2.5 text-center shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-indigo-950/70 truncate">Status</div>
                     <div className="font-heading font-black text-sm sm:text-base text-[#201e1d] truncate mt-0.5">
                       {isDemo ? 'Guest' : 'Ranked'}
                     </div>
@@ -179,12 +179,12 @@ export default function LeaderboardModal({
                 </div>
 
                 {/* Student Profile Hub Navigation Card */}
-                <div className="bg-[#F9F4ED] border-2 border-[#201e1d] rounded-2xl p-3.5 shadow-[3px_3px_0_0_#201e1d] space-y-2.5">
+                <div className="bg-[#F9F4ED] border-2 border-[#201e1d] rounded-2xl p-3.5 shadow-[3px_3px_0_0_#201e1d] space-y-2.5 overflow-hidden">
                   <Link
                     href="/profile"
                     onClick={onClose}
                     data-testid="open-profile-hub-btn"
-                    className="w-full bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] rounded-xl py-2.5 px-3.5 font-heading font-black text-xs sm:text-sm text-[#201e1d] flex items-center justify-between transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                    className="w-full shrink-0 whitespace-nowrap bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] rounded-xl py-2.5 px-3.5 font-heading font-black text-xs sm:text-sm text-[#201e1d] flex items-center justify-between transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                   >
                     <span>🏠 Open Full Student Profile Hub</span>
                     <span aria-hidden="true">→</span>
@@ -193,28 +193,28 @@ export default function LeaderboardModal({
                     <Link
                       href="/profile?tab=stats"
                       onClick={onClose}
-                      className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                      className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       📊 Stats & Mastery
                     </Link>
                     <Link
                       href="/profile?tab=review"
                       onClick={onClose}
-                      className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                      className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       🧠 Questions to Review
                     </Link>
                     <Link
                       href="/profile?tab=achievements"
                       onClick={onClose}
-                      className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                      className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       🏅 Badges & Activity
                     </Link>
                     <Link
                       href="/profile?tab=settings"
                       onClick={onClose}
-                      className="p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                      className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       ⚙️ Profile Settings
                     </Link>
@@ -230,7 +230,7 @@ export default function LeaderboardModal({
                     <button
                       type="button"
                       onClick={() => setAuthModalOpen(true)}
-                      className="w-full min-h-[44px] bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] rounded-xl font-heading font-black text-xs sm:text-sm text-[#201e1d] flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
+                      className="w-full shrink-0 whitespace-nowrap min-h-[44px] bg-[#FEF08A] hover:bg-[#FDE047] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] rounded-xl font-heading font-black text-xs sm:text-sm text-[#201e1d] flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all"
                     >
                       <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -243,7 +243,7 @@ export default function LeaderboardModal({
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="w-full text-center text-xs font-heading font-black text-rose-700 hover:text-rose-900 hover:underline py-1 cursor-pointer"
+                      className="w-full shrink-0 whitespace-nowrap text-center text-xs font-heading font-black text-rose-700 hover:text-rose-900 hover:underline py-1 cursor-pointer"
                     >
                       Exit Demo / Reset Session
                     </button>
@@ -251,7 +251,7 @@ export default function LeaderboardModal({
                 ) : (
                 <div className="space-y-3">
                   <label className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-[#201e1d] bg-white shadow-[2px_2px_0_0_#201e1d] cursor-pointer">
-                    <div className="space-y-0.5 pr-2">
+                    <div className="space-y-0.5 pr-2 min-w-0 flex-1">
                       <span className="text-xs sm:text-sm font-heading font-black text-[#201e1d] block">Appear on Global Leaderboard</span>
                       <p className="text-[11px] text-neutral-500 font-bold">Allow other Cambridge students to see your weekly score</p>
                     </div>
@@ -265,7 +265,7 @@ export default function LeaderboardModal({
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full py-2.5 rounded-xl border-2 border-[#201e1d] bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading font-black text-xs sm:text-sm shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                    className="w-full shrink-0 whitespace-nowrap py-2.5 rounded-xl border-2 border-[#201e1d] bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading font-black text-xs sm:text-sm shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                   >
                     Sign Out of Account
                   </button>
@@ -280,7 +280,7 @@ export default function LeaderboardModal({
                   <p className="text-[11px] text-neutral-500 font-bold">Updated live with XP earned across past papers</p>
                 </div>
                 {loading && (
-                  <span className="text-[11px] font-black text-neutral-400 animate-pulse bg-neutral-100 px-2 py-0.5 rounded-md border border-[#201e1d]/20">
+                  <span className="text-[11px] font-black text-neutral-400 animate-pulse bg-neutral-100 px-2 py-0.5 rounded-md border border-[#201e1d]/20 shrink-0 whitespace-nowrap">
                     Refreshing...
                   </span>
                 )}
@@ -293,7 +293,7 @@ export default function LeaderboardModal({
                   leaderboard.map((entry, idx) => (
                     <div
                       key={entry.id}
-                      className={`flex items-center justify-between p-3 rounded-2xl border-2 border-[#201e1d] transition-all ${
+                      className={`flex items-center justify-between p-3 rounded-2xl border-2 border-[#201e1d] transition-all overflow-hidden ${
                         idx === 0
                           ? 'bg-[#FEF08A] shadow-[3px_3px_0_0_#201e1d]'
                           : idx === 1
@@ -313,12 +313,12 @@ export default function LeaderboardModal({
                           {entry.display_name} {entry.is_school_account && '🎓'}
                         </span>
                         {entry.id === userProfile?.id && (
-                          <span className="text-[10px] font-black uppercase tracking-wider bg-[#201e1d] text-white px-2 py-0.5 rounded-md shadow-[1px_1px_0_0_#201e1d] shrink-0">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-[#201e1d] text-white px-2 py-0.5 rounded-md shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
                             You
                           </span>
                         )}
                       </div>
-                      <span className="shrink-0 bg-[#C7D2FE] border-2 border-[#201e1d] rounded-xl px-2.5 py-0.5 font-heading font-black text-xs text-[#201e1d] shadow-[1px_1px_0_0_#201e1d]">
+                      <span className="shrink-0 whitespace-nowrap bg-[#C7D2FE] border-2 border-[#201e1d] rounded-xl px-2.5 py-0.5 font-heading font-black text-xs text-[#201e1d] shadow-[1px_1px_0_0_#201e1d]">
                         {entry.total_xp} XP
                       </span>
                     </div>

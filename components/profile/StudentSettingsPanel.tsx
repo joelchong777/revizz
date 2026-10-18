@@ -179,7 +179,7 @@ export function StudentSettingsPanel({
       )}
 
       {/* 1. Identity & Avatar Section */}
-      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d]">
+      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d] overflow-hidden">
         <div className="flex items-center gap-3.5 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-2xl shrink-0">
             {currentAvatar}
@@ -242,7 +242,7 @@ export function StudentSettingsPanel({
             <button
               type="submit"
               disabled={savingName || !displayNameInput.trim()}
-              className="px-6 py-3 rounded-2xl bg-[#FEF08A] hover:bg-[#FDE047] text-[#201e1d] font-heading font-black border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+              className="shrink-0 whitespace-nowrap px-6 py-3 rounded-2xl bg-[#FEF08A] hover:bg-[#FDE047] text-[#201e1d] font-heading font-black border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
               {savingName ? (
                 <span>Saving...</span>
@@ -259,27 +259,27 @@ export function StudentSettingsPanel({
         </form>
 
         {/* Account Badge & Verification Status */}
-        <div className="p-4 rounded-2xl bg-[#F9F4ED] border-2 border-[#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[2px_2px_0_0_#201e1d]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-[1px_1px_0_0_#201e1d]">
+        <div className="p-4 rounded-2xl bg-[#F9F4ED] border-2 border-[#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0">
               <User className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-heading font-black text-sm sm:text-base text-[#201e1d]">
+                <span className="font-heading font-black text-sm sm:text-base text-[#201e1d] truncate">
                   {userProfile?.email || 'Guest Student'}
                 </span>
                 {userProfile?.is_school_account ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#DCFCE7] text-emerald-950 border border-[#201e1d]">
+                  <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#DCFCE7] text-emerald-950 border border-[#201e1d]">
                     🎓 School Account
                   </span>
                 ) : userProfile && !isDemoSession ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#EEF2FF] text-indigo-950 border border-[#201e1d]">
+                  <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#EEF2FF] text-indigo-950 border border-[#201e1d]">
                     <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                     Verified Student
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#FEF08A] text-amber-950 border border-[#201e1d]">
+                  <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#FEF08A] text-amber-950 border border-[#201e1d]">
                     ⚡ Guest Session · Unsaved
                   </span>
                 )}
@@ -296,7 +296,7 @@ export function StudentSettingsPanel({
             <button
               type="button"
               onClick={onOpenAuthModal}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2 rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Sign In to Save</span>
@@ -306,7 +306,7 @@ export function StudentSettingsPanel({
       </section>
 
       {/* 2. Cambridge Study Target & Exam Countdown Config */}
-      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d]">
+      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d] overflow-hidden">
         <div className="flex items-center gap-3.5 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#BBF7D0] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-emerald-900 shrink-0">
             <Target className="w-6 h-6" />
@@ -334,17 +334,17 @@ export function StudentSettingsPanel({
                   key={subj}
                   type="button"
                   onClick={() => onUpdatePreferences({ primarySubject: subj })}
-                  className={`p-3.5 rounded-2xl font-black text-sm text-left flex items-center justify-between transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                  className={`shrink-0 p-3.5 rounded-2xl font-black text-sm text-left flex items-center justify-between transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                     isSelected
                       ? 'bg-[#FEF08A] text-[#201e1d] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] scale-[1.02]'
                       : 'bg-[#F9F4ED] text-[#201e1d] border-2 border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-white'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-[#201e1d]" />
+                  <span className="flex items-center gap-2 shrink-0 whitespace-nowrap">
+                    <BookOpen className="w-4 h-4 text-[#201e1d] shrink-0" />
                     {subj}
                   </span>
-                  {isSelected && <Check className="w-4 h-4 text-[#201e1d] stroke-[3]" />}
+                  {isSelected && <Check className="w-4 h-4 text-[#201e1d] stroke-[3] shrink-0" />}
                 </button>
               );
             })}
@@ -365,7 +365,7 @@ export function StudentSettingsPanel({
                     key={series}
                     type="button"
                     onClick={() => onUpdatePreferences({ targetExamSeries: series })}
-                    className={`py-3 rounded-2xl font-black text-xs sm:text-sm text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                    className={`shrink-0 whitespace-nowrap py-3 rounded-2xl font-black text-xs sm:text-sm text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                       isSelected
                         ? 'bg-[#201e1d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                         : 'bg-[#F9F4ED] text-[#201e1d] border-2 border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-white'
@@ -390,7 +390,7 @@ export function StudentSettingsPanel({
                     key={year}
                     type="button"
                     onClick={() => onUpdatePreferences({ targetExamYear: year })}
-                    className={`py-3 rounded-2xl font-black text-xs sm:text-sm text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                    className={`shrink-0 whitespace-nowrap py-3 rounded-2xl font-black text-xs sm:text-sm text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                       isSelected
                         ? 'bg-[#201e1d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                         : 'bg-[#F9F4ED] text-[#201e1d] border-2 border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-white'
@@ -417,7 +417,7 @@ export function StudentSettingsPanel({
                   key={goal}
                   type="button"
                   onClick={() => onUpdatePreferences({ dailyQuestionGoal: goal })}
-                  className={`py-3 rounded-2xl font-heading font-black text-sm sm:text-base text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                  className={`shrink-0 whitespace-nowrap py-3 rounded-2xl font-heading font-black text-sm sm:text-base text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                     isSelected
                       ? 'bg-[#FEF08A] text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                       : 'bg-[#F9F4ED] text-[#201e1d] border-2 border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-white'
@@ -432,7 +432,7 @@ export function StudentSettingsPanel({
       </section>
 
       {/* 3. Default Quiz Gameplay Rules */}
-      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d]">
+      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d] overflow-hidden">
         <div className="flex items-center gap-3.5 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-indigo-950 shrink-0">
             <Layers className="w-6 h-6" />
@@ -460,7 +460,7 @@ export function StudentSettingsPanel({
                   key={length}
                   type="button"
                   onClick={() => onUpdatePreferences({ defaultRoundLength: length })}
-                  className={`py-3 sm:py-3.5 rounded-2xl font-heading font-black text-sm sm:text-base text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                  className={`shrink-0 whitespace-nowrap py-3 sm:py-3.5 rounded-2xl font-heading font-black text-sm sm:text-base text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                     isSelected
                       ? 'bg-[#FEF08A] text-[#201e1d] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] scale-[1.02]'
                       : 'bg-[#F9F4ED] text-[#201e1d] border-2 border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-white'
@@ -482,7 +482,7 @@ export function StudentSettingsPanel({
             <button
               type="button"
               onClick={() => onUpdatePreferences({ defaultTimedMode: true })}
-              className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 overflow-hidden ${
                 preferences.defaultTimedMode
                   ? 'bg-[#FFFDF7] border-[#201e1d] text-[#201e1d] shadow-[3px_3px_0_0_#201e1d]'
                   : 'bg-[#F9F4ED] border-[#201e1d]/30 text-neutral-600 hover:border-[#201e1d] hover:bg-white'
@@ -503,7 +503,7 @@ export function StudentSettingsPanel({
             <button
               type="button"
               onClick={() => onUpdatePreferences({ defaultTimedMode: false })}
-              className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 overflow-hidden ${
                 !preferences.defaultTimedMode
                   ? 'bg-[#FFFDF7] border-[#201e1d] text-[#201e1d] shadow-[3px_3px_0_0_#201e1d]'
                   : 'bg-[#F9F4ED] border-[#201e1d]/30 text-neutral-600 hover:border-[#201e1d] hover:bg-white'
@@ -536,7 +536,7 @@ export function StudentSettingsPanel({
                   key={opt.value}
                   type="button"
                   onClick={() => onUpdatePreferences({ defaultDiagramFilter: opt.value })}
-                  className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                  className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 overflow-hidden ${
                     isSelected
                       ? 'bg-[#FEF08A] border-[#201e1d] text-[#201e1d] shadow-[3px_3px_0_0_#201e1d]'
                       : 'bg-[#F9F4ED] border-[#201e1d]/30 text-[#201e1d] hover:border-[#201e1d] hover:bg-white'
@@ -555,7 +555,7 @@ export function StudentSettingsPanel({
       </section>
 
       {/* 4. Audio, Leaderboard Privacy & Data Controls */}
-      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d]">
+      <section className="bg-[#FFFDF7] rounded-2xl sm:rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d] overflow-hidden">
         <div className="flex items-center gap-3.5 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#FED7AA] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-amber-950 shrink-0">
             <Volume2 className="w-6 h-6" />
@@ -572,13 +572,13 @@ export function StudentSettingsPanel({
 
         <div className="space-y-4">
           {/* Sound Effects Toggle */}
-          <div className="p-4 rounded-2xl bg-[#F9F4ED] border-2 border-[#201e1d] flex items-center justify-between gap-3 shadow-[2px_2px_0_0_#201e1d]">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-[1px_1px_0_0_#201e1d]">
+          <div className="p-4 rounded-2xl bg-[#F9F4ED] border-2 border-[#201e1d] flex items-center justify-between gap-3 shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0">
                 {soundActive ? <Volume2 className="w-5 h-5 text-emerald-700" /> : <VolumeX className="w-5 h-5 text-neutral-400" />}
               </div>
-              <div>
-                <span className="font-heading font-black text-sm text-[#201e1d] block">
+              <div className="min-w-0 flex-1">
+                <span className="font-heading font-black text-sm text-[#201e1d] block truncate">
                   Sound Effects (Web Audio Synthesizer)
                 </span>
                 <span className="text-xs text-neutral-500 font-bold">
@@ -590,7 +590,7 @@ export function StudentSettingsPanel({
             <button
               type="button"
               onClick={handleToggleSound}
-              className={`px-4 py-2 rounded-xl font-heading font-black text-xs border-2 border-[#201e1d] transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_0_#201e1d] ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl font-heading font-black text-xs border-2 border-[#201e1d] transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_0_#201e1d] ${
                 soundActive
                   ? 'bg-[#BBF7D0] text-[#166534]'
                   : 'bg-white text-neutral-600'
@@ -601,12 +601,12 @@ export function StudentSettingsPanel({
           </div>
 
           {/* Global Leaderboard Opt-In Toggle */}
-          <div className="p-4 rounded-2xl bg-[#F9F4ED] border-2 border-[#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[2px_2px_0_0_#201e1d]">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-[1px_1px_0_0_#201e1d]">
+          <div className="p-4 rounded-2xl bg-[#F9F4ED] border-2 border-[#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0">
                 <Trophy className="w-5 h-5 text-amber-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <span className="font-heading font-black text-sm text-[#201e1d] block">
                   Weekly Leaderboard Participation
                 </span>
@@ -630,7 +630,7 @@ export function StudentSettingsPanel({
               <button
                 type="button"
                 onClick={onOpenAuthModal}
-                className="px-4 py-2 rounded-xl bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                className="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
               >
                 Sign In to Join
               </button>
@@ -639,7 +639,7 @@ export function StudentSettingsPanel({
                 type="button"
                 disabled={togglingLeaderboard}
                 onClick={handleToggleLeaderboard}
-                className={`px-4 py-2 rounded-xl font-heading font-black text-xs border-2 border-[#201e1d] transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_0_#201e1d] disabled:opacity-50 ${
+                className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl font-heading font-black text-xs border-2 border-[#201e1d] transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_0_#201e1d] disabled:opacity-50 ${
                   userProfile.opt_in_leaderboard
                     ? 'bg-[#FEF08A] text-[#201e1d]'
                     : 'bg-white text-neutral-600'
@@ -661,29 +661,29 @@ export function StudentSettingsPanel({
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(true)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4 text-rose-600" />
                 <span>Reset Local Study Data</span>
               </button>
             ) : (
-              <div className="w-full sm:w-auto p-3.5 rounded-2xl bg-[#FFF1F2] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col sm:flex-row items-center gap-2.5">
-                <span className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+              <div className="w-full sm:w-auto p-3.5 rounded-2xl bg-[#FFF1F2] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col sm:flex-row items-center gap-2.5 overflow-hidden">
+                <span className="text-xs font-bold text-rose-900 flex items-center gap-1.5 shrink-0">
                   <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                   Clear mistake review pile & history?
                 </span>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                   <button
                     type="button"
                     onClick={handleExecuteReset}
-                    className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] cursor-pointer"
+                    className="flex-1 sm:flex-none shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] cursor-pointer"
                   >
                     Yes, Clear
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowResetConfirm(false)}
-                    className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-white text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] hover:bg-neutral-50 cursor-pointer"
+                    className="flex-1 sm:flex-none shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-white text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] hover:bg-neutral-50 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -696,7 +696,7 @@ export function StudentSettingsPanel({
               type="button"
               disabled={signingOut}
               onClick={handleSignOut}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-100 text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-100 text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <LogOut className="w-4 h-4 text-[#201e1d]" />
               <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>

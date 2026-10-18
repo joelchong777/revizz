@@ -213,7 +213,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   // =========================================================================
   if (authLoading) {
     return (
-      <main className="min-h-screen bg-[#f5ead8] py-12 px-4 flex items-center justify-center select-none">
+      <main className="w-full py-12 px-4 flex items-center justify-center select-none">
         <div className="w-full max-w-md p-8 rounded-3xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] text-center space-y-4">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-3xl animate-bounce">
             🎓
@@ -229,7 +229,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
 
   if (!userProfile) {
     return (
-      <main className="min-h-screen bg-[#f5ead8] py-12 px-4 flex items-center justify-center select-none">
+      <main className="w-full py-12 px-4 flex items-center justify-center select-none">
         <StudentAuthGate onSuccess={() => router.refresh()} />
       </main>
     );
@@ -261,36 +261,35 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   const recommendedTopic = statsSummary.weakestTopics?.[0] || statsSummary.topicStats?.[0];
 
   return (
-    <main className="min-h-screen bg-[#f5ead8] py-6 sm:py-10 px-3 sm:px-6 select-none">
-      <div className="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8">
-        {/* Top Bar: Back to Quiz Arena + Page Title + Quick Start Practice */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] text-[#201e1d] hover:bg-neutral-100 font-bold text-xs sm:text-sm shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75"
-            >
-              <ArrowLeft className="w-4 h-4 text-[#201e1d]" />
-              <span>Quiz Arena</span>
-            </Link>
-
-            <h1 className="text-2xl sm:text-3xl font-heading text-[#201e1d] tracking-tight flex items-center gap-2.5">
-              <span className="w-9 h-9 rounded-xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] inline-flex items-center justify-center text-lg shrink-0">
-                🎓
-              </span>
-              <span>Student Profile Hub</span>
-            </h1>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => router.push('/')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs sm:text-sm border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-2 cursor-pointer"
+    <main className="w-full py-3 sm:py-5 space-y-6 sm:space-y-8 select-none">
+      {/* Top Bar: Back to Quiz Arena + Page Title + Quick Start Practice */}
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] text-[#201e1d] hover:bg-neutral-100 font-bold text-xs sm:text-sm shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 shrink-0 whitespace-nowrap"
           >
-            <Zap className="w-4 h-4 fill-[#201e1d] text-[#201e1d]" />
-            <span>Start Practice</span>
-          </button>
-        </header>
+            <ArrowLeft className="w-4 h-4 text-[#201e1d]" />
+            <span>Quiz Arena</span>
+          </Link>
+
+          <h1 className="text-2xl sm:text-3xl font-heading text-[#201e1d] tracking-tight flex items-center gap-2.5 truncate">
+            <span className="w-9 h-9 rounded-xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] inline-flex items-center justify-center text-lg shrink-0">
+              🎓
+            </span>
+            <span className="truncate">Student Profile Hub</span>
+          </h1>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push('/')}
+          className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs sm:text-sm border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-2 cursor-pointer shrink-0 whitespace-nowrap"
+        >
+          <Zap className="w-4 h-4 fill-[#201e1d] text-[#201e1d]" />
+          <span>Start Practice</span>
+        </button>
+      </header>
 
         {/* Tactile 5-Tab Navigation Bar */}
         <nav
@@ -426,13 +425,13 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
               {/* Guest Session Save Progress Banner */}
               {isDemoSession && (
                 <div className="mt-6 p-4 rounded-2xl bg-[#fff8db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">⚡</span>
-                    <div>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-2xl shrink-0">⚡</span>
+                    <div className="min-w-0">
                       <span className="font-heading text-sm text-[#201e1d] block">
                         Guest Session Active
                       </span>
-                      <span className="text-xs text-neutral-700 font-medium">
+                      <span className="text-xs text-neutral-700 font-medium block">
                         Create a free student account to sync XP, streaks, and mistake piles across devices.
                       </span>
                     </div>
@@ -440,7 +439,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                   <button
                     type="button"
                     onClick={() => setAuthModalOpen(true)}
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#201e1d] hover:bg-neutral-800 text-white font-heading text-xs border border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#201e1d] hover:bg-neutral-800 text-white font-heading text-xs border border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#FFDE59]" />
                     <span>Sign In to Save Progress</span>
@@ -488,22 +487,23 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                     <span className="block text-xs font-black uppercase tracking-wider text-neutral-500">
                       7-Day Consistency Strip
                     </span>
-                    <div className="grid grid-cols-7 gap-1.5">
+                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
                       {dailyGoal.activeDaysLast7.map((day) => {
                         const isToday =
                           new Date().toISOString().slice(0, 10) === day.dateStr;
                         return (
                           <div
                             key={day.dateStr}
-                            className={`p-2 rounded-xl text-center border-2 transition-all ${
+                            title={`${day.count} questions on ${day.dayShort}`}
+                            className={`py-2 px-1 rounded-xl text-center border-2 transition-all overflow-hidden ${
                               day.active
                                 ? 'bg-[#BBF7D0] border-[#201e1d] text-[#15803D] font-black shadow-[2px_2px_0_0_#201e1d]'
                                 : 'bg-neutral-100 border-neutral-300 text-neutral-400 font-bold'
-                            } ${isToday ? 'ring-2 ring-[#14B8A6] ring-offset-1' : ''}`}
+                            } ${isToday ? 'ring-2 ring-[#201e1d] ring-offset-1' : ''}`}
                           >
-                            <span className="block text-[10px] uppercase font-black">{day.dayShort}</span>
-                            <span className="block text-xs font-extrabold mt-0.5">
-                              {day.count > 0 ? (day.active ? `🔥 ${day.count}` : day.count) : '—'}
+                            <span className="block text-[10px] uppercase font-black tracking-tight leading-none">{day.dayShort}</span>
+                            <span className="block text-[11px] font-extrabold mt-1 leading-none truncate">
+                              {day.active ? '🔥' : day.count > 0 ? day.count : '—'}
                             </span>
                           </div>
                         );
@@ -524,59 +524,59 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
               <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#E11D48]">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#E11D48] shrink-0">
                         <Clock className="w-5 h-5" />
                       </div>
-                      <div>
-                        <h3 className="font-heading text-base text-[#201e1d]">Cambridge Countdown</h3>
-                        <p className="text-xs text-neutral-500 font-medium">Target exam series</p>
+                      <div className="min-w-0">
+                        <h3 className="font-heading text-base text-[#201e1d] truncate">Cambridge Countdown</h3>
+                        <p className="text-xs text-neutral-500 font-medium truncate">Target exam series</p>
                       </div>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => handleTabChange('settings')}
-                      className="px-2.5 py-1 rounded-xl bg-[#FFFDF7] hover:bg-neutral-100 text-[#201e1d] font-bold text-xs border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer"
+                      className="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-xl bg-[#FFFDF7] hover:bg-neutral-100 text-[#201e1d] font-bold text-xs border-2 border-[#201e1d] shadow-[1.5px_1.5px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <span>Edit ✎</span>
                     </button>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] mb-4 flex items-center justify-between">
-                    <div>
+                  <div className="p-4 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
+                    <div className="min-w-0 flex-1">
                       <span className="text-xs font-bold text-neutral-500 block">Primary Target</span>
-                      <span className="font-heading text-[#201e1d] text-base block">
+                      <span className="font-heading text-[#201e1d] text-base block truncate">
                         {preferences.primarySubject}
                       </span>
-                      <span className="text-xs font-bold text-neutral-600 block mt-0.5">
+                      <span className="text-xs font-bold text-neutral-600 block mt-0.5 truncate">
                         {examCountdown.seriesLabel}
                       </span>
                     </div>
 
-                    <div className="text-right">
-                      <span className="text-4xl sm:text-5xl font-heading text-[#201e1d] tracking-tight block">
+                    <div className="shrink-0 sm:text-right sm:pl-3 sm:border-l-2 sm:border-[#201e1d]/15">
+                      <span className="text-3xl sm:text-4xl font-heading text-[#201e1d] tracking-tight block leading-none">
                         {examCountdown.daysRemaining}
                       </span>
-                      <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500 block">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500 block whitespace-nowrap mt-1">
                         Days to Paper 1
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-2 border-t-2 border-neutral-100">
-                  <span className="text-xs font-bold text-neutral-500">Pacing Urgency</span>
+                <div className="flex items-center justify-between gap-2 pt-2 border-t-2 border-neutral-100 flex-wrap">
+                  <span className="text-xs font-bold text-neutral-500 shrink-0 whitespace-nowrap">Pacing Urgency</span>
                   {examCountdown.urgencyTier === 'sprint' ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 shrink-0 whitespace-nowrap">
                       🚨 Final Sprint Mode
                     </span>
                   ) : examCountdown.urgencyTier === 'focused' ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 shrink-0 whitespace-nowrap">
                       ⚡ Revision Surge
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-teal-100 text-teal-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1">
+                    <span className="px-3 py-1 rounded-full text-xs font-black bg-teal-100 text-teal-900 border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 shrink-0 whitespace-nowrap">
                       🌱 Steady Momentum
                     </span>
                   )}
@@ -585,11 +585,11 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             </div>
 
             {/* Quick Action Launchpad Grid (3 cards) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Mistake Review Pile Card */}
-              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
+              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
                 <div>
-                  <div className="w-11 h-11 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-[#FECDD3] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3 shrink-0">
                     🧠
                   </div>
                   <h4 className="font-heading text-base text-[#201e1d] mb-1">Mistake Review Pile</h4>
@@ -606,7 +606,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                   <button
                     type="button"
                     onClick={() => setAuthModalOpen(true)}
-                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
                   >
                     <Lock className="w-3.5 h-3.5" />
                     <span>Log In to Unlock</span>
@@ -616,14 +616,14 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                     <button
                       type="button"
                       onClick={() => router.push('/?drill=review')}
-                      className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer"
+                      className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
                     >
                       <span>Drill Mistakes Now →</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleTabChange('review')}
-                      className="w-full py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-xs border border-[#201e1d] transition-all cursor-pointer"
+                      className="w-full py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-[#201e1d] font-bold text-xs border border-[#201e1d] transition-all cursor-pointer shrink-0 whitespace-nowrap"
                     >
                       Inspect Queue
                     </button>
@@ -632,7 +632,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                   <button
                     type="button"
                     onClick={() => handleTabChange('review')}
-                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all cursor-pointer"
+                    className="w-full py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all cursor-pointer shrink-0 whitespace-nowrap"
                   >
                     Review Queue Clean ✓
                   </button>
@@ -640,9 +640,9 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
               </div>
 
               {/* Bookmarked Questions Card */}
-              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
+              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
                 <div>
-                  <div className="w-11 h-11 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3 shrink-0">
                     ⭐
                   </div>
                   <h4 className="font-heading text-base text-[#201e1d] mb-1">Bookmarked Questions</h4>
@@ -658,24 +658,24 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                 <button
                   type="button"
                   onClick={() => handleTabChange('review')}
-                  className="w-full py-2.5 rounded-2xl bg-[#14B8A6] hover:bg-[#0F766E] text-white font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full py-2.5 rounded-2xl bg-[#14B8A6] hover:bg-[#0F766E] text-white font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <span>Open Saved Deck →</span>
                 </button>
               </div>
 
               {/* Recommended Topic Focus Card */}
-              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between">
+              <div className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-6 shadow-[4px_4px_0_0_#201e1d] flex flex-col justify-between overflow-hidden">
                 <div>
-                  <div className="w-11 h-11 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-[#C7D2FE] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl mb-3 shrink-0">
                     🎯
                   </div>
                   <h4 className="font-heading text-base text-[#201e1d] mb-1">Recommended Topic Focus</h4>
                   <p className="text-xs text-neutral-600 font-medium mb-3">
                     Syllabus area with greatest opportunity for score improvement.
                   </p>
-                  <div className="mb-4">
-                    <span className="font-bold text-[#201e1d] text-sm block line-clamp-1">
+                  <div className="mb-4 min-w-0">
+                    <span className="font-bold text-[#201e1d] text-sm block truncate">
                       {recommendedTopic?.topicName || 'Syllabus Fundamentals'}
                     </span>
                     <span className="text-xs font-black text-indigo-700 block mt-0.5">
@@ -693,7 +693,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                       router.push('/');
                     }
                   }}
-                  className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full py-2.5 rounded-2xl bg-[#FFDE59] hover:bg-[#FACC15] text-[#201e1d] font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <span>Practice Topic →</span>
                 </button>
@@ -703,17 +703,17 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             {/* Recent Milestones & Activity Preview */}
             <section className="bg-[#FFFDF7] rounded-3xl border-2 border-[#201e1d] p-5 sm:p-7 shadow-[4px_4px_0_0_#201e1d]">
               <div className="flex items-center justify-between gap-3 mb-5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-10 h-10 rounded-2xl bg-[#FEF08A] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-xl shrink-0">
                     <Award className="w-5 h-5 text-amber-800" />
                   </div>
-                  <h3 className="font-heading text-lg sm:text-xl text-[#201e1d]">Milestones & Recent Activity</h3>
+                  <h3 className="font-heading text-lg sm:text-xl text-[#201e1d] truncate">Milestones & Recent Activity</h3>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => handleTabChange('achievements')}
-                  className="text-xs font-heading text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-heading text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <span>View All Badges →</span>
                 </button>
@@ -865,7 +865,6 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             />
           </div>
         )}
-      </div>
 
       {/* Global Auth Modal for Guest Conversion */}
       <AuthModal
