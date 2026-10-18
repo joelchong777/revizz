@@ -772,9 +772,8 @@ function PortalContent() {
 
       {/* Main Content Area */}
       <div className="min-w-0 flex flex-col min-h-screen">
-        {/* Mobile Sticky Top Bar */}
         {/* Mobile Sticky Top Header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-[1.5px] border-[#dcd3c4] px-4 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-[1.5px] border-[#dcd3c4] px-4 py-2.5 flex items-center gap-2 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
@@ -794,63 +793,18 @@ function PortalContent() {
               </span>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="text-xs font-bold px-2.5 py-1 rounded-xl bg-[#ccdbb2] border-[1.5px] border-[#201e1d] text-[#201e1d] hover:bg-[#b8c99d] transition-colors flex items-center gap-1 shadow-offset-2 active:translate-y-0.5"
-                title="Open App Admin"
-              >
-                <span>App Admin 🛠️</span>
-              </Link>
-            )}
-          </div>
         </header>
 
         {/* Desktop Sticky Top Header */}
-        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-[1.5px] border-[#dcd3c4] px-8 py-3 items-center justify-between shadow-xs">
-          <div className="flex items-center gap-4 min-w-0">
-            {/* Clean Breadcrumb Header */}
-            <div className="flex items-center gap-2">
-              <span className="font-heading font-black text-lg text-[#201e1d]">
-                Teacher Portal
-              </span>
-              <span className="text-[#645c50] font-mono text-base">/</span>
-              <span className="font-heading font-bold text-base text-[#201e1d]">
-                {activeLabel}
-              </span>
-            </div>
-
-            {/* Telemetry Status */}
-            <div className="flex items-center gap-2 pl-4 border-l border-[#201e1d]/15 text-xs font-mono text-[#645c50]">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Active Cohort: None Registered
-              </span>
-              <span>·</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/20 font-bold text-[#201e1d]">
-                Syllabus: Cambridge IGCSE 2024
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ccdbb2] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-                title="Open App Administration Dashboard"
-              >
-                <span>Open App Admin 🛠️</span>
-              </Link>
-            )}
-            <Link
-              href="/"
-              className="text-xs font-bold text-[#645c50] hover:text-[#201e1d] px-2 py-1 transition-colors"
-            >
-              Student Home ↗
-            </Link>
+        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-[1.5px] border-[#dcd3c4] px-8 py-3 items-center shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-heading font-black text-lg text-[#201e1d]">
+              Teacher Portal
+            </span>
+            <span className="text-[#645c50] font-mono text-base">/</span>
+            <span className="font-heading font-bold text-base text-[#201e1d]">
+              {activeLabel}
+            </span>
           </div>
         </header>
 
