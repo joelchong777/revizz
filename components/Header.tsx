@@ -266,11 +266,11 @@ export function Header({
             <button
               type="button"
               onClick={() => {
-                if (userProfile && !isDemo) {
+                if (userProfile) {
                   setModalTab('account');
                   setLeaderboardOpen(true);
                 } else {
-                  handleSignIn();
+                  setAuthModalOpen(true);
                 }
               }}
               title={

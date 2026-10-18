@@ -6,6 +6,7 @@ import {
   signInWithEmail,
   signInWithOtp,
   signUpWithEmail,
+  signInAsDemoStudent,
   isProviderNotEnabledError,
 } from '@/lib/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -365,6 +366,24 @@ export function AuthModal({
               </button>
             </div>
           )}
+
+          {/* Guest / Demo Mode Button */}
+          <div className="pt-3 border-t-2 border-[#201e1d]/15 flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                signInAsDemoStudent();
+                if (onSuccess) onSuccess();
+                onClose();
+              }}
+              className="w-full py-2.5 px-3 rounded-xl bg-[#ccdbb2] hover:bg-[#bccca1] text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 font-heading font-black text-xs sm:text-sm cursor-pointer"
+            >
+              <span>⚡ Play as Guest / Demo Student</span>
+            </button>
+            <p className="text-[11px] text-center text-[#82796a] font-medium m-0">
+              Instant access without an account · progress saved on device
+            </p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

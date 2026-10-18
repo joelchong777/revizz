@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { signInWithGoogle, signInAsDemoStudent, isProviderNotEnabledError } from '@/lib/auth';
+import { AuthModal } from './AuthModal';
 
 interface StudentAuthGateProps {
   onSuccess?: () => void;
@@ -11,6 +12,7 @@ export function StudentAuthGate({ onSuccess }: StudentAuthGateProps) {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAuthModalOpen, setAuthModalOpen] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -143,6 +145,16 @@ export function StudentAuthGate({ onSuccess }: StudentAuthGateProps) {
               </span>
             </div>
           </button>
+
+          <div className="pt-1 text-center">
+            <button
+              type="button"
+              onClick={() => setAuthModalOpen(true)}
+              className="text-xs font-bold text-neutral-700 hover:text-text hover:underline cursor-pointer"
+            >
+              Or sign up / sign in with Email or Gmail →
+            </button>
+          </div>
         </div>
 
         {/* Clean Privacy Note */}
@@ -150,6 +162,12 @@ export function StudentAuthGate({ onSuccess }: StudentAuthGateProps) {
           Zero tracking cookies. Switch to Google anytime from your profile.
         </p>
       </div>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={onSuccess}
+      />
     </div>
   );
 }

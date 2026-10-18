@@ -3706,6 +3706,66 @@ async function runSuite20() {
       'TeacherAnalytics.tsx contains invite drawer and references addRosterInvite'
     );
   });
+
+  test('Static Code Contract: components/AuthModal.tsx references signInAsDemoStudent and Guest mode', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const authModalPath = path.resolve(process.cwd(), 'components/AuthModal.tsx');
+    assertEqual(fs.existsSync(authModalPath), true, 'components/AuthModal.tsx exists');
+
+    const content = fs.readFileSync(authModalPath, 'utf8');
+    assert(
+      content.includes('signInAsDemoStudent'),
+      'components/AuthModal.tsx references signInAsDemoStudent'
+    );
+    assert(
+      content.includes('Guest') || content.includes('Demo'),
+      'components/AuthModal.tsx references Guest or Demo mode button'
+    );
+  });
+
+  test('Static Code Contract: components/StudentAuthGate.tsx references signInAsDemoStudent and AuthModal', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const gatePath = path.resolve(process.cwd(), 'components/StudentAuthGate.tsx');
+    assertEqual(fs.existsSync(gatePath), true, 'components/StudentAuthGate.tsx exists');
+
+    const content = fs.readFileSync(gatePath, 'utf8');
+    assert(
+      content.includes('signInAsDemoStudent'),
+      'components/StudentAuthGate.tsx references signInAsDemoStudent'
+    );
+    assert(
+      content.includes('AuthModal'),
+      'components/StudentAuthGate.tsx references AuthModal'
+    );
+    assert(
+      content.includes('Try Demo Mode') || content.includes('Demo Mode'),
+      'components/StudentAuthGate.tsx maintains active demo mode button'
+    );
+  });
+
+  test('Static Code Contract: demo mode buttons remain active across components', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const leaderboardModalPath = path.resolve(process.cwd(), 'components/LeaderboardModal.tsx');
+    assertEqual(fs.existsSync(leaderboardModalPath), true, 'components/LeaderboardModal.tsx exists');
+
+    const lbContent = fs.readFileSync(leaderboardModalPath, 'utf8');
+    assert(
+      lbContent.includes('AuthModal') && lbContent.includes('isDemo'),
+      'components/LeaderboardModal.tsx integrates AuthModal for demo accounts'
+    );
+
+    const headerPath = path.resolve(process.cwd(), 'components/Header.tsx');
+    assertEqual(fs.existsSync(headerPath), true, 'components/Header.tsx exists');
+
+    const headerContent = fs.readFileSync(headerPath, 'utf8');
+    assert(
+      headerContent.includes('setLeaderboardOpen(true)') && headerContent.includes('userProfile'),
+      'components/Header.tsx enables LeaderboardModal for userProfile including demo students'
+    );
+  });
 }
 
 async function main() {
