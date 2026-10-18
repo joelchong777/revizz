@@ -8,6 +8,7 @@ import { useAuth, signInWithGoogle, isProviderNotEnabledError } from '../lib/aut
 import { syncGuestDataToUser } from '../lib/sync';
 import { isSoundEnabled, setSoundEnabled, playPop, subscribeSoundState } from '@/lib/audio';
 import LeaderboardModal from './LeaderboardModal';
+import { AuthModal } from './AuthModal';
 
 interface HeaderProps {
   currentXp?: number;
@@ -22,6 +23,7 @@ export function Header({
 }: HeaderProps) {
   const { userProfile, loading, setUserProfile } = useAuth();
   const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<'account' | 'leaderboard'>('account');
   const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
   const [soundOn, setSoundOn] = useState<boolean>(false);
@@ -133,39 +135,8 @@ export function Header({
     }
   }, [displayXp, shouldReduceMotion, xpControls]);
 
-  const handleSignIn = async () => {
-    const confirmed = confirm('Save your XP, streaks, and join the leaderboard!');
-    if (confirmed) {
-      try {
-        await signInWithGoogle();
-      } catch (e: any) {
-        console.error('Sign-in error:', e);
-        const errMsg = e?.message || e?.error_description || String(e || '');
-        const errCode = e?.code || '';
-        const isProviderNotEnabled =
-          isProviderNotEnabledError(e) ||
-          errCode === 'PROVIDER_NOT_ENABLED' ||
-          errCode === 'validation_failed' ||
-          /provider.*not enabled/i.test(errMsg) ||
-          /validation/i.test(errMsg) ||
-          /not enabled/i.test(errMsg) ||
-          /unsupported provider/i.test(errMsg) ||
-          errMsg.includes('PROVIDER_NOT_ENABLED');
-
-        const notice = (isProviderNotEnabled || !errMsg)
-          ? "Notice: Google Sign-In is currently disabled on this demo instance. Your XP and streaks continue to be saved locally on your device!"
-          : errMsg;
-
-        setSyncToastMessage(notice);
-        if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-          try {
-            window.alert(notice);
-          } catch {
-            // Ignore if alerts are restricted in environment
-          }
-        }
-      }
-    }
+  const handleSignIn = () => {
+    setAuthModalOpen(true);
   };
 
   const isDemo =
@@ -175,7 +146,7 @@ export function Header({
 
   const userName = isDemo
     ? 'Demo Student'
-    : userProfile?.display_name || 'Guest Learner';
+    : userProfile?.display_name || (userProfile?.email ? userProfile.email.split('@')[0] : 'Guest Learner');
 
   const userInitials = isDemo
     ? 'DS'
@@ -295,7 +266,7 @@ export function Header({
             <button
               type="button"
               onClick={() => {
-                if (userProfile) {
+                if (userProfile && !isDemo) {
                   setModalTab('account');
                   setLeaderboardOpen(true);
                 } else {
@@ -327,6 +298,11 @@ export function Header({
           }
         }}
         initialTab={modalTab}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setAuthModalOpen(false)}
       />
     </>
   );

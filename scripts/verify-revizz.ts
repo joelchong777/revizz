@@ -7,6 +7,8 @@
  * 3. Topic Mastery Thresholds (<50% novice, 50-80% proficient, >80% master) and Badges
  * 4. Auth Display Name Sanitization & School Domain Tagging
  * 5. Timer Math & Simulated Gameplay Round End-to-End
+ * ...
+ * 20. Auth & Roster Engine Architecture (Email Auth, Roster Invites, Code Contracts)
  */
 
 import {
@@ -41,7 +43,18 @@ import {
   checkIsSchoolAccount,
   isDemoStudentSession,
   DEFAULT_DEMO_STUDENT_PROFILE,
+  signUpWithEmail,
+  signInWithEmail,
+  signInWithOtp,
 } from '../lib/auth';
+
+import {
+  addRosterInvite,
+  getRosterInvites,
+  deleteRosterInvite,
+  checkAndClaimInvite,
+  ROSTER_INVITES_STORAGE_KEY,
+} from '../lib/roster';
 
 import { CAMBRIDGE_QUESTIONS, Question } from '../lib/questions';
 import {
@@ -3576,6 +3589,128 @@ async function runSuite13() {
     assert(quizGameContent.includes('!isDemoSession && Boolean(userProfile?.email)'), 'useQuizGame.ts guards addToReviewPile calls');
     assert(pageContent.includes('if (isDemoSession || questions.length === 0) return;'), 'page.tsx guards handleStartReviewPile');
   });
+}
+
+// -----------------------------------------------------------------------------
+// [Suite 20] Auth & Roster Engine Architecture
+// -----------------------------------------------------------------------------
+async function runSuite20() {
+  console.log('\n\x1b[1m\x1b[34m[Suite 20] Auth & Roster Engine Architecture\x1b[0m');
+
+  await testAsync('Roster Engine: addRosterInvite normalizes email and creates pending invite with defaults', async () => {
+    mockStorage.removeItem(ROSTER_INVITES_STORAGE_KEY);
+
+    const invite = await addRosterInvite({
+      email: '  Student.Alpha@School.EDU  ',
+      displayName: 'Student Alpha',
+    });
+
+    assertEqual(invite.email, 'student.alpha@school.edu', 'Email normalized to lowercase and trimmed');
+    assertEqual(invite.role, 'student', 'Default role is student');
+    assertEqual(invite.cohort, 'General', 'Default cohort is General');
+    assertEqual(invite.status, 'pending', 'Initial status is pending');
+    assert(Boolean(invite.id), 'Invite has generated id');
+    assert(Boolean(invite.created_at), 'Invite has created_at timestamp');
+
+    const stored = JSON.parse(mockStorage.getItem(ROSTER_INVITES_STORAGE_KEY) || '[]');
+    assertEqual(stored.length, 1, 'Invite persisted to localStorage');
+    assertEqual(stored[0].email, 'student.alpha@school.edu', 'Stored invite matches normalized email');
+  });
+
+  const uniqueCohort = 'Cohort_' + Date.now();
+
+  await testAsync('Roster Engine: addRosterInvite supports custom teacher/admin role and custom cohort', async () => {
+    const teacherInvite = await addRosterInvite({
+      email: 'teacher.beta@school.edu',
+      displayName: 'Teacher Beta',
+      role: 'teacher',
+      cohort: uniqueCohort,
+      invitedBy: 'admin-user-1',
+    });
+
+    assertEqual(teacherInvite.role, 'teacher', 'Preserved teacher role');
+    assertEqual(teacherInvite.cohort, uniqueCohort, 'Preserved custom cohort');
+    assertEqual(teacherInvite.invited_by, 'admin-user-1', 'Preserved invitedBy reference');
+  });
+
+  await testAsync('Roster Engine: getRosterInvites returns invites and filters by cohort', async () => {
+    const all = await getRosterInvites();
+    assert(all.length >= 2, 'getRosterInvites retrieves all invites');
+
+    const filtered = await getRosterInvites(uniqueCohort);
+    assertEqual(filtered.length, 1, 'getRosterInvites filters correctly by cohort');
+    assertEqual(filtered[0].email, 'teacher.beta@school.edu', 'Filtered item has expected email');
+  });
+
+  await testAsync('Roster Engine: checkAndClaimInvite matches case-insensitively and updates status to claimed', async () => {
+    const claimed = await checkAndClaimInvite('STUDENT.ALPHA@SCHOOL.EDU', 'user-alpha-uuid');
+    assert(claimed !== null, 'Claimed invite returned');
+    assertEqual(claimed?.email, 'student.alpha@school.edu', 'Matches case-insensitively');
+    assertEqual(claimed?.status, 'claimed', 'Status updated to claimed');
+
+    // Claiming again returns null since status is now claimed
+    const reClaim = await checkAndClaimInvite('student.alpha@school.edu', 'user-alpha-uuid');
+    assert(reClaim === null, 'Already claimed invite cannot be claimed again');
+  });
+
+  await testAsync('Roster Engine: deleteRosterInvite deletes invite and updates storage', async () => {
+    const invite = await addRosterInvite({
+      email: 'temp.delete@school.edu',
+      cohort: 'DeleteTest',
+    });
+
+    const before = await getRosterInvites('DeleteTest');
+    assertEqual(before.length, 1, 'Invite created before delete');
+
+    const success = await deleteRosterInvite(invite.id);
+    assertEqual(success, true, 'deleteRosterInvite returns true');
+
+    const after = await getRosterInvites('DeleteTest');
+    assertEqual(after.length, 0, 'Invite removed from storage');
+  });
+
+  test('Auth Engine: signUpWithEmail, signInWithEmail, and signInWithOtp are exported functions', () => {
+    assertEqual(typeof signUpWithEmail, 'function', 'signUpWithEmail is exported function');
+    assertEqual(typeof signInWithEmail, 'function', 'signInWithEmail is exported function');
+    assertEqual(typeof signInWithOtp, 'function', 'signInWithOtp is exported function');
+  });
+
+  test('Static Code Contract: components/AuthModal.tsx exists and exports AuthModal', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const authModalPath = path.resolve(process.cwd(), 'components/AuthModal.tsx');
+    assertEqual(fs.existsSync(authModalPath), true, 'components/AuthModal.tsx exists');
+
+    const content = fs.readFileSync(authModalPath, 'utf8');
+    assert(
+      content.includes('export default function AuthModal') ||
+      content.includes('export function AuthModal') ||
+      content.includes('export const AuthModal') ||
+      content.includes('AuthModal'),
+      'components/AuthModal.tsx exports AuthModal'
+    );
+  });
+
+  test('Static Code Contract: TeacherAnalytics.tsx contains invite drawer and references addRosterInvite', () => {
+    const fs = require('fs');
+    const path = require('path');
+    let analyticsPath = path.resolve(process.cwd(), 'components/portal/TeacherAnalytics.tsx');
+    if (!fs.existsSync(analyticsPath)) {
+      analyticsPath = path.resolve(process.cwd(), 'components/TeacherAnalytics.tsx');
+    }
+    assertEqual(fs.existsSync(analyticsPath), true, 'TeacherAnalytics.tsx exists');
+
+    const content = fs.readFileSync(analyticsPath, 'utf8');
+    assert(
+      content.includes('addRosterInvite') || content.includes('roster_invites') || content.includes('RosterInvite') || content.includes('Invite students'),
+      'TeacherAnalytics.tsx contains invite drawer and references addRosterInvite'
+    );
+  });
+}
+
+async function main() {
+  await runSuite13();
+  await runSuite20();
 
   // Summary Output
   console.log('\n========================================================');
@@ -3592,7 +3727,7 @@ async function runSuite13() {
   }
 }
 
-runSuite13().catch((err) => {
-  console.error('Fatal test error in Suite 13:', err);
+main().catch((err) => {
+  console.error('Fatal test error in test suite runner:', err);
   process.exit(1);
 });

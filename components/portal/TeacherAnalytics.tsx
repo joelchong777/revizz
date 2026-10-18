@@ -17,8 +17,12 @@ import {
   CheckCircle2,
   HelpCircle,
   TrendingDown,
-  X
+  X,
+  Mail,
+  Loader2
 } from 'lucide-react';
+import { addRosterInvite, getRosterInvites, deleteRosterInvite, RosterInvite } from '@/lib/roster';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export interface TeacherAnalyticsProps {
   initialView?: 'roster' | 'mastery';
@@ -51,9 +55,21 @@ export default function TeacherAnalytics({
 }: TeacherAnalyticsProps) {
   const [currentView, setCurrentView] = useState<'roster' | 'mastery'>(initialView);
   const [selectedStudent, setSelectedStudent] = useState<RosterStudent | null>(null);
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedClass, setSelectedClass] = useState('10B Physics');
   const [searchTerm, setSearchTerm] = useState('');
   const [agentNoticeDismissed, setAgentNoticeDismissed] = useState(false);
+
+  // Invite Student / Educator Modal State
+  const [isInviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteCohort, setInviteCohort] = useState('10B Physics');
+  const [inviteRole, setInviteRole] = useState<'student' | 'educator'>('student');
+  const [invitesList, setInvitesList] = useState<RosterInvite[]>([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
+  const [submittingInvite, setSubmittingInvite] = useState(false);
+  const [inviteSuccessMsg, setInviteSuccessMsg] = useState<string | null>(null);
+  const [inviteErrorMsg, setInviteErrorMsg] = useState<string | null>(null);
 
   // Roster dataset fetched from Supabase profiles
   const [rosterData, setRosterData] = useState<RosterStudent[]>([]);
@@ -61,11 +77,77 @@ export default function TeacherAnalytics({
 
   // Mastery heatmap data - empty until dynamic student rounds are recorded
   const [heatRows, setHeatRows] = useState<HeatRow[]>([]);
-  const cohorts: string[] = [];
+  const cohorts: string[] = ['10B Physics', '10A Physics', '11A Physics', '10 Economics'];
   const chapters: string[] = [];
   const [mostMissedQuestions, setMostMissedQuestions] = useState<
     Array<{ id: string; stem: string; first: string; second: string }>
   >([]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadInvites() {
+      try {
+        setLoadingInvites(true);
+        const list = await getRosterInvites();
+        if (mounted) {
+          setInvitesList(list);
+        }
+      } catch (e) {
+        console.warn('Failed to load roster invites:', e);
+      } finally {
+        if (mounted) setLoadingInvites(false);
+      }
+    }
+    loadInvites();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleAddInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) {
+      setInviteErrorMsg('Please enter a valid Gmail address.');
+      return;
+    }
+    if (!inviteEmail.includes('@')) {
+      setInviteErrorMsg('Please provide a valid email format (e.g. student@gmail.com).');
+      return;
+    }
+
+    try {
+      setSubmittingInvite(true);
+      setInviteErrorMsg(null);
+      setInviteSuccessMsg(null);
+
+      const mappedRole = inviteRole === 'educator' ? 'teacher' : 'student';
+      const newInvite = await addRosterInvite({
+        email: inviteEmail.trim(),
+        displayName: inviteName.trim() || undefined,
+        cohort: inviteCohort,
+        role: mappedRole,
+      });
+
+      setInvitesList((prev) => [newInvite, ...prev.filter((i) => i.id !== newInvite.id)]);
+      setInviteSuccessMsg(`Added ${newInvite.email} to ${newInvite.cohort} roster! ✉️`);
+      setInviteEmail('');
+      setInviteName('');
+    } catch (err: any) {
+      console.error('Failed to add roster invite:', err);
+      setInviteErrorMsg(err?.message || 'Could not add invite. Please try again.');
+    } finally {
+      setSubmittingInvite(false);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId: string) => {
+    try {
+      await deleteRosterInvite(inviteId);
+      setInvitesList((prev) => prev.filter((i) => i.id !== inviteId));
+    } catch (err) {
+      console.error('Failed to delete roster invite:', err);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -353,10 +435,10 @@ export default function TeacherAnalytics({
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
           <button
-            onClick={() => alert('Opening student invite drawer...')}
-            className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5"
+            onClick={() => setInviteModalOpen(true)}
+            className="px-3.5 py-2 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#ffc6a5] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center gap-1.5 cursor-pointer transition-all"
           >
-            <UserPlus className="w-3.5 h-3.5" /> Invite students
+            <UserPlus className="w-3.5 h-3.5" /> + Add by Gmail
           </button>
           <button
             onClick={() => onNavigateToAssign?.()}
@@ -428,6 +510,67 @@ export default function TeacherAnalytics({
         </div>
       )}
 
+      {/* Pending Gmail Invites Section */}
+      {invitesList.length > 0 && (
+        <div className="rounded-[24px] bg-[#fffdf7] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] p-4 sm:p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-amber-100 border border-[#201e1d] grid place-items-center text-xs">
+                ✉️
+              </span>
+              <span className="font-heading font-black text-sm text-[#201e1d]">
+                Pending Gmail Invites ({invitesList.length})
+              </span>
+            </div>
+            <button
+              onClick={() => setInviteModalOpen(true)}
+              className="text-xs font-bold text-[#c67139] hover:underline cursor-pointer"
+            >
+              + Add another Gmail →
+            </button>
+          </div>
+
+          <div className="divide-y divide-[#eee7db] max-h-52 overflow-y-auto pr-1">
+            {invitesList.map((inv) => (
+              <div
+                key={inv.id}
+                className="py-2.5 flex items-center justify-between gap-3 text-xs"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="w-7 h-7 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] grid place-items-center text-[10px] font-bold shrink-0">
+                    {inv.display_name
+                      ? inv.display_name.slice(0, 2).toUpperCase()
+                      : inv.email.slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="truncate">
+                    <span className="font-bold text-[#201e1d] truncate block">
+                      {inv.display_name ? `${inv.display_name} ` : ''}
+                      <span className="text-[#645c50] font-normal">({inv.email})</span>
+                    </span>
+                    <span className="text-[11px] text-[#82796a]">
+                      Cohort: {inv.cohort} • Role: {inv.role === 'teacher' ? 'Educator' : 'Student'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[11px] whitespace-nowrap">
+                    Pending Sign-in ✉️
+                  </span>
+                  <button
+                    onClick={() => handleCancelInvite(inv.id)}
+                    title="Cancel / remove invite"
+                    className="p-1 rounded-lg text-[#82796a] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Student Roster Table */}
       <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
         {loadingRoster ? (
@@ -444,10 +587,10 @@ export default function TeacherAnalytics({
             </p>
             <div className="flex items-center gap-2 pt-2">
               <button
-                onClick={() => alert('Opening student invite drawer...')}
+                onClick={() => setInviteModalOpen(true)}
                 className="px-4 py-2 rounded-full bg-[#ffe1d0] border-[1.5px] border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
               >
-                Invite students
+                + Add by Gmail
               </button>
               <button
                 onClick={() => onNavigateToAssign?.()}
@@ -752,6 +895,190 @@ export default function TeacherAnalytics({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Interactive Add Students by Gmail Modal */}
+      <Dialog
+        open={isInviteModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setInviteModalOpen(false);
+            setInviteErrorMsg(null);
+            setInviteSuccessMsg(null);
+          }
+        }}
+      >
+        <DialogContent className="w-[calc(100vw-24px)] sm:w-full sm:max-w-lg p-0 overflow-hidden border-2 border-[#201e1d] rounded-3xl shadow-[4px_4px_0_0_#201e1d] bg-[#FFFDF7] text-[#201e1d] max-h-[90vh] flex flex-col gap-0 select-none">
+          {/* Modal Header */}
+          <DialogHeader className="p-4 sm:p-5 bg-amber-50/80 border-b-2 border-[#201e1d] flex flex-row items-center justify-between pr-12 space-y-0">
+            <DialogTitle className="text-base sm:text-lg font-heading font-black text-[#201e1d] flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#c67139]" />
+              <span>Add Students by Gmail</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Modal Body */}
+          <div className="p-5 sm:p-6 overflow-y-auto max-h-[calc(90vh-120px)] flex flex-col gap-4">
+            <p className="text-xs text-[#645c50] leading-relaxed">
+              Pre-register student or educator Gmail addresses. When they sign in with Google or Email, their account will instantly attach to this cohort.
+            </p>
+
+            {/* Feedback Messages */}
+            {inviteErrorMsg && (
+              <div className="p-3 rounded-xl bg-red-50 border-2 border-red-500 text-xs font-bold text-red-800 flex items-start gap-2 shadow-[2px_2px_0_0_rgba(239,68,68,0.2)]">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1 leading-snug">{inviteErrorMsg}</div>
+              </div>
+            )}
+            {inviteSuccessMsg && (
+              <div className="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-600 text-xs font-bold text-emerald-900 flex items-start gap-2 shadow-[2px_2px_0_0_rgba(5,150,105,0.2)]">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="flex-1 leading-snug">{inviteSuccessMsg}</div>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleAddInvite} className="flex flex-col gap-3.5">
+              {/* Gmail Address */}
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1">
+                  Gmail / Email Address <span className="text-red-600">*</span>
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#82796a]" />
+                  <input
+                    type="email"
+                    required
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="student@gmail.com"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs sm:text-sm font-semibold text-[#201e1d] placeholder:text-[#a19786] focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                  />
+                </div>
+              </div>
+
+              {/* Student Name (Optional) */}
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1">
+                  Student Name <span className="text-[#82796a] font-normal normal-case">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  placeholder="e.g. Maya Lin"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs sm:text-sm font-semibold text-[#201e1d] placeholder:text-[#a19786] focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                />
+              </div>
+
+              {/* Cohort Select & Role Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Cohort Select */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1">
+                    Cohort / Class
+                  </label>
+                  <select
+                    value={inviteCohort}
+                    onChange={(e) => setInviteCohort(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs sm:text-sm font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                  >
+                    {cohorts.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Role Selector */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1">
+                    Role
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInviteRole('student')}
+                      className={`flex-1 py-2 px-3 rounded-xl border-2 border-[#201e1d] font-bold text-xs transition-all cursor-pointer ${
+                        inviteRole === 'student'
+                          ? 'bg-[#201e1d] text-white shadow-[2px_2px_0_0_#201e1d]'
+                          : 'bg-white text-[#474238] hover:bg-amber-50 shadow-[1px_1px_0_0_#201e1d]'
+                      }`}
+                    >
+                      Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInviteRole('educator')}
+                      className={`flex-1 py-2 px-3 rounded-xl border-2 border-[#201e1d] font-bold text-xs transition-all cursor-pointer ${
+                        inviteRole === 'educator'
+                          ? 'bg-[#201e1d] text-white shadow-[2px_2px_0_0_#201e1d]'
+                          : 'bg-white text-[#474238] hover:bg-amber-50 shadow-[1px_1px_0_0_#201e1d]'
+                      }`}
+                    >
+                      Educator
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add to Roster Button */}
+              <button
+                type="submit"
+                disabled={submittingInvite}
+                className="w-full mt-2 py-3 px-4 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 font-heading font-black text-xs sm:text-sm cursor-pointer disabled:opacity-60"
+              >
+                {submittingInvite ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    <span>Add to Roster</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Pending Gmail Invites list inside modal */}
+            {invitesList.length > 0 && (
+              <div className="mt-3 pt-3 border-t-2 border-[#201e1d]/15 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-heading font-bold text-xs text-[#201e1d]">
+                    Pending Invites ({invitesList.length})
+                  </span>
+                  <span className="text-[10px] text-[#82796a]">Auto-claims on sign in</span>
+                </div>
+                <div className="divide-y divide-[#eee7db] max-h-48 overflow-y-auto">
+                  {invitesList.map((inv) => (
+                    <div key={inv.id} className="py-2 flex items-center justify-between gap-2 text-xs">
+                      <div className="truncate">
+                        <div className="font-bold text-[#201e1d] truncate">
+                          {inv.display_name ? `${inv.display_name} ` : ''}
+                          <span className="text-[#645c50] font-normal">({inv.email})</span>
+                        </div>
+                        <div className="text-[10px] text-[#82796a]">
+                          {inv.cohort} • {inv.role === 'teacher' ? 'Educator' : 'Student'}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[10px]">
+                          Pending Sign-in ✉️
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCancelInvite(inv.id)}
+                          title="Cancel invite"
+                          className="p-1 rounded text-[#82796a] hover:text-red-600 transition-colors cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
