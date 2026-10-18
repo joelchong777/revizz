@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import {
   FileText,
+  History,
   Sparkles,
   BookOpen,
   Flag,
@@ -189,6 +190,23 @@ export default function AppAdminNav({
                 {renderIcon(FileText, 'ingestion')}
                 {!compact && (
                   <span className="flex-1 min-w-0 truncate">Ingestion Studio</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleNavClick('history')}
+                className={navItemClass('history')}
+                title="Ingestion History"
+              >
+                {renderIcon(History, 'history')}
+                {!compact && (
+                  <>
+                    <span className="flex-1 min-w-0 truncate">Ingestion History</span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#f5ead8] text-[#474238] text-[10px] font-mono font-bold border border-[#201e1d]/20 shrink-0">
+                      Ledger
+                    </span>
+                  </>
                 )}
               </button>
 

@@ -123,8 +123,19 @@ export const StagingPaperSchema = z.object({
   paper: StagingPaperMetaSchema,
   syllabus_topics: z.array(StagingSyllabusTopicSchema),
   questions: z.array(StagingQuestionSchema),
+  ingested_at: z.string().optional(),
+  updated_at: z.string().optional(),
+  published_at: z.string().optional(),
 });
 export type StagingPaper = z.infer<typeof StagingPaperSchema>;
+
+/**
+ * Syllabus topic summary item for staged paper metadata.
+ */
+export interface StagedPaperTopicSummary {
+  name: string;
+  count: number;
+}
 
 /**
  * Summary representation of a staged paper in staging/ directory.
@@ -136,6 +147,16 @@ export interface StagedPaperSummary {
   paper?: { year?: number; series?: string; paper_code?: string };
   questionsCount?: number;
   diagramsCount?: number;
+  activeCount?: number;
+  needsReviewCount?: number;
+  withdrawnCount?: number;
+  topicsCount?: number;
+  topicBreakdown?: StagedPaperTopicSummary[];
+  ingested_at?: string | null;
+  updated_at?: string | null;
+  published_at?: string | null;
+  source_qp_filename?: string | null;
+  source_ms_filename?: string | null;
   lifecycle_state?: string;
   is_published?: boolean;
   published_exam_paper_id?: string | null;

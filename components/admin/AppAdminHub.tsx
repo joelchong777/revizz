@@ -6,6 +6,7 @@ import IngestionHub from '@/components/portal/IngestionHub';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
+import IngestionHistoryHub from '@/components/admin/IngestionHistoryHub';
 import PortalMenuManager from '@/components/admin/PortalMenuManager';
 import AdminSettingsHub, { SettingsSubTab } from '@/components/admin/AdminSettingsHub';
 import AdsManagerHub from '@/components/admin/AdsManagerHub';
@@ -358,6 +359,14 @@ export default function AppAdminHub({
             }
           }}
           onSelectParentTab={onSelectTab}
+        />
+      );
+
+    case 'history':
+      return (
+        <IngestionHistoryHub
+          onSelectTab={onSelectTab}
+          onOpenEditor={handleOpenEditor}
         />
       );
 

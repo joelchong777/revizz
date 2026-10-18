@@ -11,6 +11,7 @@ import { useQuestions } from '@/lib/questions';
 
 const TAB_TITLES: Record<string, string> = {
   ingestion: 'Ingestion Studio',
+  history: 'Ingestion History',
   diagnostics: 'Diagnostics Lab',
   bank: 'Question Bank',
   flagged: 'Flagged Reports',
@@ -67,6 +68,8 @@ function AdminContent() {
       const normalized = tab.toLowerCase();
       if (normalized === 'importer') {
         setActiveTab('ingestion');
+      } else if (normalized === 'ingestion-history') {
+        setActiveTab('history');
       } else if (normalized === 'system') {
         setActiveTab('settings');
         setSubTab('system');
@@ -76,7 +79,7 @@ function AdminContent() {
       } else if (normalized === 'portal-menu') {
         setActiveTab('settings');
         setSubTab('portal-menu');
-      } else if (['ingestion', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads'].includes(normalized)) {
+      } else if (['ingestion', 'history', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }

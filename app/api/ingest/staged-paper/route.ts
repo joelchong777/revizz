@@ -190,11 +190,20 @@ export async function GET(request: NextRequest) {
       let fileContent: string | null = null;
       let isArchived = archivedSet.has(cleanId);
       let foundLocally = false;
+      let localBirthtime: string | null = null;
+      let localMtime: string | null = null;
 
       if (fs.existsSync(activeFilePath)) {
         try {
           fileContent = fs.readFileSync(activeFilePath, 'utf8');
           foundLocally = true;
+          try {
+            const stat = fs.statSync(activeFilePath);
+            localBirthtime = stat.birthtime ? stat.birthtime.toISOString() : null;
+            localMtime = stat.mtime ? stat.mtime.toISOString() : null;
+          } catch {
+            // ignore
+          }
         } catch (readErr: any) {
           return NextResponse.json(
             { success: false, error: `Failed to read file for "${cleanId}": ${readErr?.message}` },
@@ -206,6 +215,13 @@ export async function GET(request: NextRequest) {
           fileContent = fs.readFileSync(archiveFilePath, 'utf8');
           isArchived = true;
           foundLocally = true;
+          try {
+            const stat = fs.statSync(archiveFilePath);
+            localBirthtime = stat.birthtime ? stat.birthtime.toISOString() : null;
+            localMtime = stat.mtime ? stat.mtime.toISOString() : null;
+          } catch {
+            // ignore
+          }
         } catch (readErr: any) {
           return NextResponse.json(
             { success: false, error: `Failed to read archive file for "${cleanId}": ${readErr?.message}` },
@@ -277,6 +293,12 @@ export async function GET(request: NextRequest) {
         paper.lifecycle_state = 'published';
       }
 
+      paper.ingested_at = paper.ingested_at || localBirthtime || localMtime || undefined;
+      paper.updated_at = paper.updated_at || localMtime || paper.ingested_at || undefined;
+      if (isPublished && !paper.published_at) {
+        paper.published_at = paper.updated_at || undefined;
+      }
+
       return NextResponse.json({
         success: true,
         paper,
@@ -293,6 +315,8 @@ export async function GET(request: NextRequest) {
       isLocallyArchived: boolean;
       localPath?: string;
       remotePath?: string;
+      remoteCreatedAt?: string | null;
+      remoteUpdatedAt?: string | null;
     }
 
     const discoveredMap = new Map<string, DiscoveredPaper>();
@@ -353,6 +377,8 @@ export async function GET(request: NextRequest) {
                 filename: item.name,
                 isLocallyArchived: false,
                 remotePath: `${STAGED_PAPERS_DIR}/${item.name}`,
+                remoteCreatedAt: (item as any).created_at || null,
+                remoteUpdatedAt: (item as any).updated_at || null,
               });
             }
           }
@@ -382,6 +408,18 @@ export async function GET(request: NextRequest) {
 
       papers.push(cleanId);
 
+      let localBirthtime: string | null = null;
+      let localMtime: string | null = null;
+      if (item.localPath && fs.existsSync(item.localPath)) {
+        try {
+          const stat = fs.statSync(item.localPath);
+          localBirthtime = stat.birthtime ? stat.birthtime.toISOString() : null;
+          localMtime = stat.mtime ? stat.mtime.toISOString() : null;
+        } catch {
+          // ignore
+        }
+      }
+
       let fileContent: string | null = null;
       try {
         if (item.localPath && fs.existsSync(item.localPath)) {
@@ -410,11 +448,25 @@ export async function GET(request: NextRequest) {
         const matchedPaper = publishedMap.get(lookupKey);
         const isPublished = Boolean(matchedPaper);
 
+        const ingestedAt = localBirthtime || localMtime || item.remoteCreatedAt || item.remoteUpdatedAt || null;
+        const updatedAt = localMtime || item.remoteUpdatedAt || ingestedAt || null;
+        const publishedAt = isPublished ? updatedAt : null;
+
         stagedPapers.push({
           id: cleanId,
           filename: item.filename,
           questionsCount: 0,
           diagramsCount: 0,
+          activeCount: 0,
+          needsReviewCount: 0,
+          withdrawnCount: 0,
+          topicsCount: 0,
+          topicBreakdown: [],
+          ingested_at: ingestedAt,
+          updated_at: updatedAt,
+          published_at: publishedAt,
+          source_qp_filename: null,
+          source_ms_filename: null,
           lifecycle_state: isPublished ? 'published' : 'draft',
           is_published: isPublished,
           published_exam_paper_id: matchedPaper?.id || null,
@@ -431,6 +483,29 @@ export async function GET(request: NextRequest) {
           (q: any) => Boolean(q?.diagram?.has_diagram || q?.has_diagram || q?.diagram?.image_url || q?.image_url)
         ).length;
 
+        let activeCount = 0;
+        let needsReviewCount = 0;
+        let withdrawnCount = 0;
+        const topicCounts = new Map<string, number>();
+
+        for (const q of questions) {
+          if (q?.status === 'needs_review') {
+            needsReviewCount++;
+          } else if (q?.status === 'withdrawn') {
+            withdrawnCount++;
+          } else {
+            activeCount++;
+          }
+
+          const tName = (typeof q?.topic_name === 'string' && q.topic_name.trim()) ? q.topic_name.trim() : 'General';
+          topicCounts.set(tName, (topicCounts.get(tName) || 0) + 1);
+        }
+
+        const topicBreakdown = Array.from(topicCounts.entries())
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count);
+        const topicsCount = topicBreakdown.length;
+
         const fallbackMeta = parseMetadataFromFilename(item.filename);
         const subjectCode = parsedJson?.subject?.code || fallbackMeta.subjectCode;
         const series = parsedJson?.paper?.series || fallbackMeta.series;
@@ -445,6 +520,10 @@ export async function GET(request: NextRequest) {
         const lifecycleState = isPublished
           ? 'published'
           : (parsedJson?.lifecycle_state || parsedJson?.state || 'review');
+
+        const ingestedAt = parsedJson?.ingested_at || localBirthtime || localMtime || item.remoteCreatedAt || item.remoteUpdatedAt || null;
+        const updatedAt = parsedJson?.updated_at || localMtime || item.remoteUpdatedAt || ingestedAt || null;
+        const publishedAt = parsedJson?.published_at || (isPublished ? updatedAt : null);
 
         stagedPapers.push({
           id: typeof parsedJson?.id === 'string' && parsedJson.id ? parsedJson.id : cleanId,
@@ -473,6 +552,16 @@ export async function GET(request: NextRequest) {
             : undefined,
           questionsCount: questions.length,
           diagramsCount,
+          activeCount,
+          needsReviewCount,
+          withdrawnCount,
+          topicsCount,
+          topicBreakdown,
+          ingested_at: ingestedAt,
+          updated_at: updatedAt,
+          published_at: publishedAt,
+          source_qp_filename: parsedJson?.source_qp_filename || null,
+          source_ms_filename: parsedJson?.source_ms_filename || null,
           lifecycle_state: lifecycleState,
           is_published: isPublished,
           published_exam_paper_id: publishedExamPaperId,
@@ -490,11 +579,25 @@ export async function GET(request: NextRequest) {
         const matchedPaper = publishedMap.get(lookupKey);
         const isPublished = Boolean(matchedPaper);
 
+        const ingestedAt = localBirthtime || localMtime || item.remoteCreatedAt || item.remoteUpdatedAt || null;
+        const updatedAt = localMtime || item.remoteUpdatedAt || ingestedAt || null;
+        const publishedAt = isPublished ? updatedAt : null;
+
         stagedPapers.push({
           id: cleanId,
           filename: item.filename,
           questionsCount: 0,
           diagramsCount: 0,
+          activeCount: 0,
+          needsReviewCount: 0,
+          withdrawnCount: 0,
+          topicsCount: 0,
+          topicBreakdown: [],
+          ingested_at: ingestedAt,
+          updated_at: updatedAt,
+          published_at: publishedAt,
+          source_qp_filename: null,
+          source_ms_filename: null,
           lifecycle_state: isPublished ? 'published' : 'draft',
           is_published: isPublished,
           published_exam_paper_id: matchedPaper?.id || null,
@@ -769,7 +872,30 @@ export async function POST(request: NextRequest) {
     const cleanId = path.basename(rawId).replace(/\.json$/i, '').trim() || defaultId;
 
     const filePath = path.join(stagingDir, `${cleanId}.json`);
-    const paperToSave = { ...paper, id: cleanId };
+
+    let existingIngestedAt: string | null = null;
+    if (fs.existsSync(filePath)) {
+      try {
+        const existingContent = fs.readFileSync(filePath, 'utf8');
+        const existingParsed = JSON.parse(existingContent);
+        if (existingParsed?.ingested_at) {
+          existingIngestedAt = existingParsed.ingested_at;
+        } else {
+          const stat = fs.statSync(filePath);
+          existingIngestedAt = stat.birthtime ? stat.birthtime.toISOString() : null;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const nowIso = new Date().toISOString();
+    const paperToSave = {
+      ...paper,
+      id: cleanId,
+      ingested_at: paper.ingested_at || existingIngestedAt || nowIso,
+      updated_at: nowIso,
+    };
 
     let savedLocally = false;
     try {
