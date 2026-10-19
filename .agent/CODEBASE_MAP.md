@@ -1,6 +1,6 @@
 # Revizz Codebase Atlas & Line Coordinates
 
-> **Automated Symbol Atlas**: Indexing 157 files, 85,414 lines, and 765 symbols across core modules. Generated in 291ms.
+> **Automated Symbol Atlas**: Indexing 159 files, 84,611 lines, and 762 symbols across core modules. Generated in 326ms.
 
 Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact `[L<start>-L<end>]` coordinates.
 
@@ -73,7 +73,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`components/portal/TeacherAnalytics.tsx`** (1085 lines) — *Teacher analytics dashboard for student accuracy and distractor metrics*: `TeacherAnalyticsProps [L27-L30]`, `RosterStudent [L32-L45]`, `HeatRow [L47-L50]`, `TeacherAnalytics [L52-L1084]`
 - **`components/portal/compiler/CompilerDiagramPreview.tsx`** (272 lines) — *Defensive, tactile neobrutalist diagram preview component for Revizz Test Compiler.*: `resolveDiagramUrl [L17-L17]`, `CompilerDiagramPreviewProps [L19-L25]`, `CompilerDiagramPreview [L34-L271]`
 - **`components/portal/compiler/PrintableExamLayout.tsx`** (337 lines) — *Printable Cambridge exam format layout with cover page & mark scheme*: `PrintableExamLayout [L19-L336]`
-- **`components/portal/compiler/TestCompilerHub.tsx`** (3227 lines) — *Teacher test compiler builder for custom exams, filters, and drafts*: `TestCompilerHub [L90-L3226]`
+- **`components/portal/compiler/TestCompilerHub.tsx`** (2184 lines) — *Teacher test compiler builder for custom exams, filters, and drafts*: `TestCompilerHub [L75-L2183]`
 - **`components/portal/staged/StagedPaperAuditor.tsx`** (663 lines) — *Portal & ingestion component: StagedPaperAuditor*: `StagedPaperAuditorProps [L30-L34]`, `StagedPaperAuditor [L42-L660]`
 - **`components/portal/staged/StagedPapersQueue.tsx`** (733 lines) — *Portal & ingestion component: StagedPapersQueue*: `StagedPaperItem [L29-L46]`, `StagedPapersQueueProps [L48-L51]`, `StagedPapersQueue [L87-L732]`
 - **`components/profile/StudentAchievementsActivityPanel.tsx`** (584 lines) — *1.*: `StudentAchievementsActivityPanelProps [L14-L20]`, `StudentAchievementsActivityPanel [L22-L583]`
@@ -119,17 +119,19 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`lib/subjects.ts`** (58 lines) — *Core library utility module: subjects*: `DbSubject [L3-L8]`, `FALLBACK_SUBJECTS [L10-L10]`, `getSubjectEmoji [L12-L34]`, `fetchSubjectsFromDb [L36-L57]`
 - **`lib/supabaseClient.ts`** (13 lines) — *Supabase client configuration and anonymous fallback*: `supabase [L11-L11]`
 - **`lib/sync.ts`** (94 lines) — *Offline attempt queue and background Supabase synchronization*: `syncGuestDataToUser [L4-L93]`
-- **`lib/testCompiler.ts`** (644 lines) — *Test compiler draft persistence in localStorage and exam compiler*: `DRAFT_KEY_PREFIX [L5-L5]`, `PRINT_SNAPSHOT_PREFIX [L6-L6]`, `DRAFT_CHANGE_EVENT [L7-L7]`, `SUBJECT_CATALOG [L10-L10]`, `GeneratedTestPaper [L17-L21]`, `resolveQuestionExplanation [L23-L35]`, `notifyDraftsChanged [L37-L53]`, `sanitizeAccountScope [L55-L65]`, `resolveCurrentAccountScope [L67-L116]`, `getDraftStorageKey [L118-L121]`, `formatDefaultDraftTitle [L123-L134]`, `saveTestDraft [L136-L188]`, `savePrintSnapshot [L190-L219]`, `loadTestDraft [L221-L286]`, `listTestDrafts [L288-L324]`, `deleteTestDraft [L326-L349]`, `duplicateTestDraft [L351-L366]`, `renameTestDraft [L368-L386]`, `exportTestDraftJson [L388-L398]`, `importTestDraftJson [L400-L468]`, `buildCompiledQuestions [L470-L509]`, `autoSelectQuestions [L512-L549]`, `generateTestPaper [L551-L579]`, `shuffleQuestionIds [L581-L588]`, `computeTopicDistribution [L590-L619]`, `saveOnlineAssignment [L621-L624]`, `listOnlineAssignments [L626-L641]`
+- **`lib/testCompiler.ts`** (242 lines) — *Test compiler draft persistence in localStorage and exam compiler*: `SUBJECT_CATALOG [L8-L8]`, `GeneratedTestPaper [L15-L19]`, `resolveQuestionExplanation [L21-L33]`, `saveTestDraft [L35-L38]`, `loadTestDraft [L40-L49]`, `listTestDrafts [L51-L66]`, `buildCompiledQuestions [L68-L107]`, `autoSelectQuestions [L110-L147]`, `generateTestPaper [L149-L177]`, `shuffleQuestionIds [L179-L186]`, `computeTopicDistribution [L188-L217]`, `saveOnlineAssignment [L219-L222]`, `listOnlineAssignments [L224-L239]`
 - **`lib/utils.ts`** (7 lines) — *Tailwind CSS class merging utility with clsx and twMerge*: `cn [L4-L6]`
 
 ## 4. Automation & Verification CLI Scripts (scripts/)
 
 - **`scripts/agent-memory.ts`** (1179 lines) — *Agent memory engine indexing learnings, rules, and reflections*: `RuleCategory [L17-L22]`, `RuleItem [L24-L35]`, `ReflectionEntry [L37-L49]`, `SearchResult [L51-L56]`, `SearchOptions [L58-L62]`, `MemoryStats [L64-L72]`, `DEFAULT_MEMORY_PATH [L78-L86]`, `c [L96-L114]`, `extractRulesAndTraps [L540-L543]`
+- **`scripts/aggregate-0455-m24-12.ts`** (129 lines) — *CLI script aggregating March 2024 paper 12 questions into JSON*: `aggregatePaper [L18-L18]`
 - **`scripts/aggregate-0455-s24-12.ts`** (243 lines) — *CLI script aggregating Summer 2024 paper 12 questions into JSON*: `aggregatePaper [L23-L23]`
 - **`scripts/blackboard.ts`** (211 lines) — *CLI interface for multi-agent blackboard state inspection*: `printHelp [L17-L52]`, `parseJsonOrString [L54-L60]`, `main [L62-L208]`
 - **`scripts/check-mark-scheme.ts`** (255 lines) — *Cambridge Mark Scheme Checker & Auto-Remediator CLI Usage: npx tsx scripts/check-mark-scheme.ts <paper_id_or_path> [o...*: `parseArgs [L38-L61]`, `printUsage [L63-L83]`, `resolvePaperFiles [L85-L122]`, `run [L124-L249]`
 - **`scripts/codebase-map.ts`** (1191 lines) — *Ultra-fast (<200ms), zero-dependency TypeScript/Python/SQL symbol & line-range indexer.*: `SymbolKind [L23-L36]`, `SymbolInfo [L38-L45]`, `FileCategory [L47-L47]`, `FileMapEntry [L49-L55]`, `CodebaseIndex [L57-L68]`, `discoverFiles [L187-L216]`, `extractPurpose [L222-L1190]`
 - **`scripts/crop_box.py`** (232 lines) — *PyMuPDF 300 DPI high-resolution diagram cropper CLI*: `normalize_coordinates [L26-L48]`, `crop_diagram [L51-L60]`, `main [L161-L227]`
+- **`scripts/fast-ingest.py`** (853 lines) — *Fast multimodal Gemini ingestion pipeline with bounding box cropping*: `escape_currency_dollars [L96-L132]`, `parse_filename_metadata [L135-L176]`, `parse_mark_scheme [L179-L208]`, `map_syllabus_topic [L211-L232]`, `generate_explanation [L235-L240]`, `render_diagram_crop [L275-L279]`, `extract_questions_from_qp [L296-L302]`, `assemble_staging_paper [L644-L649]`, `ingest_single_paper [L692-L698]`, `find_matching_ms [L744-L763]`, `ingest_batch_directory [L766-L771]`, `main [L809-L848]`
 - **`scripts/generate-upsert-sql.ts`** (125 lines) — *Generates SQL upsert queries for Cambridge questions into Supabase*: `generateQuestionSql [L54-L100]`
 - **`scripts/ingest-paper.ts`** (669 lines) — *End-to-end paper ingestion coordinator script*: `CliOptions [L69-L84]`, `parseCliArgs [L86-L137]`, `InferredMetadata [L155-L164]`, `inferCambridgeMetadata [L170-L214]`, `upsertStagingPaperToSupabase [L224-L233]`
 - **`scripts/parse_mark_scheme.py`** (94 lines) — *Automation CLI script: parse_mark_scheme*: `extract_mark_scheme [L13-L79]`, `main [L81-L90]`
@@ -140,7 +142,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`scripts/verify-ads-system.ts`** (854 lines) — *Revizz Ads & Monetization System QA & Verification Suite Comprehensive automated test suite validating: 1.*: `createGroup [L43-L49]`
 - **`scripts/verify-compiler-diagram-preview.ts`** (117 lines) — *Standalone Verification Script for CompilerDiagramPreview & Test Compiler Integration.*: `assert [L20-L28]`, `run [L30-L111]`
 - **`scripts/verify-compiler-print-pipeline.ts`** (204 lines) — *Standalone Verification Script for Test Compiler Print Pipeline.*: `assert [L26-L34]`, `run [L36-L198]`
-- **`scripts/verify-compiler-print.ts`** (813 lines) — *Standalone Verification Test Script: verify-compiler-print.ts Verifies: 1.*: `recordResult [L74-L78]`, `testDynamicPoolCompilation [L80-L163]`, `testCambridgeFallback [L165-L180]`, `testDraftSnapshotSerialization [L182-L259]`, `testDraftLifecycleOperations [L261-L415]`, `testAccountScopedDraftIsolation [L417-L584]`, `testSupabaseEndToEnd [L586-L719]`, `testAutoSelectQuestions [L721-L766]`, `main [L768-L807]`
+- **`scripts/verify-compiler-print.ts`** (473 lines) — *Standalone Verification Test Script: verify-compiler-print.ts Verifies: 1.*: `recordResult [L61-L65]`, `testDynamicPoolCompilation [L67-L150]`, `testCambridgeFallback [L152-L167]`, `testDraftSnapshotSerialization [L169-L246]`, `testSupabaseEndToEnd [L248-L381]`, `testAutoSelectQuestions [L383-L428]`, `main [L430-L467]`
 - **`scripts/verify-delete-papers.ts`** (493 lines) — *Automated Verification Suite: Delete Staged and Archived Papers Verifies: 1.*: `pass [L44-L48]`, `fail [L50-L54]`, `assert [L56-L62]`, `createDummyPaper [L64-L88]`, `runVerification [L90-L490]`
 - **`scripts/verify-diagram-cropper.ts`** (128 lines) — *Verification test suite for PDF diagram cropper script*: `runTests [L6-L122]`
 - **`scripts/verify-diagram-filter.ts`** (118 lines) — *1.*

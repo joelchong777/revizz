@@ -24,6 +24,7 @@
 | 16 | CI/CD Deployment | **Instant HTTP Probe False-Positive**: Checking production URL immediately after git push returns cached prior deployment. | Enforce direct Vercel CLI execution (`npx vercel --prod --yes`) or poll status for `● Ready`. |
 | 17 | Package Dependencies | **Local Cache Dependency Masking**: Locally cached `node_modules` hides missing `package.json` entries (`rehype-raw`, `remark-gfm`). | Validate dependencies directly in `package.json` against imports before shipping. |
 | 18 | Data Tables | **Multi-Format Table Detection**: Checking only `stem.includes('\|')` skips Cambridge questions with diagram/text tables. | Inspect stem phrasing, HTML tags, option matrices, and diagram metadata. |
+| 19 | UI Layout | **Viewport-Height Drawer Stretch**: Using `h-[calc(100vh-...)]` and `flex-1` with `mt-auto` creates dead space when inner lists are removed. | Enforce `shrink-0` and content-hugging card containers without artificial viewport constraints. |
 
 ## Reflection Log Entry - 2026-10-19 (Student UI, Auth Gate, 4-Option Format Filter, GFM Tables & Mobile Ergonomics)
 - **Topic**: Student UI, Auth Gate, 4-Option Format Filter, GFM Tables & Mobile Ergonomics
@@ -172,5 +173,23 @@
 ### Verification & Quality Assurance
 - Automated tests: Added Suite 20 to `scripts/verify-revizz.ts`; all tests passed with 0 TypeScript compilation errors.
 - Production release: Shipped atomically via `scripts/wt.ts ship auth-accounts -m "feat(auth): add accounts by gmail and preserve guest mode"`, pushed commits `6959d15` and `c7f31e0` to GitHub `main`, verified Vercel production deployment (`https://revizz-sand.vercel.app` HTTP 200 OK), and pruned the worktree.
+
+## Reflection Log Entry - 2026-10-19 (Test Assembly Drawer Refactoring: Test Name Field, Edit Layout Modal & Compact Layout)
+- **Topic**: Test Assembly Drawer Refactoring: Test Name Field, Edit Layout Modal & Compact Layout
+- **Target Surfaces**: `components/portal/compiler/TestCompilerHub.tsx`
+
+### Architectural Solutions & Key Insights
+- **Streamlined Test Assembly UX**: Removed the redundant "Selected Questions (0)" subheader, empty-state placeholder, and drag-and-drop question cards from the Test Assembly card in the teacher Test Compiler while preserving the `Shuffle Order` capability.
+- **Direct Assessment Naming**: Added a prominent, tactile neobrutalist `Test Name` text input directly bound to `testTitle` within the top section of the card, allowing teachers to name their tests immediately without opening nested settings.
+- **Accessible Popup Modal for Layout & Settings**: Replaced the bulky inline accordion with an accessible dialog (`role="dialog"`, `aria-modal="true"`, Escape key support, backdrop click) triggered by an "Edit" button, housing Subject Catalog, School Name, Exam Date & Duration, Test Code, and all 5 layout toggle switches.
+- **Compact Content-Hugging Architecture**: Removed artificial viewport height constraints (`h-[calc(100vh-130px)]` and `flex-1 min-h-0`) and unified all controls into a neat 2-tier footer (`[Edit] [Shuffle Order]` on Row 1; `[Save Draft] [Assign Online] [PDF / Print]` on Row 2), completely eliminating vertical dead space.
+
+### Anti-Patterns & Bug Traps
+- **Viewport-Height Drawer Stretch Trap**: Using `h-[calc(100vh-...)]` on parent containers and `flex-1` with `mt-auto` on side drawers when inner lists are removed creates an unsightly empty gap in the middle of cards; enforce `shrink-0` and natural content-hugging containers.
+- **Accordion Form Clutter Trap**: Embedding deep forms (Subject catalog, dates, test codes, 5 toggles) inside side accordions pushes primary CTA buttons offscreen; extract complex configurations into modal overlays.
+
+### Verification & Quality Assurance
+- Automated tests: Ran full verification with all 158 automated tests passing across 21 test suites; 0 TypeScript compilation errors.
+- Production release: Shipped atomically via `scripts/wt.ts ship compiler-assembly-ui -m "feat(compiler): compact test assembly drawer, add test name input and popup layout modal" --fast`, merged commit `73b49c3` into GitHub `main`, verified Vercel production deployment (`https://revizz-sand.vercel.app` HTTP 200 OK), and pruned the worktree.
 
 
