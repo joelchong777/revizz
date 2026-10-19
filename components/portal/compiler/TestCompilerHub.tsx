@@ -11,8 +11,6 @@ import {
   Check,
   Zap,
   Image as ImageIcon,
-  ArrowUp,
-  ArrowDown,
   Table,
   Calculator,
   RotateCcw,
@@ -20,7 +18,6 @@ import {
   ChevronUp,
   Filter,
   Shuffle,
-  GripVertical,
   Send,
   Sparkles,
   LayoutGrid,
@@ -137,9 +134,8 @@ export default function TestCompilerHub() {
   const [includeExplanations, setIncludeExplanations] = useState(true);
 
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLayoutModalOpen, setIsLayoutModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // --- Modals State ---
   const [isAutoModalOpen, setIsAutoModalOpen] = useState(false);
@@ -360,24 +356,6 @@ export default function TestCompilerHub() {
 
   const handleClearSelection = () => setSelectedQuestionIds([]);
 
-  const handleMoveQuestion = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index > 0) {
-      const newIds = [...selectedQuestionIds];
-      [newIds[index - 1], newIds[index]] = [newIds[index], newIds[index - 1]];
-      setSelectedQuestionIds(newIds);
-    } else if (direction === 'down' && index < selectedQuestionIds.length - 1) {
-      const newIds = [...selectedQuestionIds];
-      [newIds[index + 1], newIds[index]] = [newIds[index], newIds[index + 1]];
-      setSelectedQuestionIds(newIds);
-    }
-  };
-
-  const handleRemoveQuestion = (index: number) => {
-    const newIds = [...selectedQuestionIds];
-    newIds.splice(index, 1);
-    setSelectedQuestionIds(newIds);
-  };
-
   const generateConfig = (): TestPaperConfig => {
     const compiled = buildCompiledQuestions(selectedQuestionIds, questions);
     return {
@@ -488,7 +466,9 @@ export default function TestCompilerHub() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isCohortDropdownOpen) {
+        if (isLayoutModalOpen) {
+          setIsLayoutModalOpen(false);
+        } else if (isCohortDropdownOpen) {
           setIsCohortDropdownOpen(false);
           setIsCustomCohortInputOpen(false);
         } else if (isAutoModalOpen) {
@@ -502,7 +482,7 @@ export default function TestCompilerHub() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCohortDropdownOpen, isAutoModalOpen, isDraftsModalOpen, isAssignModalOpen]);
+  }, [isLayoutModalOpen, isCohortDropdownOpen, isAutoModalOpen, isDraftsModalOpen, isAssignModalOpen]);
 
   return (
     <div className="flex flex-col gap-6 text-[#201e1d] font-body pb-12">
@@ -763,7 +743,7 @@ export default function TestCompilerHub() {
         </div>
 
         {/* RIGHT COLUMN: Controls & Test Assembly Drawer */}
-        <div className="flex flex-col gap-3.5 lg:sticky lg:top-4 h-[calc(100vh-130px)] max-h-[calc(100vh-130px)] min-w-0">
+        <div className="flex flex-col gap-3.5 lg:sticky lg:top-4 min-w-0">
           {/* Panel 1: Compact Question Filters & Tools (shrink-0) */}
           <div className="p-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex flex-col gap-2.5 shrink-0">
             {/* Header: Title, Found Badge, Reset Button, Select All Quick Toggle, Collapse Toggle */}
@@ -1218,11 +1198,11 @@ export default function TestCompilerHub() {
             )}
           </div>
 
-          {/* Panel 2: Dedicated Test Assembly Drawer (flex-1 min-h-0 flex flex-col) */}
+          {/* Panel 2: Dedicated Test Assembly Drawer (compact, shrink-0) */}
           <aside
             id="test-assembly-drawer"
             aria-label="Test Assembly Drawer"
-            className="flex-1 min-h-0 flex flex-col p-4 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] overflow-hidden"
+            className="shrink-0 flex flex-col p-4 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] gap-2.5"
           >
             {/* Summary Header */}
             <div className="shrink-0 flex items-center justify-between border-b-[1.5px] border-[#dcd3c4] pb-3">
@@ -1241,139 +1221,29 @@ export default function TestCompilerHub() {
               </div>
             </div>
 
-            {/* Collapsible Settings */}
-            <div className="shrink-0 flex flex-col gap-2 border-b-[1.5px] border-[#dcd3c4] py-2.5">
-              <button
-                type="button"
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                aria-expanded={isSettingsOpen}
-                aria-label={isSettingsOpen ? 'Collapse layout and settings' : 'Expand layout and settings'}
-                className="flex items-center justify-between font-bold text-xs text-[#201e1d] w-full p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-1 active:translate-y-0.5 transition-all cursor-pointer hover:bg-[#eee7db]"
-              >
-                <div className="flex items-center gap-2">
-                  <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Layout & Settings ({subjectCode} {subjectName})</span>
-                </div>
-                <span aria-hidden="true" className="text-[10px] text-[#645c50]">{isSettingsOpen ? '▲' : '▼'}</span>
-              </button>
-
-              {isSettingsOpen && (
-                <div className="flex flex-col gap-2 max-h-[24vh] overflow-y-auto pr-1">
-                  {/* Dynamic Subject Selector */}
-                  <div>
-                    <label htmlFor="settings-subject-select" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
-                      Subject Catalog
-                    </label>
-                    <select
-                      id="settings-subject-select"
-                      aria-label="Select Subject Catalog"
-                      value={subjectCode}
-                      onChange={(e) => {
-                        const newCode = e.target.value;
-                        setSubjectCode(newCode);
-                        const cat = SUBJECT_CATALOG.find((s) => s.code === newCode);
-                        if (cat) {
-                          if (testTitle) setTestTitle(`Assessment - ${cat.name}`);
-                          if (testCode) setTestCode(`REV-${cat.code}`);
-                        }
-                      }}
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
-                    >
-                      {SUBJECT_CATALOG.map((s) => (
-                        <option key={s.code} value={s.code}>
-                          {s.code} {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={testTitle}
-                    onChange={(e) => setTestTitle(e.target.value)}
-                    placeholder="Enter assessment title..."
-                    aria-label="Test Title"
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                  />
-                  <input
-                    type="text"
-                    value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
-                    placeholder="Enter school name..."
-                    aria-label="School Name"
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={dateString}
-                      onChange={(e) => setDateString(e.target.value)}
-                      placeholder="Exam Date"
-                      aria-label="Exam Date"
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                    />
-                    <input
-                      type="number"
-                      value={durationMinutes}
-                      onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
-                      placeholder="Duration (m)"
-                      aria-label="Duration in minutes"
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    value={testCode}
-                    onChange={(e) => setTestCode(e.target.value)}
-                    placeholder="e.g. REV-0455-T1"
-                    aria-label="Test Code"
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                  />
-
-                  {/* Layout Toggles */}
-                  <div className="flex flex-col gap-1.5 mt-0.5">
-                    {[
-                      { label: 'Exam Cover Page', state: includeCoverPage, set: setIncludeCoverPage, id: 'toggle-cover-page' },
-                      { label: 'Candidate Details Header', state: includeCandidateHeader, set: setIncludeCandidateHeader, id: 'toggle-header' },
-                      { label: 'Candidate MCQ Bubble Sheet', state: includeBubbleSheet, set: setIncludeBubbleSheet, id: 'toggle-bubble' },
-                      { label: 'Teacher Mark Scheme', state: includeMarkScheme, set: setIncludeMarkScheme, id: 'toggle-mark-scheme' },
-                      { label: 'Mark Scheme Explanations', state: includeExplanations, set: setIncludeExplanations, id: 'toggle-explanations' },
-                    ].map((toggle, i) => (
-                      <label key={i} htmlFor={toggle.id} className="flex items-center gap-2 text-xs text-[#201e1d] cursor-pointer">
-                        <button
-                          id={toggle.id}
-                          type="button"
-                          role="switch"
-                          aria-checked={toggle.state}
-                          aria-label={toggle.label}
-                          onClick={() => toggle.set(!toggle.state)}
-                          className={`w-7 h-4 shrink-0 rounded-full relative transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 ${
-                            toggle.state ? 'bg-[#728157]' : 'bg-[#c0b6a5]'
-                          }`}
-                        >
-                          <span
-                            aria-hidden="true"
-                            className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${
-                              toggle.state ? 'right-0.5' : 'left-0.5'
-                            }`}
-                          />
-                        </button>
-                        <span className="font-bold text-[11px]">{toggle.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Test Name Input */}
+            <div className="shrink-0 flex flex-col gap-1 pt-0.5">
+              <label htmlFor="test-assembly-name-input" className="text-[10px] font-black uppercase tracking-wider text-[#645c50]">
+                Test Name
+              </label>
+              <input
+                id="test-assembly-name-input"
+                type="text"
+                placeholder="Enter test name..."
+                value={testTitle}
+                onChange={(e) => setTestTitle(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] placeholder:text-[#a19786] placeholder:font-normal"
+              />
             </div>
 
             {/* Topic Distribution Breakdown Strip */}
             {selectedQuestions.length > 0 && topicDistribution.length > 0 && (
-              <div className="shrink-0 p-2.5 rounded-2xl bg-[#eee7db]/80 border border-[#dcd3c4] flex flex-col gap-1.5 my-1">
+              <div className="shrink-0 p-2.5 rounded-2xl bg-[#eee7db]/80 border border-[#dcd3c4] flex flex-col gap-1.5 my-0.5">
                 <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-[#645c50]">
                   <span>Topic Coverage Breakdown</span>
                   <span>{topicDistribution.length} Topics</span>
                 </div>
-                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar">
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto no-scrollbar">
                   {topicDistribution.map((item) => (
                     <span
                       key={item.topic}
@@ -1388,114 +1258,8 @@ export default function TestCompilerHub() {
               </div>
             )}
 
-            {/* Selected Questions Header with Shuffle Order Button */}
-            <div className="shrink-0 flex items-center justify-between py-1 px-0.5 border-b border-[#dcd3c4]/70">
-              <span className="text-xs font-bold text-[#645c50]">
-                Selected Questions ({selectedQuestions.length})
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedQuestionIds((prev) => shuffleQuestionIds(prev))}
-                disabled={selectedQuestions.length < 2}
-                aria-label="Shuffle question order"
-                title={selectedQuestions.length < 2 ? 'Add at least 2 questions to shuffle' : 'Shuffle question order'}
-                className="px-2 py-1 rounded-lg bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center gap-1 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0 shadow-xs"
-              >
-                <Shuffle className="w-3 h-3 text-[#c67139]" aria-hidden="true" />
-                <span>Shuffle Order</span>
-              </button>
-            </div>
-
-            {/* Selected Questions List with HTML5 Drag-and-Drop */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2 py-2">
-              {questions.length === 0 ? (
-                <div className="text-center py-8 text-[#645c50] text-xs font-medium flex flex-col items-center justify-center gap-1.5 h-full">
-                  <span className="font-bold text-[#201e1d]">Question Bank is empty.</span>
-                  <span>Ingest exam papers in App Admin to assemble tests.</span>
-                </div>
-              ) : selectedQuestions.length === 0 ? (
-                <div className="text-center py-8 text-[#645c50] text-xs font-medium flex flex-col items-center justify-center gap-1.5 h-full">
-                  <span>No questions selected yet. Add some from the bank.</span>
-                </div>
-              ) : (
-                selectedQuestions.map((q, idx) => (
-                  <div
-                    key={q.id}
-                    draggable
-                    onDragStart={(e) => {
-                      setDraggedIndex(idx);
-                      e.dataTransfer.effectAllowed = 'move';
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = 'move';
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (draggedIndex === null || draggedIndex === idx) return;
-                      setSelectedQuestionIds((prev) => {
-                        const updated = [...prev];
-                        const [moved] = updated.splice(draggedIndex, 1);
-                        updated.splice(idx, 0, moved);
-                        return updated;
-                      });
-                      setDraggedIndex(null);
-                    }}
-                    onDragEnd={() => setDraggedIndex(null)}
-                    className={`flex items-start gap-1.5 p-2 rounded-xl hover:bg-[#eee7db] transition-colors group ${
-                      draggedIndex === idx ? 'opacity-40 border-2 border-dashed border-[#c67139]' : ''
-                    }`}
-                  >
-                    <span
-                      className="cursor-grab active:cursor-grabbing text-[#a19786] hover:text-[#201e1d] mt-1 shrink-0 p-0.5"
-                      title="Drag to reorder"
-                      aria-hidden="true"
-                    >
-                      <GripVertical className="w-3.5 h-3.5" />
-                    </span>
-                    <span className="w-4 text-center text-xs font-black text-[#645c50] mt-0.5">{idx + 1}.</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-[#201e1d] line-clamp-1">{q.stem_markdown}</div>
-                      <div className="text-[10px] text-[#645c50] font-mono mt-0.5">{stripCambridgeIgcse(q.citation || q.id)}</div>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleMoveQuestion(idx, 'up')}
-                        disabled={idx === 0}
-                        aria-label={`Move question ${idx + 1} up`}
-                        title="Move question up"
-                        className="p-1 hover:bg-[#dcd3c4] rounded disabled:opacity-30 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveQuestion(idx, 'down')}
-                        disabled={idx === selectedQuestions.length - 1}
-                        aria-label={`Move question ${idx + 1} down`}
-                        title="Move question down"
-                        className="p-1 hover:bg-[#dcd3c4] rounded disabled:opacity-30 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveQuestion(idx)}
-                        aria-label={`Remove question ${idx + 1} from selection`}
-                        title="Remove question"
-                        className="p-1 hover:bg-[#ffc6a5] text-[#c67139] rounded ml-1 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
-                      >
-                        <X className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Pinned Action Footer */}
-            <div className="shrink-0 pt-3 border-t-[1.5px] border-[#dcd3c4] flex flex-col gap-2 mt-auto">
+            {/* Action Footer */}
+            <div className="shrink-0 pt-2.5 border-t-[1.5px] border-[#dcd3c4] flex flex-col gap-2">
               {publishedBanner && (
                 <div className="p-2.5 rounded-xl bg-[#e3f4d7] border-2 border-[#728157] text-[#2b3a1a] text-xs font-bold flex items-center justify-between gap-2 shadow-sm animate-fade-in">
                   <div className="flex items-center gap-1.5 min-w-0">
@@ -1521,6 +1285,32 @@ export default function TestCompilerHub() {
                 </div>
               )}
 
+              {/* Row 1: Layout & Shuffle */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsLayoutModalOpen(true)}
+                  aria-label="Edit Layout & Settings"
+                  className="py-2 px-3 rounded-2xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Edit</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedQuestionIds((prev) => shuffleQuestionIds(prev))}
+                  disabled={selectedQuestions.length < 2}
+                  aria-label="Shuffle question order"
+                  title={selectedQuestions.length < 2 ? 'Add at least 2 questions to shuffle' : 'Shuffle question order'}
+                  className="py-2 px-3 rounded-2xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:shadow-[2px_2px_0_0_#201e1d]"
+                >
+                  <Shuffle className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
+                  <span>Shuffle Order</span>
+                </button>
+              </div>
+
+              {/* Row 2: Save, Assign, Print */}
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -1558,6 +1348,196 @@ export default function TestCompilerHub() {
           </aside>
         </div>
       </div>
+
+      {/* Layout & Exam Settings Modal */}
+      {isLayoutModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="layout-settings-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
+        >
+          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] w-full max-w-lg flex flex-col gap-4 max-h-[85vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-1 border-b-[1.5px] border-[#dcd3c4]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#201e1d] shrink-0">
+                  <Settings2 className="w-5 h-5 text-[#201e1d]" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 id="layout-settings-modal-title" className="font-heading text-lg sm:text-xl font-black text-[#201e1d] leading-tight">
+                    Layout & Exam Settings
+                  </h3>
+                  <p className="text-[11px] font-medium text-[#645c50]">
+                    {subjectCode} • {subjectName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLayoutModalOpen(false)}
+                aria-label="Close layout and settings dialog"
+                title="Close dialog"
+                className="w-8 h-8 rounded-full border-2 border-[#201e1d] bg-white shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center text-[#201e1d] hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="overflow-y-auto pr-1 flex flex-col gap-3">
+              {/* Dynamic Subject Selector */}
+              <div>
+                <label htmlFor="settings-subject-select" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
+                  Subject Catalog
+                </label>
+                <select
+                  id="settings-subject-select"
+                  aria-label="Select Subject Catalog"
+                  value={subjectCode}
+                  onChange={(e) => {
+                    const newCode = e.target.value;
+                    setSubjectCode(newCode);
+                    const cat = SUBJECT_CATALOG.find((s) => s.code === newCode);
+                    if (cat) {
+                      if (testTitle) setTestTitle(`Assessment - ${cat.name}`);
+                      if (testCode) setTestCode(`REV-${cat.code}`);
+                    }
+                  }}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+                >
+                  {SUBJECT_CATALOG.map((s) => (
+                    <option key={s.code} value={s.code}>
+                      {s.code} {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="settings-modal-test-title" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
+                  Assessment Title
+                </label>
+                <input
+                  id="settings-modal-test-title"
+                  type="text"
+                  value={testTitle}
+                  onChange={(e) => setTestTitle(e.target.value)}
+                  placeholder="Enter assessment title..."
+                  aria-label="Assessment Title"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="settings-modal-school-name" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
+                  School Name
+                </label>
+                <input
+                  id="settings-modal-school-name"
+                  type="text"
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  placeholder="Enter school name..."
+                  aria-label="School Name"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="settings-modal-date" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
+                    Exam Date
+                  </label>
+                  <input
+                    id="settings-modal-date"
+                    type="text"
+                    value={dateString}
+                    onChange={(e) => setDateString(e.target.value)}
+                    placeholder="Exam Date"
+                    aria-label="Exam Date"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="settings-modal-duration" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
+                    Duration (mins)
+                  </label>
+                  <input
+                    id="settings-modal-duration"
+                    type="number"
+                    value={durationMinutes}
+                    onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
+                    placeholder="Duration (m)"
+                    aria-label="Duration in minutes"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="settings-modal-test-code" className="text-[10px] font-black uppercase text-[#645c50] block mb-1">
+                  Test Code
+                </label>
+                <input
+                  id="settings-modal-test-code"
+                  type="text"
+                  value={testCode}
+                  onChange={(e) => setTestCode(e.target.value)}
+                  placeholder="e.g. REV-0455-T1"
+                  aria-label="Test Code"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                />
+              </div>
+
+              {/* Layout Toggles */}
+              <div className="flex flex-col gap-2 pt-2 border-t border-[#dcd3c4]">
+                <span className="text-[10px] font-black uppercase text-[#645c50]">Layout Toggles</span>
+                {[
+                  { label: 'Exam Cover Page', state: includeCoverPage, set: setIncludeCoverPage, id: 'toggle-modal-cover-page' },
+                  { label: 'Candidate Details Header', state: includeCandidateHeader, set: setIncludeCandidateHeader, id: 'toggle-modal-header' },
+                  { label: 'Candidate MCQ Bubble Sheet', state: includeBubbleSheet, set: setIncludeBubbleSheet, id: 'toggle-modal-bubble' },
+                  { label: 'Teacher Mark Scheme', state: includeMarkScheme, set: setIncludeMarkScheme, id: 'toggle-modal-mark-scheme' },
+                  { label: 'Mark Scheme Explanations', state: includeExplanations, set: setIncludeExplanations, id: 'toggle-modal-explanations' },
+                ].map((toggle, i) => (
+                  <label key={i} htmlFor={toggle.id} className="flex items-center justify-between p-2 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs text-[#201e1d] cursor-pointer hover:bg-[#fbf7f0] transition-colors">
+                    <span className="font-bold text-xs">{toggle.label}</span>
+                    <button
+                      id={toggle.id}
+                      type="button"
+                      role="switch"
+                      aria-checked={toggle.state}
+                      aria-label={toggle.label}
+                      onClick={() => toggle.set(!toggle.state)}
+                      className={`w-8 h-4 shrink-0 rounded-full relative transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 ${
+                        toggle.state ? 'bg-[#728157]' : 'bg-[#c0b6a5]'
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${
+                          toggle.state ? 'right-0.5' : 'left-0.5'
+                        }`}
+                      />
+                    </button>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-2 border-t border-[#dcd3c4]">
+              <button
+                type="button"
+                onClick={() => setIsLayoutModalOpen(false)}
+                className="w-full py-2.5 px-4 rounded-2xl bg-[#f0fae1] border-2 border-[#201e1d] font-bold text-xs text-[#2b3a1a] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#e1eecc] active:translate-y-0.5 cursor-pointer text-center"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Auto-Generate Modal */}
       {isAutoModalOpen && (
