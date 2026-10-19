@@ -2698,7 +2698,7 @@ export default function AdminTools({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.92, y: 10 }}
                   transition={{ duration: 0.16 }}
-                  className="w-full max-w-lg rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[6px_6px_0_#201e1d] p-6 sm:p-7 flex flex-col gap-4 max-h-[90vh] overflow-hidden"
+                  className="w-full max-w-2xl lg:max-w-3xl rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[6px_6px_0_#201e1d] p-6 sm:p-7 flex flex-col gap-4 max-h-[90vh] overflow-hidden"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Modal Header */}
@@ -2743,15 +2743,15 @@ export default function AdminTools({
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
                       Affected Questions ({modalCount})
                     </span>
-                    <div className="max-h-48 overflow-y-auto rounded-2xl border border-[#dcd3c4] bg-[#eee7db]/50 p-2.5 divide-y divide-[#dcd3c4]">
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden rounded-2xl border border-[#dcd3c4] bg-[#eee7db]/50 p-2.5 divide-y divide-[#dcd3c4]">
                       {modalPreviewItems.map((item) => (
                         <div
                           key={item.id}
-                          className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2.5 text-xs"
+                          className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2.5 text-xs min-w-0"
                         >
                           <span className="font-mono font-bold text-[#201e1d] shrink-0">{item.id}</span>
-                          <span className="text-[#474238] truncate flex-1 font-medium">{item.stem}</span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f9f4ed] border border-[#dcd3c4] shrink-0 text-[#645c50]">
+                          <span className="text-[#474238] truncate flex-1 min-w-0 font-medium">{item.stem}</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f9f4ed] border border-[#dcd3c4] shrink-0 max-w-[200px] truncate text-[#645c50]">
                             {item.topic}
                           </span>
                         </div>
