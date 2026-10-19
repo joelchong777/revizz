@@ -623,7 +623,7 @@ export function StartFlow({
           <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
             Questions
           </h2>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-wrap gap-2">
             {[
               {
                 val: 'mixed' as const,
@@ -646,11 +646,12 @@ export function StartFlow({
                 <button
                   key={opt.val}
                   type="button"
+                  data-testid={`diagram-filter-${opt.val}`}
                   onClick={() => handleDiagramFilterSelect(opt.val)}
                   className={cn(
-                    'py-2 px-2 rounded-2xl border-2 border-text font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all select-none',
+                    'px-3.5 py-1.5 rounded-full border-2 border-text font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer transition-all select-none',
                     isSelected
-                      ? 'bg-accent-2-300 text-text shadow-offset-2'
+                      ? 'bg-accent text-neutral-100 shadow-offset-2'
                       : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
                   )}
                 >
