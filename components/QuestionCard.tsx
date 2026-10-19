@@ -5,7 +5,9 @@ import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 import { Question, resolveDiagramUrl } from '@/lib/questions';
 import { cn } from '@/lib/utils';
@@ -407,8 +409,30 @@ export function QuestionCard({
         <div className="text-[17px] leading-relaxed font-semibold text-text break-words overflow-x-auto min-h-[48px]">
           <MarkdownErrorBoundary fallbackText={question.stem_markdown}>
             <ReactMarkdown
-              remarkPlugins={[remarkMath]}
-              rehypePlugins={[rehypeKatex]}
+              remarkPlugins={[remarkMath, remarkGfm]}
+              rehypePlugins={[rehypeRaw, rehypeKatex]}
+              components={{
+                table: ({ node, ...props }) => (
+                  <div className="my-3 overflow-x-auto rounded-xl border-2 border-text bg-white shadow-offset-2">
+                    <table className="w-full text-left text-sm border-collapse" {...props} />
+                  </div>
+                ),
+                thead: ({ node, ...props }) => (
+                  <thead className="bg-accent-2-100 border-b-2 border-text font-bold" {...props} />
+                ),
+                tbody: ({ node, ...props }) => (
+                  <tbody className="divide-y-2 divide-neutral-200" {...props} />
+                ),
+                tr: ({ node, ...props }) => (
+                  <tr className="hover:bg-neutral-50/80 transition-colors" {...props} />
+                ),
+                th: ({ node, ...props }) => (
+                  <th className="px-3.5 py-2.5 font-heading text-xs tracking-wider uppercase text-text border-r-2 last:border-r-0 border-text/20" {...props} />
+                ),
+                td: ({ node, ...props }) => (
+                  <td className="px-3.5 py-2 font-medium text-text border-r-2 last:border-r-0 border-neutral-200" {...props} />
+                ),
+              }}
             >
               {question.stem_markdown}
             </ReactMarkdown>
@@ -654,8 +678,8 @@ export function QuestionCard({
               <span className="flex-1 text-sm sm:text-base font-semibold text-text break-words min-w-0 pt-0.5 leading-snug">
                 <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
                   <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
+                    remarkPlugins={[remarkMath, remarkGfm]}
+                    rehypePlugins={[rehypeRaw, rehypeKatex]}
                   >
                     {opt.text_markdown}
                   </ReactMarkdown>

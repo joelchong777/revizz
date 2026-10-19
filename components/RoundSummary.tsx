@@ -5,8 +5,11 @@ import { motion, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { MissedQuestionItem } from '../hooks/useQuizGame';
 import { playFanfare, playPop } from '../lib/audio';
 import { cn } from '@/lib/utils';
@@ -22,6 +25,7 @@ interface RoundSummaryProps {
   onReviewMissed: () => void;
   onPlayAgain: () => void;
   onHome: () => void;
+  initialOpenMissedIndex?: number | null;
 }
 
 export function RoundSummary({
@@ -34,8 +38,9 @@ export function RoundSummary({
   onReviewMissed,
   onPlayAgain,
   onHome,
+  initialOpenMissedIndex = null,
 }: RoundSummaryProps) {
-  const [openMissedIndex, setOpenMissedIndex] = useState<number | null>(null);
+  const [openMissedIndex, setOpenMissedIndex] = useState<number | null>(initialOpenMissedIndex);
   const shouldReduceMotion = useReducedMotion();
 
   const totalAnswered = correctFirstTryCount + correctRetryCount + wrongCount;
@@ -180,8 +185,13 @@ export function RoundSummary({
                 const correctLetter = correctIdx >= 0 ? letters[correctIdx] : 'A';
                 const correctOption = item.question.options[correctIdx];
 
+                const stemPreview = item.question.stem_markdown
+                  .split(/\n\s*\|/)[0]
+                  .trim()
+                  .replace(/[*#$]/g, '');
+
                 const steps = [
-                  `Review concept: ${item.question.stem_markdown.replace(/[*#$]/g, '').slice(0, 90)}...`,
+                  `Review concept: ${stemPreview.slice(0, 90)}...`,
                   `Correct answer is Option ${correctLetter}: "${correctOption?.text_markdown.replace(/[*#$]/g, '') || ''}".`,
                   `This question has been queued to your Review Pile for spaced repetition practice.`,
                 ];
@@ -202,7 +212,7 @@ export function RoundSummary({
                           {item.question.citation?.replace('Cambridge IGCSE ', '') || `Question ${item.questionNumber}`}
                         </span>
                         <span className="text-sm font-semibold text-text leading-snug line-clamp-2">
-                          {item.question.stem_markdown.replace(/[*#$]/g, '')}
+                          {stemPreview}
                         </span>
                       </div>
                       <span
@@ -229,9 +239,54 @@ export function RoundSummary({
                     {/* Expanded Content */}
                     {isOpen && (
                       <div className="flex flex-col gap-2 p-3.5 sm:p-4 border-t-2 border-neutral-300">
-                        <span className="self-start px-3 py-1 rounded-xl bg-accent-2-300 border-[1.5px] border-text font-bold text-xs sm:text-sm text-text">
-                          Answer {correctLetter} · {correctOption?.text_markdown.replace(/[*#$]/g, '')}
-                        </span>
+                        <div className="text-sm font-semibold text-text break-words my-1 bg-white p-3 rounded-xl border border-neutral-300 overflow-x-auto">
+                          <MarkdownErrorBoundary fallbackText={item.question.stem_markdown}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkMath, remarkGfm]}
+                              rehypePlugins={[rehypeRaw, rehypeKatex]}
+                              components={{
+                                table: ({ node, ...props }) => (
+                                  <div className="my-2 overflow-x-auto rounded-lg border-2 border-text bg-white shadow-offset-2">
+                                    <table className="w-full text-left text-xs sm:text-sm border-collapse" {...props} />
+                                  </div>
+                                ),
+                                thead: ({ node, ...props }) => (
+                                  <thead className="bg-accent-2-100 border-b-2 border-text font-bold" {...props} />
+                                ),
+                                tbody: ({ node, ...props }) => (
+                                  <tbody className="divide-y-2 divide-neutral-200" {...props} />
+                                ),
+                                tr: ({ node, ...props }) => (
+                                  <tr className="hover:bg-neutral-50/80 transition-colors" {...props} />
+                                ),
+                                th: ({ node, ...props }) => (
+                                  <th className="px-2.5 sm:px-3 py-2 font-heading text-[11px] sm:text-xs tracking-wider uppercase text-text border-r-2 last:border-r-0 border-text/20" {...props} />
+                                ),
+                                td: ({ node, ...props }) => (
+                                  <td className="px-2.5 sm:px-3 py-1.5 sm:py-2 font-medium text-text border-r-2 last:border-r-0 border-neutral-200" {...props} />
+                                ),
+                              }}
+                            >
+                              {item.question.stem_markdown}
+                            </ReactMarkdown>
+                          </MarkdownErrorBoundary>
+                        </div>
+
+                        <div className="self-start px-3 py-1.5 rounded-xl bg-accent-2-300 border-[1.5px] border-text font-bold text-xs sm:text-sm text-text flex items-center gap-1.5 flex-wrap">
+                          <span>Answer {correctLetter} ·</span>
+                          <MarkdownErrorBoundary fallbackText={correctOption?.text_markdown || ''}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkMath, remarkGfm]}
+                              rehypePlugins={[rehypeRaw, rehypeKatex]}
+                              components={{
+                                p: ({ node, ...props }) => <span {...props} />,
+                              }}
+                            >
+                              {correctOption?.text_markdown || ''}
+                            </ReactMarkdown>
+                          </MarkdownErrorBoundary>
+                        </div>
+
                         <div className="flex flex-col gap-1.5 mt-1">
                           {steps.map((st, stepIdx) => (
                             <span
