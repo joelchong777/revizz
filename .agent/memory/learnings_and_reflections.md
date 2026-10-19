@@ -153,3 +153,24 @@
 - Automated tests: `npx tsc --noEmit` passed with 0 errors; all 158 automated tests passed across all 21 suites in `scripts/verify-revizz.ts`.
 - Production build: Shipped atomically via `scripts/wt.ts ship fix-table-filter --fast` to GitHub `main` (`19f669d`) and deployed to Vercel production (`https://revizz-sand.vercel.app` HTTP 200 OK).
 
+## Reflection Log Entry - 2026-10-19 (Hybrid Account Creation, Gmail Roster Pre-Authorization & Guest Mode Preservation)
+- **Topic**: Hybrid Account Creation (Google OAuth, Email/Password, Magic Link), Gmail Roster Pre-Authorization & Frictionless Guest Mode Preservation
+- **Target Surfaces**: `components/AuthModal.tsx`, `components/StudentAuthGate.tsx`, `components/Header.tsx`, `components/LeaderboardModal.tsx`, `components/portal/TeacherAnalytics.tsx`, `lib/auth.ts`, `lib/roster.ts`, `scripts/verify-revizz.ts`
+
+### Architectural Solutions & Key Insights
+- **Hybrid Auth Modal Architecture**: Built `components/AuthModal.tsx` implementing a dual-tab Neobrutalist dialog supporting 1-click Google OAuth, Email/Password sign-up/sign-in with full name metadata, and passwordless Magic Links sent directly to the user's Gmail.
+- **Supabase Database Trigger & Roster Pre-Authorization**: Provisioned `public.roster_invites` table and updated the `handle_new_user()` trigger on `auth.users` to automatically match incoming sign-ups by lowercase email, pre-assigning roles (`student`, `teacher`, `admin`), setting `is_school_account = true`, and marking invites as claimed.
+- **Resilient Offline/Demo Roster Engine**: Created `lib/roster.ts` with email normalization (`email.trim().toLowerCase()`), database upsert to prevent duplicate invites, and localStorage fallback synchronization (`revizz_roster_invites`) for offline and demo environments.
+- **Teacher Portal "Add by Gmail" Drawer**: Replaced placeholder alert triggers in `TeacherAnalytics.tsx` with an interactive "Add Students by Gmail" modal and pending invite queue (`Pending Sign-in ✉️`) with 1-click cancellation.
+- **Frictionless Guest / Demo Mode Preservation**: Added a prominent "⚡ Play as Guest / Demo Student" button inside `AuthModal.tsx`, preserved "Try Demo Mode" in `StudentAuthGate.tsx`, and ensured demo students can open `LeaderboardModal` to inspect their local XP, streaks, and stats with an upgrade action.
+
+### Anti-Patterns & Bug Traps
+- **Duplicate Roster Invite Trap**: Repeatedly adding the same email created multiple pending rows in Supabase; prevented by checking for existing pending invites by email and updating by ID.
+- **Test Cohort Cross-Run Collision Trap**: In automated tests, re-running cohort filter tests against static cohort names collides with previous test rows; solved by generating unique test cohort names (`Cohort_${Date.now()}`).
+- **Guest Lockout Anti-Pattern**: Forcing cold unauthenticated visitors into strict account-creation modals locks out guest users; solved by placing 1-click guest options in both `AuthModal.tsx` and `StudentAuthGate.tsx`.
+
+### Verification & Quality Assurance
+- Automated tests: Added Suite 20 to `scripts/verify-revizz.ts`; all tests passed with 0 TypeScript compilation errors.
+- Production release: Shipped atomically via `scripts/wt.ts ship auth-accounts -m "feat(auth): add accounts by gmail and preserve guest mode"`, pushed commits `6959d15` and `c7f31e0` to GitHub `main`, verified Vercel production deployment (`https://revizz-sand.vercel.app` HTTP 200 OK), and pruned the worktree.
+
+
