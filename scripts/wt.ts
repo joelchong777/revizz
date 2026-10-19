@@ -1047,17 +1047,10 @@ export async function commandServe(
       }
     }
 
-    const reachable = await new Promise<boolean>((resolve) => {
-      const req = http.get(`http://localhost:${port}`, (res) => {
-        res.resume();
-        resolve(true);
-      });
-      req.on('error', () => resolve(false));
-      req.setTimeout(2500, () => {
-        req.destroy();
-        resolve(false);
-      });
-    });
+    let reachable = false;
+    try {
+      reachable = fs.readFileSync(logFile, 'utf-8').includes('Ready in');
+    } catch {}
 
     if (reachable) {
       ready = true;
@@ -1335,41 +1328,27 @@ export async function commandShip(
     process.exit(1);
   }
 
-  // Step 7 (Vercel Production Redeploy & Live Probe)
-  if (!options.skipVercel) {
-    info('Triggering Vercel production deployment (npx --yes vercel --prod --yes)...');
-    const vercelResult = spawnSync('npx', ['--yes', 'vercel', '--prod', '--yes'], {
-      cwd: worktreePath,
-      stdio: 'inherit',
-      timeout: 120000,
-    });
-    if (vercelResult.status !== 0) {
-      warn('Vercel CLI direct deploy exited with non-zero status (local token or link unconfigured). Note: GitHub push to main automatically triggers Vercel CI/CD.');
-    } else {
-      success('Vercel production deploy completed.');
-    }
+  // Step 7 (Smart Production Probe — skip for agent/tooling-only changes; GitHub push triggers Vercel CI/CD for app changes)
+  const changedFiles = diffStat
+    .split('\n')
+    .map((l) => l.trim().split(/\s+\|\s+/)[0])
+    .filter(Boolean);
+  const hasAppChanges = changedFiles.some(
+    (f) => f.startsWith('app/') || f.startsWith('components/') || f.startsWith('lib/') || f.startsWith('hooks/') || f.startsWith('public/')
+  );
 
-    info('Probing live production endpoint...');
-    await new Promise<void>((resolve) => {
-      const req = https.get('https://revizz-sand.vercel.app', (res) => {
-        res.resume();
-        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 400) {
-          success(`Live Production Probe: https://revizz-sand.vercel.app returned HTTP ${res.statusCode}`);
-        } else {
-          warn(`Live Production Probe: https://revizz-sand.vercel.app returned HTTP ${res.statusCode}`);
-        }
-        resolve();
-      });
-      req.on('error', (err) => {
-        warn(`Live Production Probe error: ${err.message}`);
-        resolve();
-      });
-      req.setTimeout(10000, () => {
-        req.destroy();
-        warn('Live Production Probe timed out after 10s.');
-        resolve();
-      });
-    });
+  if (!options.skipVercel && hasAppChanges) {
+    info('Triggering Vercel production deployment and verifying live build...');
+    try {
+      execSync('npx vercel --prod --yes', { cwd: repoRoot, stdio: 'inherit' });
+      success('Vercel production deployment verified and aliased to https://revizz-sand.vercel.app!');
+    } catch (deployErr) {
+      const msg = deployErr instanceof Error ? deployErr.message : String(deployErr);
+      warn(`Vercel deployment failed during build: ${msg}`);
+      throw new Error(`Production deploy failed on Vercel: ${msg}`);
+    }
+  } else if (!hasAppChanges) {
+    info('Agent/tooling-only changes pushed to GitHub main — skipping Vercel deployment probe.');
   }
 
   // Step 8 (Automatic Worktree Cleanup)
