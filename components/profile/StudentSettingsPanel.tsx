@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import type { UserProfile } from '@/types';
 import type { StudentPreferences } from '@/lib/studentProfile';
+import type { DiagramFilter } from '@/hooks/useQuizGame';
 import { clearRoundHistory, clearBookmarkedQuestions } from '@/lib/studentProfile';
 import { clearReviewPile } from '@/lib/mastery';
 import { isSoundEnabled, setSoundEnabled } from '@/lib/audio';
@@ -48,9 +49,10 @@ const SERIES_OPTIONS = ['Feb/Mar', 'May/June', 'Oct/Nov'] as const;
 const YEAR_OPTIONS = [2026, 2027, 2028] as const;
 const GOAL_OPTIONS = [5, 10, 15, 20, 30] as const;
 const ROUND_LENGTH_OPTIONS = [3, 5, 10, 30] as const;
-const DIAGRAM_FILTER_OPTIONS: Array<{ value: 'mixed' | 'diagrams' | 'no-diagrams'; label: string; desc: string }> = [
-  { value: 'mixed', label: 'All Questions', desc: 'Mix of diagrams & text' },
-  { value: 'diagrams', label: 'Diagrams Only', desc: 'Focus on graphs & visual stems' },
+const DIAGRAM_FILTER_OPTIONS: Array<{ value: DiagramFilter; label: string; desc: string }> = [
+  { value: 'mixed', label: 'All Questions', desc: 'Mix of graphs, diagrams & text' },
+  { value: 'graph', label: 'Graphs Only', desc: 'Curves, coordinates, and market axes' },
+  { value: 'diagrams', label: 'Diagrams Only', desc: 'Visual apparatus, charts & illustrations' },
   { value: 'no-diagrams', label: 'Text Only', desc: 'Fast calculation & theory stems' },
 ];
 
@@ -530,7 +532,11 @@ export function StudentSettingsPanel({
           </label>
           <div className="flex flex-col gap-2.5 sm:gap-3">
             {DIAGRAM_FILTER_OPTIONS.map((opt) => {
-              const isSelected = preferences.defaultDiagramFilter === opt.value;
+              const isSelected =
+                preferences.defaultDiagramFilter === opt.value ||
+                (opt.value === 'mixed' && preferences.defaultDiagramFilter === 'all') ||
+                (opt.value === 'diagrams' && preferences.defaultDiagramFilter === 'diagram') ||
+                (opt.value === 'no-diagrams' && preferences.defaultDiagramFilter === 'text');
               return (
                 <button
                   key={opt.value}

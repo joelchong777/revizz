@@ -85,7 +85,7 @@ export default function HomePage() {
       if (topicFiltered.length > 0) pool = topicFiltered;
     }
 
-    if (config.diagramFilter && config.diagramFilter !== 'mixed') {
+    if (config.diagramFilter && config.diagramFilter !== 'mixed' && config.diagramFilter !== 'all') {
       const filtered = filterQuestionsByDiagram(pool, config.diagramFilter);
       if (filtered.length > 0) {
         pool = filtered;

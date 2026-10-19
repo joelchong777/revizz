@@ -20,6 +20,7 @@ import {
   MasteryTier,
   ReviewPileMap,
 } from './mastery';
+import type { DiagramFilter } from '../hooks/useQuizGame';
 
 /* ==========================================================================
    1. Storage Keys, Events & Tabs
@@ -72,7 +73,7 @@ export interface StudentPreferences {
   dailyQuestionGoal: number;
   defaultRoundLength: 3 | 5 | 10 | 30;
   defaultTimedMode: boolean;
-  defaultDiagramFilter: 'mixed' | 'diagrams' | 'no-diagrams';
+  defaultDiagramFilter: DiagramFilter;
 }
 
 export interface ExamCountdownInfo {
@@ -145,8 +146,12 @@ export function getStudentPreferences(): StudentPreferences {
           ? parsed.defaultTimedMode
           : defaults.defaultTimedMode,
       defaultDiagramFilter:
+        parsed.defaultDiagramFilter === 'all' ||
         parsed.defaultDiagramFilter === 'mixed' ||
+        parsed.defaultDiagramFilter === 'graph' ||
+        parsed.defaultDiagramFilter === 'diagram' ||
         parsed.defaultDiagramFilter === 'diagrams' ||
+        parsed.defaultDiagramFilter === 'text' ||
         parsed.defaultDiagramFilter === 'no-diagrams'
           ? parsed.defaultDiagramFilter
           : defaults.defaultDiagramFilter,

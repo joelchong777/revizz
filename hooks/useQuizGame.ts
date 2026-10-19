@@ -39,7 +39,7 @@ export type Question = {
   subtopic?: string;
 };
 
-export type DiagramFilter = 'mixed' | 'diagrams' | 'no-diagrams';
+export type DiagramFilter = 'all' | 'mixed' | 'graph' | 'diagram' | 'diagrams' | 'text' | 'no-diagrams';
 
 export type QuizRoundConfig = {
   subject: string;

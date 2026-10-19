@@ -48,7 +48,7 @@ export function StartFlow({
     }
   }, [isDemo, selectedMode]);
   const [roundLength, setRoundLength] = useState<3 | 5 | 10 | 'endless'>(5);
-  const [diagramFilter, setDiagramFilter] = useState<DiagramFilter>('mixed');
+  const [diagramFilter, setDiagramFilter] = useState<DiagramFilter>('all');
   const [isTimed, setIsTimed] = useState<boolean>(true);
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [isMasteryOpen, setIsMasteryOpen] = useState<boolean>(false);
@@ -113,8 +113,12 @@ export function StartFlow({
         if (parsed.roundLength) setRoundLength(parsed.roundLength);
         if (typeof parsed.isTimed === 'boolean') setIsTimed(parsed.isTimed);
         if (
+          parsed.diagramFilter === 'all' ||
           parsed.diagramFilter === 'mixed' ||
+          parsed.diagramFilter === 'graph' ||
+          parsed.diagramFilter === 'diagram' ||
           parsed.diagramFilter === 'diagrams' ||
+          parsed.diagramFilter === 'text' ||
           parsed.diagramFilter === 'no-diagrams'
         ) {
           setDiagramFilter(parsed.diagramFilter);
@@ -625,23 +629,16 @@ export function StartFlow({
           </h2>
           <div className="flex flex-wrap gap-2">
             {[
-              {
-                val: 'mixed' as const,
-                icon: '🔀',
-                label: 'All',
-              },
-              {
-                val: 'diagrams' as const,
-                icon: '📊',
-                label: 'Diagrams',
-              },
-              {
-                val: 'no-diagrams' as const,
-                icon: '📝',
-                label: 'Text',
-              },
+              { val: 'all' as const, icon: '🔀', label: 'All' },
+              { val: 'graph' as const, icon: '📈', label: 'Graph' },
+              { val: 'diagram' as const, icon: '📊', label: 'Diagram' },
+              { val: 'text' as const, icon: '📝', label: 'Text' },
             ].map((opt) => {
-              const isSelected = diagramFilter === opt.val;
+              const isSelected =
+                diagramFilter === opt.val ||
+                (opt.val === 'all' && diagramFilter === 'mixed') ||
+                (opt.val === 'diagram' && diagramFilter === 'diagrams') ||
+                (opt.val === 'text' && diagramFilter === 'no-diagrams');
               return (
                 <button
                   key={opt.val}

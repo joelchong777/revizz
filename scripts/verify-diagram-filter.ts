@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import {
   CAMBRIDGE_QUESTIONS,
   isDiagramQuestion,
+  isGraphQuestion,
   filterQuestionsByDiagram,
   Question,
 } from '../lib/questions';
@@ -91,6 +92,26 @@ const testQ5: Question = {
   options: [],
   correct_option_id: 'a',
 };
-assert.strictEqual(isDiagramQuestion(testQ5), false, 'no diagram fields should identify as non-diagram');
+// 7. Test 4-option question format filter (all, graph, diagram, text)
+const allFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'all');
+assert.strictEqual(allFilter.length, 30, 'All filter should return all 30 questions');
+
+const graphFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'graph');
+assert.ok(graphFilter.length > 0, 'Graph filter should return at least 1 question');
+for (const q of graphFilter) {
+  assert.strictEqual(isGraphQuestion(q), true, `Question ${q.id} should be identified as a graph question`);
+}
+
+const diagramFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'diagram');
+assert.ok(diagramFilter.length > 0, 'Diagram filter should return at least 1 question');
+for (const q of diagramFilter) {
+  assert.strictEqual(isDiagramQuestion(q), true, `Question ${q.id} should be identified as a diagram question`);
+}
+
+const textFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'text');
+assert.strictEqual(textFilter.length, 25, 'Text filter should return exactly 25 questions');
+for (const q of textFilter) {
+  assert.strictEqual(isDiagramQuestion(q), false, `Question ${q.id} should not be identified as a diagram question`);
+}
 
 console.log('All diagram filter verification tests passed successfully! ✓');

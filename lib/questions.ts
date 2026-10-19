@@ -511,14 +511,31 @@ export function isDiagramQuestion(q: Question): boolean {
   );
 }
 
+export function isGraphQuestion(q: Question): boolean {
+  if (!isDiagramQuestion(q)) return false;
+  const text = `${q.stem_markdown || ''} ${q.diagram?.alt_description || ''} ${(q.tags || []).join(' ')}`.toLowerCase();
+  return /\b(graph|curve|curves|ppc|axis|axes|coordinate|trend|slope|demand and supply|demand curve|supply curve|equilibrium|exchange rate|tariff|wage rate|inflation)\b/i.test(text);
+}
+
 export function filterQuestionsByDiagram(
   questions: Question[],
   filter?: DiagramFilter
 ): Question[] {
+  if (!filter || filter === 'all' || filter === 'mixed') {
+    return questions;
+  }
+  if (filter === 'graph') {
+    const graphs = questions.filter(isGraphQuestion);
+    return graphs.length > 0 ? graphs : questions.filter(isDiagramQuestion);
+  }
+  if (filter === 'diagram') {
+    const visualDiagrams = questions.filter((q) => isDiagramQuestion(q) && !isGraphQuestion(q));
+    return visualDiagrams.length > 0 ? visualDiagrams : questions.filter(isDiagramQuestion);
+  }
   if (filter === 'diagrams') {
     return questions.filter(isDiagramQuestion);
   }
-  if (filter === 'no-diagrams') {
+  if (filter === 'text' || filter === 'no-diagrams') {
     return questions.filter((q) => !isDiagramQuestion(q));
   }
   return questions;
