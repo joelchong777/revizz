@@ -1731,20 +1731,6 @@ export default function TestCompilerHub() {
               </div>
             </div>
 
-            {/* Test Name Input */}
-            <div className="shrink-0 flex flex-col gap-1 pt-0.5">
-              <label htmlFor="test-assembly-name-input" className="text-[10px] font-black uppercase tracking-wider text-[#645c50]">
-                Test Name
-              </label>
-              <input
-                id="test-assembly-name-input"
-                type="text"
-                placeholder="Enter test name..."
-                value={testTitle}
-                onChange={(e) => setTestTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] placeholder:text-[#a19786] placeholder:font-normal"
-              />
-            </div>
 
             {/* Topic Distribution Breakdown Strip */}
             {selectedQuestions.length > 0 && topicDistribution.length > 0 && (
