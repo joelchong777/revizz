@@ -8,6 +8,7 @@ import { Menu, ArrowRightLeft, ChevronDown, ChevronUp, Copy, Check, ExternalLink
 import AdminNav from '@/components/portal/AdminNav';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
+import AssignedHomeworkHub from '@/components/portal/AssignedHomeworkHub';
 import TeacherAnalytics from '@/components/portal/TeacherAnalytics';
 import TestCompilerHub from '@/components/portal/compiler/TestCompilerHub';
 import { fetchWeeklyLeaderboard, LeaderboardEntry } from '@/lib/leaderboard';
@@ -16,7 +17,7 @@ import { getPortalNavItems } from '@/lib/portal/menuConfig';
 const NAV_LABELS: Record<string, string> = {
   overview: 'Overview',
   roster: 'Classes & students',
-  assign: 'Assign rounds',
+  assign: 'Assigned rounds',
   compiler: 'Test compiler',
   mastery: 'Mastery analytics',
   xp: 'Leaderboard & XP',
@@ -369,11 +370,11 @@ function PortalContent() {
         );
       case 'assign':
         return (
-          <AdminTools
+          <AssignedHomeworkHub
             key="assign"
-            initialView="assign"
-            portalMode="teacher"
-            onOpenEditor={() => setActiveNav('bank')}
+            teacherId={userProfile?.id || userProfile?.email || 'guest-educator-local'}
+            teacherName={userProfile?.display_name || 'Guest Educator'}
+            onNavigateToBank={() => setActiveNav('bank')}
           />
         );
       case 'compiler':

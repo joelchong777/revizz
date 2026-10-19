@@ -18,6 +18,8 @@ import {
   filterQuestionsByDiagram,
 } from '../lib/questions';
 import { getReviewPileIds } from '../lib/mastery';
+import { findHomeworkByIdAnyTeacher, getAssignedHomeworkByCode } from '@/lib/portal/assignedHomework';
+import { listOnlineAssignments } from '@/lib/testCompiler';
 
 export default function HomePage() {
   const { userProfile, loading: authLoading, isDemo } = useAuth();
@@ -180,13 +182,68 @@ export default function HomePage() {
     }
   };
 
-  // Handle direct drill deep-links from Student Profile Hub (?drill=custom, ?drill=topic, ?drill=review)
+  // Handle direct drill deep-links and assigned homework links (?assignmentId=..., ?drill=custom, ?drill=topic, ?drill=review)
   useEffect(() => {
     if (typeof window === 'undefined' || loading || questions.length === 0 || game.gameState !== 'setup') {
       return;
     }
 
     const searchParams = new URLSearchParams(window.location.search);
+
+    // 1. Direct assignment deep-link (?assignmentId=<id | testCode>)
+    const assignmentId = searchParams.get('assignmentId') || searchParams.get('assignment') || searchParams.get('testCode');
+    if (assignmentId) {
+      const homework = findHomeworkByIdAnyTeacher(assignmentId) || getAssignedHomeworkByCode(assignmentId);
+      const onlineAssignment = !homework
+        ? listOnlineAssignments().find((a) => a.id === assignmentId || a.testCode.toUpperCase() === assignmentId.toUpperCase())
+        : null;
+
+      const targetQuestionIds = homework?.questionIds || onlineAssignment?.questionIds || [];
+      const pool = questions.length > 0 ? questions : CAMBRIDGE_QUESTIONS;
+      let matchedQuestions: Question[] = [];
+
+      if (targetQuestionIds.length > 0) {
+        const idSet = new Set(targetQuestionIds);
+        matchedQuestions = pool.filter((q) => idSet.has(q.id));
+        if (matchedQuestions.length < targetQuestionIds.length) {
+          const foundIds = new Set(matchedQuestions.map((q) => q.id));
+          const missing = CAMBRIDGE_QUESTIONS.filter((q) => idSet.has(q.id) && !foundIds.has(q.id));
+          matchedQuestions = [...matchedQuestions, ...missing];
+        }
+      }
+
+      if (matchedQuestions.length === 0) {
+        matchedQuestions = pool.slice(0, homework?.roundLength || 5);
+      }
+
+      if (matchedQuestions.length > 0) {
+        window.history.replaceState({}, '', '/');
+        const subjectLabel = homework
+          ? `${homework.subjectName} ${homework.subjectCode}`
+          : onlineAssignment
+          ? `${onlineAssignment.subjectName} ${onlineAssignment.subjectCode}`
+          : 'Economics 0455';
+
+        const roundLen = (
+          matchedQuestions.length >= 30 ? 30 :
+          matchedQuestions.length >= 10 ? 10 :
+          matchedQuestions.length >= 5 ? 5 : 3
+        ) as 3 | 5 | 10 | 30 | 'endless';
+
+        const assignmentConfig: QuizRoundConfig = {
+          subject: subjectLabel,
+          sourceType: 'paper',
+          sourceValue: homework?.id || onlineAssignment?.id || assignmentId,
+          roundLength: roundLen,
+          isTimed: homework?.timerMode === 'Exam',
+        };
+
+        handleStartRound(assignmentConfig, matchedQuestions);
+        return;
+      }
+    }
+
+    // 2. Practice drill deep-links
     const drill = searchParams.get('drill');
     if (!drill) return;
 
