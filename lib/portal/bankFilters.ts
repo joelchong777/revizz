@@ -391,7 +391,9 @@ export function detectQuestionFeatures(raw: {
   image_url?: string | null;
   diagram_metadata?: any;
   diagram?: any;
+  tags?: any;
   options?: Array<{ content_markdown?: string; text?: string; text_markdown?: string }> | null;
+  [key: string]: any;
 }): {
   hasDiagram: boolean;
   hasTable: boolean;
@@ -416,8 +418,28 @@ export function detectQuestionFeatures(raw: {
     (o) => o.content_markdown || o.text_markdown || o.text || ''
   );
 
+  const hasTableMeta = Boolean(
+    meta &&
+      (meta.type === 'table' ||
+        meta.has_table === true ||
+        (typeof meta.description === 'string' && /\btables?\b/i.test(meta.description)))
+  );
+
+  const hasTableTag = Boolean(
+    Array.isArray(raw.tags) &&
+      raw.tags.some(
+        (t: any) =>
+          typeof t === 'string' &&
+          (t.toLowerCase() === 'table' ||
+            t.toLowerCase() === 'tables' ||
+            t.toLowerCase() === 'has_table')
+      )
+  );
+
   const hasTable =
-    hasDataTable(stem) ||
+    hasDataTable(stem, raw) ||
+    hasTableMeta ||
+    hasTableTag ||
     optionsList.some((o) =>
       hasDataTable(o.content_markdown || o.text_markdown || o.text || '')
     );
@@ -603,8 +625,8 @@ export function filterBankQuestions(
     // 10. Content Features (AND logic: question must have all selected features)
     if (filters.features && filters.features.length > 0) {
       for (const feat of filters.features) {
-        if (feat === 'diagram' && !q.hasDiagram) return false;
-        if (feat === 'table' && !q.hasTable) return false;
+        if ((feat === 'diagram' || (feat as string) === 'diagrams') && !q.hasDiagram) return false;
+        if ((feat === 'table' || (feat as string) === 'tables') && !q.hasTable) return false;
         if (feat === 'math' && !q.hasMath) return false;
       }
     }
@@ -858,7 +880,12 @@ export function getActiveFilterChips(filters: BankFilterState): ActiveFilterChip
   }
   if (filters.features && filters.features.length > 0) {
     for (const f of filters.features) {
-      const featLabel = f === 'diagram' ? 'Diagram' : f === 'table' ? 'Table' : 'Math';
+      const featLabel =
+        f === 'diagram' || (f as string) === 'diagrams'
+          ? 'Diagram'
+          : f === 'table' || (f as string) === 'tables'
+          ? 'Table'
+          : 'Math';
       chips.push({ key: 'features', label: featLabel, value: f });
     }
   }
@@ -922,9 +949,16 @@ export function removeActiveFilterChip(
     case 'status':
       next.status = 'All';
       break;
-    case 'features':
-      next.features = (filters.features || []).filter((f) => f !== chip.value);
+    case 'features': {
+      const targetVal =
+        chip.value === 'tables' ? 'table' : chip.value === 'diagrams' ? 'diagram' : chip.value;
+      next.features = (filters.features || []).filter((f) => {
+        const norm =
+          (f as string) === 'tables' ? 'table' : (f as string) === 'diagrams' ? 'diagram' : f;
+        return norm !== targetVal;
+      });
       break;
+    }
   }
 
   return next;
@@ -1017,14 +1051,16 @@ export function parseBankFiltersFromQuery(searchString: string): BankFilterState
 
   const status = params.get('status') || 'All';
 
-  const featuresParam = params.get('features');
+  const featuresParam = params.get('features') || params.get('feature') || params.get('format');
   const features: BankContentFeature[] = featuresParam
     ? (featuresParam
         .split(',')
-        .map((f) => f.trim())
+        .map((f) => f.trim().toLowerCase())
+        .map((f) => (f === 'tables' ? 'table' : f === 'diagrams' ? 'diagram' : f))
         .filter((f): f is BankContentFeature =>
           f === 'diagram' || f === 'table' || f === 'math'
-        ))
+        )
+        .filter((v, idx, arr) => arr.indexOf(v) === idx))
     : [];
 
   const pageParam = params.get('page');

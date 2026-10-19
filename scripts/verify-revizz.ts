@@ -101,6 +101,7 @@ import {
   deriveQuestionStatus,
   deriveQuestionDifficulty,
   detectQuestionFeatures,
+  enrichBankQuestion,
   filterBankQuestions,
   computeBankFacetCounts,
   getActiveFilterChips,
@@ -780,13 +781,14 @@ test('Content Toggles: Diagrams, Data Tables, and Calculations/Math', () => {
     withTablesOnly: true,
   });
   assertEqual(
-    withTables.every((q) => hasDataTable(q.stem_markdown)),
+    withTables.every((q) => hasDataTable(q.stem_markdown, q)),
     true,
-    'Data tables toggle only includes questions containing markdown table syntax |'
+    'Data tables toggle only includes questions containing tables'
   );
   assertEqual(withTables.some((q) => q.id === '0455-s24-12-q06'), true, 'q06 contains markdown table');
   assertEqual(withTables.some((q) => q.id === '0455-s24-12-q14'), true, 'q14 contains markdown table');
   assertEqual(withTables.some((q) => q.id === '0455-s24-12-q30'), true, 'q30 contains markdown table');
+  assertEqual(withTables.some((q) => q.id === '0455-s24-12-q16'), true, 'q16 contains 2-column option table');
 
   // 3. Math / Calculations toggle
   const withMath = filterAndSortQuestions(CAMBRIDGE_QUESTIONS, {
@@ -2531,7 +2533,63 @@ async function runSuite13() {
       'Plain stem hasDiagram false'
     );
 
-    // Table detection
+    // Table detection: hasDataTable & detectQuestionFeatures
+    assertEqual(
+      hasDataTable('Table of data:\n| Good | Price |\n| Coffee | 5 |'),
+      true,
+      'hasDataTable detects markdown table pipes'
+    );
+    assertEqual(
+      hasDataTable('The table shows the demand and supply for apples.'),
+      true,
+      'hasDataTable detects authentic Cambridge phrase "the table shows"'
+    );
+    assertEqual(
+      hasDataTable('According to the data in the table, what was the inflation rate?'),
+      true,
+      'hasDataTable detects "data in the table"'
+    );
+    assertEqual(
+      hasDataTable('Which row in the table below correctly identifies the economic terms?'),
+      true,
+      'hasDataTable detects "in the table" and "the table below"'
+    );
+    assertEqual(
+      hasDataTable('<table><tr><td>Row</td></tr></table>'),
+      true,
+      'hasDataTable detects HTML table element'
+    );
+    assertEqual(
+      hasDataTable('No table present here'),
+      false,
+      'hasDataTable returns false for "No table present here"'
+    );
+    assertEqual(
+      hasDataTable('A firm operates in a perfectly competitive market.'),
+      false,
+      'hasDataTable returns false for ordinary text'
+    );
+    assertEqual(
+      hasDataTable(undefined, { tags: ['tables'] }),
+      true,
+      'hasDataTable detects table from question tags'
+    );
+    assertEqual(
+      hasDataTable(undefined, { diagram_metadata: { type: 'table' } }),
+      true,
+      'hasDataTable detects table from diagram_metadata.type'
+    );
+    assertEqual(
+      hasDataTable(undefined, { diagram_metadata: { has_table: true } }),
+      true,
+      'hasDataTable detects table from diagram_metadata.has_table'
+    );
+    assertEqual(
+      hasDataTable(undefined, { options: [{ text: 'capital | land' }] }),
+      true,
+      'hasDataTable detects table from option text pipes'
+    );
+
     assertEqual(
       detectQuestionFeatures({ stem: 'Table of data:\n| Good | Price |\n| Coffee | 5 |' }).hasTable,
       true,
@@ -2544,6 +2602,27 @@ async function runSuite13() {
       }).hasTable,
       true,
       'Markdown table in option sets hasTable true'
+    );
+    assertEqual(
+      detectQuestionFeatures({ stem: 'The table shows the changes in unemployment and inflation.' }).hasTable,
+      true,
+      'Authentic Cambridge table phrasing in stem sets hasTable true'
+    );
+    assertEqual(
+      detectQuestionFeatures({
+        stem: 'What is shown in the data?',
+        diagram_metadata: { type: 'table', has_table: true },
+      }).hasTable,
+      true,
+      'Table diagram metadata sets hasTable true'
+    );
+    assertEqual(
+      detectQuestionFeatures({
+        stem: 'Which option is correct?',
+        tags: ['table'],
+      }).hasTable,
+      true,
+      'Question with table tag sets hasTable true'
     );
     assertEqual(
       detectQuestionFeatures({ stem: 'No table present here' }).hasTable,
@@ -2801,6 +2880,35 @@ async function runSuite13() {
     });
     assertEqual(featTable.length, 1, "Features ['table'] yields 1 question (q3)");
 
+    // Plural alias support
+    const featTables = filterBankQuestions(mockBankQuestions, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      features: ['tables'] as any,
+    });
+    assertEqual(featTables.length, 1, "Features ['tables'] plural alias yields 1 question (q3)");
+
+    // Dynamic Cambridge authentic stem question without pipes
+    const cambridgeStemQ = enrichBankQuestion({
+      id: 'q-cambridge-table',
+      stem_markdown: 'The table shows the demand for widgets at different prices.',
+      citation: '0455/12 s 2024 Q09',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      year: '2024',
+      season: 'May/June (s)',
+      variant: '12',
+      topic: 'The allocation of resources',
+      difficulty: 'Medium',
+      status: 'Live',
+    });
+    assertEqual(cambridgeStemQ.hasTable, true, 'enrichBankQuestion flags authentic Cambridge stem as hasTable: true');
+    const questionsWithCambridgeTable = [...mockBankQuestions, cambridgeStemQ];
+    const filteredWithCambridgeTable = filterBankQuestions(questionsWithCambridgeTable, {
+      ...DEFAULT_BANK_FILTER_STATE,
+      features: ['table'],
+    });
+    assertEqual(filteredWithCambridgeTable.length, 2, 'Features [table] returns both q3 and Cambridge stem question');
+
     const featCompound = filterBankQuestions(mockBankQuestions, {
       ...DEFAULT_BANK_FILTER_STATE,
       features: ['table', 'math'],
@@ -3019,6 +3127,31 @@ async function runSuite13() {
     assertEqual(parsedRoundTrip.status, richState.status, 'Round-trip status matches');
     assertEqual(JSON.stringify(parsedRoundTrip.features), JSON.stringify(richState.features), 'Round-trip features match');
     assertEqual(parsedRoundTrip.page, richState.page, 'Round-trip page matches');
+
+    // 4. Query param normalization: features=tables, feature=tables, format=tables
+    const parsedTablesPlural = parseBankFiltersFromQuery('features=tables');
+    assertEqual(JSON.stringify(parsedTablesPlural.features), JSON.stringify(['table']), 'features=tables maps to ["table"]');
+
+    const parsedFeatureSingular = parseBankFiltersFromQuery('feature=tables');
+    assertEqual(JSON.stringify(parsedFeatureSingular.features), JSON.stringify(['table']), 'feature=tables maps to ["table"]');
+
+    const parsedFormatTables = parseBankFiltersFromQuery('format=tables');
+    assertEqual(JSON.stringify(parsedFormatTables.features), JSON.stringify(['table']), 'format=tables maps to ["table"]');
+
+    const parsedMultiPlural = parseBankFiltersFromQuery('features=diagrams,tables');
+    assertEqual(JSON.stringify(parsedMultiPlural.features), JSON.stringify(['diagram', 'table']), 'diagrams,tables maps to ["diagram", "table"]');
+
+    // Remove active filter chip with value 'tables'
+    const stateWithTableChip: BankFilterState = {
+      ...DEFAULT_BANK_FILTER_STATE,
+      features: ['table'],
+    };
+    const afterRemovingTableChip = removeActiveFilterChip(stateWithTableChip, {
+      key: 'features',
+      label: 'Table',
+      value: 'tables',
+    });
+    assertEqual(afterRemovingTableChip.features.length, 0, 'removeActiveFilterChip with value "tables" removes "table"');
   });
 
   // -----------------------------------------------------------------------------

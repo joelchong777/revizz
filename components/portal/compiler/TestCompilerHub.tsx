@@ -618,7 +618,7 @@ export default function TestCompilerHub() {
                           <ImageIcon className="w-3 h-3" aria-hidden="true" /> Diagram
                         </span>
                       )}
-                      {hasDataTable(q.stem_markdown) && (
+                      {hasDataTable(q.stem_markdown, q) && (
                         <span className="px-2.5 py-0.5 rounded-full bg-[#e1f0fa] text-[#2c6e91] border border-[#aed2e6] text-[11px] font-bold flex items-center gap-1">
                           <Table className="w-3 h-3" aria-hidden="true" /> Table
                         </span>

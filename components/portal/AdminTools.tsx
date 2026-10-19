@@ -1743,9 +1743,10 @@ export default function AdminTools({
               </button>
               <button
                 type="button"
+                data-testid="filter-tables"
                 onClick={() => toggleFeature('table')}
                 className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
-                  bankFilters.features.includes('table')
+                  bankFilters.features.includes('table') || (bankFilters.features as any[]).includes('tables')
                     ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
                     : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
                 }`}
@@ -1753,7 +1754,7 @@ export default function AdminTools({
                 <span>Has Table</span>
                 <span
                   className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
-                    bankFilters.features.includes('table')
+                    bankFilters.features.includes('table') || (bankFilters.features as any[]).includes('tables')
                       ? 'bg-[#c67139] text-[#f9f4ed]'
                       : 'bg-[#e8decb] text-[#645c50]'
                   }`}

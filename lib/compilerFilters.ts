@@ -191,12 +191,67 @@ export function parseCitationTagPills(citation?: string, id?: string): CitationT
   return pills;
 }
 
+export const CAMBRIDGE_TABLE_REGEX =
+  /\b(?:the\s+table\s+(?:shows|gives|contains|lists|provides|presents|below|illustrates)|\b(?:in|from|of|to|into|about|according\s+to)\s+(?:the|this)\s+table|\b(?:data|information|figures|statistics|indicators|details|forecast|results|rates|values|components)\s+in\s+(?:the|this)\s+table|\bthe\s+following\s+table|\btable\s+\d+)\b/i;
+
+export const HTML_TABLE_REGEX = /<\s*(?:table|tbody|tr|td|th)\b/i;
+
 /**
- * Checks if question stem contains markdown table syntax `|`.
+ * Checks if question stem contains markdown table syntax `|`, HTML table tags, or authentic Cambridge table phrasing.
+ * Optionally inspects question object for stem_markdown, tags, diagram_metadata, and options.
  */
-export function hasDataTable(stem?: string): boolean {
-  if (!stem) return false;
-  return stem.includes('|');
+export function hasDataTable(stem?: string, question?: any): boolean {
+  // 1. Direct stem inspection
+  if (stem && typeof stem === 'string') {
+    if (stem.includes('|')) return true;
+    if (HTML_TABLE_REGEX.test(stem)) return true;
+    if (CAMBRIDGE_TABLE_REGEX.test(stem)) return true;
+  }
+
+  // 2. Question object inspection
+  if (question && typeof question === 'object') {
+    const qStem = question.stem_markdown || question.stem;
+    if (qStem && typeof qStem === 'string' && qStem !== stem) {
+      if (qStem.includes('|')) return true;
+      if (HTML_TABLE_REGEX.test(qStem)) return true;
+      if (CAMBRIDGE_TABLE_REGEX.test(qStem)) return true;
+    }
+
+    if (Array.isArray(question.tags)) {
+      const hasTableTag = question.tags.some(
+        (t: any) =>
+          typeof t === 'string' &&
+          (t.toLowerCase() === 'table' ||
+            t.toLowerCase() === 'tables' ||
+            t.toLowerCase() === 'has_table')
+      );
+      if (hasTableTag) return true;
+    }
+
+    const meta = question.diagram_metadata || question.diagram;
+    if (meta && typeof meta === 'object') {
+      if (meta.type === 'table' || meta.has_table === true) return true;
+      if (typeof meta.description === 'string' && /\btables?\b/i.test(meta.description)) {
+        return true;
+      }
+    }
+
+    if (Array.isArray(question.options)) {
+      for (const opt of question.options) {
+        const optText =
+          typeof opt === 'string'
+            ? opt
+            : (opt?.content_markdown || opt?.text_markdown || opt?.text || '');
+        if (optText && typeof optText === 'string') {
+          if (optText.includes('|')) return true;
+          if (HTML_TABLE_REGEX.test(optText)) return true;
+          if (CAMBRIDGE_TABLE_REGEX.test(optText)) return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -303,7 +358,7 @@ export function filterAndSortQuestions(
     }
 
     // 6. Data tables toggle
-    if (withTablesOnly && !hasDataTable(q.stem_markdown)) {
+    if (withTablesOnly && !hasDataTable(q.stem_markdown, q)) {
       return false;
     }
 
