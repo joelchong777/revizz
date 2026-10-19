@@ -46,6 +46,9 @@ import {
   savePrintSnapshot,
   exportTestDraftJson,
   importTestDraftJson,
+  sanitizeAccountScope,
+  resolveCurrentAccountScope,
+  getDraftStorageKey,
   DRAFT_KEY_PREFIX,
   PRINT_SNAPSHOT_PREFIX,
   DRAFT_CHANGE_EVENT,
@@ -411,6 +414,175 @@ async function testDraftLifecycleOperations() {
   );
 }
 
+async function testAccountScopedDraftIsolation() {
+  console.log('\n--- 3c. Testing Account-Scoped Draft Isolation (Multi-Tenant Local Storage) ---');
+
+  const aliceId = 'teacher-alice-001';
+  const bobId = 'teacher-bob-002';
+  const sharedDraftId = 'shared-id-1';
+
+  const aliceDraft: TestPaperConfig = {
+    id: sharedDraftId,
+    title: "Alice's Economics Exam",
+    subjectCode: '0455',
+    subjectName: 'Economics',
+    schoolName: "Alice's Grammar School",
+    durationMinutes: 60,
+    totalMarks: 2,
+    testCode: 'ALICE-01',
+    dateString: 'October 2026',
+    includeCoverPage: true,
+    includeCandidateHeader: true,
+    includeBubbleSheet: true,
+    includeMarkScheme: false,
+    notes: 'Alice private test notes',
+    questionIds: ['uuid-sample-1', 'uuid-sample-2'],
+    createdAt: '2026-02-01T08:00:00.000Z',
+  };
+
+  const bobDraft: TestPaperConfig = {
+    id: sharedDraftId,
+    title: "Bob's Chemistry Quiz",
+    subjectCode: '0620',
+    subjectName: 'Chemistry',
+    schoolName: "Bob's Collegiate",
+    durationMinutes: 30,
+    totalMarks: 1,
+    testCode: 'BOB-01',
+    dateString: 'October 2026',
+    includeCoverPage: false,
+    includeCandidateHeader: true,
+    includeBubbleSheet: false,
+    includeMarkScheme: true,
+    notes: 'Bob private chemistry notes',
+    questionIds: ['uuid-sample-1'],
+    createdAt: '2026-03-01T09:00:00.000Z',
+  };
+
+  // 1. Save drafts under Alice and Bob accounts with the exact same ID
+  saveTestDraft(aliceDraft, aliceId);
+  saveTestDraft(bobDraft, bobId);
+
+  // Check 1: listTestDrafts(accountId) isolation
+  const aliceDrafts = listTestDrafts(aliceId);
+  const bobDrafts = listTestDrafts(bobId);
+
+  const isolationPass =
+    aliceDrafts.some((d) => d.id === sharedDraftId && d.title === "Alice's Economics Exam") &&
+    !aliceDrafts.some((d) => d.title === "Bob's Chemistry Quiz") &&
+    bobDrafts.some((d) => d.id === sharedDraftId && d.title === "Bob's Chemistry Quiz") &&
+    !bobDrafts.some((d) => d.title === "Alice's Economics Exam");
+
+  recordResult(
+    'listTestDrafts(accountId) isolates drafts strictly between accounts',
+    'Account Isolation',
+    Boolean(isolationPass),
+    isolationPass
+      ? `Alice sees ${aliceDrafts.length} draft(s) (only Alice's), Bob sees ${bobDrafts.length} draft(s) (only Bob's)`
+      : `Cross-account draft leakage detected (Alice count: ${aliceDrafts.length}, Bob count: ${bobDrafts.length})`
+  );
+
+  // Check 2: Same ID collision avoidance in localStorage
+  const loadedAlice = loadTestDraft(sharedDraftId, aliceId);
+  const loadedBob = loadTestDraft(sharedDraftId, bobId);
+
+  const collisionPass =
+    loadedAlice !== null &&
+    loadedBob !== null &&
+    loadedAlice.id === sharedDraftId &&
+    loadedBob.id === sharedDraftId &&
+    loadedAlice.title === "Alice's Economics Exam" &&
+    loadedBob.title === "Bob's Chemistry Quiz" &&
+    loadedAlice.ownerId === aliceId &&
+    loadedBob.ownerId === bobId &&
+    loadedAlice.notes === 'Alice private test notes' &&
+    loadedBob.notes === 'Bob private chemistry notes';
+
+  recordResult(
+    'Identical draft IDs do not overwrite across different accounts',
+    'Account Isolation',
+    Boolean(collisionPass),
+    collisionPass
+      ? `Alice: "${loadedAlice?.title}" (${loadedAlice?.ownerId}), Bob: "${loadedBob?.title}" (${loadedBob?.ownerId})`
+      : 'Draft collision detected between Alice and Bob'
+  );
+
+  // Check 3: Renaming and deleting in Alice does not affect Bob
+  renameTestDraft(sharedDraftId, "Alice's Updated Economics Exam", 'Updated notes for Alice', aliceId);
+  const reloadedBobAfterAliceRename = loadTestDraft(sharedDraftId, bobId);
+  const bobUnaffectedByRename =
+    reloadedBobAfterAliceRename !== null &&
+    reloadedBobAfterAliceRename.title === "Bob's Chemistry Quiz" &&
+    reloadedBobAfterAliceRename.notes === 'Bob private chemistry notes';
+
+  deleteTestDraft(sharedDraftId, aliceId);
+  const reloadedAliceAfterDelete = loadTestDraft(sharedDraftId, aliceId);
+  const reloadedBobAfterAliceDelete = loadTestDraft(sharedDraftId, bobId);
+
+  const deleteIsolationPass =
+    reloadedAliceAfterDelete === null &&
+    bobUnaffectedByRename &&
+    reloadedBobAfterAliceDelete !== null &&
+    reloadedBobAfterAliceDelete.title === "Bob's Chemistry Quiz";
+
+  recordResult(
+    'Deleting or renaming draft in Account A has zero effect on Account B',
+    'Account Isolation',
+    Boolean(deleteIsolationPass),
+    deleteIsolationPass
+      ? `Alice draft deleted successfully; Bob draft persists intact ("${reloadedBobAfterAliceDelete?.title}")`
+      : 'Cross-account side effect detected upon rename/delete'
+  );
+
+  // Check 4: Exporting from Alice and importing into Bob reassigns ownerId to Bob
+  const freshAliceDraftId = `alice-export-${Date.now()}`;
+  const freshAliceDraft: TestPaperConfig = {
+    id: freshAliceDraftId,
+    title: 'Alice Shared Master Paper',
+    subjectCode: '0455',
+    subjectName: 'Economics',
+    schoolName: 'Alice Academy',
+    durationMinutes: 45,
+    totalMarks: 2,
+    testCode: 'ALICE-EXP-01',
+    dateString: 'October 2026',
+    includeCoverPage: true,
+    includeCandidateHeader: true,
+    includeBubbleSheet: false,
+    includeMarkScheme: true,
+    questionIds: ['uuid-sample-1', 'uuid-sample-2'],
+    createdAt: new Date().toISOString(),
+  };
+
+  const savedAliceDraft = saveTestDraft(freshAliceDraft, aliceId);
+  const exportedJsonFromAlice = exportTestDraftJson(savedAliceDraft);
+
+  // Bob imports Alice's JSON
+  const importedIntoBob = importTestDraftJson(exportedJsonFromAlice, bobId);
+  const bobDraftsAfterImport = listTestDrafts(bobId);
+  const aliceDraftsAfterImport = listTestDrafts(aliceId);
+
+  const importReassignPass =
+    importedIntoBob !== null &&
+    importedIntoBob.ownerId === bobId &&
+    bobDraftsAfterImport.some((d) => d.id === importedIntoBob.id && d.ownerId === bobId) &&
+    !aliceDraftsAfterImport.some((d) => d.id === importedIntoBob.id && d.ownerId === bobId);
+
+  recordResult(
+    'importTestDraftJson overrides ownerId to current account scope',
+    'Account Isolation',
+    Boolean(importReassignPass),
+    importReassignPass
+      ? `Imported draft ID ${importedIntoBob?.id} owned by "${importedIntoBob?.ownerId}" in Bob's draft list`
+      : 'Failed to reassign ownerId to importing account'
+  );
+
+  // Clean up Bob's remaining drafts
+  deleteTestDraft(sharedDraftId, bobId);
+  deleteTestDraft(importedIntoBob.id, bobId);
+  deleteTestDraft(freshAliceDraftId, aliceId);
+}
+
 async function testSupabaseEndToEnd() {
   console.log('\n--- 4. Testing End-to-End Supabase DB Query, Compilation & Diagram URLs ---');
 
@@ -602,6 +774,7 @@ async function main() {
   await testCambridgeFallback();
   await testDraftSnapshotSerialization();
   await testDraftLifecycleOperations();
+  await testAccountScopedDraftIsolation();
   await testSupabaseEndToEnd();
   await testAutoSelectQuestions();
 

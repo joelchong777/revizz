@@ -16,6 +16,9 @@ export interface TestPaperConfig {
   instructionsText?: string;
   notes?: string;
   topicSummary?: string[];
+  ownerId?: string;
+  ownerName?: string;
+  ownerEmail?: string | null;
   questionIds: string[];
   compiledQuestions?: CompiledExamQuestion[];
   createdAt: string;

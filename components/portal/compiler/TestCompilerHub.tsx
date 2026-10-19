@@ -41,6 +41,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { useQuestions, useTopics, Question, resolveDiagramUrl } from '@/lib/questions';
+import { useAuth } from '@/lib/auth';
 import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
 import { CompilerDiagramPreview } from './CompilerDiagramPreview';
 import {
@@ -84,6 +85,16 @@ const TARGET_COHORTS = [
 ];
 
 export default function TestCompilerHub() {
+  const { userProfile } = useAuth();
+  const currentAccountId = useMemo(
+    () => userProfile?.id || userProfile?.email || 'guest-educator-local',
+    [userProfile?.id, userProfile?.email]
+  );
+  const currentAccountLabel = useMemo(
+    () => userProfile?.display_name || userProfile?.email || 'Guest Educator',
+    [userProfile?.display_name, userProfile?.email]
+  );
+
   const { questions, loading: loadingQuestions } = useQuestions();
   const { topics, loading: loadingTopics } = useTopics();
 
@@ -256,16 +267,33 @@ export default function TestCompilerHub() {
 
   useEffect(() => {
     setOnlineAssignments(listOnlineAssignments());
-    setDrafts(listTestDrafts());
+  }, []);
+
+  useEffect(() => {
+    const accountDrafts = listTestDrafts(currentAccountId);
+    setDrafts(accountDrafts);
+
+    // Clean account switching guardrail: detach active draft if it doesn't belong to current account
+    if (activeDraftId && !accountDrafts.some((d) => d.id === activeDraftId)) {
+      setActiveDraftId(null);
+      setLastSavedSnapshot(null);
+      setLastSavedDraftBanner(null);
+    }
 
     const handleDraftsChanged = () => {
-      setDrafts(listTestDrafts());
+      const updated = listTestDrafts(currentAccountId);
+      setDrafts(updated);
+      if (activeDraftId && !updated.some((d) => d.id === activeDraftId)) {
+        setActiveDraftId(null);
+        setLastSavedSnapshot(null);
+        setLastSavedDraftBanner(null);
+      }
     };
     window.addEventListener(DRAFT_CHANGE_EVENT, handleDraftsChanged);
     return () => {
       window.removeEventListener(DRAFT_CHANGE_EVENT, handleDraftsChanged);
     };
-  }, []);
+  }, [currentAccountId, activeDraftId]);
 
   const currentConfigSignature = useMemo(() => {
     return JSON.stringify({
@@ -510,6 +538,9 @@ export default function TestCompilerHub() {
       includeExplanations: includeExplanations,
       notes: resolvedNotes,
       topicSummary: topicSummary.length > 0 ? topicSummary : undefined,
+      ownerId: currentAccountId,
+      ownerName: currentAccountLabel,
+      ownerEmail: userProfile?.email || null,
       questionIds: selectedQuestionIds,
       compiledQuestions: compiled,
       createdAt: now,
@@ -555,7 +586,7 @@ export default function TestCompilerHub() {
     setDraftNotes(saveModalNotes);
 
     const configToSave = generateConfig(targetId, finalTitle, saveModalNotes);
-    const saved = saveTestDraft(configToSave);
+    const saved = saveTestDraft(configToSave, currentAccountId);
 
     setActiveDraftId(saved.id);
     const newSnapshot = JSON.stringify({
@@ -575,7 +606,7 @@ export default function TestCompilerHub() {
     });
     setLastSavedSnapshot(newSnapshot);
 
-    setDrafts(listTestDrafts());
+    setDrafts(listTestDrafts(currentAccountId));
     setIsSaveDraftModalOpen(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
@@ -603,10 +634,10 @@ export default function TestCompilerHub() {
       questionIds: selectedQuestionIds,
     });
     const configToSave = generateConfig(activeDraftId, finalTitle, draftNotes);
-    const saved = saveTestDraft(configToSave);
+    const saved = saveTestDraft(configToSave, currentAccountId);
 
     setLastSavedSnapshot(currentConfigSignature);
-    setDrafts(listTestDrafts());
+    setDrafts(listTestDrafts(currentAccountId));
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
 
@@ -634,7 +665,7 @@ export default function TestCompilerHub() {
     const config = generateConfig();
     savePrintSnapshot(config);
     if (activeDraftId) {
-      saveTestDraft(config);
+      saveTestDraft(config, currentAccountId);
     }
     window.open(`/portal/compiler/print?testId=${config.id}`, '_blank');
   };
@@ -660,7 +691,7 @@ export default function TestCompilerHub() {
   };
 
   const handleOpenDrafts = () => {
-    setDrafts(listTestDrafts());
+    setDrafts(listTestDrafts(currentAccountId));
     setDraftSearch('');
     setDraftSubjectFilter('all');
     setEditingDraftId(null);
@@ -705,21 +736,21 @@ export default function TestCompilerHub() {
 
   const handleDeleteDraft = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    deleteTestDraft(id);
+    deleteTestDraft(id, currentAccountId);
     if (activeDraftId === id) {
       setActiveDraftId(null);
       setLastSavedSnapshot(null);
     }
-    setDrafts(listTestDrafts());
+    setDrafts(listTestDrafts(currentAccountId));
     setDraftModalFeedback('Draft deleted.');
     setTimeout(() => setDraftModalFeedback(null), 3000);
   };
 
   const handleDuplicateDraft = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const dup = duplicateTestDraft(id);
+    const dup = duplicateTestDraft(id, undefined, currentAccountId);
     if (dup) {
-      setDrafts(listTestDrafts());
+      setDrafts(listTestDrafts(currentAccountId));
       setDraftModalFeedback(`Draft duplicated as "${dup.title}"`);
       setTimeout(() => setDraftModalFeedback(null), 3000);
     }
@@ -734,13 +765,13 @@ export default function TestCompilerHub() {
 
   const handleSaveRenameDraft = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const updated = renameTestDraft(id, editingDraftTitle, editingDraftNotes);
+    const updated = renameTestDraft(id, editingDraftTitle, editingDraftNotes, currentAccountId);
     if (updated) {
       if (activeDraftId === id) {
         setTestTitle(updated.title);
         setDraftNotes(updated.notes || '');
       }
-      setDrafts(listTestDrafts());
+      setDrafts(listTestDrafts(currentAccountId));
       setEditingDraftId(null);
       setDraftModalFeedback('Draft updated successfully.');
       setTimeout(() => setDraftModalFeedback(null), 3000);
@@ -784,8 +815,8 @@ export default function TestCompilerHub() {
     reader.onload = (event) => {
       try {
         const content = event.target?.result as string;
-        const imported = importTestDraftJson(content);
-        setDrafts(listTestDrafts());
+        const imported = importTestDraftJson(content, currentAccountId);
+        setDrafts(listTestDrafts(currentAccountId));
         setDraftModalFeedback(`Imported draft "${imported.title}" (${imported.questionIds.length} Qs)!`);
         setTimeout(() => setDraftModalFeedback(null), 4000);
       } catch (err: any) {
@@ -2214,6 +2245,20 @@ export default function TestCompilerHub() {
               </button>
             </div>
 
+            {/* Account Isolation Pill Badge */}
+            <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#645c50]">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Users className="w-3.5 h-3.5 text-[#201e1d] shrink-0" aria-hidden="true" />
+                <span className="truncate">
+                  Account: <span className="font-black text-[#201e1d]">{currentAccountLabel}</span>
+                  {userProfile?.email && userProfile.email !== currentAccountLabel ? ` (${userProfile.email})` : ''}
+                </span>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#3d472b] bg-[#e4ede1] px-1.5 py-0.5 rounded-md border border-[#8fa073] shrink-0">
+                Private Vault
+              </span>
+            </div>
+
             {/* Save Mode Selector (When activeDraftId exists) */}
             {activeDraftId && (
               <div className="flex flex-col gap-1.5">
@@ -2435,6 +2480,20 @@ export default function TestCompilerHub() {
                   <X className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
+            </div>
+
+            {/* Account Isolation Pill Badge */}
+            <div className="shrink-0 flex items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#645c50]">
+              <div className="flex items-center gap-2 min-w-0">
+                <Users className="w-4 h-4 text-[#201e1d] shrink-0" aria-hidden="true" />
+                <span className="truncate">
+                  Account Vault: <span className="font-black text-[#201e1d]">{currentAccountLabel}</span>
+                  {userProfile?.email && userProfile.email !== currentAccountLabel ? ` (${userProfile.email})` : ''}
+                </span>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#3d472b] bg-[#e4ede1] px-2 py-0.5 rounded-md border border-[#8fa073] shrink-0">
+                Private Vault
+              </span>
             </div>
 
             {/* Feedback / Notification Banner */}

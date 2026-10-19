@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-19T08:51:31.004Z",
+  "generatedAt": "2026-10-19T10:45:19.659Z",
   "stats": {
-    "totalFiles": 159,
-    "totalLines": 84410,
-    "totalSymbols": 760,
-    "scanDurationMs": 267
+    "totalFiles": 157,
+    "totalLines": 85414,
+    "totalSymbols": 765,
+    "scanDurationMs": 291
   },
   "sections": {
     "app": [
@@ -922,7 +922,7 @@
       },
       {
         "path": "components/portal/AdminTools.tsx",
-        "lineCount": 2817,
+        "lineCount": 2818,
         "purpose": "Question audit and management tools for administrators",
         "category": "components",
         "symbols": [
@@ -1007,7 +1007,7 @@
             "name": "AdminTools",
             "kind": "component",
             "startLine": 400,
-            "endLine": 2816,
+            "endLine": 2817,
             "exported": true
           }
         ]
@@ -1652,15 +1652,15 @@
       },
       {
         "path": "components/portal/compiler/TestCompilerHub.tsx",
-        "lineCount": 2196,
+        "lineCount": 3227,
         "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
         "category": "components",
         "symbols": [
           {
             "name": "TestCompilerHub",
             "kind": "component",
-            "startLine": 75,
-            "endLine": 2195,
+            "startLine": 90,
+            "endLine": 3226,
             "exported": true
           }
         ]
@@ -2716,7 +2716,7 @@
       },
       {
         "path": "lib/compilerFilters.ts",
-        "lineCount": 353,
+        "lineCount": 408,
         "purpose": "Search, filter, and sort algorithms for teacher test compiler",
         "category": "lib",
         "symbols": [
@@ -2770,38 +2770,52 @@
             "exported": true
           },
           {
+            "name": "CAMBRIDGE_TABLE_REGEX",
+            "kind": "const",
+            "startLine": 194,
+            "endLine": 195,
+            "exported": true
+          },
+          {
+            "name": "HTML_TABLE_REGEX",
+            "kind": "const",
+            "startLine": 197,
+            "endLine": 197,
+            "exported": true
+          },
+          {
             "name": "hasDataTable",
             "kind": "function",
-            "startLine": 197,
-            "endLine": 200,
+            "startLine": 203,
+            "endLine": 255,
             "exported": true
           },
           {
             "name": "isMathOrCalculation",
             "kind": "function",
-            "startLine": 205,
-            "endLine": 228,
+            "startLine": 260,
+            "endLine": 283,
             "exported": true
           },
           {
             "name": "getAvailableSeries",
             "kind": "function",
-            "startLine": 233,
-            "endLine": 242,
+            "startLine": 288,
+            "endLine": 297,
             "exported": true
           },
           {
             "name": "filterAndSortQuestions",
             "kind": "function",
-            "startLine": 247,
-            "endLine": 331,
+            "startLine": 302,
+            "endLine": 386,
             "exported": true
           },
           {
             "name": "countActiveFilters",
             "kind": "function",
-            "startLine": 336,
-            "endLine": 352,
+            "startLine": 391,
+            "endLine": 407,
             "exported": true
           }
         ]
@@ -3547,7 +3561,7 @@
       },
       {
         "path": "lib/portal/bankFilters.ts",
-        "lineCount": 1051,
+        "lineCount": 1087,
         "purpose": "Pure, zero-DOM-dependency Question Bank Filter Engine & URL Synchronization Module.",
         "category": "lib",
         "symbols": [
@@ -3660,77 +3674,77 @@
             "name": "detectQuestionFeatures",
             "kind": "function",
             "startLine": 388,
-            "endLine": 399,
+            "endLine": 401,
             "exported": true
           },
           {
             "name": "enrichBankQuestion",
             "kind": "function",
-            "startLine": 439,
-            "endLine": 505,
+            "startLine": 461,
+            "endLine": 527,
             "exported": true
           },
           {
             "name": "enrichBankQuestions",
             "kind": "function",
-            "startLine": 510,
-            "endLine": 512,
+            "startLine": 532,
+            "endLine": 534,
             "exported": true
           },
           {
             "name": "filterBankQuestions",
             "kind": "function",
-            "startLine": 517,
-            "endLine": 628,
+            "startLine": 539,
+            "endLine": 650,
             "exported": true
           },
           {
             "name": "BankFacetCounts",
             "kind": "interface",
-            "startLine": 630,
-            "endLine": 641,
+            "startLine": 652,
+            "endLine": 663,
             "exported": true
           },
           {
             "name": "computeBankFacetCounts",
             "kind": "function",
-            "startLine": 647,
-            "endLine": 807,
+            "startLine": 669,
+            "endLine": 829,
             "exported": true
           },
           {
             "name": "getActiveFilterChips",
             "kind": "function",
-            "startLine": 812,
-            "endLine": 867,
+            "startLine": 834,
+            "endLine": 894,
             "exported": true
           },
           {
             "name": "countActiveBankFilters",
             "kind": "function",
-            "startLine": 872,
-            "endLine": 874,
+            "startLine": 899,
+            "endLine": 901,
             "exported": true
           },
           {
             "name": "removeActiveFilterChip",
             "kind": "function",
-            "startLine": 879,
-            "endLine": 931,
+            "startLine": 906,
+            "endLine": 965,
             "exported": true
           },
           {
             "name": "serializeBankFiltersToQuery",
             "kind": "function",
-            "startLine": 936,
-            "endLine": 986,
+            "startLine": 970,
+            "endLine": 1020,
             "exported": true
           },
           {
             "name": "parseBankFiltersFromQuery",
             "kind": "function",
-            "startLine": 991,
-            "endLine": 1050,
+            "startLine": 1025,
+            "endLine": 1086,
             "exported": true
           }
         ]
@@ -4728,99 +4742,197 @@
       },
       {
         "path": "lib/testCompiler.ts",
-        "lineCount": 242,
+        "lineCount": 644,
         "purpose": "Test compiler draft persistence in localStorage and exam compiler",
         "category": "lib",
         "symbols": [
           {
+            "name": "DRAFT_KEY_PREFIX",
+            "kind": "const",
+            "startLine": 5,
+            "endLine": 5,
+            "exported": true
+          },
+          {
+            "name": "PRINT_SNAPSHOT_PREFIX",
+            "kind": "const",
+            "startLine": 6,
+            "endLine": 6,
+            "exported": true
+          },
+          {
+            "name": "DRAFT_CHANGE_EVENT",
+            "kind": "const",
+            "startLine": 7,
+            "endLine": 7,
+            "exported": true
+          },
+          {
             "name": "SUBJECT_CATALOG",
             "kind": "const",
-            "startLine": 8,
-            "endLine": 8,
+            "startLine": 10,
+            "endLine": 10,
             "exported": true
           },
           {
             "name": "GeneratedTestPaper",
             "kind": "interface",
-            "startLine": 15,
-            "endLine": 19,
+            "startLine": 17,
+            "endLine": 21,
             "exported": true
           },
           {
             "name": "resolveQuestionExplanation",
             "kind": "function",
-            "startLine": 21,
-            "endLine": 33,
+            "startLine": 23,
+            "endLine": 35,
+            "exported": true
+          },
+          {
+            "name": "notifyDraftsChanged",
+            "kind": "function",
+            "startLine": 37,
+            "endLine": 53,
+            "exported": true
+          },
+          {
+            "name": "sanitizeAccountScope",
+            "kind": "function",
+            "startLine": 55,
+            "endLine": 65,
+            "exported": true
+          },
+          {
+            "name": "resolveCurrentAccountScope",
+            "kind": "function",
+            "startLine": 67,
+            "endLine": 116,
+            "exported": true
+          },
+          {
+            "name": "getDraftStorageKey",
+            "kind": "function",
+            "startLine": 118,
+            "endLine": 121,
+            "exported": true
+          },
+          {
+            "name": "formatDefaultDraftTitle",
+            "kind": "function",
+            "startLine": 123,
+            "endLine": 134,
             "exported": true
           },
           {
             "name": "saveTestDraft",
             "kind": "function",
-            "startLine": 35,
-            "endLine": 38,
+            "startLine": 136,
+            "endLine": 188,
+            "exported": true
+          },
+          {
+            "name": "savePrintSnapshot",
+            "kind": "function",
+            "startLine": 190,
+            "endLine": 219,
             "exported": true
           },
           {
             "name": "loadTestDraft",
             "kind": "function",
-            "startLine": 40,
-            "endLine": 49,
+            "startLine": 221,
+            "endLine": 286,
             "exported": true
           },
           {
             "name": "listTestDrafts",
             "kind": "function",
-            "startLine": 51,
-            "endLine": 66,
+            "startLine": 288,
+            "endLine": 324,
+            "exported": true
+          },
+          {
+            "name": "deleteTestDraft",
+            "kind": "function",
+            "startLine": 326,
+            "endLine": 349,
+            "exported": true
+          },
+          {
+            "name": "duplicateTestDraft",
+            "kind": "function",
+            "startLine": 351,
+            "endLine": 366,
+            "exported": true
+          },
+          {
+            "name": "renameTestDraft",
+            "kind": "function",
+            "startLine": 368,
+            "endLine": 386,
+            "exported": true
+          },
+          {
+            "name": "exportTestDraftJson",
+            "kind": "function",
+            "startLine": 388,
+            "endLine": 398,
+            "exported": true
+          },
+          {
+            "name": "importTestDraftJson",
+            "kind": "function",
+            "startLine": 400,
+            "endLine": 468,
             "exported": true
           },
           {
             "name": "buildCompiledQuestions",
             "kind": "function",
-            "startLine": 68,
-            "endLine": 107,
+            "startLine": 470,
+            "endLine": 509,
             "exported": true
           },
           {
             "name": "autoSelectQuestions",
             "kind": "function",
-            "startLine": 110,
-            "endLine": 147,
+            "startLine": 512,
+            "endLine": 549,
             "exported": true
           },
           {
             "name": "generateTestPaper",
             "kind": "function",
-            "startLine": 149,
-            "endLine": 177,
+            "startLine": 551,
+            "endLine": 579,
             "exported": true
           },
           {
             "name": "shuffleQuestionIds",
             "kind": "function",
-            "startLine": 179,
-            "endLine": 186,
+            "startLine": 581,
+            "endLine": 588,
             "exported": true
           },
           {
             "name": "computeTopicDistribution",
             "kind": "function",
-            "startLine": 188,
-            "endLine": 217,
+            "startLine": 590,
+            "endLine": 619,
             "exported": true
           },
           {
             "name": "saveOnlineAssignment",
             "kind": "function",
-            "startLine": 219,
-            "endLine": 222,
+            "startLine": 621,
+            "endLine": 624,
             "exported": true
           },
           {
             "name": "listOnlineAssignments",
             "kind": "function",
-            "startLine": 224,
-            "endLine": 239,
+            "startLine": 626,
+            "endLine": 641,
             "exported": true
           }
         ]
@@ -4909,21 +5021,6 @@
             "kind": "function",
             "startLine": 540,
             "endLine": 543,
-            "exported": true
-          }
-        ]
-      },
-      {
-        "path": "scripts/aggregate-0455-m24-12.ts",
-        "lineCount": 129,
-        "purpose": "CLI script aggregating March 2024 paper 12 questions into JSON",
-        "category": "scripts",
-        "symbols": [
-          {
-            "name": "aggregatePaper",
-            "kind": "function",
-            "startLine": 18,
-            "endLine": 18,
             "exported": true
           }
         ]
@@ -5090,98 +5187,6 @@
             "kind": "def",
             "startLine": 161,
             "endLine": 227,
-            "exported": true
-          }
-        ]
-      },
-      {
-        "path": "scripts/fast-ingest.py",
-        "lineCount": 853,
-        "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
-        "category": "scripts",
-        "symbols": [
-          {
-            "name": "escape_currency_dollars",
-            "kind": "def",
-            "startLine": 96,
-            "endLine": 132,
-            "exported": true
-          },
-          {
-            "name": "parse_filename_metadata",
-            "kind": "def",
-            "startLine": 135,
-            "endLine": 176,
-            "exported": true
-          },
-          {
-            "name": "parse_mark_scheme",
-            "kind": "def",
-            "startLine": 179,
-            "endLine": 208,
-            "exported": true
-          },
-          {
-            "name": "map_syllabus_topic",
-            "kind": "def",
-            "startLine": 211,
-            "endLine": 232,
-            "exported": true
-          },
-          {
-            "name": "generate_explanation",
-            "kind": "def",
-            "startLine": 235,
-            "endLine": 240,
-            "exported": true
-          },
-          {
-            "name": "render_diagram_crop",
-            "kind": "def",
-            "startLine": 275,
-            "endLine": 279,
-            "exported": true
-          },
-          {
-            "name": "extract_questions_from_qp",
-            "kind": "def",
-            "startLine": 296,
-            "endLine": 302,
-            "exported": true
-          },
-          {
-            "name": "assemble_staging_paper",
-            "kind": "def",
-            "startLine": 644,
-            "endLine": 649,
-            "exported": true
-          },
-          {
-            "name": "ingest_single_paper",
-            "kind": "def",
-            "startLine": 692,
-            "endLine": 698,
-            "exported": true
-          },
-          {
-            "name": "find_matching_ms",
-            "kind": "def",
-            "startLine": 744,
-            "endLine": 763,
-            "exported": true
-          },
-          {
-            "name": "ingest_batch_directory",
-            "kind": "def",
-            "startLine": 766,
-            "endLine": 771,
-            "exported": true
-          },
-          {
-            "name": "main",
-            "kind": "def",
-            "startLine": 809,
-            "endLine": 848,
             "exported": true
           }
         ]
@@ -5457,57 +5462,71 @@
       },
       {
         "path": "scripts/verify-compiler-print.ts",
-        "lineCount": 473,
+        "lineCount": 813,
         "purpose": "Standalone Verification Test Script: verify-compiler-print.ts Verifies: 1.",
         "category": "scripts",
         "symbols": [
           {
             "name": "recordResult",
             "kind": "function",
-            "startLine": 61,
-            "endLine": 65,
+            "startLine": 74,
+            "endLine": 78,
             "exported": false
           },
           {
             "name": "testDynamicPoolCompilation",
             "kind": "function",
-            "startLine": 67,
-            "endLine": 150,
+            "startLine": 80,
+            "endLine": 163,
             "exported": false
           },
           {
             "name": "testCambridgeFallback",
             "kind": "function",
-            "startLine": 152,
-            "endLine": 167,
+            "startLine": 165,
+            "endLine": 180,
             "exported": false
           },
           {
             "name": "testDraftSnapshotSerialization",
             "kind": "function",
-            "startLine": 169,
-            "endLine": 246,
+            "startLine": 182,
+            "endLine": 259,
+            "exported": false
+          },
+          {
+            "name": "testDraftLifecycleOperations",
+            "kind": "function",
+            "startLine": 261,
+            "endLine": 415,
+            "exported": false
+          },
+          {
+            "name": "testAccountScopedDraftIsolation",
+            "kind": "function",
+            "startLine": 417,
+            "endLine": 584,
             "exported": false
           },
           {
             "name": "testSupabaseEndToEnd",
             "kind": "function",
-            "startLine": 248,
-            "endLine": 381,
+            "startLine": 586,
+            "endLine": 719,
             "exported": false
           },
           {
             "name": "testAutoSelectQuestions",
             "kind": "function",
-            "startLine": 383,
-            "endLine": 428,
+            "startLine": 721,
+            "endLine": 766,
             "exported": false
           },
           {
             "name": "main",
             "kind": "function",
-            "startLine": 430,
-            "endLine": 467,
+            "startLine": 768,
+            "endLine": 807,
             "exported": false
           }
         ]
@@ -6106,64 +6125,64 @@
       },
       {
         "path": "scripts/verify-revizz.ts",
-        "lineCount": 3987,
+        "lineCount": 4120,
         "purpose": "Master Revizz QA and gameplay test suite with 56 assertions",
         "category": "scripts",
         "symbols": [
           {
             "name": "test",
             "kind": "function",
-            "startLine": 166,
-            "endLine": 178,
+            "startLine": 167,
+            "endLine": 179,
             "exported": false
           },
           {
             "name": "testAsync",
             "kind": "function",
-            "startLine": 180,
-            "endLine": 192,
+            "startLine": 181,
+            "endLine": 193,
             "exported": false
           },
           {
             "name": "assert",
             "kind": "function",
-            "startLine": 194,
-            "endLine": 198,
+            "startLine": 195,
+            "endLine": 199,
             "exported": false
           },
           {
             "name": "assertEqual",
             "kind": "function",
-            "startLine": 200,
-            "endLine": 204,
+            "startLine": 201,
+            "endLine": 205,
             "exported": false
           },
           {
             "name": "runSuite13",
             "kind": "function",
-            "startLine": 1549,
-            "endLine": 3630,
+            "startLine": 1551,
+            "endLine": 3763,
             "exported": false
           },
           {
             "name": "runSuite20",
             "kind": "function",
-            "startLine": 3635,
-            "endLine": 3807,
+            "startLine": 3768,
+            "endLine": 3940,
             "exported": false
           },
           {
             "name": "runSuite21",
             "kind": "function",
-            "startLine": 3809,
-            "endLine": 3961,
+            "startLine": 3942,
+            "endLine": 4094,
             "exported": false
           },
           {
             "name": "main",
             "kind": "function",
-            "startLine": 3963,
-            "endLine": 3981,
+            "startLine": 4096,
+            "endLine": 4114,
             "exported": false
           }
         ]
@@ -6387,7 +6406,7 @@
       },
       {
         "path": "scripts/wt.ts",
-        "lineCount": 1567,
+        "lineCount": 1555,
         "purpose": "Git worktree isolation manager and atomic release CLI",
         "category": "scripts",
         "symbols": [
@@ -6535,21 +6554,21 @@
             "name": "commandShip",
             "kind": "async-function",
             "startLine": 1115,
-            "endLine": 1369,
+            "endLine": 1357,
             "exported": true
           },
           {
             "name": "commandHelp",
             "kind": "function",
-            "startLine": 1374,
-            "endLine": 1453,
+            "startLine": 1362,
+            "endLine": 1441,
             "exported": true
           },
           {
             "name": "main",
             "kind": "async-function",
-            "startLine": 1456,
-            "endLine": 1558,
+            "startLine": 1444,
+            "endLine": 1546,
             "exported": true
           }
         ]
@@ -7521,7 +7540,7 @@
     },
     {
       "path": "components/portal/AdminTools.tsx",
-      "lineCount": 2817,
+      "lineCount": 2818,
       "purpose": "Question audit and management tools for administrators",
       "category": "components",
       "symbols": [
@@ -7606,7 +7625,7 @@
           "name": "AdminTools",
           "kind": "component",
           "startLine": 400,
-          "endLine": 2816,
+          "endLine": 2817,
           "exported": true
         }
       ]
@@ -8251,15 +8270,15 @@
     },
     {
       "path": "components/portal/compiler/TestCompilerHub.tsx",
-      "lineCount": 2196,
+      "lineCount": 3227,
       "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
       "category": "components",
       "symbols": [
         {
           "name": "TestCompilerHub",
           "kind": "component",
-          "startLine": 75,
-          "endLine": 2195,
+          "startLine": 90,
+          "endLine": 3226,
           "exported": true
         }
       ]
@@ -9313,7 +9332,7 @@
     },
     {
       "path": "lib/compilerFilters.ts",
-      "lineCount": 353,
+      "lineCount": 408,
       "purpose": "Search, filter, and sort algorithms for teacher test compiler",
       "category": "lib",
       "symbols": [
@@ -9367,38 +9386,52 @@
           "exported": true
         },
         {
+          "name": "CAMBRIDGE_TABLE_REGEX",
+          "kind": "const",
+          "startLine": 194,
+          "endLine": 195,
+          "exported": true
+        },
+        {
+          "name": "HTML_TABLE_REGEX",
+          "kind": "const",
+          "startLine": 197,
+          "endLine": 197,
+          "exported": true
+        },
+        {
           "name": "hasDataTable",
           "kind": "function",
-          "startLine": 197,
-          "endLine": 200,
+          "startLine": 203,
+          "endLine": 255,
           "exported": true
         },
         {
           "name": "isMathOrCalculation",
           "kind": "function",
-          "startLine": 205,
-          "endLine": 228,
+          "startLine": 260,
+          "endLine": 283,
           "exported": true
         },
         {
           "name": "getAvailableSeries",
           "kind": "function",
-          "startLine": 233,
-          "endLine": 242,
+          "startLine": 288,
+          "endLine": 297,
           "exported": true
         },
         {
           "name": "filterAndSortQuestions",
           "kind": "function",
-          "startLine": 247,
-          "endLine": 331,
+          "startLine": 302,
+          "endLine": 386,
           "exported": true
         },
         {
           "name": "countActiveFilters",
           "kind": "function",
-          "startLine": 336,
-          "endLine": 352,
+          "startLine": 391,
+          "endLine": 407,
           "exported": true
         }
       ]
@@ -10144,7 +10177,7 @@
     },
     {
       "path": "lib/portal/bankFilters.ts",
-      "lineCount": 1051,
+      "lineCount": 1087,
       "purpose": "Pure, zero-DOM-dependency Question Bank Filter Engine & URL Synchronization Module.",
       "category": "lib",
       "symbols": [
@@ -10257,77 +10290,77 @@
           "name": "detectQuestionFeatures",
           "kind": "function",
           "startLine": 388,
-          "endLine": 399,
+          "endLine": 401,
           "exported": true
         },
         {
           "name": "enrichBankQuestion",
           "kind": "function",
-          "startLine": 439,
-          "endLine": 505,
+          "startLine": 461,
+          "endLine": 527,
           "exported": true
         },
         {
           "name": "enrichBankQuestions",
           "kind": "function",
-          "startLine": 510,
-          "endLine": 512,
+          "startLine": 532,
+          "endLine": 534,
           "exported": true
         },
         {
           "name": "filterBankQuestions",
           "kind": "function",
-          "startLine": 517,
-          "endLine": 628,
+          "startLine": 539,
+          "endLine": 650,
           "exported": true
         },
         {
           "name": "BankFacetCounts",
           "kind": "interface",
-          "startLine": 630,
-          "endLine": 641,
+          "startLine": 652,
+          "endLine": 663,
           "exported": true
         },
         {
           "name": "computeBankFacetCounts",
           "kind": "function",
-          "startLine": 647,
-          "endLine": 807,
+          "startLine": 669,
+          "endLine": 829,
           "exported": true
         },
         {
           "name": "getActiveFilterChips",
           "kind": "function",
-          "startLine": 812,
-          "endLine": 867,
+          "startLine": 834,
+          "endLine": 894,
           "exported": true
         },
         {
           "name": "countActiveBankFilters",
           "kind": "function",
-          "startLine": 872,
-          "endLine": 874,
+          "startLine": 899,
+          "endLine": 901,
           "exported": true
         },
         {
           "name": "removeActiveFilterChip",
           "kind": "function",
-          "startLine": 879,
-          "endLine": 931,
+          "startLine": 906,
+          "endLine": 965,
           "exported": true
         },
         {
           "name": "serializeBankFiltersToQuery",
           "kind": "function",
-          "startLine": 936,
-          "endLine": 986,
+          "startLine": 970,
+          "endLine": 1020,
           "exported": true
         },
         {
           "name": "parseBankFiltersFromQuery",
           "kind": "function",
-          "startLine": 991,
-          "endLine": 1050,
+          "startLine": 1025,
+          "endLine": 1086,
           "exported": true
         }
       ]
@@ -11325,99 +11358,197 @@
     },
     {
       "path": "lib/testCompiler.ts",
-      "lineCount": 242,
+      "lineCount": 644,
       "purpose": "Test compiler draft persistence in localStorage and exam compiler",
       "category": "lib",
       "symbols": [
         {
+          "name": "DRAFT_KEY_PREFIX",
+          "kind": "const",
+          "startLine": 5,
+          "endLine": 5,
+          "exported": true
+        },
+        {
+          "name": "PRINT_SNAPSHOT_PREFIX",
+          "kind": "const",
+          "startLine": 6,
+          "endLine": 6,
+          "exported": true
+        },
+        {
+          "name": "DRAFT_CHANGE_EVENT",
+          "kind": "const",
+          "startLine": 7,
+          "endLine": 7,
+          "exported": true
+        },
+        {
           "name": "SUBJECT_CATALOG",
           "kind": "const",
-          "startLine": 8,
-          "endLine": 8,
+          "startLine": 10,
+          "endLine": 10,
           "exported": true
         },
         {
           "name": "GeneratedTestPaper",
           "kind": "interface",
-          "startLine": 15,
-          "endLine": 19,
+          "startLine": 17,
+          "endLine": 21,
           "exported": true
         },
         {
           "name": "resolveQuestionExplanation",
           "kind": "function",
-          "startLine": 21,
-          "endLine": 33,
+          "startLine": 23,
+          "endLine": 35,
+          "exported": true
+        },
+        {
+          "name": "notifyDraftsChanged",
+          "kind": "function",
+          "startLine": 37,
+          "endLine": 53,
+          "exported": true
+        },
+        {
+          "name": "sanitizeAccountScope",
+          "kind": "function",
+          "startLine": 55,
+          "endLine": 65,
+          "exported": true
+        },
+        {
+          "name": "resolveCurrentAccountScope",
+          "kind": "function",
+          "startLine": 67,
+          "endLine": 116,
+          "exported": true
+        },
+        {
+          "name": "getDraftStorageKey",
+          "kind": "function",
+          "startLine": 118,
+          "endLine": 121,
+          "exported": true
+        },
+        {
+          "name": "formatDefaultDraftTitle",
+          "kind": "function",
+          "startLine": 123,
+          "endLine": 134,
           "exported": true
         },
         {
           "name": "saveTestDraft",
           "kind": "function",
-          "startLine": 35,
-          "endLine": 38,
+          "startLine": 136,
+          "endLine": 188,
+          "exported": true
+        },
+        {
+          "name": "savePrintSnapshot",
+          "kind": "function",
+          "startLine": 190,
+          "endLine": 219,
           "exported": true
         },
         {
           "name": "loadTestDraft",
           "kind": "function",
-          "startLine": 40,
-          "endLine": 49,
+          "startLine": 221,
+          "endLine": 286,
           "exported": true
         },
         {
           "name": "listTestDrafts",
           "kind": "function",
-          "startLine": 51,
-          "endLine": 66,
+          "startLine": 288,
+          "endLine": 324,
+          "exported": true
+        },
+        {
+          "name": "deleteTestDraft",
+          "kind": "function",
+          "startLine": 326,
+          "endLine": 349,
+          "exported": true
+        },
+        {
+          "name": "duplicateTestDraft",
+          "kind": "function",
+          "startLine": 351,
+          "endLine": 366,
+          "exported": true
+        },
+        {
+          "name": "renameTestDraft",
+          "kind": "function",
+          "startLine": 368,
+          "endLine": 386,
+          "exported": true
+        },
+        {
+          "name": "exportTestDraftJson",
+          "kind": "function",
+          "startLine": 388,
+          "endLine": 398,
+          "exported": true
+        },
+        {
+          "name": "importTestDraftJson",
+          "kind": "function",
+          "startLine": 400,
+          "endLine": 468,
           "exported": true
         },
         {
           "name": "buildCompiledQuestions",
           "kind": "function",
-          "startLine": 68,
-          "endLine": 107,
+          "startLine": 470,
+          "endLine": 509,
           "exported": true
         },
         {
           "name": "autoSelectQuestions",
           "kind": "function",
-          "startLine": 110,
-          "endLine": 147,
+          "startLine": 512,
+          "endLine": 549,
           "exported": true
         },
         {
           "name": "generateTestPaper",
           "kind": "function",
-          "startLine": 149,
-          "endLine": 177,
+          "startLine": 551,
+          "endLine": 579,
           "exported": true
         },
         {
           "name": "shuffleQuestionIds",
           "kind": "function",
-          "startLine": 179,
-          "endLine": 186,
+          "startLine": 581,
+          "endLine": 588,
           "exported": true
         },
         {
           "name": "computeTopicDistribution",
           "kind": "function",
-          "startLine": 188,
-          "endLine": 217,
+          "startLine": 590,
+          "endLine": 619,
           "exported": true
         },
         {
           "name": "saveOnlineAssignment",
           "kind": "function",
-          "startLine": 219,
-          "endLine": 222,
+          "startLine": 621,
+          "endLine": 624,
           "exported": true
         },
         {
           "name": "listOnlineAssignments",
           "kind": "function",
-          "startLine": 224,
-          "endLine": 239,
+          "startLine": 626,
+          "endLine": 641,
           "exported": true
         }
       ]
@@ -11504,21 +11635,6 @@
           "kind": "function",
           "startLine": 540,
           "endLine": 543,
-          "exported": true
-        }
-      ]
-    },
-    {
-      "path": "scripts/aggregate-0455-m24-12.ts",
-      "lineCount": 129,
-      "purpose": "CLI script aggregating March 2024 paper 12 questions into JSON",
-      "category": "scripts",
-      "symbols": [
-        {
-          "name": "aggregatePaper",
-          "kind": "function",
-          "startLine": 18,
-          "endLine": 18,
           "exported": true
         }
       ]
@@ -11685,98 +11801,6 @@
           "kind": "def",
           "startLine": 161,
           "endLine": 227,
-          "exported": true
-        }
-      ]
-    },
-    {
-      "path": "scripts/fast-ingest.py",
-      "lineCount": 853,
-      "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
-      "category": "scripts",
-      "symbols": [
-        {
-          "name": "escape_currency_dollars",
-          "kind": "def",
-          "startLine": 96,
-          "endLine": 132,
-          "exported": true
-        },
-        {
-          "name": "parse_filename_metadata",
-          "kind": "def",
-          "startLine": 135,
-          "endLine": 176,
-          "exported": true
-        },
-        {
-          "name": "parse_mark_scheme",
-          "kind": "def",
-          "startLine": 179,
-          "endLine": 208,
-          "exported": true
-        },
-        {
-          "name": "map_syllabus_topic",
-          "kind": "def",
-          "startLine": 211,
-          "endLine": 232,
-          "exported": true
-        },
-        {
-          "name": "generate_explanation",
-          "kind": "def",
-          "startLine": 235,
-          "endLine": 240,
-          "exported": true
-        },
-        {
-          "name": "render_diagram_crop",
-          "kind": "def",
-          "startLine": 275,
-          "endLine": 279,
-          "exported": true
-        },
-        {
-          "name": "extract_questions_from_qp",
-          "kind": "def",
-          "startLine": 296,
-          "endLine": 302,
-          "exported": true
-        },
-        {
-          "name": "assemble_staging_paper",
-          "kind": "def",
-          "startLine": 644,
-          "endLine": 649,
-          "exported": true
-        },
-        {
-          "name": "ingest_single_paper",
-          "kind": "def",
-          "startLine": 692,
-          "endLine": 698,
-          "exported": true
-        },
-        {
-          "name": "find_matching_ms",
-          "kind": "def",
-          "startLine": 744,
-          "endLine": 763,
-          "exported": true
-        },
-        {
-          "name": "ingest_batch_directory",
-          "kind": "def",
-          "startLine": 766,
-          "endLine": 771,
-          "exported": true
-        },
-        {
-          "name": "main",
-          "kind": "def",
-          "startLine": 809,
-          "endLine": 848,
           "exported": true
         }
       ]
@@ -12052,57 +12076,71 @@
     },
     {
       "path": "scripts/verify-compiler-print.ts",
-      "lineCount": 473,
+      "lineCount": 813,
       "purpose": "Standalone Verification Test Script: verify-compiler-print.ts Verifies: 1.",
       "category": "scripts",
       "symbols": [
         {
           "name": "recordResult",
           "kind": "function",
-          "startLine": 61,
-          "endLine": 65,
+          "startLine": 74,
+          "endLine": 78,
           "exported": false
         },
         {
           "name": "testDynamicPoolCompilation",
           "kind": "function",
-          "startLine": 67,
-          "endLine": 150,
+          "startLine": 80,
+          "endLine": 163,
           "exported": false
         },
         {
           "name": "testCambridgeFallback",
           "kind": "function",
-          "startLine": 152,
-          "endLine": 167,
+          "startLine": 165,
+          "endLine": 180,
           "exported": false
         },
         {
           "name": "testDraftSnapshotSerialization",
           "kind": "function",
-          "startLine": 169,
-          "endLine": 246,
+          "startLine": 182,
+          "endLine": 259,
+          "exported": false
+        },
+        {
+          "name": "testDraftLifecycleOperations",
+          "kind": "function",
+          "startLine": 261,
+          "endLine": 415,
+          "exported": false
+        },
+        {
+          "name": "testAccountScopedDraftIsolation",
+          "kind": "function",
+          "startLine": 417,
+          "endLine": 584,
           "exported": false
         },
         {
           "name": "testSupabaseEndToEnd",
           "kind": "function",
-          "startLine": 248,
-          "endLine": 381,
+          "startLine": 586,
+          "endLine": 719,
           "exported": false
         },
         {
           "name": "testAutoSelectQuestions",
           "kind": "function",
-          "startLine": 383,
-          "endLine": 428,
+          "startLine": 721,
+          "endLine": 766,
           "exported": false
         },
         {
           "name": "main",
           "kind": "function",
-          "startLine": 430,
-          "endLine": 467,
+          "startLine": 768,
+          "endLine": 807,
           "exported": false
         }
       ]
@@ -12701,64 +12739,64 @@
     },
     {
       "path": "scripts/verify-revizz.ts",
-      "lineCount": 3987,
+      "lineCount": 4120,
       "purpose": "Master Revizz QA and gameplay test suite with 56 assertions",
       "category": "scripts",
       "symbols": [
         {
           "name": "test",
           "kind": "function",
-          "startLine": 166,
-          "endLine": 178,
+          "startLine": 167,
+          "endLine": 179,
           "exported": false
         },
         {
           "name": "testAsync",
           "kind": "function",
-          "startLine": 180,
-          "endLine": 192,
+          "startLine": 181,
+          "endLine": 193,
           "exported": false
         },
         {
           "name": "assert",
           "kind": "function",
-          "startLine": 194,
-          "endLine": 198,
+          "startLine": 195,
+          "endLine": 199,
           "exported": false
         },
         {
           "name": "assertEqual",
           "kind": "function",
-          "startLine": 200,
-          "endLine": 204,
+          "startLine": 201,
+          "endLine": 205,
           "exported": false
         },
         {
           "name": "runSuite13",
           "kind": "function",
-          "startLine": 1549,
-          "endLine": 3630,
+          "startLine": 1551,
+          "endLine": 3763,
           "exported": false
         },
         {
           "name": "runSuite20",
           "kind": "function",
-          "startLine": 3635,
-          "endLine": 3807,
+          "startLine": 3768,
+          "endLine": 3940,
           "exported": false
         },
         {
           "name": "runSuite21",
           "kind": "function",
-          "startLine": 3809,
-          "endLine": 3961,
+          "startLine": 3942,
+          "endLine": 4094,
           "exported": false
         },
         {
           "name": "main",
           "kind": "function",
-          "startLine": 3963,
-          "endLine": 3981,
+          "startLine": 4096,
+          "endLine": 4114,
           "exported": false
         }
       ]
@@ -12982,7 +13020,7 @@
     },
     {
       "path": "scripts/wt.ts",
-      "lineCount": 1567,
+      "lineCount": 1555,
       "purpose": "Git worktree isolation manager and atomic release CLI",
       "category": "scripts",
       "symbols": [
@@ -13130,21 +13168,21 @@
           "name": "commandShip",
           "kind": "async-function",
           "startLine": 1115,
-          "endLine": 1369,
+          "endLine": 1357,
           "exported": true
         },
         {
           "name": "commandHelp",
           "kind": "function",
-          "startLine": 1374,
-          "endLine": 1453,
+          "startLine": 1362,
+          "endLine": 1441,
           "exported": true
         },
         {
           "name": "main",
           "kind": "async-function",
-          "startLine": 1456,
-          "endLine": 1558,
+          "startLine": 1444,
+          "endLine": 1546,
           "exported": true
         }
       ]
