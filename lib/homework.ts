@@ -1,6 +1,6 @@
 import { OnlineQuizAssignment } from '../types/testCompiler';
 import { listOnlineAssignments } from './testCompiler';
-import { Question, CAMBRIDGE_QUESTIONS } from './questions';
+import { Question } from './questions';
 
 export type HomeworkStatus = 'pending' | 'completed' | 'overdue';
 
@@ -30,65 +30,7 @@ export const HOMEWORK_CHANGE_EVENT = 'revizz:homework-updated';
  * These serve as seed assignments when no custom teacher assignments exist.
  */
 export function getSeedHomeworkAssignments(): OnlineQuizAssignment[] {
-  const now = Date.now();
-  const dayMs = 24 * 60 * 60 * 1000;
-
-  return [
-    {
-      id: 'ECO-0455-HW1',
-      title: 'IGCSE Economics: Basic Economic Problem & Allocation',
-      subjectCode: '0455',
-      subjectName: 'Economics',
-      cohortName: 'Year 10 Cambridge Economics',
-      dueDate: new Date(now + 3 * dayMs).toISOString(),
-      durationMinutes: 15,
-      questionIds: [
-        '0455-s24-12-q01',
-        '0455-s24-12-q02',
-        '0455-s24-12-q03',
-        '0455-s24-12-q04',
-        '0455-s24-12-q05',
-      ],
-      testCode: 'ECO-0455-HW1',
-      createdAt: new Date(now - 1 * dayMs).toISOString(),
-    },
-    {
-      id: 'ECO-0455-HW2',
-      title: 'IGCSE Economics: Market Equilibrium & Price Elasticity',
-      subjectCode: '0455',
-      subjectName: 'Economics',
-      cohortName: 'Year 10 Cambridge Economics',
-      dueDate: new Date(now + 7 * dayMs).toISOString(),
-      durationMinutes: 20,
-      questionIds: [
-        '0455-s24-12-q06',
-        '0455-s24-12-q07',
-        '0455-s24-12-q08',
-        '0455-s24-12-q09',
-        '0455-s24-12-q10',
-      ],
-      testCode: 'ECO-0455-HW2',
-      createdAt: new Date(now - 1 * dayMs).toISOString(),
-    },
-    {
-      id: 'ECO-0455-HW3',
-      title: 'IGCSE Economics: Government Microeconomic Intervention',
-      subjectCode: '0455',
-      subjectName: 'Economics',
-      cohortName: 'Year 10 Cambridge Economics',
-      dueDate: new Date(now + 14 * dayMs).toISOString(),
-      durationMinutes: 20,
-      questionIds: [
-        '0455-s24-12-q11',
-        '0455-s24-12-q12',
-        '0455-s24-12-q13',
-        '0455-s24-12-q14',
-        '0455-s24-12-q15',
-      ],
-      testCode: 'ECO-0455-HW3',
-      createdAt: new Date(now - 1 * dayMs).toISOString(),
-    },
-  ];
+  return [];
 }
 
 /**

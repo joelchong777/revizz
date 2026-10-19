@@ -4253,23 +4253,31 @@ async function runSuite22() {
 async function runSuite23() {
   console.log('\n\x1b[1m\x1b[34m[Suite 23] Student Homework & Online Assessment Engine Architecture\x1b[0m');
 
-  test('Homework Engine: getHomeworkAssignments returns default seed assignments on clean state', () => {
+  test('Homework Engine: getHomeworkAssignments returns empty array on clean state', () => {
     mockStorage.clear();
     const items = getHomeworkAssignments();
-    assertEqual(items.length, 3, 'Returns exactly 3 seed assignments');
-    const hw1 = items.find((i) => i.testCode === 'ECO-0455-HW1');
-    assert(Boolean(hw1), 'Seed assignment ECO-0455-HW1 is present');
-    assertEqual(hw1?.subjectCode, '0455', 'ECO-0455-HW1 has subjectCode 0455');
-    assertEqual(hw1?.status, 'pending', 'ECO-0455-HW1 has pending status');
-    assertEqual(hw1?.isOverdue, false, 'ECO-0455-HW1 is not overdue');
+    assertEqual(items.length, 0, 'Returns 0 assignments on clean state');
   });
 
   test('Homework Engine: findAssignmentByTestCode performs case-insensitive lookup', () => {
+    saveOnlineAssignment({
+      id: 'ECO-0455-HW1',
+      title: 'IGCSE Economics: Basic Economic Problem & Allocation',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      cohortName: 'Year 10 Cambridge Economics',
+      dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      durationMinutes: 15,
+      questionIds: ['0455-s24-12-q01', '0455-s24-12-q02'],
+      testCode: 'ECO-0455-HW1',
+      createdAt: new Date().toISOString(),
+    });
+
     const foundUpper = findAssignmentByTestCode('ECO-0455-HW1');
     assert(Boolean(foundUpper), 'findAssignmentByTestCode finds uppercase');
     const foundLower = findAssignmentByTestCode('eco-0455-hw1');
     assert(Boolean(foundLower), 'findAssignmentByTestCode finds lowercase');
-    const foundSpaced = findAssignmentByTestCode('   ECO-0455-HW2   ');
+    const foundSpaced = findAssignmentByTestCode('   ECO-0455-HW1   ');
     assert(Boolean(foundSpaced), 'findAssignmentByTestCode handles whitespace');
     const notFound = findAssignmentByTestCode('NON-EXISTENT-CODE');
     assertEqual(notFound, null, 'Returns null for unknown code');

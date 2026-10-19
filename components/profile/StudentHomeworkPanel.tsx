@@ -30,7 +30,7 @@ import {
   Eye,
 } from 'lucide-react';
 
-import { Question, CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import { Question } from '@/lib/questions';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { playChime, playFanfare, playPop } from '@/lib/audio';
@@ -134,9 +134,7 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
   const [quizSubmittedResult, setQuizSubmittedResult] = useState<HomeworkSubmission | null>(null);
 
   // Pool of available questions
-  const questionPool = useMemo(() => {
-    return questions && questions.length > 0 ? questions : CAMBRIDGE_QUESTIONS;
-  }, [questions]);
+  const questionPool = useMemo(() => questions || [], [questions]);
 
   // Load and subscribe to homework changes
   const reloadHomework = useCallback(() => {
@@ -158,7 +156,7 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
     setQuickCodeError(null);
     const code = quickCodeInput.trim().toUpperCase();
     if (!code) {
-      setQuickCodeError('Please enter a test code (e.g. ECO-0455-HW1).');
+      setQuickCodeError('Please enter a test code (e.g. REV-101).');
       return;
     }
     const found = findAssignmentByTestCode(code);
@@ -239,7 +237,7 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
   const modalQuestions = useMemo(() => {
     if (!activeModalItem) return [];
     return activeModalItem.questionIds
-      .map((id) => questionPool.find((q) => q.id === id) || CAMBRIDGE_QUESTIONS.find((q) => q.id === id))
+      .map((id) => questionPool.find((q) => q.id === id))
       .filter((q): q is Question => Boolean(q));
   }, [activeModalItem, questionPool]);
 
@@ -472,7 +470,7 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
                 setQuickCodeInput(e.target.value.toUpperCase());
                 if (quickCodeError) setQuickCodeError(null);
               }}
-              placeholder="Enter Test Code (e.g. ECO-0455-HW1)"
+              placeholder="Enter Test Code (e.g. REV-101)"
               className="w-full px-4 py-3 bg-white border-2 border-[#201e1d] rounded-xl text-sm font-mono font-bold text-[#201e1d] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#FEF08A] shadow-[2px_2px_0_0_#201e1d]"
             />
             {quickCodeInput && (

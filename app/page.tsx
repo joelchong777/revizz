@@ -13,7 +13,6 @@ import {
   fetchTopicsFromDb,
   SyllabusTopic,
   shuffleQuestions,
-  CAMBRIDGE_QUESTIONS,
   isDiagramQuestion,
   filterQuestionsByDiagram,
 } from '../lib/questions';
@@ -93,7 +92,7 @@ export default function HomePage() {
         pool = filtered;
       } else {
         // Fallback across full question bank if topic had zero matching questions
-        const subjectFallback = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, config.diagramFilter);
+        const subjectFallback = filterQuestionsByDiagram(questions, config.diagramFilter);
         if (subjectFallback.length > 0) {
           pool = subjectFallback;
         }
@@ -199,17 +198,12 @@ export default function HomePage() {
         : null;
 
       const targetQuestionIds = homework?.questionIds || onlineAssignment?.questionIds || [];
-      const pool = questions.length > 0 ? questions : CAMBRIDGE_QUESTIONS;
+      const pool = questions;
       let matchedQuestions: Question[] = [];
 
       if (targetQuestionIds.length > 0) {
         const idSet = new Set(targetQuestionIds);
         matchedQuestions = pool.filter((q) => idSet.has(q.id));
-        if (matchedQuestions.length < targetQuestionIds.length) {
-          const foundIds = new Set(matchedQuestions.map((q) => q.id));
-          const missing = CAMBRIDGE_QUESTIONS.filter((q) => idSet.has(q.id) && !foundIds.has(q.id));
-          matchedQuestions = [...matchedQuestions, ...missing];
-        }
       }
 
       if (matchedQuestions.length === 0) {

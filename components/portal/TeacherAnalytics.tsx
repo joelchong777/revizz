@@ -53,7 +53,7 @@ import {
   generateClassRosterCsv,
   StudentClassOverride,
 } from '@/lib/roster';
-import { CAMBRIDGE_QUESTIONS } from '@/lib/questions';
+import { useQuestions } from '@/lib/questions';
 import { listOnlineAssignments } from '@/lib/testCompiler';
 import { OnlineQuizAssignment } from '@/types/testCompiler';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -204,6 +204,8 @@ export default function TeacherAnalytics({
   onNavigateToAssign,
   onNavigateToCompiler,
 }: TeacherAnalyticsProps) {
+  const { questions: dbQuestions } = useQuestions();
+
   // Navigation & View Mode
   const [currentView, setCurrentView] = useState<'roster' | 'mastery' | 'assignments'>(initialView);
 
@@ -299,7 +301,7 @@ export default function TeacherAnalytics({
   const selectedClassObj = useMemo(() => {
     return teacherClasses.find((c) => c.id === selectedClassId) || teacherClasses[0] || {
       id: 'default',
-      name: '10B Physics',
+      name: 'General Cohort',
       subjectCode: '0625',
       subjectName: 'Physics',
       yearGroup: 'Year 10',
@@ -374,7 +376,7 @@ export default function TeacherAnalytics({
             const xpVal = p.total_xp || 0;
             const streak = p.current_streak || 0;
 
-            const assignedCohort = override?.cohort || (teacherClasses[idx % (teacherClasses.length || 1)]?.name || '10B Physics');
+            const assignedCohort = override?.cohort || (teacherClasses[idx % (teacherClasses.length || 1)]?.name || 'General Cohort');
             const classObj = teacherClasses.find((c) => c.name === assignedCohort) || selectedClassObj;
             const metrics = computeStudentMetrics(p.id, xpVal, streak, classObj.subjectCode);
 
@@ -589,11 +591,14 @@ export default function TeacherAnalytics({
 
   // Most-Missed Questions
   const mostMissedQuestions = useMemo(() => {
+    if (dbQuestions.length === 0 || rosterData.length === 0) {
+      return [];
+    }
     const subjectCode = selectedClassObj.subjectCode;
-    const matching = CAMBRIDGE_QUESTIONS.filter(
+    const matching = dbQuestions.filter(
       (q) => !subjectCode || q.id.includes(subjectCode) || (q.citation && q.citation.includes(subjectCode))
     );
-    const pool = matching.length >= 4 ? matching : CAMBRIDGE_QUESTIONS;
+    const pool = matching.length >= 4 ? matching : dbQuestions;
 
     return pool.slice(0, 5).map((q, idx) => {
       const firstTry = Math.max(28, 44 - idx * 3);
@@ -606,7 +611,7 @@ export default function TeacherAnalytics({
         topic: q.topic || chapters[idx % chapters.length],
       };
     });
-  }, [selectedClassObj, chapters]);
+  }, [selectedClassObj, chapters, dbQuestions, rosterData]);
 
   // Selection Handlers
   const toggleSelectAll = () => {
@@ -987,40 +992,46 @@ export default function TeacherAnalytics({
             </div>
 
             {/* Rows */}
-            {heatRows.map((row, rIdx) => (
-              <div
-                key={rIdx}
-                className="grid grid-cols-[130px_repeat(6,1fr)] gap-2 items-center p-1 rounded-2xl hover:bg-[#f9f4ed] transition-colors"
-              >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d] truncate">
-                    {row.name}
-                  </span>
-                </div>
-                {row.cells.map((score, cIdx) => {
-                  const bg = score >= 80 ? '#ccdbb2' : score >= 50 ? '#ffe1d0' : '#eee7db';
-                  const textCls = score >= 80 ? 'text-[#272e1b]' : score >= 50 ? 'text-[#643312]' : 'text-[#474238]';
-                  return (
-                    <button
-                      key={cIdx}
-                      type="button"
-                      onClick={() =>
-                        setSelectedHeatCell({
-                          className: row.name,
-                          chapter: chapters[cIdx],
-                          score,
-                        })
-                      }
-                      title={`Click to inspect or assign: ${chapters[cIdx]} (${score}%)`}
-                      className={`h-11 rounded-2xl grid place-items-center font-black text-sm border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] ${textCls} transition-all hover:scale-105 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer`}
-                      style={{ backgroundColor: bg }}
-                    >
-                      {score}%
-                    </button>
-                  );
-                })}
+            {heatRows.length === 0 ? (
+              <div className="py-8 px-4 text-center rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#201e1d]/20 text-xs font-bold text-[#645c50]">
+                No active classes or mastery data available yet.
               </div>
-            ))}
+            ) : (
+              heatRows.map((row, rIdx) => (
+                <div
+                  key={rIdx}
+                  className="grid grid-cols-[130px_repeat(6,1fr)] gap-2 items-center p-1 rounded-2xl hover:bg-[#f9f4ed] transition-colors"
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d] truncate">
+                      {row.name}
+                    </span>
+                  </div>
+                  {row.cells.map((score, cIdx) => {
+                    const bg = score >= 80 ? '#ccdbb2' : score >= 50 ? '#ffe1d0' : '#eee7db';
+                    const textCls = score >= 80 ? 'text-[#272e1b]' : score >= 50 ? 'text-[#643312]' : 'text-[#474238]';
+                    return (
+                      <button
+                        key={cIdx}
+                        type="button"
+                        onClick={() =>
+                          setSelectedHeatCell({
+                            className: row.name,
+                            chapter: chapters[cIdx],
+                            score,
+                          })
+                        }
+                        title={`Click to inspect or assign: ${chapters[cIdx]} (${score}%)`}
+                        className={`h-11 rounded-2xl grid place-items-center font-black text-sm border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] ${textCls} transition-all hover:scale-105 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer`}
+                        style={{ backgroundColor: bg }}
+                      >
+                        {score}%
+                      </button>
+                    );
+                  })}
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -1071,28 +1082,34 @@ export default function TeacherAnalytics({
             <span>Action</span>
           </div>
 
-          <div className="divide-y divide-[#eee7db]">
-            {mostMissedQuestions.map((q) => (
-              <div
-                key={q.id}
-                className="grid grid-cols-[70px_1fr_60px_60px_80px] gap-2 items-center py-2.5 text-xs"
-              >
-                <span className="font-mono font-bold text-[#645c50] text-[11px]">{q.id}</span>
-                <span className="font-medium text-[#201e1d] line-clamp-1" title={q.stem}>
-                  {q.stem}
-                </span>
-                <span className="font-bold text-[#c67139]">{q.first}</span>
-                <span className="font-bold text-[#56633f]">{q.second}</span>
-                <button
-                  type="button"
-                  onClick={() => onNavigateToAssign?.(q.topic)}
-                  className="px-2 py-1 rounded-lg bg-[#f9f4ed] border border-[#201e1d] hover:bg-[#ffe1d0] text-[10px] font-bold text-[#201e1d] active:scale-95 transition-all text-center cursor-pointer"
+          {mostMissedQuestions.length === 0 ? (
+            <div className="py-8 px-4 text-center rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#201e1d]/20 text-xs font-bold text-[#645c50]">
+              No frequent misconceptions recorded yet. Assign a practice round once questions and students are active.
+            </div>
+          ) : (
+            <div className="divide-y divide-[#eee7db]">
+              {mostMissedQuestions.map((q) => (
+                <div
+                  key={q.id}
+                  className="grid grid-cols-[70px_1fr_60px_60px_80px] gap-2 items-center py-2.5 text-xs"
                 >
-                  Assign Drill
-                </button>
-              </div>
-            ))}
-          </div>
+                  <span className="font-mono font-bold text-[#645c50] text-[11px]">{q.id}</span>
+                  <span className="font-medium text-[#201e1d] line-clamp-1" title={q.stem}>
+                    {q.stem}
+                  </span>
+                  <span className="font-bold text-[#c67139]">{q.first}</span>
+                  <span className="font-bold text-[#56633f]">{q.second}</span>
+                  <button
+                    type="button"
+                    onClick={() => onNavigateToAssign?.(q.topic)}
+                    className="px-2 py-1 rounded-lg bg-[#f9f4ed] border border-[#201e1d] hover:bg-[#ffe1d0] text-[10px] font-bold text-[#201e1d] active:scale-95 transition-all text-center cursor-pointer"
+                  >
+                    Assign Drill
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* AI Agent Learning Diagnosis Card */}
@@ -1508,10 +1525,14 @@ export default function TeacherAnalytics({
               👥
             </div>
             <h3 className="font-heading text-base font-black text-[#201e1d]">
-              No Students Found in {cohortFilter === 'all' ? 'Directory' : selectedClassObj.name}
+              {rosterData.length === 0
+                ? 'No students enrolled yet'
+                : `No Students Found in ${cohortFilter === 'all' ? 'Directory' : selectedClassObj.name}`}
             </h3>
             <p className="text-xs text-[#645c50] max-w-md">
-              {searchTerm
+              {rosterData.length === 0
+                ? 'No active classes or students available yet. Invite students using their Gmail addresses or add student names directly to this roster.'
+                : searchTerm
                 ? `No student records match "${searchTerm}". Try resetting search or status filters.`
                 : 'Invite students using their Gmail addresses or add student names directly to this roster.'}
             </p>

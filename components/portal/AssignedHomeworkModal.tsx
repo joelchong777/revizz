@@ -18,7 +18,7 @@ import {
   Clock4
 } from 'lucide-react';
 import { AssignedHomeworkRound, StudentSubmission, saveAssignedHomework } from '@/lib/portal/assignedHomework';
-import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS, Question } from '@/lib/questions';
+import { useQuestions } from '@/lib/questions';
 import { SUBJECT_CATALOG } from '@/lib/testCompiler';
 
 interface NewHomeworkModalProps {
@@ -30,13 +30,12 @@ interface NewHomeworkModalProps {
 }
 
 const DEFAULT_COHORTS = [
-  '10B Physics',
-  '10A Physics',
-  '11A Physics',
-  '10 Economics',
-  '11 Economics',
-  '10 Chemistry',
-  '10 Biology',
+  'Year 10 Physics',
+  'Year 11 Physics',
+  'Year 10 Economics',
+  'Year 11 Economics',
+  'Year 10 Chemistry',
+  'Year 10 Biology',
 ];
 
 const SUBJECT_TOPICS: Record<string, string[]> = {
@@ -81,7 +80,8 @@ export function NewHomeworkModal({
   teacherName,
   onCreated,
 }: NewHomeworkModalProps) {
-  const [cohortName, setCohortName] = useState('10B Physics');
+  const { questions: dbQuestions } = useQuestions();
+  const [cohortName, setCohortName] = useState('Year 10 Physics');
   const [customCohort, setCustomCohort] = useState('');
   const [isCustomCohort, setIsCustomCohort] = useState(false);
 
@@ -142,21 +142,21 @@ export function NewHomeworkModal({
 
   // Matched preview questions
   const previewQuestions = useMemo(() => {
-    let pool = [...CAMBRIDGE_QUESTIONS];
+    let pool = [...dbQuestions];
     // Filter by topic if possible
     const topicFiltered = pool.filter((q) => q.topic && selectedTopics.includes(q.topic));
     if (topicFiltered.length > 0) {
       pool = topicFiltered;
     }
     return pool.slice(0, questionCount);
-  }, [selectedTopics, questionCount]);
+  }, [dbQuestions, selectedTopics, questionCount]);
 
   const handleApplyAiPreset = (presetType: 'physics_exam' | 'econ_chill' | 'quick_5') => {
     setIsAiLoading(true);
     setTimeout(() => {
       if (presetType === 'physics_exam') {
         setSubjectCode('0625');
-        setCohortName('10B Physics');
+        setCohortName('Year 10 Physics');
         setIsCustomCohort(false);
         setTitle('Kinematics & Thermal Motion Drill');
         setSelectedTopics(['Thermal physics', 'General physics']);
@@ -166,7 +166,7 @@ export function NewHomeworkModal({
         setAllowRetry(true);
       } else if (presetType === 'econ_chill') {
         setSubjectCode('0455');
-        setCohortName('10 Economics');
+        setCohortName('Year 10 Economics');
         setIsCustomCohort(false);
         setTitle('Macroeconomic Fiscal Policy & Inflation Quiz');
         setSelectedTopics(['Government and the macroeconomy', 'The allocation of resources']);
@@ -194,10 +194,7 @@ export function NewHomeworkModal({
     const homeworkId = `hw-${Date.now()}-${testCode.toLowerCase()}`;
 
     // Extract real question IDs
-    let qIds = previewQuestions.map((q) => q.id);
-    if (qIds.length === 0) {
-      qIds = CAMBRIDGE_QUESTIONS.slice(0, questionCount).map((q) => q.id);
-    }
+    const qIds = previewQuestions.map((q) => q.id);
 
     const newRound: AssignedHomeworkRound = {
       id: homeworkId,
@@ -299,7 +296,7 @@ export function NewHomeworkModal({
                 disabled={isAiLoading}
                 className="px-2.5 py-1 text-xs font-bold bg-white text-[#201e1d] rounded-lg border-1.5 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#bae6fd] active:translate-y-0.5 cursor-pointer"
               >
-                ⚡ 10B Physics Exam Drill (10Q)
+                ⚡ Year 10 Physics Exam Drill (10Q)
               </button>
               <button
                 type="button"
@@ -307,7 +304,7 @@ export function NewHomeworkModal({
                 disabled={isAiLoading}
                 className="px-2.5 py-1 text-xs font-bold bg-white text-[#201e1d] rounded-lg border-1.5 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#bae6fd] active:translate-y-0.5 cursor-pointer"
               >
-                🌿 10 Econ Fiscal Policy (Chill)
+                🌿 Year 10 Econ Fiscal Policy (Chill)
               </button>
               <button
                 type="button"

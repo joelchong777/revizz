@@ -51,7 +51,7 @@ import {
   autoSelectQuestions,
   buildCompiledQuestions,
 } from '@/lib/testCompiler';
-import { CAMBRIDGE_QUESTIONS, CAMBRIDGE_TOPICS, Question } from '@/lib/questions';
+import { useQuestions } from '@/lib/questions';
 import { TestPaperConfig, OnlineQuizAssignment } from '@/types/testCompiler';
 
 export interface TeacherOverviewHubProps {
@@ -93,44 +93,7 @@ const AVAILABLE_COHORTS = [
   'Year 11 Physics (0625)',
 ];
 
-const DEFAULT_FALLBACK_DRAFTS: TestPaperConfig[] = [
-  {
-    id: 'draft-diag-0455-term2',
-    title: 'IGCSE Economics Paper 1 - Term 2 Diagnostic',
-    subjectCode: '0455',
-    subjectName: 'Economics',
-    schoolName: 'Cambridge Secondary Academy',
-    durationMinutes: 30,
-    totalMarks: 15,
-    testCode: 'ECO-TERM2-DIAG',
-    dateString: 'Term 2 Week 6',
-    includeCoverPage: true,
-    includeCandidateHeader: true,
-    includeBubbleSheet: true,
-    includeMarkScheme: true,
-    includeExplanations: true,
-    questionIds: ['0455-s24-12-q01', '0455-s24-12-q02', '0455-s24-12-q03'],
-    createdAt: new Date(Date.now() - 3600000 * 18).toISOString(),
-  },
-  {
-    id: 'draft-mock-0625-mech',
-    title: 'IGCSE Physics Core Mechanics - Formative Check',
-    subjectCode: '0625',
-    subjectName: 'Physics',
-    schoolName: 'Cambridge Secondary Academy',
-    durationMinutes: 25,
-    totalMarks: 10,
-    testCode: 'PHY-MECH-01',
-    dateString: 'Midterm Assessment',
-    includeCoverPage: true,
-    includeCandidateHeader: true,
-    includeBubbleSheet: true,
-    includeMarkScheme: true,
-    includeExplanations: true,
-    questionIds: ['0625-w23-11-q01', '0625-w23-11-q02'],
-    createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-  },
-];
+const DEFAULT_FALLBACK_DRAFTS: TestPaperConfig[] = [];
 
 const DEFAULT_FALLBACK_ASSIGNMENTS: MockAssignmentStats[] = [];
 
@@ -145,6 +108,8 @@ export default function TeacherOverviewHub({
   onNavigate,
   userDisplayName = 'Educator',
 }: TeacherOverviewHubProps) {
+  const { questions: dbQuestions } = useQuestions();
+
   // Top-level unconditional state hooks (Defends against React Error #310)
   const [selectedCohort, setSelectedCohort] = useState<string>('All Cohorts');
   const [draftsList, setDraftsList] = useState<TestPaperConfig[]>(DEFAULT_FALLBACK_DRAFTS);
@@ -393,11 +358,17 @@ export default function TeacherOverviewHub({
   const handleExecuteDiagnosticGenerator = (action: 'print' | 'assign') => {
     setIsGeneratingDiag(true);
 
+    if (dbQuestions.length === 0) {
+      showToast('⚠️ Question Bank is empty. Ingest questions in App Admin first.', 'warning');
+      setIsGeneratingDiag(false);
+      return;
+    }
+
     try {
-      const subjectPool = CAMBRIDGE_QUESTIONS.filter(
+      const subjectPool = dbQuestions.filter(
         (q) => !q.citation || q.citation.includes(diagSubject) || q.id.includes(diagSubject)
       );
-      const pool = subjectPool.length >= diagCount ? subjectPool : CAMBRIDGE_QUESTIONS;
+      const pool = subjectPool.length >= diagCount ? subjectPool : dbQuestions;
 
       let selectedIds: string[] = [];
       if (diagFocus === 'topic') {
@@ -431,7 +402,7 @@ export default function TeacherOverviewHub({
           title: testTitle,
           subjectCode: subjectMeta.code,
           subjectName: subjectMeta.name,
-          schoolName: 'Cambridge Secondary Academy',
+          schoolName: '',
           durationMinutes: diagCount * 2,
           totalMarks: selectedIds.length,
           testCode: `DIAG-${subjectMeta.code}-${Math.floor(100 + Math.random() * 900)}`,

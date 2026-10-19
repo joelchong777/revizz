@@ -36,9 +36,7 @@ import {
   useTopics, 
   deleteQuestionsFromDb, 
   updateQuestionsInDb,
-  Question,
-  CAMBRIDGE_QUESTIONS,
-  CAMBRIDGE_TOPICS
+  Question
 } from '@/lib/questions';
 import { fetchSubjectsFromDb } from '@/lib/subjects';
 import {
@@ -441,9 +439,7 @@ export default function AdminTools({
   const [scheduledSuccess, setScheduledSuccess] = useState(false);
 
   // Question Bank Stateful Data (2f) & Live Supabase Questions
-  const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>(() =>
-    createInitialBankItems(CAMBRIDGE_QUESTIONS)
-  );
+  const [bankQuestions, setBankQuestions] = useState<QuestionBankItem[]>([]);
   const [liveQuestions, setLiveQuestions] = useState<any[]>([]);
   const [isLoadingLive, setIsLoadingLive] = useState<boolean>(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -466,17 +462,18 @@ export default function AdminTools({
         };
       });
     }
-    const source = dbQuestions.length > 0 ? dbQuestions : CAMBRIDGE_QUESTIONS;
-    const filteredSource = isTeacherMode
-      ? source.filter((q: any) => !q.status || q.status === 'active' || q.status === 'Live')
-      : source;
-    return filteredSource.map((q) => ({
+    const source = (dbQuestions || []).map((q) => ({
       id: q.id,
       stem: q.stem_markdown,
       topic: q.topic || 'General',
       acc: '—',
       agent: false,
+      status: (q as any).status,
     }));
+    const filteredSource = isTeacherMode
+      ? source.filter((q: any) => !q.status || q.status === 'active' || q.status === 'Live')
+      : source;
+    return filteredSource;
   }, [liveQuestions, dbQuestions, isTeacherMode]);
 
   const fetchLiveQuestions = async () => {
@@ -639,11 +636,9 @@ export default function AdminTools({
         };
       });
       setBankQuestions(items);
-    } else if (!isLoadingLive && !questionsLoading) {
-      if (dbQuestions && dbQuestions.length > 0) {
-        setBankQuestions(createInitialBankItems(dbQuestions));
-      } else {
-        setBankQuestions(createInitialBankItems(CAMBRIDGE_QUESTIONS));
+    } else if (!isLoadingLive) {
+      if (!questionsLoading) {
+        setBankQuestions(createInitialBankItems(dbQuestions || []));
       }
     }
   }, [liveQuestions, isLoadingLive, dbQuestions, questionsLoading]);
@@ -935,8 +930,15 @@ export default function AdminTools({
     window.history.replaceState(null, '', newUrl);
   }, [bankFilters]);
 
+  const topicOptions = useMemo(() => {
+    if (!dbTopics || dbTopics.length === 0) {
+      return [{ value: 'None', label: 'None' }];
+    }
+    return dbTopics.map((t) => ({ value: t.name, label: t.name }));
+  }, [dbTopics]);
+
   const knownTopicNames = useMemo(() => {
-    return dbTopics.length > 0 ? dbTopics.map((t) => t.name) : CAMBRIDGE_TOPICS.map((t) => t.name);
+    return (dbTopics || []).map((t) => t.name);
   }, [dbTopics]);
 
   const baseBankQuestions = useMemo(
@@ -992,8 +994,14 @@ export default function AdminTools({
   };
 
   const reassignTopicOptions = useMemo(() => {
-    const list = dbTopics.length > 0 ? dbTopics.map((t) => t.name) : CAMBRIDGE_TOPICS.map((t) => t.name);
     const fromBank = Array.from(new Set(bankQuestions.map((q) => q.topic).filter(Boolean)));
+    if (!dbTopics || dbTopics.length === 0) {
+      if (fromBank.length === 0) {
+        return [];
+      }
+      return fromBank;
+    }
+    const list = dbTopics.map((t) => t.name);
     return Array.from(new Set([...list, ...fromBank]));
   }, [dbTopics, bankQuestions]);
 
@@ -1573,16 +1581,7 @@ export default function AdminTools({
             <div>
               <span className="text-xs font-bold text-[#645c50]">Question bank</span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                {questionsLoading ? (
-                  <span className="inline-flex items-center gap-2 text-xl text-[#645c50] animate-pulse">
-                    <span className="w-4 h-4 border-2 border-[#c67139] border-t-transparent rounded-full animate-spin" />
-                    Syncing live database...
-                  </span>
-                ) : filteredBankItems.length === baseBankQuestions.length ? (
-                  `${baseBankQuestions.length} questions`
-                ) : (
-                  `${filteredBankItems.length} of ${baseBankQuestions.length} questions`
-                )}
+                {questionsLoading ? '...' : `${bankQuestions.length} questions`}
               </h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">

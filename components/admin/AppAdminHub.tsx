@@ -285,7 +285,7 @@ export default function AppAdminHub({
                   MODERATION OPS · QA
                 </span>
                 <span className="text-xs font-mono font-bold text-[#645c50]">
-                  Community & Educator Flag Reports (8 Queued)
+                  Community & Educator Flag Reports (0 Queued)
                 </span>
               </div>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">

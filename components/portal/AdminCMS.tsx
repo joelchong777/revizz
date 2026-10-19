@@ -21,7 +21,7 @@ import {
   Layers,
   BookOpen
 } from 'lucide-react';
-import { useQuestions, Question, CAMBRIDGE_TOPICS } from '@/lib/questions';
+import { useQuestions, useTopics, Question } from '@/lib/questions';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 import {
   CambridgeQuestionMeta,
@@ -47,6 +47,7 @@ export default function AdminCMS({
   questionId,
 }: AdminCMSProps) {
   const { questions, loading: loadingQuestions } = useQuestions();
+  const { topics: dbTopics } = useTopics();
   const [activeTab, setActiveTab] = useState<'editor' | 'flagged'>(initialView);
   const [isAuthoringNew, setIsAuthoringNew] = useState(false);
 
@@ -588,7 +589,7 @@ export default function AdminCMS({
                         onChange={(e) => setTopic(e.target.value)}
                         className="w-full px-3 py-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] font-semibold text-[#201e1d] text-xs outline-none focus:border-[#201e1d]"
                       >
-                        {CAMBRIDGE_TOPICS.map((t) => (
+                        {dbTopics.map((t) => (
                           <option key={t.id} value={t.name}>
                             {t.orderIndex}. {t.name}
                           </option>
