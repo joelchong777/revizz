@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { buildInviteLink, buildInviteMailto, sendInviteEmail } from '@/lib/email';
 
 // Polyfill WebSocket in Node runtime if absent
 if (typeof (globalThis as any).WebSocket === 'undefined') {
@@ -228,9 +229,44 @@ export async function POST(req: NextRequest) {
       isInvite: true,
     };
 
+    // Determine origin for invite link
+    let origin = req.headers.get('origin');
+    if (!origin) {
+      const referer = req.headers.get('referer');
+      if (referer) {
+        try {
+          origin = new URL(referer).origin;
+        } catch {
+          origin = referer;
+        }
+      }
+    }
+    if (!origin) {
+      origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    }
+
+    const inviteLink = buildInviteLink({ origin, inviteId, email: cleanEmail });
+    const mailtoUrl = buildInviteMailto({
+      email: cleanEmail,
+      name: cleanName,
+      role: userRole,
+      cohort: cleanCohort,
+      inviteLink,
+    });
+    const emailDelivery = await sendInviteEmail({
+      email: cleanEmail,
+      name: cleanName,
+      role: userRole,
+      cohort: cleanCohort,
+      inviteLink,
+    });
+
     return NextResponse.json({
       success: true,
       user: createdUser,
+      inviteLink,
+      mailtoUrl,
+      emailDelivery,
     });
   } catch (err: any) {
     console.error('Error in POST /api/admin/users:', err);

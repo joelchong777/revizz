@@ -29,6 +29,7 @@ import {
   Filter,
   Flame,
   Zap,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import {
@@ -182,6 +183,17 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
   const [inviteIsSchool, setInviteIsSchool] = useState<boolean>(false);
   const [submittingInvite, setSubmittingInvite] = useState<boolean>(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [lastInviteResult, setLastInviteResult] = useState<{
+    email: string;
+    inviteLink: string;
+    mailtoUrl: string;
+    emailDelivery: {
+      sent: boolean;
+      provider?: string | null;
+      reason?: string;
+    };
+  } | null>(null);
+  const [copiedInviteLinkId, setCopiedInviteLinkId] = useState<string | null>(null);
 
   // Delete confirmation state
   const [userToDelete, setUserToDelete] = useState<ManagedUser | null>(null);
@@ -584,6 +596,9 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
     try {
       let createdUser: ManagedUser | null = null;
+      let apiInviteLink: string | undefined;
+      let apiMailtoUrl: string | undefined;
+      let apiEmailDelivery: { sent: boolean; provider?: string | null; reason?: string } | undefined;
 
       try {
         const res = await fetch('/api/admin/users', {
@@ -602,6 +617,9 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
           const data = await res.json();
           if (data.success && data.user) {
             createdUser = data.user;
+            apiInviteLink = data.inviteLink;
+            apiMailtoUrl = data.mailtoUrl;
+            apiEmailDelivery = data.emailDelivery;
           }
         }
       } catch (apiErr) {
@@ -644,18 +662,48 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
         saveStoredOverrides(overrides);
       }
 
-      // Prepend returned user to users list and close modal
+      // Prepend returned user to users list
       const newUser = createdUser;
       setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id && u.email !== newUser.email)]);
 
-      // Reset form
+      // Construct inviteLink and mailtoUrl
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const inviteLink =
+        apiInviteLink ||
+        `${origin}/?invite=${newUser.id}&email=${encodeURIComponent(cleanEmail)}`;
+      const mailSubject = encodeURIComponent('Invitation to join Revizz');
+      const mailBody = encodeURIComponent(
+        `Hi ${inviteName.trim() || cleanEmail.split('@')[0]},\n\nYou have been invited to join Revizz!\nClick here to get started: ${inviteLink}\n\nHappy revising!`
+      );
+      const mailtoUrl =
+        apiMailtoUrl ||
+        `mailto:${encodeURIComponent(cleanEmail)}?subject=${mailSubject}&body=${mailBody}`;
+      const emailDelivery = apiEmailDelivery || {
+        sent: false,
+        provider: null,
+        reason: 'Email provider not configured',
+      };
+
+      if (emailDelivery.sent) {
+        showFeedback(`Email notification sent via ${emailDelivery.provider || 'email'}!`);
+      } else {
+        showFeedback(`Invitation ready for ${cleanEmail}!`);
+      }
+
+      // Display the post-invite success panel inside the modal
+      setLastInviteResult({
+        email: cleanEmail,
+        inviteLink,
+        mailtoUrl,
+        emailDelivery,
+      });
+
+      // Reset form fields
       setInviteName('');
       setInviteEmail('');
       setInviteRole('student');
       setInviteCohort('General');
       setInviteIsSchool(false);
-      setIsInviteModalOpen(false);
-      showFeedback(`Invitation successfully sent to ${cleanEmail}!`);
     } catch (err: any) {
       console.error('Failed to create user invite:', err);
       setInviteError(err?.message || 'Failed to send invitation. Please try again.');
@@ -721,6 +769,23 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       setTimeout(() => setCopiedEmailId(null), 2000);
       showFeedback(`Copied ${email} to clipboard`);
     }
+  };
+
+  const handleCopyInviteLink = (inviteUrl: string, identifier: string, email?: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(inviteUrl);
+      setCopiedInviteLinkId(identifier);
+      setTimeout(() => setCopiedInviteLinkId(null), 2000);
+      showFeedback(
+        email ? `Copied invite link for ${email} to clipboard!` : 'Copied invite link to clipboard!'
+      );
+    }
+  };
+
+  const handleCloseInviteModal = () => {
+    setIsInviteModalOpen(false);
+    setLastInviteResult(null);
+    setInviteError(null);
   };
 
   // Metrics computation
@@ -859,7 +924,11 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
           <button
             type="button"
-            onClick={() => setIsInviteModalOpen(true)}
+            onClick={() => {
+              setLastInviteResult(null);
+              setInviteError(null);
+              setIsInviteModalOpen(true);
+            }}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#272e1b] font-heading font-black text-xs shadow-offset-2 hover:bg-[#b8c99d] active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
@@ -1136,7 +1205,11 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
               ) : null}
               <button
                 type="button"
-                onClick={() => setIsInviteModalOpen(true)}
+                onClick={() => {
+                  setLastInviteResult(null);
+                  setInviteError(null);
+                  setIsInviteModalOpen(true);
+                }}
                 className="px-4 py-2 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] font-heading font-black text-xs text-[#272e1b] shadow-offset-2 hover:bg-[#b8c99d] active:translate-y-0.5 cursor-pointer flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
@@ -1173,6 +1246,8 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                       ? 'bg-[#ffe1d0]'
                       : 'bg-[#bae6fd]';
 
+                  const isPendingInvite = user.status === 'invited' || Boolean(user.isInvite);
+
                   return (
                     <tr
                       key={user.id}
@@ -1204,13 +1279,31 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                                 <button
                                   type="button"
                                   onClick={() => handleCopyEmail(user.id, user.email)}
-                                  className="text-[#645c50] hover:text-[#201e1d] p-0.5"
+                                  className="text-[#645c50] hover:text-[#201e1d] p-0.5 cursor-pointer"
                                   title="Copy email address"
                                 >
                                   {copiedEmailId === user.id ? (
                                     <Check className="w-3 h-3 text-[#166534]" />
                                   ) : (
                                     <Copy className="w-3 h-3" />
+                                  )}
+                                </button>
+                              )}
+                              {isPendingInvite && user.email && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                                    const link = `${origin}/?invite=${user.id}&email=${encodeURIComponent(user.email)}`;
+                                    handleCopyInviteLink(link, user.id, user.email);
+                                  }}
+                                  className="text-[#854d0e] hover:text-[#201e1d] p-0.5 cursor-pointer ml-0.5"
+                                  title="Copy invite link for this user"
+                                >
+                                  {copiedInviteLinkId === user.id ? (
+                                    <Check className="w-3 h-3 text-[#166534]" />
+                                  ) : (
+                                    <LinkIcon className="w-3 h-3" />
                                   )}
                                 </button>
                               )}
@@ -1305,14 +1398,57 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
                       {/* 6. Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setUserToDelete(user)}
-                          className="p-1.5 rounded-lg border border-transparent hover:border-[#201e1d] hover:bg-[#ffe4e6] text-[#645c50] hover:text-[#e11d48] transition-colors"
-                          title="Revoke / Delete User"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {isPendingInvite && user.email && (
+                            <>
+                              {/* Dedicated Copy Invite Link button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                                  const link = `${origin}/?invite=${user.id}&email=${encodeURIComponent(user.email)}`;
+                                  handleCopyInviteLink(link, user.id, user.email);
+                                }}
+                                className={`p-1.5 rounded-lg border-2 transition-all shadow-offset-1 cursor-pointer ${
+                                  copiedInviteLinkId === user.id
+                                    ? 'bg-[#ccdbb2] border-[#201e1d] text-[#166534]'
+                                    : 'bg-white border-[#201e1d] text-[#201e1d] hover:bg-[#eee7db]'
+                                }`}
+                                title="Copy invite link for this user"
+                              >
+                                {copiedInviteLinkId === user.id ? (
+                                  <Check className="w-3.5 h-3.5 text-[#166534]" />
+                                ) : (
+                                  <LinkIcon className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+
+                              {/* Dedicated Open Mail Client button */}
+                              <a
+                                href={`mailto:${encodeURIComponent(user.email)}?subject=${encodeURIComponent(
+                                  'Invitation to join Revizz'
+                                )}&body=${encodeURIComponent(
+                                  `Hi ${user.name || ''},\n\nYou have been invited to join Revizz!\nClick here to get started: ${
+                                    typeof window !== 'undefined' ? window.location.origin : ''
+                                  }/?invite=${user.id}&email=${encodeURIComponent(user.email)}\n\nHappy revising!`
+                                )}`}
+                                className="p-1.5 rounded-lg border-2 border-[#201e1d] bg-white text-[#201e1d] hover:bg-[#eee7db] shadow-offset-1 transition-all cursor-pointer inline-flex items-center justify-center"
+                                title="Open mail client to send invitation"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                              </a>
+                            </>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => setUserToDelete(user)}
+                            className="p-1.5 rounded-lg border border-transparent hover:border-[#201e1d] hover:bg-[#ffe4e6] text-[#645c50] hover:text-[#e11d48] transition-colors cursor-pointer"
+                            title="Revoke / Delete User"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1331,147 +1467,251 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
             <div className="p-5 bg-[#f5ead8] border-b-2 border-[#201e1d] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-offset-1">
-                  <Plus className="w-5 h-5 stroke-[3]" />
+                  {lastInviteResult ? (
+                    <CheckCircle2 className="w-5 h-5 text-[#166534]" />
+                  ) : (
+                    <Plus className="w-5 h-5 stroke-[3]" />
+                  )}
                 </div>
                 <div>
                   <h3 className="font-heading font-black text-base text-[#201e1d]">
-                    Invite New User
+                    {lastInviteResult ? 'Invitation Ready!' : 'Invite New User'}
                   </h3>
                   <p className="text-[11px] text-[#645c50]">
-                    Provision identity roles, cohort grouping, and institutional campus access.
+                    {lastInviteResult
+                      ? `Access link and delivery details for ${lastInviteResult.email}`
+                      : 'Provision identity roles, cohort grouping, and institutional campus access.'}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setIsInviteModalOpen(false);
-                  setInviteError(null);
-                }}
-                className="p-1 rounded-lg border border-transparent hover:border-[#201e1d] hover:bg-white text-[#645c50] hover:text-[#201e1d]"
+                onClick={handleCloseInviteModal}
+                className="p-1 rounded-lg border border-transparent hover:border-[#201e1d] hover:bg-white text-[#645c50] hover:text-[#201e1d] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Form */}
-            <form onSubmit={handleSubmitInvite} className="p-5 space-y-4">
-              {inviteError && (
-                <div className="p-3 rounded-xl bg-[#ffe4e6] border-2 border-[#e11d48] text-[#9f1239] text-xs font-bold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{inviteError}</span>
-                </div>
-              )}
+            {lastInviteResult ? (
+              /* Post-Invite Success / Dispatch Panel */
+              <div className="p-5 space-y-4">
+                {/* Email Delivery Feedback Card */}
+                {lastInviteResult.emailDelivery.sent ? (
+                  <div className="p-3.5 rounded-2xl bg-[#dcfce7] border-2 border-[#166534] text-[#166534] flex items-start gap-3 shadow-offset-1">
+                    <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#166534]" />
+                    <div className="space-y-0.5">
+                      <div className="font-heading font-black text-xs">
+                        Email Notification Dispatched!
+                      </div>
+                      <div className="text-[11px] text-[#166534]/90">
+                        Automated invitation delivered via {lastInviteResult.emailDelivery.provider || 'email service'}.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-[#fef9c3] border-2 border-[#854d0e] text-[#854d0e] flex items-start gap-3 shadow-offset-1">
+                    <Mail className="w-5 h-5 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <div className="font-heading font-black text-xs">
+                        Direct Invite Link Ready
+                      </div>
+                      <div className="text-[11px] text-[#854d0e]/90">
+                        {lastInviteResult.emailDelivery.reason ||
+                          'Email provider not configured. You can copy the unique link below or send it directly via your mail client.'}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-              {/* Display Name */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-                  Display Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Charlie Campbell"
-                  value={inviteName}
-                  onChange={(e) => setInviteName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
-                />
-              </div>
-
-              {/* Email Address */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-                  Email Address <span className="text-[#e11d48]">*</span>
-                </label>
-                <input
-                  type="email"
-                  placeholder="user@example.com"
-                  required
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
-                />
-              </div>
-
-              {/* Role Select & Cohort */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-                    Role &amp; Permissions
+                {/* Direct Invite Link Box */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50]">
+                    Direct Activation Link
                   </label>
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none cursor-pointer"
-                  >
-                    <option value="student">Student (Learner)</option>
-                    <option value="teacher">Teacher (Educator)</option>
-                    <option value="admin">Administrator (Deck)</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={lastInviteResult.inviteLink}
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                      className="flex-1 px-3 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-mono text-[#201e1d] select-all truncate focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCopyInviteLink(
+                          lastInviteResult.inviteLink,
+                          'modal',
+                          lastInviteResult.email
+                        )
+                      }
+                      className={`px-3.5 py-2.5 rounded-xl border-2 border-[#201e1d] font-heading font-black text-xs transition-all shadow-offset-1 flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                        copiedInviteLinkId === 'modal'
+                          ? 'bg-[#ccdbb2] text-[#166534]'
+                          : 'bg-[#bae6fd] text-[#0369a1] hover:bg-[#93c5fd]'
+                      }`}
+                    >
+                      {copiedInviteLinkId === 'modal' ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-[#166534]" />
+                          <span>✓ Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy Invite Link</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
+                {/* Quick Dispatch Actions */}
+                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                  <a
+                    href={lastInviteResult.mailtoUrl}
+                    className="px-4 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white text-xs font-heading font-bold text-[#201e1d] hover:bg-[#eee7db] shadow-offset-1 flex items-center justify-center gap-2 transition-all active:translate-y-0.5 cursor-pointer"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>Open Mail Client</span>
+                  </a>
+
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setLastInviteResult(null)}
+                      className="px-3.5 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white text-xs font-bold text-[#645c50] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer"
+                    >
+                      + Invite Another
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCloseInviteModal}
+                      className="px-5 py-2.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] font-heading font-black text-xs text-[#272e1b] shadow-offset-2 hover:bg-[#b8c99d] active:translate-y-0.5 cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Modal Form */
+              <form onSubmit={handleSubmitInvite} className="p-5 space-y-4">
+                {inviteError && (
+                  <div className="p-3 rounded-xl bg-[#ffe4e6] border-2 border-[#e11d48] text-[#9f1239] text-xs font-bold flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{inviteError}</span>
+                  </div>
+                )}
+
+                {/* Display Name */}
                 <div>
                   <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-                    Cohort / Dept
+                    Display Name (Optional)
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 11B Physics or General"
-                    value={inviteCohort}
-                    onChange={(e) => setInviteCohort(e.target.value)}
+                    placeholder="e.g. Charlie Campbell"
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
                   />
                 </div>
-              </div>
 
-              {/* School Account Toggle */}
-              <div className="p-3 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-between">
+                {/* Email Address */}
                 <div>
-                  <div className="font-heading font-black text-xs text-[#201e1d]">
-                    Institutional School Campus
+                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
+                    Email Address <span className="text-[#e11d48]">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    required
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
+                  />
+                </div>
+
+                {/* Role Select & Cohort */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
+                      Role &amp; Permissions
+                    </label>
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value as UserRole)}
+                      className="w-full px-3 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none cursor-pointer"
+                    >
+                      <option value="student">Student (Learner)</option>
+                      <option value="teacher">Teacher (Educator)</option>
+                      <option value="admin">Administrator (Deck)</option>
+                    </select>
                   </div>
-                  <div className="text-[10px] text-[#645c50]">
-                    Grants access to school-wide license seats and cohort assignments.
+
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
+                      Cohort / Dept
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 11B Physics or General"
+                      value={inviteCohort}
+                      onChange={(e) => setInviteCohort(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
+                    />
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={inviteIsSchool}
-                  onChange={(e) => setInviteIsSchool(e.target.checked)}
-                  className="w-5 h-5 accent-[#201e1d] cursor-pointer"
-                />
-              </div>
 
-              {/* Action Buttons */}
-              <div className="pt-2 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsInviteModalOpen(false);
-                    setInviteError(null);
-                  }}
-                  className="px-4 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white text-xs font-bold text-[#645c50] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingInvite}
-                  className="px-5 py-2.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] font-heading font-black text-xs text-[#272e1b] shadow-offset-2 hover:bg-[#b8c99d] active:translate-y-0.5 cursor-pointer disabled:opacity-50 flex items-center gap-2"
-                >
-                  {submittingInvite ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Sending Invite...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>Send Invitation</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+                {/* School Account Toggle */}
+                <div className="p-3 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-between">
+                  <div>
+                    <div className="font-heading font-black text-xs text-[#201e1d]">
+                      Institutional School Campus
+                    </div>
+                    <div className="text-[10px] text-[#645c50]">
+                      Grants access to school-wide license seats and cohort assignments.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={inviteIsSchool}
+                    onChange={(e) => setInviteIsSchool(e.target.checked)}
+                    className="w-5 h-5 accent-[#201e1d] cursor-pointer"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleCloseInviteModal}
+                    className="px-4 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white text-xs font-bold text-[#645c50] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingInvite}
+                    className="px-5 py-2.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] font-heading font-black text-xs text-[#272e1b] shadow-offset-2 hover:bg-[#b8c99d] active:translate-y-0.5 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {submittingInvite ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Sending Invite...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Send Invitation</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
