@@ -1,0 +1,167 @@
+{
+  "globalAdsEnabled": true,
+  "hideAdsForSchoolAccounts": true,
+  "hideAdsInTimedExamMode": true,
+  "audienceFilter": "free_and_demo_only",
+  "globalFrequencyCapPerRound": 4,
+  "adsensePublisherId": "",
+  "slots": {
+    "start_flow_banner": {
+      "slotId": "start_flow_banner",
+      "label": "Start Flow Banner",
+      "surface": "Quiz Setup & Paper Selection",
+      "description": "Tactile study resource banner displayed before quiz drill initiation.",
+      "enabled": true,
+      "format": "banner",
+      "sourceMode": "native",
+      "frequencyCapPerSession": 0,
+      "interstitialIntervalQuestions": 0,
+      "dismissible": true,
+      "priorityWeight": 10
+    },
+    "round_summary_card": {
+      "slotId": "round_summary_card",
+      "label": "Round Summary Card",
+      "surface": "Quiz Results & Review Pile",
+      "description": "High-yield completion card shown on score celebration screens.",
+      "enabled": true,
+      "format": "native_card",
+      "sourceMode": "native",
+      "frequencyCapPerSession": 0,
+      "interstitialIntervalQuestions": 0,
+      "dismissible": false,
+      "priorityWeight": 20
+    },
+    "leaderboard_footer": {
+      "slotId": "leaderboard_footer",
+      "label": "Leaderboard Footer",
+      "surface": "Cohort & Global Leaderboard",
+      "description": "Subtle partner pill positioned beneath high score leaderboards.",
+      "enabled": true,
+      "format": "compact_pill",
+      "sourceMode": "native",
+      "frequencyCapPerSession": 0,
+      "interstitialIntervalQuestions": 0,
+      "dismissible": false,
+      "priorityWeight": 15
+    },
+    "between_questions_interstitial": {
+      "slotId": "between_questions_interstitial",
+      "label": "Between-Questions Interstitial",
+      "surface": "Live Quiz Session Break",
+      "description": "Paced micro-break card between question batches to alleviate cognitive fatigue.",
+      "enabled": false,
+      "format": "interstitial",
+      "sourceMode": "native",
+      "frequencyCapPerSession": 3,
+      "interstitialIntervalQuestions": 5,
+      "dismissible": true,
+      "priorityWeight": 5
+    },
+    "question_card_footer": {
+      "slotId": "question_card_footer",
+      "label": "Question Card Footer",
+      "surface": "Active Question Layout",
+      "description": "Ultra-compact study tip or sponsor pill under multiple choice options.",
+      "enabled": false,
+      "format": "compact_pill",
+      "sourceMode": "native",
+      "frequencyCapPerSession": 5,
+      "interstitialIntervalQuestions": 0,
+      "dismissible": false,
+      "priorityWeight": 5
+    }
+  },
+  "campaigns": [
+    {
+      "id": "cambridge-igcse-revision-guide",
+      "title": "Example 1: Cambridge IGCSE Revision Companion",
+      "sponsorName": "Revizz Study Guide (Example Reference)",
+      "badgeText": "EXAMPLE · STUDY RESOURCE",
+      "headline": "Master Core & Extended Cambridge Syllabus Topics",
+      "bodyCopy": "Concise summary charts, examiner mark scheme breakdowns, and topic-by-topic checklists for Cambridge candidates.",
+      "ctaText": "Explore Study Guide",
+      "targetUrl": "/portal",
+      "imageUrl": "/ads/banner-cambridge-economics.svg",
+      "imageAlt": "Cambridge IGCSE 0455 Economics Revision Companion Banner",
+      "creativeMode": "image_banner",
+      "imageFit": "cover",
+      "showCaptionBarOnBanner": true,
+      "accentColor": "peach",
+      "sourceType": "native",
+      "status": "active",
+      "targetSlots": [
+        "start_flow_banner",
+        "round_summary_card"
+      ],
+      "targetSubjects": [],
+      "impressions": 1,
+      "clicks": 0,
+      "createdAt": "2026-01-15T08:00:00.000Z"
+    },
+    {
+      "id": "past-paper-formula-sheet",
+      "title": "Example 2: Sciences Formula & Data Reference Pack",
+      "sponsorName": "Revizz Science Lab (Example Reference)",
+      "badgeText": "EXAMPLE · QUICK REFERENCE",
+      "headline": "High-Contrast Printable Science & Economics Formula Sheets",
+      "bodyCopy": "Physics (0625), Chemistry (0620), Biology (0610), and Economics (0455) equation & diagram sheets.",
+      "ctaText": "Open Reference Pack",
+      "targetUrl": "/portal",
+      "imageUrl": "/ads/banner-sciences-formula-pack.svg",
+      "imageAlt": "IGCSE Sciences Formula & Data Reference Pack Banner",
+      "creativeMode": "image_banner",
+      "imageFit": "cover",
+      "showCaptionBarOnBanner": false,
+      "accentColor": "sage",
+      "sourceType": "native",
+      "status": "active",
+      "targetSlots": [
+        "round_summary_card",
+        "between_questions_interstitial",
+        "leaderboard_footer"
+      ],
+      "targetSubjects": [
+        "0620",
+        "0625",
+        "0610",
+        "0455"
+      ],
+      "impressions": 1,
+      "clicks": 0,
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "stem-graphing-calculator-tool",
+      "title": "Example 3: Daily Past-Paper Sprint & Mastery Tracker",
+      "sponsorName": "Revizz Exam Prep (Example Reference)",
+      "badgeText": "EXAMPLE · FEATURED TOOL",
+      "headline": "Build a First-Try Accuracy Streak & Unlock Gold Mastery Badges",
+      "bodyCopy": "Practice untimed topic drills and track syllabus mastery across every Cambridge paper.",
+      "ctaText": "View Topic Mastery",
+      "targetUrl": "/",
+      "imageUrl": "/ads/banner-daily-sprint-challenge.svg",
+      "imageAlt": "Daily Past-Paper Sprint & Mastery Tracker Graphic",
+      "creativeMode": "illustrated_card",
+      "imageFit": "cover",
+      "showCaptionBarOnBanner": true,
+      "accentColor": "sky",
+      "sourceType": "native",
+      "status": "active",
+      "targetSlots": [
+        "start_flow_banner",
+        "question_card_footer",
+        "leaderboard_footer",
+        "between_questions_interstitial"
+      ],
+      "targetSubjects": [
+        "0580",
+        "0455",
+        "0625"
+      ],
+      "impressions": 0,
+      "clicks": 0,
+      "createdAt": "2026-02-10T12:00:00.000Z"
+    }
+  ]
+}
