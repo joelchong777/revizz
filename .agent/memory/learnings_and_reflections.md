@@ -26,16 +26,14 @@
 | 18 | Data Tables | **Multi-Format Table Detection**: Checking only `stem.includes('\|')` skips Cambridge questions with diagram/text tables. | Inspect stem phrasing, HTML tags, option matrices, and diagram metadata. |
 | 19 | UI Layout | **Viewport-Height Drawer Stretch**: Using `h-[calc(100vh-...)]` and `flex-1` with `mt-auto` creates dead space when inner lists are removed. | Enforce `shrink-0` and content-hugging card containers without artificial viewport constraints. |
 | 20 | Vercel Deployment | **Vercel CLI Root Folder Stale Upload**: `npx vercel --prod` runs from repo root, deploying an older snapshot if root hasn't pulled `origin/main`. | Fast-forward root repo (`git pull --ff-only origin main`) immediately after atomic push in `scripts/wt.ts`. |
+| 21 | Local Dev Server | **Non-Daemon Process Teardown**: Running `npm run wt serve` with `IsDaemon: false` kills child `next dev` when the tool step exits. | Launch `npx next dev -p 3000` with `IsDaemon: true` and pre-warm `/portal` via `curl` for instant browser loads. |
+| 22 | Worktree Dev Root | **Next.js 15 Multiple Lockfile Inference**: Next.js 15 infers root from parent `package-lock.json`, breaking worktree routing (404 on worktree-only routes). | Set `outputFileTracingRoot: path.resolve(__dirname)` in `next.config.ts`. |
 
-## Recent Session Reflection — 2026-10-19: Teacher Portal Overview Hub & Deployment Sync
-- **Topic**: Teacher Portal Overview Command Center (`TeacherOverviewHub.tsx`) & Deployment Synchronization
-- **Target Surfaces**: `components/portal/TeacherOverviewHub.tsx`, `app/portal/page.tsx`, `scripts/wt.ts`
+## Recent Session Reflection — 2026-10-19: Student Homework Page & Mobile Assessment Runner
+- **Topic**: Student Homework & Assigned Work Hub (`app/homework/page.tsx`, `components/profile/StudentHomeworkPanel.tsx`, `lib/homework.ts`)
+- **Target Surfaces**: `app/homework/page.tsx`, `app/profile/homework/page.tsx`, `components/profile/StudentHomeworkPanel.tsx`, `components/profile/StudentProfileHub.tsx`, `components/LeaderboardModal.tsx`, `lib/homework.ts`, `lib/studentProfile.ts`, `next.config.ts`, `scripts/verify-homework.ts`, `scripts/verify-revizz.ts`
 
 ### Architectural Solutions & Key Insights
-- **Overview Command Center Architecture**: Built `components/portal/TeacherOverviewHub.tsx` featuring 4 tactile health cards (Accuracy, Turn-in rate, Test count, Triage flags), Test Compiler quick presets (10-Q diagnostic, 20-Q mock), homework completion progress bars with instant nudges, and a student triage hub (high errors, inactivity, fast guessing) with 1-click recovery pack assignments.
-- **Revizz 3D Neobrutalist Physics Formula**: Standardized button motion across the dashboard to `shadow-offset-2 hover:shadow-offset-3 hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-75` and strict Revizz color tokens (`#ffe1d0`, `#ccdbb2`, `#fed7aa`, `#fde8e8`, `#f9f4ed`, `#201e1d`).
-- **Mobile Modal Defense**: Fixed Quick Diagnostic generator modal overflow by pinning header/footer and making the body scrollable (`max-h-[90vh] overflow-y-auto`).
-- **Deployment Synchronization Safeguard**: Patched `scripts/wt.ts` `commandShip` to fast-forward `repoRoot` via `git pull --ff-only origin main` right after pushing to GitHub, preventing Vercel CLI uploads from deploying stale local repository snapshots.
-
-### Verification & Quality Assurance
-- Passed full TypeScript typecheck (`npx tsc --noEmit`) and all 158 tests in `npm test`. Verified live in production at `https://revizz-sand.vercel.app/portal?guest=true` (`HTTP 200`).
+- **Worktree Lockfile Pinning**: Next.js 15 inferred the parent root repo because of multiple lockfiles, returning 404 for worktree-added pages (`/homework`). Pinned `outputFileTracingRoot: path.resolve(__dirname)` in `next.config.ts` to ensure route resolution within the worktree.
+- **Online Assigned Work Hub**: Implemented `lib/homework.ts` and `StudentHomeworkPanel.tsx` with dynamic urgency badges (*Overdue*, *Due today*, *Completed*), test code auto-formatting, and full-screen mobile assessment modal with sticky header/timer and sticky bottom navigation.
+- **Verification & Release**: Passed `scripts/verify-homework.ts` (43/43 tests), full QA suite (170/170 assertions across 23 suites in `scripts/verify-revizz.ts`), and `npx tsc --noEmit` (0 errors). Shipped to `origin/main` (`b78a804`) and verified `HTTP/2 200` on Vercel production edge CDN.
