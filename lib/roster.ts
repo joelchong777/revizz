@@ -270,3 +270,265 @@ export async function checkAndClaimInvite(
 
   return matchedInvite;
 }
+
+/* ==========================================================
+   TEACHER CLASSROOM & ROSTER DATA EXTENSIONS
+   ========================================================== */
+
+export interface TeacherClassRoom {
+  id: string;
+  name: string;        // e.g. '10B Physics'
+  subjectCode: string; // e.g. '0625' | '0455' | '0610' | '0620'
+  subjectName: string; // e.g. 'Physics' | 'Economics' | 'Biology' | 'Chemistry'
+  yearGroup: string;   // e.g. 'Year 10' | 'Year 11'
+  joinCode: string;    // e.g. 'RVZ-10BP'
+  targetAccuracy: number; // default 75
+  weeklyGoalXp: number;   // default 500
+  createdAt: string;
+}
+
+export const TEACHER_CLASSES_STORAGE_KEY = 'revizz_teacher_classes';
+export const STUDENT_CLASS_OVERRIDES_KEY = 'revizz_student_class_overrides';
+
+export const DEFAULT_TEACHER_CLASSES: TeacherClassRoom[] = [
+  {
+    id: 'cls_10b_physics',
+    name: '10B Physics',
+    subjectCode: '0625',
+    subjectName: 'Physics',
+    yearGroup: 'Year 10',
+    joinCode: 'RVZ-10BP',
+    targetAccuracy: 75,
+    weeklyGoalXp: 500,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'cls_10a_physics',
+    name: '10A Physics',
+    subjectCode: '0625',
+    subjectName: 'Physics',
+    yearGroup: 'Year 10',
+    joinCode: 'RVZ-10AP',
+    targetAccuracy: 80,
+    weeklyGoalXp: 600,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'cls_11a_physics',
+    name: '11A Physics',
+    subjectCode: '0625',
+    subjectName: 'Physics',
+    yearGroup: 'Year 11',
+    joinCode: 'RVZ-11AP',
+    targetAccuracy: 80,
+    weeklyGoalXp: 750,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'cls_10_economics',
+    name: '10 Economics',
+    subjectCode: '0455',
+    subjectName: 'Economics',
+    yearGroup: 'Year 10',
+    joinCode: 'RVZ-10EC',
+    targetAccuracy: 75,
+    weeklyGoalXp: 500,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'cls_10_biology',
+    name: '10 Biology',
+    subjectCode: '0610',
+    subjectName: 'Biology',
+    yearGroup: 'Year 10',
+    joinCode: 'RVZ-10BI',
+    targetAccuracy: 75,
+    weeklyGoalXp: 500,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+];
+
+export function getTeacherClasses(): TeacherClassRoom[] {
+  const storage = getStorage();
+  if (!storage) return DEFAULT_TEACHER_CLASSES;
+  try {
+    const raw = storage.getItem(TEACHER_CLASSES_STORAGE_KEY);
+    if (!raw) return DEFAULT_TEACHER_CLASSES;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_TEACHER_CLASSES;
+  } catch (e) {
+    console.warn('Failed to parse teacher classes from storage:', e);
+    return DEFAULT_TEACHER_CLASSES;
+  }
+}
+
+export function saveTeacherClasses(classes: TeacherClassRoom[]): void {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(TEACHER_CLASSES_STORAGE_KEY, JSON.stringify(classes));
+  } catch (e) {
+    console.warn('Failed to save teacher classes to storage:', e);
+  }
+}
+
+export function createTeacherClass(input: {
+  name: string;
+  subjectCode: string;
+  subjectName?: string;
+  yearGroup?: string;
+  targetAccuracy?: number;
+  weeklyGoalXp?: number;
+}): TeacherClassRoom {
+  const current = getTeacherClasses();
+  const cleanNameLetters = input.name.replace(/[^A-Za-z0-9]/g, '').slice(-4).toUpperCase();
+  const codeSuffix = cleanNameLetters.length >= 2 ? cleanNameLetters : Math.random().toString(36).substring(2, 6).toUpperCase();
+  const joinCode = `RVZ-${codeSuffix}`;
+
+  const subjectNameMap: Record<string, string> = {
+    '0625': 'Physics',
+    '0455': 'Economics',
+    '0610': 'Biology',
+    '0620': 'Chemistry',
+  };
+  const resolvedSubjectName = input.subjectName || subjectNameMap[input.subjectCode] || 'Cambridge Subject';
+
+  const newClass: TeacherClassRoom = {
+    id:
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? `cls_${crypto.randomUUID()}`
+        : `cls_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    name: input.name.trim(),
+    subjectCode: input.subjectCode.trim(),
+    subjectName: resolvedSubjectName,
+    yearGroup: input.yearGroup?.trim() || 'Year 10',
+    joinCode,
+    targetAccuracy: input.targetAccuracy ?? 75,
+    weeklyGoalXp: input.weeklyGoalXp ?? 500,
+    createdAt: new Date().toISOString(),
+  };
+
+  const updated = [newClass, ...current];
+  saveTeacherClasses(updated);
+  return newClass;
+}
+
+export function updateTeacherClass(id: string, patch: Partial<TeacherClassRoom>): TeacherClassRoom[] {
+  const current = getTeacherClasses();
+  const updated = current.map((c) => {
+    if (c.id === id) {
+      return { ...c, ...patch };
+    }
+    return c;
+  });
+  saveTeacherClasses(updated);
+  return updated;
+}
+
+export function deleteTeacherClass(id: string): TeacherClassRoom[] {
+  const current = getTeacherClasses();
+  const updated = current.filter((c) => c.id !== id);
+  saveTeacherClasses(updated);
+  return updated;
+}
+
+export interface StudentClassOverride {
+  studentId: string;
+  notes?: string;
+  cohort?: string;
+  removed?: boolean;
+  manualStudent?: boolean;
+  name?: string;
+  email?: string;
+  updatedAt?: string;
+}
+
+export function getStudentClassOverrides(): Record<string, StudentClassOverride> {
+  const storage = getStorage();
+  if (!storage) return {};
+  try {
+    const raw = storage.getItem(STUDENT_CLASS_OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.warn('Failed to parse student class overrides from storage:', e);
+    return {};
+  }
+}
+
+export function saveStudentClassOverride(
+  studentId: string,
+  patch: Partial<StudentClassOverride>
+): Record<string, StudentClassOverride> {
+  const current = getStudentClassOverrides();
+  current[studentId] = {
+    ...current[studentId],
+    studentId,
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  };
+  const storage = getStorage();
+  if (storage) {
+    try {
+      storage.setItem(STUDENT_CLASS_OVERRIDES_KEY, JSON.stringify(current));
+    } catch (e) {
+      console.warn('Failed to save student class overrides to storage:', e);
+    }
+  }
+  return current;
+}
+
+function escapeCsvCell(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  const str = String(val);
+  if (/[",\n\r]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+export function generateClassRosterCsv(
+  className: string,
+  subjectCode: string,
+  students: Array<{
+    name: string;
+    email?: string;
+    xp: string | number;
+    streak: number;
+    acc: number;
+    weak: string;
+    tier: string;
+    last: string;
+    status?: string;
+  }>
+): string {
+  const headers = [
+    'Class',
+    'Subject Code',
+    'Student Name',
+    'Email',
+    'Total XP',
+    'Streak (Days)',
+    '1st-Try Accuracy (%)',
+    'Weakest Topic',
+    'Mastery Tier',
+    'Last Active',
+    'Status',
+  ];
+
+  const rows = students.map((s) => [
+    escapeCsvCell(className),
+    escapeCsvCell(subjectCode),
+    escapeCsvCell(s.name),
+    escapeCsvCell(s.email || '—'),
+    escapeCsvCell(s.xp),
+    escapeCsvCell(s.streak),
+    escapeCsvCell(`${s.acc}%`),
+    escapeCsvCell(s.weak),
+    escapeCsvCell(s.tier),
+    escapeCsvCell(s.last),
+    escapeCsvCell(s.status || (s.streak > 0 ? 'Active' : 'Inactive')),
+  ]);
+
+  return [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+}
+

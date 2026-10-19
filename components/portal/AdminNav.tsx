@@ -251,10 +251,10 @@ export default function AdminNav({
                   type="button"
                   onClick={() => handleNavClick('roster')}
                   className={navItemClass('roster')}
-                  title="Classes & students"
+                  title="Classes"
                 >
                   {renderIcon(Users, 'roster')}
-                  {!compact && <span className="flex-1 min-w-0 truncate">Classes & students</span>}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Classes</span>}
                 </button>
               )}
 

@@ -17,7 +17,7 @@ import { getPortalNavItems } from '@/lib/portal/menuConfig';
 
 const NAV_LABELS: Record<string, string> = {
   overview: 'Overview',
-  roster: 'Classes & students',
+  roster: 'Classes',
   assign: 'Assigned rounds',
   compiler: 'Test compiler',
   mastery: 'Mastery analytics',
@@ -53,6 +53,7 @@ function PortalContent() {
   const [activeNav, setActiveNav] = useState<string>('overview');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | undefined>(undefined);
+  const [assignPrefill, setAssignPrefill] = useState<string | undefined>(undefined);
 
   const activeLabel = NAV_LABELS[activeNav] || getPortalNavItems().find((i) => i.id === activeNav)?.label || 'Overview';
 
@@ -373,7 +374,11 @@ function PortalContent() {
           <TeacherAnalytics
             key="roster"
             initialView="roster"
-            onNavigateToAssign={() => setActiveNav('assign')}
+            onNavigateToAssign={(prefill) => {
+              setAssignPrefill(prefill);
+              setActiveNav('assign');
+            }}
+            onNavigateToCompiler={() => setActiveNav('compiler')}
           />
         );
       case 'assign':
@@ -392,7 +397,11 @@ function PortalContent() {
           <TeacherAnalytics
             key="mastery"
             initialView="mastery"
-            onNavigateToAssign={() => setActiveNav('assign')}
+            onNavigateToAssign={(prefill) => {
+              setAssignPrefill(prefill);
+              setActiveNav('assign');
+            }}
+            onNavigateToCompiler={() => setActiveNav('compiler')}
           />
         );
       case 'xp':

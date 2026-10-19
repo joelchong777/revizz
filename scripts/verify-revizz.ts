@@ -54,6 +54,11 @@ import {
   deleteRosterInvite,
   checkAndClaimInvite,
   ROSTER_INVITES_STORAGE_KEY,
+  getTeacherClasses,
+  createTeacherClass,
+  updateTeacherClass,
+  deleteTeacherClass,
+  generateClassRosterCsv,
 } from '../lib/roster';
 
 import { CAMBRIDGE_QUESTIONS, Question } from '../lib/questions';
@@ -1902,6 +1907,9 @@ async function runSuite13() {
 
     const actualIds = defaults.map((item) => item.id);
     assertEqual(JSON.stringify(actualIds), JSON.stringify(expectedIds), 'Default items have expected IDs in correct order');
+
+    const rosterDefault = defaults.find((item) => item.id === 'roster');
+    assertEqual(rosterDefault?.label, 'Classes', 'Roster default nav item label is "Classes"');
 
     const allEnabled = defaults.every((item) => item.enabled === true);
     assertEqual(allEnabled, true, 'All default portal nav items are enabled by default');
@@ -4093,10 +4101,151 @@ async function runSuite21() {
   });
 }
 
+async function runSuite22() {
+  console.log('\n\x1b[1m\x1b[34m[Suite 22] Teacher Classes Hub & Redesigned Analytics Architecture\x1b[0m');
+
+  test('Classes Portal Navigation Contract: DEFAULT_PORTAL_NAV_ITEMS, AdminNav, and app/portal/page.tsx', () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    // 1. DEFAULT_PORTAL_NAV_ITEMS has id: 'roster' with label: 'Classes'
+    const rosterDefault = DEFAULT_PORTAL_NAV_ITEMS.find((item) => item.id === 'roster');
+    assert(Boolean(rosterDefault), 'DEFAULT_PORTAL_NAV_ITEMS has roster item');
+    assertEqual(rosterDefault?.label, 'Classes', "DEFAULT_PORTAL_NAV_ITEMS has label: 'Classes'");
+
+    // 2. AdminNav.tsx uses 'Classes' for roster
+    const adminNavPath = path.resolve(process.cwd(), 'components/portal/AdminNav.tsx');
+    assertEqual(fs.existsSync(adminNavPath), true, 'components/portal/AdminNav.tsx exists');
+    const adminNavContent = fs.readFileSync(adminNavPath, 'utf8');
+    assert(
+      adminNavContent.includes('title="Classes"') && adminNavContent.includes('>Classes</span>'),
+      "AdminNav.tsx renders 'Classes' for roster item"
+    );
+
+    // 3. app/portal/page.tsx uses 'Classes' for roster
+    const portalPagePath = path.resolve(process.cwd(), 'app/portal/page.tsx');
+    assertEqual(fs.existsSync(portalPagePath), true, 'app/portal/page.tsx exists');
+    const portalPageContent = fs.readFileSync(portalPagePath, 'utf8');
+    assert(
+      portalPageContent.includes("roster: 'Classes'"),
+      "app/portal/page.tsx registers roster: 'Classes'"
+    );
+  });
+
+  test('Class Management Engine: getTeacherClasses, createTeacherClass, updateTeacherClass, deleteTeacherClass', () => {
+    const initialClasses = getTeacherClasses();
+    assert(Array.isArray(initialClasses) && initialClasses.length >= 4, 'getTeacherClasses returns initial Cambridge classes');
+    const initialCount = initialClasses.length;
+
+    // Create a new class
+    const created = createTeacherClass({
+      name: '10C Physics Test',
+      subjectCode: '0625',
+      yearGroup: 'Year 10',
+      targetAccuracy: 85,
+      weeklyGoalXp: 650,
+    });
+    assert(Boolean(created.id), 'Created class has unique ID');
+    assertEqual(created.name, '10C Physics Test', 'Created class has specified name');
+    assertEqual(created.subjectCode, '0625', 'Created class has specified subject code');
+    assertEqual(created.subjectName, 'Physics', 'Created class resolves subject name Physics');
+    assert(created.joinCode.startsWith('RVZ-'), 'Created class has RVZ- join code');
+    assertEqual(created.targetAccuracy, 85, 'Created class has target accuracy 85%');
+
+    // Verify it is in list
+    const classesAfterCreate = getTeacherClasses();
+    assertEqual(classesAfterCreate.length, initialCount + 1, 'Classes count incremented by 1');
+    const foundCreated = classesAfterCreate.find((c) => c.id === created.id);
+    assert(Boolean(foundCreated), 'Created class is persisted');
+
+    // Update the class
+    const updated = updateTeacherClass(created.id, {
+      targetAccuracy: 90,
+      weeklyGoalXp: 800,
+    });
+    const foundUpdated = updated.find((c) => c.id === created.id);
+    assertEqual(foundUpdated?.targetAccuracy, 90, 'Target accuracy updated to 90%');
+    assertEqual(foundUpdated?.weeklyGoalXp, 800, 'Weekly goal XP updated to 800');
+
+    // Delete the class
+    const classesAfterDelete = deleteTeacherClass(created.id);
+    assertEqual(classesAfterDelete.length, initialCount, 'Classes count returned to initial count after deletion');
+    assert(!classesAfterDelete.some((c) => c.id === created.id), 'Deleted class is no longer present');
+  });
+
+  test('CSV Engine: generateClassRosterCsv produces valid RFC-4180 escaped CSV data', () => {
+    const sampleStudents = [
+      {
+        name: 'Maya Lin',
+        email: 'maya@school.edu',
+        xp: 1450,
+        streak: 12,
+        acc: 88,
+        weak: 'Thermal Physics & Matter',
+        tier: '👑 Master',
+        last: 'Active today',
+        status: 'Active',
+      },
+      {
+        name: 'O\'Connor, Sean "Jack"',
+        email: 'sean@school.edu',
+        xp: 420,
+        streak: 0,
+        acc: 64,
+        weak: 'General Physics & Measurement',
+        tier: '⚡ Proficient',
+        last: 'Inactive',
+        status: 'Idle',
+      },
+    ];
+
+    const csvOutput = generateClassRosterCsv('10B Physics', '0625', sampleStudents);
+    assert(csvOutput.includes('Class,Subject Code,Student Name,Email,Total XP,Streak (Days),1st-Try Accuracy (%),Weakest Topic,Mastery Tier,Last Active,Status'), 'Contains correct RFC-4180 CSV header');
+    assert(csvOutput.includes('10B Physics,0625,Maya Lin,maya@school.edu,1450,12,88%,Thermal Physics & Matter,👑 Master,Active today,Active'), 'Contains first student row');
+    assert(csvOutput.includes('"O\'Connor, Sean ""Jack"""'), 'Properly escapes quotes and commas in student name according to RFC-4180');
+  });
+
+  test('TeacherAnalytics.tsx Static Architecture Contract: Zero alerts, real CSV wiring, class creation, and student drawer', () => {
+    const fs = require('fs');
+    const path = require('path');
+    let analyticsPath = path.resolve(process.cwd(), 'components/portal/TeacherAnalytics.tsx');
+    if (!fs.existsSync(analyticsPath)) {
+      analyticsPath = path.resolve(process.cwd(), 'components/TeacherAnalytics.tsx');
+    }
+    assertEqual(fs.existsSync(analyticsPath), true, 'components/portal/TeacherAnalytics.tsx exists');
+
+    const content = fs.readFileSync(analyticsPath, 'utf8');
+
+    // Zero alert calls
+    assert(!content.includes('alert('), 'TeacherAnalytics.tsx contains ZERO alert(...) calls');
+
+    // CSV export wiring
+    assert(content.includes('generateClassRosterCsv'), 'TeacherAnalytics.tsx imports and wires generateClassRosterCsv');
+    assert(content.includes('handleExportRosterCsv'), 'TeacherAnalytics.tsx implements handleExportRosterCsv');
+
+    // Class creation wiring
+    assert(content.includes('createTeacherClass'), 'TeacherAnalytics.tsx imports and wires createTeacherClass');
+    assert(content.includes('handleCreateClass'), 'TeacherAnalytics.tsx implements handleCreateClass');
+
+    // Join code copy
+    assert(content.includes('handleCopyJoinCode') && content.includes('joinCode'), 'TeacherAnalytics.tsx wires up interactive join code copy pill');
+
+    // Search and filtering toolbar
+    assert(content.includes('searchTerm') && content.includes('statusFilter'), 'TeacherAnalytics.tsx implements search and status filtering');
+
+    // Bulk selection
+    assert(content.includes('selectedStudentIds') && content.includes('toggleSelectAll'), 'TeacherAnalytics.tsx implements bulk multi-selection');
+
+    // Teacher notes in drawer
+    assert(content.includes('handleSaveStudentNotes') && content.includes('saveStudentClassOverride'), 'TeacherAnalytics.tsx implements persistent teacher observation notes');
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
   await runSuite21();
+  await runSuite22();
 
   // Summary Output
   console.log('\n========================================================');
@@ -4117,3 +4266,4 @@ main().catch((err) => {
   console.error('Fatal test error in test suite runner:', err);
   process.exit(1);
 });
+

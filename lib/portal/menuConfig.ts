@@ -35,7 +35,7 @@ export const DEFAULT_PORTAL_NAV_ITEMS: PortalNavItem[] = [
   },
   {
     id: 'roster',
-    label: 'Classes & students',
+    label: 'Classes',
     section: 'teaching',
     iconName: 'Users',
     enabled: true,
@@ -146,7 +146,13 @@ export function getPortalNavItems(): PortalNavItem[] {
     if (!Array.isArray(parsed) || parsed.length === 0) {
       return getDefaultPortalNavItems();
     }
-    return parsed.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const normalized = parsed.map((item) => {
+      if (item && item.id === 'roster' && item.label === 'Classes & students') {
+        return { ...item, label: 'Classes' };
+      }
+      return item;
+    });
+    return normalized.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   } catch (err) {
     console.error('Failed to parse portal nav configuration from storage:', err);
     return getDefaultPortalNavItems();
