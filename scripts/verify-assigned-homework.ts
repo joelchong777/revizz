@@ -809,85 +809,87 @@ registerTest(
 );
 
 // ============================================================================
-// SUITE 6: DEMO SEEDING & IDEMPOTENCY
+// SUITE 6: ZERO FAKE DATA INVARIANTS & LEGACY PURGING
 // ============================================================================
 
 registerTest(
   'SEED_01',
-  'Demo Seeding',
-  'seedInitialHomeworkIfEmpty populates realistic Cambridge assignments if empty',
+  'Zero Fake Data Invariants',
+  'getAssignedHomeworkList returns [] on empty storage and seedInitialHomeworkIfEmpty returns []',
   () => {
     resetStorage();
-    const freshTeacher = 'teacher-fresh-seed';
+    const freshTeacher = 'teacher-fresh-clean';
 
     // Verify initially empty
-    assertEqual(getAssignedHomeworkList(freshTeacher).length, 0, 'Initially empty');
+    const listBefore = getAssignedHomeworkList(freshTeacher);
+    assertEqual(listBefore.length, 0, 'Initially empty list');
+    assertDeepEqual(listBefore, [], 'Expected empty array []');
 
-    // Seed
+    // Call seedInitialHomeworkIfEmpty
     const seeded = seedInitialHomeworkIfEmpty(freshTeacher, 'Ms. Laura Davis');
+    assertEqual(seeded.length, 0, 'seedInitialHomeworkIfEmpty must return empty array []');
+    assertDeepEqual(seeded, [], 'Expected empty array []');
 
-    assert(seeded.length > 0, 'Seeded list must be non-empty');
-    assert(seeded.some((h) => h.subjectCode === '0625'), 'Includes Physics syllabus');
-    assert(seeded.some((h) => h.subjectCode === '0455'), 'Includes Economics syllabus');
-
-    // Verify stored
-    const stored = getAssignedHomeworkList(freshTeacher);
-    assertEqual(stored.length, seeded.length, 'Storage reflects seeded list');
-
-    // Verify sample submissions inside seeded items
-    const kinematics = stored.find((h) => h.id === 'hw-seed-01-kinematics');
-    assert(kinematics !== undefined, 'Contains kinematics seeded drill');
-    assert(kinematics!.submissions.length > 0, 'Kinematics contains realistic student submissions');
-    assert(kinematics!.questionIds.length > 0, 'Kinematics contains question IDs');
+    // Verify storage remains empty
+    const listAfter = getAssignedHomeworkList(freshTeacher);
+    assertEqual(listAfter.length, 0, 'Storage remains empty after seeding call');
   }
 );
 
 registerTest(
   'SEED_02',
-  'Demo Seeding',
-  'seedInitialHomeworkIfEmpty is idempotent and does not overwrite existing data',
+  'Zero Fake Data Invariants',
+  'seedInitialHomeworkIfEmpty never writes fake data into storage',
   () => {
     resetStorage();
-    const teacherId = 'teacher-idempotent-seed';
+    const teacherId = 'teacher-no-fake-data';
 
-    // First seed
-    const firstSeed = seedInitialHomeworkIfEmpty(teacherId, 'Educator 1');
-    const firstLength = firstSeed.length;
+    // Call seed
+    seedInitialHomeworkIfEmpty(teacherId, 'Educator 1');
 
-    // Modify one item in the list
-    const modifiedRound = { ...firstSeed[0], title: 'Locally Customized Drill Name' };
-    saveAssignedHomework(teacherId, modifiedRound);
+    // Storage raw check
+    const raw = mockStorage.getItem(`revizz_assigned_homework_v1_${teacherId}`);
+    assertEqual(raw, null, 'Storage key must not be populated with fake data');
 
-    // Call seed again
-    const secondCall = seedInitialHomeworkIfEmpty(teacherId, 'Educator 1');
-
-    assertEqual(secondCall.length, firstLength, 'List length does not double or change');
-    const checked = getAssignedHomeworkById(teacherId, modifiedRound.id);
-    assertEqual(checked?.title, 'Locally Customized Drill Name', 'User customizations preserved');
+    // Online assignment check - verify no online fake assignments were registered
+    const online = listOnlineAssignments();
+    const fakeSeeded = online.filter((a) => a.id.startsWith('hw-seed-'));
+    assertEqual(fakeSeeded.length, 0, 'Online assignments must contain 0 fake seeded rounds');
   }
 );
 
 registerTest(
   'SEED_03',
-  'Demo Seeding',
-  'seedInitialHomeworkIfEmpty does not overwrite if custom homework was previously created',
+  'Zero Fake Data Invariants',
+  'legacy hw-seed- items are purged on read and rewritten to clean storage',
   () => {
     resetStorage();
-    const teacherId = 'teacher-custom-first';
+    const teacherId = 'teacher-legacy-purge';
+    const key = `revizz_assigned_homework_v1_${teacherId}`;
 
-    // User creates custom homework first
-    const customRound = createSampleRound({
-      id: 'hw-custom-only',
-      teacherId,
-      title: 'Teacher Custom Paper Prior to Seeding',
-    });
-    saveAssignedHomework(teacherId, customRound);
+    // Inject legacy fake seeded items directly into storage
+    const legacyFake = [
+      createSampleRound({ id: 'hw-seed-01-kinematics', teacherId }),
+      createSampleRound({ id: 'hw-seed-02-macro-fiscal', teacherId }),
+      createSampleRound({ id: 'hw-real-legit-01', teacherId, title: 'Real Educator Test' }),
+    ];
+    mockStorage.setItem(key, JSON.stringify(legacyFake));
 
-    // Now call seed
-    const result = seedInitialHomeworkIfEmpty(teacherId);
+    // getAssignedHomeworkList must purge hw-seed- items and return only real items
+    const cleaned = getAssignedHomeworkList(teacherId);
+    assertEqual(cleaned.length, 1, 'Only real non-seed assignment is returned');
+    assertEqual(cleaned[0].id, 'hw-real-legit-01', 'Retained legitimate assignment');
 
-    assertEqual(result.length, 1, 'Should NOT add seed papers when teacher already has assignments');
-    assertEqual(result[0].id, 'hw-custom-only', 'Original assignment is retained');
+    // Verify localStorage was rewritten in-place without the fake items
+    const rawAfter = mockStorage.getItem(key);
+    assert(rawAfter !== null, 'Key still exists in storage');
+    const parsedAfter = JSON.parse(rawAfter!);
+    assertEqual(parsedAfter.length, 1, 'Storage was purged in place to 1 item');
+    assertEqual(parsedAfter[0].id, 'hw-real-legit-01', 'Purged hw-seed- items permanently');
+
+    // Verify findHomeworkByIdAnyTeacher ignores hw-seed-
+    const fakeFoundByCode = findHomeworkByIdAnyTeacher('hw-seed-01-kinematics');
+    assertEqual(fakeFoundByCode, null, 'findHomeworkByIdAnyTeacher ignores hw-seed- items');
   }
 );
 

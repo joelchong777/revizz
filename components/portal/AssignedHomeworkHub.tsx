@@ -20,7 +20,6 @@ import {
   Award,
   Layers,
   CopyPlus,
-  RefreshCw,
   ShieldCheck,
   AlertCircle
 } from 'lucide-react';
@@ -32,7 +31,6 @@ import {
   deleteAssignedHomework,
   computeHomeworkMetrics,
   isHomeworkDue,
-  seedInitialHomeworkIfEmpty,
   subscribeToHomeworkChanges
 } from '@/lib/portal/assignedHomework';
 import { NewHomeworkModal, SubmissionsDetailModal } from './AssignedHomeworkModal';
@@ -67,13 +65,10 @@ export default function AssignedHomeworkHub({
   // Load and subscribe to homework
   const refreshHomework = useCallback(() => {
     if (!teacherId) return;
-    let list = getAssignedHomeworkList(teacherId);
-    if (list.length === 0) {
-      list = seedInitialHomeworkIfEmpty(teacherId, teacherName);
-    }
+    const list = getAssignedHomeworkList(teacherId);
     setRounds(list);
     setLoading(false);
-  }, [teacherId, teacherName]);
+  }, [teacherId]);
 
   useEffect(() => {
     refreshHomework();
@@ -169,11 +164,6 @@ export default function AssignedHomeworkHub({
       deleteAssignedHomework(teacherId, roundId);
       refreshHomework();
     }
-  };
-
-  const handleLoadSampleAssignments = () => {
-    seedInitialHomeworkIfEmpty(teacherId, teacherName);
-    refreshHomework();
   };
 
   return (
@@ -392,11 +382,11 @@ export default function AssignedHomeworkHub({
             </div>
             <div className="space-y-1">
               <h2 className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
-                No Assigned Homework Found
+                {rounds.length === 0 ? 'No Assigned Homework Yet' : 'No Assigned Homework Found'}
               </h2>
               <p className="text-xs sm:text-sm font-medium text-[#645c50]">
                 {rounds.length === 0
-                  ? 'Your educator profile does not have any assigned homework rounds yet.'
+                  ? 'Your educator profile does not have any assigned homework rounds yet. Create a homework round to get started.'
                   : 'No assignments match the selected class cohort or status filter.'}
               </p>
             </div>
@@ -408,16 +398,6 @@ export default function AssignedHomeworkHub({
               >
                 + Create New Homework Round
               </button>
-              {rounds.length === 0 && (
-                <button
-                  type="button"
-                  onClick={handleLoadSampleAssignments}
-                  className="px-4 py-2.5 rounded-2xl border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] font-bold text-xs sm:text-sm text-[#201e1d] shadow-[3px_3px_0_0_#201e1d] active:translate-y-0.5 cursor-pointer flex items-center gap-1.5"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Load Sample Class Assignments</span>
-                </button>
-              )}
             </div>
           </div>
         ) : (

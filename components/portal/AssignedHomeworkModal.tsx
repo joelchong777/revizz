@@ -86,7 +86,7 @@ export function NewHomeworkModal({
   const [isCustomCohort, setIsCustomCohort] = useState(false);
 
   const [subjectCode, setSubjectCode] = useState('0625');
-  const [title, setTitle] = useState('Kinematics & Energy Master Drill');
+  const [title, setTitle] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>(['Thermal physics', 'General physics']);
   const [questionCount, setQuestionCount] = useState<number>(10);
   const [timerMode, setTimerMode] = useState<'Chill' | 'Exam' | 'Standard'>('Exam');
@@ -106,7 +106,7 @@ export function NewHomeworkModal({
   const [retryXpPercentage, setRetryXpPercentage] = useState(50);
   const [addToReviewPile, setAddToReviewPile] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(true);
-  const [totalStudents, setTotalStudents] = useState<number>(24);
+  const [totalStudents, setTotalStudents] = useState<number>(0);
 
   // AI prompt assistant
   const [aiPrompt, setAiPrompt] = useState('');
@@ -222,7 +222,7 @@ export function NewHomeworkModal({
         addToReviewPile,
         shuffleOptions,
       },
-      totalStudents: totalStudents || 24,
+      totalStudents: totalStudents || 0,
       submissions: [],
     };
 
@@ -275,13 +275,22 @@ export function NewHomeworkModal({
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs font-black text-[#0369a1] uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>AI Fast Assistant Presets</span>
+                <span>AI Prompt Assistant &amp; Presets</span>
               </span>
               {aiAppliedTag && (
                 <span className="text-[10px] font-bold bg-[#bae6fd] text-[#0369a1] px-2 py-0.5 rounded-full border border-[#0284c7]">
                   Config Applied ✨
                 </span>
               )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="e.g. 10 questions on Price Elasticity for 10 Economics due Friday"
+                className="w-full px-3 py-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] focus:outline-hidden focus:ring-2 focus:ring-[#0284c7]"
+              />
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -321,7 +330,7 @@ export function NewHomeworkModal({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Kinematics & Thermal Motion Drill"
+                placeholder="e.g. Chapter 2 Supply & Demand Quiz"
                 className="w-full px-3 py-2 bg-white border-2 border-[#201e1d] rounded-xl font-bold text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] focus:outline-hidden focus:ring-2 focus:ring-[#f97316]"
               />
             </div>
@@ -504,10 +513,11 @@ export function NewHomeworkModal({
               </label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 max="100"
-                value={totalStudents}
-                onChange={(e) => setTotalStudents(parseInt(e.target.value) || 20)}
+                value={totalStudents || ''}
+                onChange={(e) => setTotalStudents(parseInt(e.target.value, 10) || 0)}
+                placeholder="0"
                 className="w-full px-3 py-2 bg-white border-2 border-[#201e1d] rounded-xl font-bold text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs"
               />
             </div>
@@ -785,7 +795,7 @@ export function SubmissionsDetailModal({
           {completedCount === 0 ? (
             <div className="p-8 text-center bg-white border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_0_#201e1d] space-y-2">
               <div className="text-3xl">⏳</div>
-              <h3 className="font-heading font-black text-base text-[#201e1d]">No submissions received yet</h3>
+              <h3 className="font-heading font-black text-base text-[#201e1d]">No submissions received yet.</h3>
               <p className="text-xs text-[#645c50] max-w-sm mx-auto">
                 Share test code <b>{homework.testCode}</b> or the student link with your {homework.cohortName} cohort so students can complete the round!
               </p>

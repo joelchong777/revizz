@@ -39,6 +39,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import {
+  findHomeworkByIdAnyTeacher,
+  getAssignedHomeworkByCode,
+} from '@/lib/portal/assignedHomework';
+import {
   saveTestDraft,
   listTestDrafts,
   saveOnlineAssignment,
@@ -128,137 +132,14 @@ const DEFAULT_FALLBACK_DRAFTS: TestPaperConfig[] = [
   },
 ];
 
-const DEFAULT_FALLBACK_ASSIGNMENTS: MockAssignmentStats[] = [
-  {
-    id: 'asg-0455-ped-3',
-    title: 'Economics Elasticity Practice Challenge #3',
-    subjectCode: '0455',
-    subjectName: 'Economics',
-    cohortName: '10 Economics (0455)',
-    dueDate: new Date(Date.now() + 3600000 * 48).toISOString(),
-    durationMinutes: 20,
-    questionIds: ['0455-s24-12-q01', '0455-s24-12-q02', '0455-s24-12-q03'],
-    testCode: 'ECO-HW-03',
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    completedCount: 19,
-    totalStudents: 22,
-    averageScorePercent: 78,
-  },
-  {
-    id: 'asg-0455-gov-sprint',
-    title: 'Government Macro Policies & Inflation Sprint',
-    subjectCode: '0455',
-    subjectName: 'Economics',
-    cohortName: '10 Economics (0455)',
-    dueDate: new Date(Date.now() + 3600000 * 18).toISOString(),
-    durationMinutes: 25,
-    questionIds: ['0455-s24-12-q04', '0455-s24-12-q05'],
-    testCode: 'ECO-HW-04',
-    createdAt: new Date(Date.now() - 3600000 * 36).toISOString(),
-    completedCount: 21,
-    totalStudents: 22,
-    averageScorePercent: 84,
-  },
-  {
-    id: 'asg-0625-waves-diag',
-    title: 'Physics Waves & Sound Diagnostic',
-    subjectCode: '0625',
-    subjectName: 'Physics',
-    cohortName: 'Grade 10 Physics (0625)',
-    dueDate: new Date(Date.now() + 3600000 * 72).toISOString(),
-    durationMinutes: 20,
-    questionIds: ['0625-w23-11-q01', '0625-w23-11-q02'],
-    testCode: 'PHY-HW-02',
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    completedCount: 14,
-    totalStudents: 20,
-    averageScorePercent: 71,
-  },
-];
+const DEFAULT_FALLBACK_ASSIGNMENTS: MockAssignmentStats[] = [];
 
-const INITIAL_TRIAGE_STUDENTS: TriageStudent[] = [
-  {
-    id: 'student-marcus-tan',
-    name: 'Marcus Tan',
-    initials: 'MT',
-    cohort: '10 Economics (0455)',
-    avatarBg: '#ffe1d0',
-    reason: 'error_rate',
-    reasonBadge: '🚨 High Error Rate',
-    detail: '42% accuracy on Price Elasticity & Market Failure over last 3 rounds.',
-    accuracy: 42,
-    lastActive: '3 hours ago',
-    status: 'flagged',
-  },
-  {
-    id: 'student-chloe-lim',
-    name: 'Chloe Lim',
-    initials: 'CL',
-    cohort: '10 Economics (0455)',
-    avatarBg: '#fed7aa',
-    reason: 'rapid_guessing',
-    reasonBadge: '⚡ Rapid Guessing',
-    detail: 'Average response time 5.2s / question. High guess rate detected on Paper 1 stems.',
-    accuracy: 38,
-    avgTimeSeconds: 5.2,
-    lastActive: 'Yesterday',
-    status: 'flagged',
-  },
-  {
-    id: 'student-devon-vance',
-    name: 'Devon Vance',
-    initials: 'DV',
-    cohort: 'Grade 10 Physics (0625)',
-    avatarBg: '#eee7db',
-    reason: 'inactive',
-    reasonBadge: '💤 Inactive > 4 Days',
-    detail: '0 streak. No quiz attempts or homework submissions for 5 consecutive days.',
-    accuracy: 50,
-    lastActive: '5 days ago',
-    status: 'flagged',
-  },
-  {
-    id: 'student-sophia-zhang',
-    name: 'Sophia Zhang',
-    initials: 'SZ',
-    cohort: 'Grade 10 Physics (0625)',
-    avatarBg: '#fde8e8',
-    reason: 'error_rate',
-    reasonBadge: '🚨 High Error Rate',
-    detail: '44% accuracy on Thermal Energy and Waves calculations.',
-    accuracy: 44,
-    lastActive: '1 day ago',
-    status: 'flagged',
-  },
-  {
-    id: 'student-lucas-meyer',
-    name: 'Lucas Meyer',
-    initials: 'LM',
-    cohort: 'Year 11 Physics (0625)',
-    avatarBg: '#ffe1d0',
-    reason: 'rapid_guessing',
-    reasonBadge: '⚡ Rapid Guessing',
-    detail: 'Average response time 6.1s / question on Nuclear Physics revision.',
-    accuracy: 46,
-    avgTimeSeconds: 6.1,
-    lastActive: '2 days ago',
-    status: 'flagged',
-  },
-];
+const INITIAL_TRIAGE_STUDENTS: TriageStudent[] = [];
 
-const TOPIC_MASTERY_STRONG = [
-  { topic: 'The Basic Economic Problem', accuracy: 89, attempts: 42, subject: '0455' },
-  { topic: 'Government Macroeconomic Aims', accuracy: 84, attempts: 38, subject: '0455' },
-  { topic: 'Production Possibility Curves', accuracy: 82, attempts: 31, subject: '0455' },
-  { topic: 'General Physics & Measurement', accuracy: 85, attempts: 35, subject: '0625' },
-];
+const TOPIC_MASTERY_STRONG: { topic: string; accuracy: number; attempts: number; subject: string }[] = [];
 
-const TOPIC_MASTERY_GAPS = [
-  { topic: 'Price Elasticity of Demand (PED & PES)', accuracy: 46, strugglingCount: 18, subject: '0455' },
-  { topic: 'Market Failure & Negative Externalities', accuracy: 51, strugglingCount: 15, subject: '0455' },
-  { topic: 'Monetary vs Fiscal Policy Trade-offs', accuracy: 54, strugglingCount: 12, subject: '0455' },
-  { topic: 'Electromagnetic Induction & Transformers', accuracy: 49, strugglingCount: 14, subject: '0625' },
-];
+const TOPIC_MASTERY_GAPS: { topic: string; accuracy: number; strugglingCount: number; subject: string }[] = [];
+export const TOPIC_MASTERY_WEAK = TOPIC_MASTERY_GAPS;
 
 export default function TeacherOverviewHub({
   onNavigate,
@@ -347,70 +228,32 @@ export default function TeacherOverviewHub({
         // 2. Load Online Assignments
         const storedAssignments = listOnlineAssignments();
         if (storedAssignments && storedAssignments.length > 0) {
-          const augmented: MockAssignmentStats[] = storedAssignments.map((a, idx) => ({
-            ...a,
-            completedCount: 18 + (idx % 4),
-            totalStudents: 22,
-            averageScorePercent: 74 + ((idx * 5) % 15),
-          }));
-          if (mounted) setAssignmentsList(augmented);
-        }
-
-        // 3. Query Supabase profiles to merge live student roster if available
-        const { data: profiles, error } = await supabase
-          .from('profiles')
-          .select('id, display_name, total_xp, current_streak')
-          .order('total_xp', { ascending: false });
-
-        if (!error && profiles && profiles.length > 0 && mounted) {
-          const liveTriage: TriageStudent[] = profiles.slice(0, 5).map((p, idx) => {
-            const name = p.display_name || `Student ${idx + 1}`;
-            const parts = name.trim().split(/\s+/);
-            const initials =
-              parts.length > 1
-                ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-                : name.slice(0, 2).toUpperCase();
-            const streak = p.current_streak || 0;
-            const xp = p.total_xp || 0;
-
-            let reason: 'error_rate' | 'rapid_guessing' | 'inactive' = 'error_rate';
-            let reasonBadge = '🚨 High Error Rate';
-            let detail = 'Needs additional practice on Cambridge core questions.';
-            let accuracy = 45;
-            let avgTimeSeconds = undefined;
-
-            if (streak === 0 && xp < 100) {
-              reason = 'inactive';
-              reasonBadge = '💤 Inactive > 4 Days';
-              detail = 'No active streak or quiz participation in the last 4 days.';
-            } else if (idx % 2 === 1) {
-              reason = 'rapid_guessing';
-              reasonBadge = '⚡ Rapid Guessing';
-              detail = 'Average answer speed 5.8s / question with high volatility.';
-              avgTimeSeconds = 5.8;
-              accuracy = 40;
-            }
+          const augmented: MockAssignmentStats[] = storedAssignments.map((a) => {
+            const hw = findHomeworkByIdAnyTeacher(a.id) || getAssignedHomeworkByCode(a.testCode || '');
+            const submissions = hw?.submissions || [];
+            const completedCount = submissions.length;
+            const totalStudents = hw?.totalStudents || 0;
+            const averageScorePercent =
+              completedCount > 0
+                ? Math.round(
+                    submissions.reduce((sum, s) => sum + s.accuracyPercentage, 0) / completedCount
+                  )
+                : 0;
 
             return {
-              id: p.id,
-              name,
-              initials,
-              cohort: idx % 2 === 0 ? '10 Economics (0455)' : 'Grade 10 Physics (0625)',
-              avatarBg: idx % 3 === 0 ? '#ffe1d0' : idx % 3 === 1 ? '#ccdbb2' : '#fed7aa',
-              reason,
-              reasonBadge,
-              detail,
-              accuracy,
-              avgTimeSeconds,
-              lastActive: streak > 0 ? 'Today' : '4+ days ago',
-              status: 'flagged',
+              ...a,
+              completedCount,
+              totalStudents,
+              averageScorePercent,
             };
           });
-
-          if (liveTriage.length > 0) {
-            setTriageStudents(liveTriage);
-          }
+          if (mounted) setAssignmentsList(augmented);
+        } else {
+          if (mounted) setAssignmentsList([]);
         }
+
+        // 3. Zero fake data invariant: Never invent fake error rates, fake guessing speeds, or fake student triage entries
+        // Real triage students will only populate if explicit error telemetries exist
       } catch (err) {
         console.warn('TeacherOverviewHub: Non-fatal error loading hub data, using fallbacks:', err);
       } finally {
@@ -452,6 +295,31 @@ export default function TeacherOverviewHub({
       inactive: triageStudents.filter((s) => s.reason === 'inactive').length,
     };
   }, [triageStudents]);
+
+  // Dynamic real data metrics across active assignments
+  const totalEnrolledAcrossAssignments = useMemo(() => {
+    return filteredAssignments.reduce((acc, a) => acc + (a.totalStudents || 0), 0);
+  }, [filteredAssignments]);
+
+  const totalCompletedAcrossAssignments = useMemo(() => {
+    return filteredAssignments.reduce((acc, a) => acc + (a.completedCount || 0), 0);
+  }, [filteredAssignments]);
+
+  const totalPendingAcrossAssignments = Math.max(
+    0,
+    totalEnrolledAcrossAssignments - totalCompletedAcrossAssignments
+  );
+
+  const turnInPercentage = totalEnrolledAcrossAssignments > 0
+    ? Math.round((totalCompletedAcrossAssignments / totalEnrolledAcrossAssignments) * 100)
+    : 0;
+
+  const averageAccuracyPercent = useMemo(() => {
+    const withSubs = filteredAssignments.filter((a) => a.completedCount > 0);
+    if (withSubs.length === 0) return 0;
+    const sum = withSubs.reduce((acc, a) => acc + (a.averageScorePercent || 0), 0);
+    return Math.round(sum / withSubs.length);
+  }, [filteredAssignments]);
 
   // Smooth anchor scrolling helper
   const scrollToSection = (sectionId: string) => {
@@ -737,13 +605,21 @@ export default function TeacherOverviewHub({
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-[#201e1d] font-heading">74.8%</span>
-            <span className="text-xs font-bold text-[#272e1b] bg-[#ccdbb2] px-2 py-0.5 rounded-full border border-[#201e1d]">
-              +3.4% wk
+            <span className="text-3xl font-black text-[#201e1d] font-heading">
+              {averageAccuracyPercent > 0 ? `${averageAccuracyPercent}%` : '0%'}
             </span>
+            {averageAccuracyPercent > 0 && (
+              <span className="text-xs font-bold text-[#272e1b] bg-[#ccdbb2] px-2 py-0.5 rounded-full border border-[#201e1d]">
+                Live Average
+              </span>
+            )}
           </div>
           <p className="text-[11px] font-semibold text-[#645c50] mt-2 flex items-center justify-between">
-            <span>Across 342 Cambridge questions</span>
+            <span>
+              {totalCompletedAcrossAssignments > 0
+                ? `Across ${totalCompletedAcrossAssignments} completed drills`
+                : 'No submissions received yet'}
+            </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#201e1d]" />
           </p>
         </button>
@@ -764,13 +640,15 @@ export default function TeacherOverviewHub({
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-[#201e1d] font-heading">86.4%</span>
+            <span className="text-3xl font-black text-[#201e1d] font-heading">
+              {totalEnrolledAcrossAssignments > 0 ? `${turnInPercentage}%` : '0%'}
+            </span>
             <span className="text-xs font-bold text-[#643312] bg-[#ffe1d0] px-2 py-0.5 rounded-full border border-[#201e1d]">
-              54 / 64
+              {totalCompletedAcrossAssignments} / {totalEnrolledAcrossAssignments}
             </span>
           </div>
           <p className="text-[11px] font-semibold text-[#645c50] mt-2 flex items-center justify-between">
-            <span>10 pending across {filteredAssignments.length} sets</span>
+            <span>{totalPendingAcrossAssignments} pending across {filteredAssignments.length} sets</span>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#201e1d]" />
           </p>
         </button>
@@ -823,12 +701,18 @@ export default function TeacherOverviewHub({
             <span className="text-3xl font-black text-[#991b1b] font-heading">
               {activeTriageCount}
             </span>
-            <span className="text-xs font-bold text-[#991b1b] bg-[#fde8e8] px-2 py-0.5 rounded-full border border-[#201e1d] animate-pulse">
-              Requires Action
-            </span>
+            {activeTriageCount > 0 ? (
+              <span className="text-xs font-bold text-[#991b1b] bg-[#fde8e8] px-2 py-0.5 rounded-full border border-[#201e1d] animate-pulse">
+                Requires Action
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-[#272e1b] bg-[#ccdbb2] px-2 py-0.5 rounded-full border border-[#201e1d]">
+                All Clear ✓
+              </span>
+            )}
           </div>
           <p className="text-[11px] font-semibold text-[#645c50] mt-2 flex items-center justify-between">
-            <span>Spikes &amp; rapid guessing</span>
+            <span>{activeTriageCount > 0 ? 'Spikes & rapid guessing' : 'All student activity within expected thresholds'}</span>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#201e1d]" />
           </p>
         </button>
@@ -1062,17 +946,21 @@ export default function TeacherOverviewHub({
               <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-dashed border-[#201e1d] space-y-3">
                 <FileCheck className="w-8 h-8 text-[#645c50] mx-auto" />
                 <h4 className="font-heading font-black text-sm text-[#201e1d]">
-                  No active assignments for {selectedCohort}
+                  {assignmentsList.length === 0
+                    ? 'No active homework assignments yet.'
+                    : `No active assignments for ${selectedCohort}`}
                 </h4>
                 <p className="text-xs text-[#645c50] max-w-sm mx-auto">
-                  Assign a diagnostic or practice round to start tracking live student completion and submission stats.
+                  {assignmentsList.length === 0
+                    ? "Click '+ New Assignment' to create one."
+                    : 'Assign a diagnostic or practice round to start tracking live student completion and submission stats.'}
                 </p>
                 <button
                   type="button"
                   onClick={() => onNavigate('assign')}
                   className="mt-2 min-h-[38px] px-4 py-2 bg-[#ffe1d0] hover:bg-[#ffc6a5] text-[#201e1d] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
                 >
-                  + Create Assignment
+                  + New Assignment
                 </button>
               </div>
             ) : (
@@ -1218,75 +1106,93 @@ export default function TeacherOverviewHub({
               </p>
             </div>
 
-            {/* Critical Gap Topics (< 60% accuracy) */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-1.5 text-xs font-black uppercase text-[#991b1b] tracking-wider font-heading">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Critical Gap Topics (Needs Remedial Action)</span>
+            {TOPIC_MASTERY_GAPS.length === 0 && TOPIC_MASTERY_STRONG.length === 0 ? (
+              <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-dashed border-[#201e1d] space-y-2">
+                <Target className="w-8 h-8 text-[#645c50] mx-auto" />
+                <h4 className="font-heading font-black text-sm text-[#201e1d]">
+                  No topic mastery telemetry recorded yet.
+                </h4>
+                <p className="text-xs text-[#645c50] max-w-sm mx-auto">
+                  Class accuracy will populate as students complete quiz rounds.
+                </p>
               </div>
-
-              <div className="space-y-2.5">
-                {TOPIC_MASTERY_GAPS.map((gap, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-xl border-2 border-[#201e1d] bg-[#fde8e8]/50 shadow-offset-2 space-y-2 hover:bg-[#fde8e8] transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d]">
-                        {gap.topic}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#fde8e8] border border-[#201e1d] font-mono text-xs font-black text-[#991b1b]">
-                        {gap.accuracy}%
-                      </span>
+            ) : (
+              <>
+                {/* Critical Gap Topics (< 60% accuracy) */}
+                {TOPIC_MASTERY_GAPS.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-1.5 text-xs font-black uppercase text-[#991b1b] tracking-wider font-heading">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>Critical Gap Topics (Needs Remedial Action)</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="text-[11px] font-semibold text-[#645c50]">
-                        {gap.strugglingCount} students falling behind
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemedialRound(gap.topic, gap.subject)}
-                        className="min-h-[32px] px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#ffe1d0] hover:bg-[#ffc6a5] text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2 hover:shadow-offset-3 hover:-translate-y-0.5 transition-all duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center gap-1 cursor-pointer"
-                        title={`Generate remedial round for ${gap.topic}`}
-                      >
-                        <Zap className="w-3 h-3 fill-[#201e1d]" />
-                        <span>Remedial Round</span>
-                      </button>
+                    <div className="space-y-2.5">
+                      {TOPIC_MASTERY_GAPS.map((gap, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3.5 rounded-xl border-2 border-[#201e1d] bg-[#fde8e8]/50 shadow-offset-2 space-y-2 hover:bg-[#fde8e8] transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d]">
+                              {gap.topic}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-[#fde8e8] border border-[#201e1d] font-mono text-xs font-black text-[#991b1b]">
+                              {gap.accuracy}%
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3 text-xs">
+                            <span className="text-[11px] font-semibold text-[#645c50]">
+                              {gap.strugglingCount} students falling behind
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemedialRound(gap.topic, gap.subject)}
+                              className="min-h-[32px] px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#ffe1d0] hover:bg-[#ffc6a5] text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2 hover:shadow-offset-3 hover:-translate-y-0.5 transition-all duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center gap-1 cursor-pointer"
+                              title={`Generate remedial round for ${gap.topic}`}
+                            >
+                              <Zap className="w-3 h-3 fill-[#201e1d]" />
+                              <span>Remedial Round</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                )}
 
-            {/* Strongest Topics (>= 80% accuracy) */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center gap-1.5 text-xs font-black uppercase text-[#272e1b] tracking-wider font-heading">
-                <Award className="w-3.5 h-3.5 text-[#272e1b]" />
-                <span>Strongest Syllabus Units (Mastery Confirmed)</span>
-              </div>
-
-              <div className="space-y-2">
-                {TOPIC_MASTERY_STRONG.slice(0, 3).map((st, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-xl border-2 border-[#201e1d] bg-[#f0fae1]/50 shadow-offset-2 flex items-center justify-between gap-2"
-                  >
-                    <div>
-                      <h4 className="font-heading font-bold text-xs text-[#201e1d]">
-                        {st.topic}
-                      </h4>
-                      <span className="text-[10px] text-[#645c50]">
-                        {st.attempts} question rounds completed
-                      </span>
+                {/* Strongest Topics (>= 80% accuracy) */}
+                {TOPIC_MASTERY_STRONG.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-1.5 text-xs font-black uppercase text-[#272e1b] tracking-wider font-heading">
+                      <Award className="w-3.5 h-3.5 text-[#272e1b]" />
+                      <span>Strongest Syllabus Units (Mastery Confirmed)</span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-md bg-[#ccdbb2] border border-[#201e1d] font-mono text-xs font-black text-[#272e1b]">
-                      {st.accuracy}%
-                    </span>
+
+                    <div className="space-y-2">
+                      {TOPIC_MASTERY_STRONG.slice(0, 3).map((st, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3 rounded-xl border-2 border-[#201e1d] bg-[#f0fae1]/50 shadow-offset-2 flex items-center justify-between gap-2"
+                        >
+                          <div>
+                            <h4 className="font-heading font-bold text-xs text-[#201e1d]">
+                              {st.topic}
+                            </h4>
+                            <span className="text-[10px] text-[#645c50]">
+                              {st.attempts} question rounds completed
+                            </span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-md bg-[#ccdbb2] border border-[#201e1d] font-mono text-xs font-black text-[#272e1b]">
+                            {st.accuracy}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Section 4: Student Flagging & Triage Hub */}
@@ -1368,7 +1274,17 @@ export default function TeacherOverviewHub({
 
             {/* Triage Cards */}
             <div className="space-y-3">
-              {filteredTriageStudents.length === 0 ? (
+              {triageStudents.length === 0 ? (
+                <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-dashed border-[#201e1d] space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-[#272e1b] mx-auto" />
+                  <h4 className="font-heading font-black text-sm text-[#201e1d]">
+                    No students currently flagged for triage.
+                  </h4>
+                  <p className="text-xs text-[#645c50]">
+                    All student activity within expected accuracy thresholds.
+                  </p>
+                </div>
+              ) : filteredTriageStudents.length === 0 ? (
                 <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-[#201e1d] space-y-2">
                   <CheckCircle2 className="w-8 h-8 text-[#272e1b] mx-auto" />
                   <h4 className="font-heading font-black text-sm text-[#201e1d]">
