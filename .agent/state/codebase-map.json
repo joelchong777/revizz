@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-19T10:22:31.141Z",
+  "generatedAt": "2026-10-19T11:05:38.368Z",
   "stats": {
-    "totalFiles": 159,
-    "totalLines": 84611,
-    "totalSymbols": 762,
-    "scanDurationMs": 326
+    "totalFiles": 163,
+    "totalLines": 89775,
+    "totalSymbols": 804,
+    "scanDurationMs": 227
   },
   "sections": {
     "app": [
@@ -325,15 +325,15 @@
       },
       {
         "path": "app/page.tsx",
-        "lineCount": 352,
+        "lineCount": 409,
         "purpose": "Revizz student home page and interactive quiz game launchpad",
         "category": "app",
         "symbols": [
           {
             "name": "HomePage",
             "kind": "component",
-            "startLine": 22,
-            "endLine": 351,
+            "startLine": 24,
+            "endLine": 408,
             "exported": true
           }
         ]
@@ -355,15 +355,15 @@
       },
       {
         "path": "app/portal/page.tsx",
-        "lineCount": 976,
+        "lineCount": 977,
         "purpose": "Teacher and student portal hub with tabs and analytics",
         "category": "app",
         "symbols": [
           {
             "name": "PortalPage",
             "kind": "component",
-            "startLine": 958,
-            "endLine": 975,
+            "startLine": 959,
+            "endLine": 976,
             "exported": true
           }
         ]
@@ -1013,6 +1013,50 @@
         ]
       },
       {
+        "path": "components/portal/AssignedHomeworkHub.tsx",
+        "lineCount": 636,
+        "purpose": "Portal & ingestion component: AssignedHomeworkHub",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "AssignedHomeworkHubProps",
+            "kind": "interface",
+            "startLine": 40,
+            "endLine": 44,
+            "exported": true
+          },
+          {
+            "name": "AssignedHomeworkHub",
+            "kind": "component",
+            "startLine": 46,
+            "endLine": 635,
+            "exported": true
+          }
+        ]
+      },
+      {
+        "path": "components/portal/AssignedHomeworkModal.tsx",
+        "lineCount": 864,
+        "purpose": "Portal & ingestion component: AssignedHomeworkModal",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "NewHomeworkModal",
+            "kind": "component",
+            "startLine": 77,
+            "endLine": 611,
+            "exported": true
+          },
+          {
+            "name": "SubmissionsDetailModal",
+            "kind": "component",
+            "startLine": 623,
+            "endLine": 863,
+            "exported": true
+          }
+        ]
+      },
+      {
         "path": "components/portal/IngestionAuditDrawer.tsx",
         "lineCount": 1323,
         "purpose": "Drawer component for inspecting and auditing question JSON/images",
@@ -1652,15 +1696,15 @@
       },
       {
         "path": "components/portal/compiler/TestCompilerHub.tsx",
-        "lineCount": 2184,
+        "lineCount": 3226,
         "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
         "category": "components",
         "symbols": [
           {
             "name": "TestCompilerHub",
             "kind": "component",
-            "startLine": 75,
-            "endLine": 2183,
+            "startLine": 87,
+            "endLine": 3225,
             "exported": true
           }
         ]
@@ -3560,6 +3604,126 @@
         ]
       },
       {
+        "path": "lib/portal/assignedHomework.ts",
+        "lineCount": 768,
+        "purpose": "Core library utility module: assignedHomework",
+        "category": "lib",
+        "symbols": [
+          {
+            "name": "StudentSubmission",
+            "kind": "interface",
+            "startLine": 5,
+            "endLine": 14,
+            "exported": true
+          },
+          {
+            "name": "AssignedHomeworkRound",
+            "kind": "interface",
+            "startLine": 16,
+            "endLine": 41,
+            "exported": true
+          },
+          {
+            "name": "HomeworkMetricsSummary",
+            "kind": "interface",
+            "startLine": 43,
+            "endLine": 48,
+            "exported": true
+          },
+          {
+            "name": "HOMEWORK_CHANGED_EVENT",
+            "kind": "const",
+            "startLine": 51,
+            "endLine": 51,
+            "exported": true
+          },
+          {
+            "name": "getStorageKey",
+            "kind": "function",
+            "startLine": 56,
+            "endLine": 59,
+            "exported": true
+          },
+          {
+            "name": "isHomeworkDue",
+            "kind": "function",
+            "startLine": 67,
+            "endLine": 71,
+            "exported": true
+          },
+          {
+            "name": "computeHomeworkMetrics",
+            "kind": "function",
+            "startLine": 73,
+            "endLine": 106,
+            "exported": true
+          },
+          {
+            "name": "getAssignedHomeworkList",
+            "kind": "function",
+            "startLine": 108,
+            "endLine": 121,
+            "exported": true
+          },
+          {
+            "name": "getAssignedHomeworkById",
+            "kind": "function",
+            "startLine": 123,
+            "endLine": 126,
+            "exported": true
+          },
+          {
+            "name": "getAssignedHomeworkByCode",
+            "kind": "function",
+            "startLine": 128,
+            "endLine": 150,
+            "exported": true
+          },
+          {
+            "name": "findHomeworkByIdAnyTeacher",
+            "kind": "function",
+            "startLine": 152,
+            "endLine": 172,
+            "exported": true
+          },
+          {
+            "name": "saveAssignedHomework",
+            "kind": "function",
+            "startLine": 174,
+            "endLine": 212,
+            "exported": true
+          },
+          {
+            "name": "deleteAssignedHomework",
+            "kind": "function",
+            "startLine": 214,
+            "endLine": 232,
+            "exported": true
+          },
+          {
+            "name": "recordStudentSubmission",
+            "kind": "function",
+            "startLine": 234,
+            "endLine": 259,
+            "exported": true
+          },
+          {
+            "name": "subscribeToHomeworkChanges",
+            "kind": "function",
+            "startLine": 261,
+            "endLine": 270,
+            "exported": true
+          },
+          {
+            "name": "seedInitialHomeworkIfEmpty",
+            "kind": "function",
+            "startLine": 275,
+            "endLine": 767,
+            "exported": true
+          }
+        ]
+      },
+      {
         "path": "lib/portal/bankFilters.ts",
         "lineCount": 1087,
         "purpose": "Pure, zero-DOM-dependency Question Bank Filter Engine & URL Synchronization Module.",
@@ -4742,99 +4906,197 @@
       },
       {
         "path": "lib/testCompiler.ts",
-        "lineCount": 242,
+        "lineCount": 644,
         "purpose": "Test compiler draft persistence in localStorage and exam compiler",
         "category": "lib",
         "symbols": [
           {
+            "name": "DRAFT_KEY_PREFIX",
+            "kind": "const",
+            "startLine": 5,
+            "endLine": 5,
+            "exported": true
+          },
+          {
+            "name": "PRINT_SNAPSHOT_PREFIX",
+            "kind": "const",
+            "startLine": 6,
+            "endLine": 6,
+            "exported": true
+          },
+          {
+            "name": "DRAFT_CHANGE_EVENT",
+            "kind": "const",
+            "startLine": 7,
+            "endLine": 7,
+            "exported": true
+          },
+          {
             "name": "SUBJECT_CATALOG",
             "kind": "const",
-            "startLine": 8,
-            "endLine": 8,
+            "startLine": 10,
+            "endLine": 10,
             "exported": true
           },
           {
             "name": "GeneratedTestPaper",
             "kind": "interface",
-            "startLine": 15,
-            "endLine": 19,
+            "startLine": 17,
+            "endLine": 21,
             "exported": true
           },
           {
             "name": "resolveQuestionExplanation",
             "kind": "function",
-            "startLine": 21,
-            "endLine": 33,
+            "startLine": 23,
+            "endLine": 35,
+            "exported": true
+          },
+          {
+            "name": "notifyDraftsChanged",
+            "kind": "function",
+            "startLine": 37,
+            "endLine": 53,
+            "exported": true
+          },
+          {
+            "name": "sanitizeAccountScope",
+            "kind": "function",
+            "startLine": 55,
+            "endLine": 65,
+            "exported": true
+          },
+          {
+            "name": "resolveCurrentAccountScope",
+            "kind": "function",
+            "startLine": 67,
+            "endLine": 116,
+            "exported": true
+          },
+          {
+            "name": "getDraftStorageKey",
+            "kind": "function",
+            "startLine": 118,
+            "endLine": 121,
+            "exported": true
+          },
+          {
+            "name": "formatDefaultDraftTitle",
+            "kind": "function",
+            "startLine": 123,
+            "endLine": 134,
             "exported": true
           },
           {
             "name": "saveTestDraft",
             "kind": "function",
-            "startLine": 35,
-            "endLine": 38,
+            "startLine": 136,
+            "endLine": 188,
+            "exported": true
+          },
+          {
+            "name": "savePrintSnapshot",
+            "kind": "function",
+            "startLine": 190,
+            "endLine": 219,
             "exported": true
           },
           {
             "name": "loadTestDraft",
             "kind": "function",
-            "startLine": 40,
-            "endLine": 49,
+            "startLine": 221,
+            "endLine": 286,
             "exported": true
           },
           {
             "name": "listTestDrafts",
             "kind": "function",
-            "startLine": 51,
-            "endLine": 66,
+            "startLine": 288,
+            "endLine": 324,
+            "exported": true
+          },
+          {
+            "name": "deleteTestDraft",
+            "kind": "function",
+            "startLine": 326,
+            "endLine": 349,
+            "exported": true
+          },
+          {
+            "name": "duplicateTestDraft",
+            "kind": "function",
+            "startLine": 351,
+            "endLine": 366,
+            "exported": true
+          },
+          {
+            "name": "renameTestDraft",
+            "kind": "function",
+            "startLine": 368,
+            "endLine": 386,
+            "exported": true
+          },
+          {
+            "name": "exportTestDraftJson",
+            "kind": "function",
+            "startLine": 388,
+            "endLine": 398,
+            "exported": true
+          },
+          {
+            "name": "importTestDraftJson",
+            "kind": "function",
+            "startLine": 400,
+            "endLine": 468,
             "exported": true
           },
           {
             "name": "buildCompiledQuestions",
             "kind": "function",
-            "startLine": 68,
-            "endLine": 107,
+            "startLine": 470,
+            "endLine": 509,
             "exported": true
           },
           {
             "name": "autoSelectQuestions",
             "kind": "function",
-            "startLine": 110,
-            "endLine": 147,
+            "startLine": 512,
+            "endLine": 549,
             "exported": true
           },
           {
             "name": "generateTestPaper",
             "kind": "function",
-            "startLine": 149,
-            "endLine": 177,
+            "startLine": 551,
+            "endLine": 579,
             "exported": true
           },
           {
             "name": "shuffleQuestionIds",
             "kind": "function",
-            "startLine": 179,
-            "endLine": 186,
+            "startLine": 581,
+            "endLine": 588,
             "exported": true
           },
           {
             "name": "computeTopicDistribution",
             "kind": "function",
-            "startLine": 188,
-            "endLine": 217,
+            "startLine": 590,
+            "endLine": 619,
             "exported": true
           },
           {
             "name": "saveOnlineAssignment",
             "kind": "function",
-            "startLine": 219,
-            "endLine": 222,
+            "startLine": 621,
+            "endLine": 624,
             "exported": true
           },
           {
             "name": "listOnlineAssignments",
             "kind": "function",
-            "startLine": 224,
-            "endLine": 239,
+            "startLine": 626,
+            "endLine": 641,
             "exported": true
           }
         ]
@@ -5024,7 +5286,7 @@
       },
       {
         "path": "scripts/codebase-map.ts",
-        "lineCount": 1191,
+        "lineCount": 1227,
         "purpose": "Ultra-fast (<200ms), zero-dependency TypeScript/Python/SQL symbol & line-range indexer.",
         "category": "scripts",
         "symbols": [
@@ -5074,7 +5336,7 @@
             "name": "extractPurpose",
             "kind": "function",
             "startLine": 222,
-            "endLine": 1190,
+            "endLine": 1226,
             "exported": true
           }
         ]
@@ -5426,6 +5688,56 @@
         ]
       },
       {
+        "path": "scripts/verify-assigned-homework.ts",
+        "lineCount": 1016,
+        "purpose": "Revizz QA & Verification Test Suite Account-Unique Assigned Homework Engine & Data Invariants Verification File: scri...",
+        "category": "scripts",
+        "symbols": [
+          {
+            "name": "registerTest",
+            "kind": "function",
+            "startLine": 134,
+            "endLine": 136,
+            "exported": false
+          },
+          {
+            "name": "assert",
+            "kind": "function",
+            "startLine": 138,
+            "endLine": 142,
+            "exported": false
+          },
+          {
+            "name": "assertEqual",
+            "kind": "function",
+            "startLine": 144,
+            "endLine": 150,
+            "exported": false
+          },
+          {
+            "name": "assertDeepEqual",
+            "kind": "function",
+            "startLine": 152,
+            "endLine": 160,
+            "exported": false
+          },
+          {
+            "name": "resetStorage",
+            "kind": "function",
+            "startLine": 163,
+            "endLine": 165,
+            "exported": false
+          },
+          {
+            "name": "createSampleRound",
+            "kind": "function",
+            "startLine": 168,
+            "endLine": 199,
+            "exported": false
+          }
+        ]
+      },
+      {
         "path": "scripts/verify-compiler-diagram-preview.ts",
         "lineCount": 117,
         "purpose": "Standalone Verification Script for CompilerDiagramPreview & Test Compiler Integration.",
@@ -5471,57 +5783,71 @@
       },
       {
         "path": "scripts/verify-compiler-print.ts",
-        "lineCount": 473,
+        "lineCount": 813,
         "purpose": "Standalone Verification Test Script: verify-compiler-print.ts Verifies: 1.",
         "category": "scripts",
         "symbols": [
           {
             "name": "recordResult",
             "kind": "function",
-            "startLine": 61,
-            "endLine": 65,
+            "startLine": 74,
+            "endLine": 78,
             "exported": false
           },
           {
             "name": "testDynamicPoolCompilation",
             "kind": "function",
-            "startLine": 67,
-            "endLine": 150,
+            "startLine": 80,
+            "endLine": 163,
             "exported": false
           },
           {
             "name": "testCambridgeFallback",
             "kind": "function",
-            "startLine": 152,
-            "endLine": 167,
+            "startLine": 165,
+            "endLine": 180,
             "exported": false
           },
           {
             "name": "testDraftSnapshotSerialization",
             "kind": "function",
-            "startLine": 169,
-            "endLine": 246,
+            "startLine": 182,
+            "endLine": 259,
+            "exported": false
+          },
+          {
+            "name": "testDraftLifecycleOperations",
+            "kind": "function",
+            "startLine": 261,
+            "endLine": 415,
+            "exported": false
+          },
+          {
+            "name": "testAccountScopedDraftIsolation",
+            "kind": "function",
+            "startLine": 417,
+            "endLine": 584,
             "exported": false
           },
           {
             "name": "testSupabaseEndToEnd",
             "kind": "function",
-            "startLine": 248,
-            "endLine": 381,
+            "startLine": 586,
+            "endLine": 719,
             "exported": false
           },
           {
             "name": "testAutoSelectQuestions",
             "kind": "function",
-            "startLine": 383,
-            "endLine": 428,
+            "startLine": 721,
+            "endLine": 766,
             "exported": false
           },
           {
             "name": "main",
             "kind": "function",
-            "startLine": 430,
-            "endLine": 467,
+            "startLine": 768,
+            "endLine": 807,
             "exported": false
           }
         ]
@@ -6401,7 +6727,7 @@
       },
       {
         "path": "scripts/wt.ts",
-        "lineCount": 1555,
+        "lineCount": 1557,
         "purpose": "Git worktree isolation manager and atomic release CLI",
         "category": "scripts",
         "symbols": [
@@ -6472,98 +6798,98 @@
             "name": "syncAgentTooling",
             "kind": "function",
             "startLine": 320,
-            "endLine": 370,
+            "endLine": 372,
             "exported": true
           },
           {
             "name": "commandCreate",
             "kind": "function",
-            "startLine": 377,
-            "endLine": 475,
+            "startLine": 379,
+            "endLine": 477,
             "exported": true
           },
           {
             "name": "commandList",
             "kind": "function",
-            "startLine": 480,
-            "endLine": 515,
+            "startLine": 482,
+            "endLine": 517,
             "exported": true
           },
           {
             "name": "commandVerify",
             "kind": "function",
-            "startLine": 520,
-            "endLine": 600,
+            "startLine": 522,
+            "endLine": 602,
             "exported": true
           },
           {
             "name": "commandRelease",
             "kind": "function",
-            "startLine": 605,
-            "endLine": 748,
+            "startLine": 607,
+            "endLine": 750,
             "exported": true
           },
           {
             "name": "commandClean",
             "kind": "function",
-            "startLine": 753,
-            "endLine": 873,
+            "startLine": 755,
+            "endLine": 875,
             "exported": true
           },
           {
             "name": "listWorktrees",
             "kind": "const",
-            "startLine": 876,
-            "endLine": 876,
+            "startLine": 878,
+            "endLine": 878,
             "exported": true
           },
           {
             "name": "resolveTargetWorktree",
             "kind": "const",
-            "startLine": 877,
-            "endLine": 877,
+            "startLine": 879,
+            "endLine": 879,
             "exported": true
           },
           {
             "name": "stopServerOnPort",
             "kind": "function",
-            "startLine": 884,
-            "endLine": 917,
+            "startLine": 886,
+            "endLine": 919,
             "exported": true
           },
           {
             "name": "commandServe",
             "kind": "async-function",
-            "startLine": 923,
-            "endLine": 1072,
+            "startLine": 925,
+            "endLine": 1074,
             "exported": true
           },
           {
             "name": "commandStop",
             "kind": "function",
-            "startLine": 1078,
-            "endLine": 1108,
+            "startLine": 1080,
+            "endLine": 1110,
             "exported": true
           },
           {
             "name": "commandShip",
             "kind": "async-function",
-            "startLine": 1115,
-            "endLine": 1357,
+            "startLine": 1117,
+            "endLine": 1359,
             "exported": true
           },
           {
             "name": "commandHelp",
             "kind": "function",
-            "startLine": 1362,
-            "endLine": 1441,
+            "startLine": 1364,
+            "endLine": 1443,
             "exported": true
           },
           {
             "name": "main",
             "kind": "async-function",
-            "startLine": 1444,
-            "endLine": 1546,
+            "startLine": 1446,
+            "endLine": 1548,
             "exported": true
           }
         ]
@@ -6940,15 +7266,15 @@
     },
     {
       "path": "app/page.tsx",
-      "lineCount": 352,
+      "lineCount": 409,
       "purpose": "Revizz student home page and interactive quiz game launchpad",
       "category": "app",
       "symbols": [
         {
           "name": "HomePage",
           "kind": "component",
-          "startLine": 22,
-          "endLine": 351,
+          "startLine": 24,
+          "endLine": 408,
           "exported": true
         }
       ]
@@ -6970,15 +7296,15 @@
     },
     {
       "path": "app/portal/page.tsx",
-      "lineCount": 976,
+      "lineCount": 977,
       "purpose": "Teacher and student portal hub with tabs and analytics",
       "category": "app",
       "symbols": [
         {
           "name": "PortalPage",
           "kind": "component",
-          "startLine": 958,
-          "endLine": 975,
+          "startLine": 959,
+          "endLine": 976,
           "exported": true
         }
       ]
@@ -7626,6 +7952,50 @@
       ]
     },
     {
+      "path": "components/portal/AssignedHomeworkHub.tsx",
+      "lineCount": 636,
+      "purpose": "Portal & ingestion component: AssignedHomeworkHub",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "AssignedHomeworkHubProps",
+          "kind": "interface",
+          "startLine": 40,
+          "endLine": 44,
+          "exported": true
+        },
+        {
+          "name": "AssignedHomeworkHub",
+          "kind": "component",
+          "startLine": 46,
+          "endLine": 635,
+          "exported": true
+        }
+      ]
+    },
+    {
+      "path": "components/portal/AssignedHomeworkModal.tsx",
+      "lineCount": 864,
+      "purpose": "Portal & ingestion component: AssignedHomeworkModal",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "NewHomeworkModal",
+          "kind": "component",
+          "startLine": 77,
+          "endLine": 611,
+          "exported": true
+        },
+        {
+          "name": "SubmissionsDetailModal",
+          "kind": "component",
+          "startLine": 623,
+          "endLine": 863,
+          "exported": true
+        }
+      ]
+    },
+    {
       "path": "components/portal/IngestionAuditDrawer.tsx",
       "lineCount": 1323,
       "purpose": "Drawer component for inspecting and auditing question JSON/images",
@@ -8265,15 +8635,15 @@
     },
     {
       "path": "components/portal/compiler/TestCompilerHub.tsx",
-      "lineCount": 2184,
+      "lineCount": 3226,
       "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
       "category": "components",
       "symbols": [
         {
           "name": "TestCompilerHub",
           "kind": "component",
-          "startLine": 75,
-          "endLine": 2183,
+          "startLine": 87,
+          "endLine": 3225,
           "exported": true
         }
       ]
@@ -10171,6 +10541,126 @@
       ]
     },
     {
+      "path": "lib/portal/assignedHomework.ts",
+      "lineCount": 768,
+      "purpose": "Core library utility module: assignedHomework",
+      "category": "lib",
+      "symbols": [
+        {
+          "name": "StudentSubmission",
+          "kind": "interface",
+          "startLine": 5,
+          "endLine": 14,
+          "exported": true
+        },
+        {
+          "name": "AssignedHomeworkRound",
+          "kind": "interface",
+          "startLine": 16,
+          "endLine": 41,
+          "exported": true
+        },
+        {
+          "name": "HomeworkMetricsSummary",
+          "kind": "interface",
+          "startLine": 43,
+          "endLine": 48,
+          "exported": true
+        },
+        {
+          "name": "HOMEWORK_CHANGED_EVENT",
+          "kind": "const",
+          "startLine": 51,
+          "endLine": 51,
+          "exported": true
+        },
+        {
+          "name": "getStorageKey",
+          "kind": "function",
+          "startLine": 56,
+          "endLine": 59,
+          "exported": true
+        },
+        {
+          "name": "isHomeworkDue",
+          "kind": "function",
+          "startLine": 67,
+          "endLine": 71,
+          "exported": true
+        },
+        {
+          "name": "computeHomeworkMetrics",
+          "kind": "function",
+          "startLine": 73,
+          "endLine": 106,
+          "exported": true
+        },
+        {
+          "name": "getAssignedHomeworkList",
+          "kind": "function",
+          "startLine": 108,
+          "endLine": 121,
+          "exported": true
+        },
+        {
+          "name": "getAssignedHomeworkById",
+          "kind": "function",
+          "startLine": 123,
+          "endLine": 126,
+          "exported": true
+        },
+        {
+          "name": "getAssignedHomeworkByCode",
+          "kind": "function",
+          "startLine": 128,
+          "endLine": 150,
+          "exported": true
+        },
+        {
+          "name": "findHomeworkByIdAnyTeacher",
+          "kind": "function",
+          "startLine": 152,
+          "endLine": 172,
+          "exported": true
+        },
+        {
+          "name": "saveAssignedHomework",
+          "kind": "function",
+          "startLine": 174,
+          "endLine": 212,
+          "exported": true
+        },
+        {
+          "name": "deleteAssignedHomework",
+          "kind": "function",
+          "startLine": 214,
+          "endLine": 232,
+          "exported": true
+        },
+        {
+          "name": "recordStudentSubmission",
+          "kind": "function",
+          "startLine": 234,
+          "endLine": 259,
+          "exported": true
+        },
+        {
+          "name": "subscribeToHomeworkChanges",
+          "kind": "function",
+          "startLine": 261,
+          "endLine": 270,
+          "exported": true
+        },
+        {
+          "name": "seedInitialHomeworkIfEmpty",
+          "kind": "function",
+          "startLine": 275,
+          "endLine": 767,
+          "exported": true
+        }
+      ]
+    },
+    {
       "path": "lib/portal/bankFilters.ts",
       "lineCount": 1087,
       "purpose": "Pure, zero-DOM-dependency Question Bank Filter Engine & URL Synchronization Module.",
@@ -11353,99 +11843,197 @@
     },
     {
       "path": "lib/testCompiler.ts",
-      "lineCount": 242,
+      "lineCount": 644,
       "purpose": "Test compiler draft persistence in localStorage and exam compiler",
       "category": "lib",
       "symbols": [
         {
+          "name": "DRAFT_KEY_PREFIX",
+          "kind": "const",
+          "startLine": 5,
+          "endLine": 5,
+          "exported": true
+        },
+        {
+          "name": "PRINT_SNAPSHOT_PREFIX",
+          "kind": "const",
+          "startLine": 6,
+          "endLine": 6,
+          "exported": true
+        },
+        {
+          "name": "DRAFT_CHANGE_EVENT",
+          "kind": "const",
+          "startLine": 7,
+          "endLine": 7,
+          "exported": true
+        },
+        {
           "name": "SUBJECT_CATALOG",
           "kind": "const",
-          "startLine": 8,
-          "endLine": 8,
+          "startLine": 10,
+          "endLine": 10,
           "exported": true
         },
         {
           "name": "GeneratedTestPaper",
           "kind": "interface",
-          "startLine": 15,
-          "endLine": 19,
+          "startLine": 17,
+          "endLine": 21,
           "exported": true
         },
         {
           "name": "resolveQuestionExplanation",
           "kind": "function",
-          "startLine": 21,
-          "endLine": 33,
+          "startLine": 23,
+          "endLine": 35,
+          "exported": true
+        },
+        {
+          "name": "notifyDraftsChanged",
+          "kind": "function",
+          "startLine": 37,
+          "endLine": 53,
+          "exported": true
+        },
+        {
+          "name": "sanitizeAccountScope",
+          "kind": "function",
+          "startLine": 55,
+          "endLine": 65,
+          "exported": true
+        },
+        {
+          "name": "resolveCurrentAccountScope",
+          "kind": "function",
+          "startLine": 67,
+          "endLine": 116,
+          "exported": true
+        },
+        {
+          "name": "getDraftStorageKey",
+          "kind": "function",
+          "startLine": 118,
+          "endLine": 121,
+          "exported": true
+        },
+        {
+          "name": "formatDefaultDraftTitle",
+          "kind": "function",
+          "startLine": 123,
+          "endLine": 134,
           "exported": true
         },
         {
           "name": "saveTestDraft",
           "kind": "function",
-          "startLine": 35,
-          "endLine": 38,
+          "startLine": 136,
+          "endLine": 188,
+          "exported": true
+        },
+        {
+          "name": "savePrintSnapshot",
+          "kind": "function",
+          "startLine": 190,
+          "endLine": 219,
           "exported": true
         },
         {
           "name": "loadTestDraft",
           "kind": "function",
-          "startLine": 40,
-          "endLine": 49,
+          "startLine": 221,
+          "endLine": 286,
           "exported": true
         },
         {
           "name": "listTestDrafts",
           "kind": "function",
-          "startLine": 51,
-          "endLine": 66,
+          "startLine": 288,
+          "endLine": 324,
+          "exported": true
+        },
+        {
+          "name": "deleteTestDraft",
+          "kind": "function",
+          "startLine": 326,
+          "endLine": 349,
+          "exported": true
+        },
+        {
+          "name": "duplicateTestDraft",
+          "kind": "function",
+          "startLine": 351,
+          "endLine": 366,
+          "exported": true
+        },
+        {
+          "name": "renameTestDraft",
+          "kind": "function",
+          "startLine": 368,
+          "endLine": 386,
+          "exported": true
+        },
+        {
+          "name": "exportTestDraftJson",
+          "kind": "function",
+          "startLine": 388,
+          "endLine": 398,
+          "exported": true
+        },
+        {
+          "name": "importTestDraftJson",
+          "kind": "function",
+          "startLine": 400,
+          "endLine": 468,
           "exported": true
         },
         {
           "name": "buildCompiledQuestions",
           "kind": "function",
-          "startLine": 68,
-          "endLine": 107,
+          "startLine": 470,
+          "endLine": 509,
           "exported": true
         },
         {
           "name": "autoSelectQuestions",
           "kind": "function",
-          "startLine": 110,
-          "endLine": 147,
+          "startLine": 512,
+          "endLine": 549,
           "exported": true
         },
         {
           "name": "generateTestPaper",
           "kind": "function",
-          "startLine": 149,
-          "endLine": 177,
+          "startLine": 551,
+          "endLine": 579,
           "exported": true
         },
         {
           "name": "shuffleQuestionIds",
           "kind": "function",
-          "startLine": 179,
-          "endLine": 186,
+          "startLine": 581,
+          "endLine": 588,
           "exported": true
         },
         {
           "name": "computeTopicDistribution",
           "kind": "function",
-          "startLine": 188,
-          "endLine": 217,
+          "startLine": 590,
+          "endLine": 619,
           "exported": true
         },
         {
           "name": "saveOnlineAssignment",
           "kind": "function",
-          "startLine": 219,
-          "endLine": 222,
+          "startLine": 621,
+          "endLine": 624,
           "exported": true
         },
         {
           "name": "listOnlineAssignments",
           "kind": "function",
-          "startLine": 224,
-          "endLine": 239,
+          "startLine": 626,
+          "endLine": 641,
           "exported": true
         }
       ]
@@ -11633,7 +12221,7 @@
     },
     {
       "path": "scripts/codebase-map.ts",
-      "lineCount": 1191,
+      "lineCount": 1227,
       "purpose": "Ultra-fast (<200ms), zero-dependency TypeScript/Python/SQL symbol & line-range indexer.",
       "category": "scripts",
       "symbols": [
@@ -11683,7 +12271,7 @@
           "name": "extractPurpose",
           "kind": "function",
           "startLine": 222,
-          "endLine": 1190,
+          "endLine": 1226,
           "exported": true
         }
       ]
@@ -12035,6 +12623,56 @@
       ]
     },
     {
+      "path": "scripts/verify-assigned-homework.ts",
+      "lineCount": 1016,
+      "purpose": "Revizz QA & Verification Test Suite Account-Unique Assigned Homework Engine & Data Invariants Verification File: scri...",
+      "category": "scripts",
+      "symbols": [
+        {
+          "name": "registerTest",
+          "kind": "function",
+          "startLine": 134,
+          "endLine": 136,
+          "exported": false
+        },
+        {
+          "name": "assert",
+          "kind": "function",
+          "startLine": 138,
+          "endLine": 142,
+          "exported": false
+        },
+        {
+          "name": "assertEqual",
+          "kind": "function",
+          "startLine": 144,
+          "endLine": 150,
+          "exported": false
+        },
+        {
+          "name": "assertDeepEqual",
+          "kind": "function",
+          "startLine": 152,
+          "endLine": 160,
+          "exported": false
+        },
+        {
+          "name": "resetStorage",
+          "kind": "function",
+          "startLine": 163,
+          "endLine": 165,
+          "exported": false
+        },
+        {
+          "name": "createSampleRound",
+          "kind": "function",
+          "startLine": 168,
+          "endLine": 199,
+          "exported": false
+        }
+      ]
+    },
+    {
       "path": "scripts/verify-compiler-diagram-preview.ts",
       "lineCount": 117,
       "purpose": "Standalone Verification Script for CompilerDiagramPreview & Test Compiler Integration.",
@@ -12080,57 +12718,71 @@
     },
     {
       "path": "scripts/verify-compiler-print.ts",
-      "lineCount": 473,
+      "lineCount": 813,
       "purpose": "Standalone Verification Test Script: verify-compiler-print.ts Verifies: 1.",
       "category": "scripts",
       "symbols": [
         {
           "name": "recordResult",
           "kind": "function",
-          "startLine": 61,
-          "endLine": 65,
+          "startLine": 74,
+          "endLine": 78,
           "exported": false
         },
         {
           "name": "testDynamicPoolCompilation",
           "kind": "function",
-          "startLine": 67,
-          "endLine": 150,
+          "startLine": 80,
+          "endLine": 163,
           "exported": false
         },
         {
           "name": "testCambridgeFallback",
           "kind": "function",
-          "startLine": 152,
-          "endLine": 167,
+          "startLine": 165,
+          "endLine": 180,
           "exported": false
         },
         {
           "name": "testDraftSnapshotSerialization",
           "kind": "function",
-          "startLine": 169,
-          "endLine": 246,
+          "startLine": 182,
+          "endLine": 259,
+          "exported": false
+        },
+        {
+          "name": "testDraftLifecycleOperations",
+          "kind": "function",
+          "startLine": 261,
+          "endLine": 415,
+          "exported": false
+        },
+        {
+          "name": "testAccountScopedDraftIsolation",
+          "kind": "function",
+          "startLine": 417,
+          "endLine": 584,
           "exported": false
         },
         {
           "name": "testSupabaseEndToEnd",
           "kind": "function",
-          "startLine": 248,
-          "endLine": 381,
+          "startLine": 586,
+          "endLine": 719,
           "exported": false
         },
         {
           "name": "testAutoSelectQuestions",
           "kind": "function",
-          "startLine": 383,
-          "endLine": 428,
+          "startLine": 721,
+          "endLine": 766,
           "exported": false
         },
         {
           "name": "main",
           "kind": "function",
-          "startLine": 430,
-          "endLine": 467,
+          "startLine": 768,
+          "endLine": 807,
           "exported": false
         }
       ]
@@ -13010,7 +13662,7 @@
     },
     {
       "path": "scripts/wt.ts",
-      "lineCount": 1555,
+      "lineCount": 1557,
       "purpose": "Git worktree isolation manager and atomic release CLI",
       "category": "scripts",
       "symbols": [
@@ -13081,98 +13733,98 @@
           "name": "syncAgentTooling",
           "kind": "function",
           "startLine": 320,
-          "endLine": 370,
+          "endLine": 372,
           "exported": true
         },
         {
           "name": "commandCreate",
           "kind": "function",
-          "startLine": 377,
-          "endLine": 475,
+          "startLine": 379,
+          "endLine": 477,
           "exported": true
         },
         {
           "name": "commandList",
           "kind": "function",
-          "startLine": 480,
-          "endLine": 515,
+          "startLine": 482,
+          "endLine": 517,
           "exported": true
         },
         {
           "name": "commandVerify",
           "kind": "function",
-          "startLine": 520,
-          "endLine": 600,
+          "startLine": 522,
+          "endLine": 602,
           "exported": true
         },
         {
           "name": "commandRelease",
           "kind": "function",
-          "startLine": 605,
-          "endLine": 748,
+          "startLine": 607,
+          "endLine": 750,
           "exported": true
         },
         {
           "name": "commandClean",
           "kind": "function",
-          "startLine": 753,
-          "endLine": 873,
+          "startLine": 755,
+          "endLine": 875,
           "exported": true
         },
         {
           "name": "listWorktrees",
           "kind": "const",
-          "startLine": 876,
-          "endLine": 876,
+          "startLine": 878,
+          "endLine": 878,
           "exported": true
         },
         {
           "name": "resolveTargetWorktree",
           "kind": "const",
-          "startLine": 877,
-          "endLine": 877,
+          "startLine": 879,
+          "endLine": 879,
           "exported": true
         },
         {
           "name": "stopServerOnPort",
           "kind": "function",
-          "startLine": 884,
-          "endLine": 917,
+          "startLine": 886,
+          "endLine": 919,
           "exported": true
         },
         {
           "name": "commandServe",
           "kind": "async-function",
-          "startLine": 923,
-          "endLine": 1072,
+          "startLine": 925,
+          "endLine": 1074,
           "exported": true
         },
         {
           "name": "commandStop",
           "kind": "function",
-          "startLine": 1078,
-          "endLine": 1108,
+          "startLine": 1080,
+          "endLine": 1110,
           "exported": true
         },
         {
           "name": "commandShip",
           "kind": "async-function",
-          "startLine": 1115,
-          "endLine": 1357,
+          "startLine": 1117,
+          "endLine": 1359,
           "exported": true
         },
         {
           "name": "commandHelp",
           "kind": "function",
-          "startLine": 1362,
-          "endLine": 1441,
+          "startLine": 1364,
+          "endLine": 1443,
           "exported": true
         },
         {
           "name": "main",
           "kind": "async-function",
-          "startLine": 1444,
-          "endLine": 1546,
+          "startLine": 1446,
+          "endLine": 1548,
           "exported": true
         }
       ]

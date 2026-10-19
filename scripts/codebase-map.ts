@@ -987,6 +987,16 @@ export function buildCodebaseIndex(rootDir: string): CodebaseIndex {
   };
 }
 
+export const CORE_CLI_SCRIPTS = new Set([
+  'scripts/wt.ts',
+  'scripts/codebase-map.ts',
+  'scripts/agent-memory.ts',
+  'scripts/blackboard.ts',
+  'scripts/ingest-paper.ts',
+  'scripts/verify-revizz.ts',
+  'scripts/verify-ui.ts',
+]);
+
 export function formatMarkdownAtlas(index: CodebaseIndex): string {
   const lines: string[] = [];
 
@@ -1019,14 +1029,38 @@ export function formatMarkdownAtlas(index: CodebaseIndex): string {
     }
 
     for (const entry of entries) {
-      const symList = entry.symbols
+      if (sec.category === 'scripts' && !CORE_CLI_SCRIPTS.has(entry.path)) {
+        continue;
+      }
+
+      // Filter symbols to primary exports/functions/components/hooks
+      let primary = entry.symbols.filter(
+        (s) =>
+          s.exported &&
+          (s.endLine - s.startLine >= 3 ||
+            ['component', 'hook', 'function', 'async-function', 'class'].includes(s.kind))
+      );
+
+      if (primary.length > 5) {
+        // Pick top 5 most substantial symbols by line span, re-sorted by startLine
+        primary = [...primary]
+          .sort((a, b) => (b.endLine - b.startLine) - (a.endLine - a.startLine))
+          .slice(0, 5)
+          .sort((a, b) => a.startLine - b.startLine);
+      } else if (primary.length === 0) {
+        primary = entry.symbols.filter((s) => s.exported).slice(0, 3);
+        if (primary.length === 0) {
+          primary = entry.symbols.slice(0, 3);
+        }
+      }
+
+      const symList = primary
         .map((s) => `\`${s.name} [L${s.startLine}-L${s.endLine}]\``)
         .join(', ');
 
       const symbolsPart = symList ? `: ${symList}` : '';
-      const purposePart = entry.purpose ? ` — *${entry.purpose}*` : '';
 
-      lines.push(`- **\`${entry.path}\`** (${entry.lineCount} lines)${purposePart}${symbolsPart}`);
+      lines.push(`- **\`${entry.path}\`** (${entry.lineCount} lines)${symbolsPart}`);
     }
 
     lines.push('');
@@ -1034,6 +1068,8 @@ export function formatMarkdownAtlas(index: CodebaseIndex): string {
 
   return lines.join('\n');
 }
+
+export const generateMarkdown = formatMarkdownAtlas;
 
 // ============================================================================
 // CLI Handler

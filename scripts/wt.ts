@@ -318,7 +318,7 @@ export function verifyGitignore(repoRoot: string): void {
 }
 
 export function syncAgentTooling(repoRoot: string, worktreePath: string): void {
-  const toolingPaths = [
+  const itemsToSync = [
     'scripts/wt.ts',
     'scripts/codebase-map.ts',
     'scripts/agent-memory.ts',
@@ -326,12 +326,14 @@ export function syncAgentTooling(repoRoot: string, worktreePath: string): void {
     'scripts/verify-ui.ts',
     '.agent/CODEBASE_MAP.md',
     '.agent/memory/learnings_and_reflections.md',
+    '.agent/prompts',
     '.agent/skills/revizz-local-server',
     '.agent/skills/revizz-push-live',
+    '.agent/skills/revizz-mode-loader',
   ];
 
   let syncedCount = 0;
-  for (const rel of toolingPaths) {
+  for (const rel of itemsToSync) {
     const src = path.resolve(repoRoot, rel);
     const dest = path.resolve(worktreePath, rel);
 
@@ -1322,6 +1324,13 @@ export async function commandShip(
     });
     console.log(`\n${colors.green}${colors.bold}🚀 Live Release Succeeded!${colors.reset}`);
     console.log(`Branch '${branch}' has been pushed directly to origin/main.`);
+
+    // Fast-forward root repo to origin/main so local directory and Vercel CLI builds match the shipped commit
+    try {
+      execSync('git pull --ff-only origin main', { cwd: repoRoot, stdio: 'ignore' });
+    } catch {
+      // Graceful fallback if root working tree has local unstaged modifications
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     error(`Atomic push failed: ${msg}`);
