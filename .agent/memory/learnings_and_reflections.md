@@ -23,6 +23,7 @@
 | 15 | Keyboard A11y | **Hotkey Input Suppression**: 1-4/A-D/Space shortcuts trigger during text editing. | Check `['INPUT', 'TEXTAREA'].includes(e.target.tagName)` before fire. |
 | 16 | CI/CD Deployment | **Instant HTTP Probe False-Positive**: Checking production URL immediately after git push returns cached prior deployment. | Enforce direct Vercel CLI execution (`npx vercel --prod --yes`) or poll status for `● Ready`. |
 | 17 | Package Dependencies | **Local Cache Dependency Masking**: Locally cached `node_modules` hides missing `package.json` entries (`rehype-raw`, `remark-gfm`). | Validate dependencies directly in `package.json` against imports before shipping. |
+| 18 | Data Tables | **Multi-Format Table Detection**: Checking only `stem.includes('\|')` skips Cambridge questions with diagram/text tables. | Inspect stem phrasing, HTML tags, option matrices, and diagram metadata. |
 
 ## Reflection Log Entry - 2026-10-19 (Student UI, Auth Gate, 4-Option Format Filter, GFM Tables & Mobile Ergonomics)
 - **Topic**: Student UI, Auth Gate, 4-Option Format Filter, GFM Tables & Mobile Ergonomics
@@ -130,4 +131,25 @@
 ### Verification & Quality Assurance
 - Automated tests: `npx tsc --noEmit` passed with 0 errors; all 158 automated tests passed across all 21 suites.
 - Production build: Vercel deployment verified `● Ready` and aliased to `https://revizz-sand.vercel.app`.
+
+## Reflection Log Entry - 2026-10-19 (Question Bank & Test Compiler Table Filter Engine Overhaul)
+- **Topic**: Question Bank & Test Compiler Table Filter Engine Overhaul
+- **Target Surfaces**: `lib/compilerFilters.ts`, `lib/portal/bankFilters.ts`, `components/portal/AdminTools.tsx`, `components/portal/compiler/TestCompilerHub.tsx`, `scripts/verify-revizz.ts`
+
+### Architectural Solutions & Key Insights
+- **Multi-Format Table Detection Engine**: Upgraded `hasDataTable(stem?: string, question?: any)` in `lib/compilerFilters.ts` to detect:
+  1. Markdown table pipes (`|`).
+  2. HTML table elements (`<table>`, `<tbody>`, `<tr>`, `<td>`, `<th>`).
+  3. Authentic Cambridge exam phrasing (e.g. *"The table shows..."*, *"data in the table"*, *"Table \d+"*), while strictly rejecting non-table text like `"No table present here"`.
+  4. Two-column option matrices (`optA | optB`), diagram table metadata (`meta.type === 'table'`, `meta.has_table`), and question tags.
+- **Question Bank Filter Normalization & URL Synchronization**: In `lib/portal/bankFilters.ts`, updated `detectQuestionFeatures` to flag `hasTable` accurately across both live database questions and fallback question sets. Enhanced `filterBankQuestions`, `parseBankFiltersFromQuery`, and `removeActiveFilterChip` to normalize `features=tables` to `table`, ensuring URL queries and button toggles function bidirectionally.
+- **UI Integration & Badge Consistency**: Added `data-testid="filter-tables"` on the "Has Table" toggle button in `AdminTools.tsx`, and connected `TestCompilerHub.tsx` to render the blue `Table` badge across all questions with tables.
+
+### Anti-Patterns & Bug Traps
+- **Narrow Markdown Pipe Syntax Trap**: Relying strictly on `stem.includes('|')` to classify data tables ignores authentic Cambridge exam formats where tabular data is introduced via stem phrasing ("The table shows..."), cropped diagram figures, or two-column option matrices.
+- **Plural vs Singular Query Parameter Collision**: Dropping plural URL parameters (e.g., `?features=tables`) causes filters to fail when shared via deep links; always normalize plural and singular feature tokens.
+
+### Verification & Quality Assurance
+- Automated tests: `npx tsc --noEmit` passed with 0 errors; all 158 automated tests passed across all 21 suites in `scripts/verify-revizz.ts`.
+- Production build: Shipped atomically via `scripts/wt.ts ship fix-table-filter --fast` to GitHub `main` (`19f669d`) and deployed to Vercel production (`https://revizz-sand.vercel.app` HTTP 200 OK).
 
