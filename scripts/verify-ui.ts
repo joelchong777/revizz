@@ -13,7 +13,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import puppeteer, { Browser, Page, ConsoleMessage } from 'puppeteer-core';
+// @ts-ignore - puppeteer-core is optional runtime dev dependency
+import puppeteer from 'puppeteer-core';
+type Browser = any;
+type Page = any;
+type ConsoleMessage = any;
 
 // ANSI terminal color codes
 const colors = {
@@ -417,7 +421,7 @@ async function runVerifier() {
 
     // Check that nav buttons have proper touch/click heights without exploding
     const navButtons = sidebarMetrics?.navButtons || [];
-    const explodingButtons = navButtons.filter((btn) => btn.height > 80);
+    const explodingButtons = navButtons.filter((btn: { height: number }) => btn.height > 80);
     recordAssertion({
       category: 'Sidebar Constraints',
       name: 'Sidebar navigation items maintain constrained vertical dimensions',
