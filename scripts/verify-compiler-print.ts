@@ -39,6 +39,16 @@ import {
   autoSelectQuestions,
   saveTestDraft,
   loadTestDraft,
+  listTestDrafts,
+  deleteTestDraft,
+  duplicateTestDraft,
+  renameTestDraft,
+  savePrintSnapshot,
+  exportTestDraftJson,
+  importTestDraftJson,
+  DRAFT_KEY_PREFIX,
+  PRINT_SNAPSHOT_PREFIX,
+  DRAFT_CHANGE_EVENT,
 } from '../lib/testCompiler';
 import {
   Question,
@@ -245,6 +255,162 @@ async function testDraftSnapshotSerialization() {
   );
 }
 
+async function testDraftLifecycleOperations() {
+  console.log('\n--- 3b. Testing Draft Lifecycle Operations (CRUD, Duplication, Export/Import, Print Snapshot) ---');
+
+  const draftId = `lifecycle-draft-${Date.now()}`;
+  const initialCreated = '2026-01-01T10:00:00.000Z';
+  const initialConfig: TestPaperConfig = {
+    id: draftId,
+    title: '', // explicitly empty to test auto-formatting default title
+    subjectCode: '0455',
+    subjectName: 'Economics',
+    schoolName: 'Frontier Academy',
+    durationMinutes: 45,
+    totalMarks: 0,
+    testCode: 'LC-01',
+    dateString: 'October 2026',
+    includeCoverPage: true,
+    includeCandidateHeader: true,
+    includeBubbleSheet: false,
+    includeMarkScheme: false,
+    questionIds: ['uuid-sample-1', 'uuid-sample-2'],
+    createdAt: initialCreated,
+  };
+
+  // 1. saveTestDraft auto-fills default non-empty title, populates updatedAt and topicSummary
+  const saved = saveTestDraft(initialConfig);
+  const reloadedSaved = loadTestDraft(draftId);
+  const autoTitlePass =
+    reloadedSaved !== null &&
+    reloadedSaved.title.length > 0 &&
+    reloadedSaved.title.includes('0455') &&
+    reloadedSaved.title.includes('Draft') &&
+    typeof reloadedSaved.updatedAt === 'string' &&
+    Array.isArray(reloadedSaved.topicSummary) &&
+    reloadedSaved.topicSummary.length > 0;
+
+  recordResult(
+    'saveTestDraft auto-fills title, populates updatedAt and topicSummary',
+    'Draft Lifecycle',
+    Boolean(autoTitlePass),
+    autoTitlePass
+      ? `Auto title: "${reloadedSaved?.title}", updatedAt: ${reloadedSaved?.updatedAt}, topics: ${reloadedSaved?.topicSummary?.join(', ')}`
+      : 'Failed to auto-format default title or populate updatedAt/topicSummary'
+  );
+
+  // 2. renameTestDraft updates title and notes in-place while preserving id and createdAt
+  const renamed = renameTestDraft(draftId, 'Renamed Macro Test Paper', 'Focus on aggregate demand notes');
+  const reloadedRenamed = loadTestDraft(draftId);
+  const renamePass =
+    renamed !== null &&
+    reloadedRenamed !== null &&
+    reloadedRenamed.id === draftId &&
+    reloadedRenamed.title === 'Renamed Macro Test Paper' &&
+    reloadedRenamed.notes === 'Focus on aggregate demand notes' &&
+    reloadedRenamed.createdAt === initialCreated;
+
+  recordResult(
+    'renameTestDraft updates title and notes in-place while preserving id and createdAt',
+    'Draft Lifecycle',
+    Boolean(renamePass),
+    renamePass
+      ? `Successfully updated title to "${reloadedRenamed?.title}" with notes, keeping createdAt=${reloadedRenamed?.createdAt}`
+      : `Failed to rename draft or preserve createdAt (got title="${reloadedRenamed?.title}", createdAt="${reloadedRenamed?.createdAt}")`
+  );
+
+  // 3. duplicateTestDraft creates a new draft ID with (Copy) suffix and identical questionIds
+  const duplicated = duplicateTestDraft(draftId);
+  const duplicatePass =
+    duplicated !== null &&
+    duplicated.id !== draftId &&
+    duplicated.title.endsWith('(Copy)') &&
+    JSON.stringify(duplicated.questionIds) === JSON.stringify(reloadedRenamed?.questionIds);
+
+  recordResult(
+    'duplicateTestDraft creates new ID with (Copy) suffix and identical questionIds',
+    'Draft Lifecycle',
+    Boolean(duplicatePass),
+    duplicatePass
+      ? `Created copy ID: ${duplicated?.id}, title: "${duplicated?.title}", questions: ${duplicated?.questionIds.length}`
+      : 'Failed to duplicate draft correctly'
+  );
+
+  // 4. savePrintSnapshot can be loaded by loadTestDraft(id), but does NOT pollute listTestDrafts()
+  const snapshotId = `print-snapshot-${Date.now()}`;
+  const snapshotConfig: TestPaperConfig = {
+    id: snapshotId,
+    title: 'Print Preview Snapshot Only',
+    subjectCode: '0455',
+    subjectName: 'Economics',
+    schoolName: 'Frontier Academy',
+    durationMinutes: 45,
+    totalMarks: 2,
+    testCode: 'PRINT-01',
+    dateString: 'October 2026',
+    includeCoverPage: true,
+    includeCandidateHeader: true,
+    includeBubbleSheet: true,
+    includeMarkScheme: true,
+    questionIds: ['uuid-sample-1', 'uuid-sample-2'],
+    createdAt: new Date().toISOString(),
+  };
+
+  savePrintSnapshot(snapshotConfig);
+  const loadedSnapshot = loadTestDraft(snapshotId);
+  const draftsList = listTestDrafts();
+  const snapshotInDraftsList = draftsList.some((d) => d.id === snapshotId);
+  const printSnapshotPass = loadedSnapshot !== null && !snapshotInDraftsList;
+
+  recordResult(
+    'savePrintSnapshot loadable via loadTestDraft without polluting listTestDrafts',
+    'Draft Lifecycle',
+    Boolean(printSnapshotPass),
+    printSnapshotPass
+      ? `Print snapshot loaded successfully (title: "${loadedSnapshot?.title}") and listTestDrafts() count=${draftsList.length} (snapshot excluded)`
+      : `Snapshot leaking into drafts or failed to load (loaded: ${Boolean(loadedSnapshot)}, leaked: ${snapshotInDraftsList})`
+  );
+
+  // 5. exportTestDraftJson and importTestDraftJson round-trip a draft cleanly
+  const exportedJson = exportTestDraftJson(reloadedRenamed!);
+  const roundtripImported = importTestDraftJson(exportedJson);
+  const roundtripPass =
+    roundtripImported !== null &&
+    roundtripImported.id === draftId &&
+    roundtripImported.title === reloadedRenamed?.title &&
+    roundtripImported.questionIds.length === reloadedRenamed?.questionIds.length;
+
+  recordResult(
+    'exportTestDraftJson and importTestDraftJson round-trip draft cleanly',
+    'Draft Lifecycle',
+    Boolean(roundtripPass),
+    roundtripPass
+      ? `Round-trip successful: exported ${exportedJson.length} chars, imported draft ID ${roundtripImported?.id} ("${roundtripImported?.title}")`
+      : 'Failed round-trip JSON export/import'
+  );
+
+  // 6. deleteTestDraft removes draft from listTestDrafts()
+  const deleteSuccess = deleteTestDraft(draftId);
+  const reloadedAfterDelete = loadTestDraft(draftId);
+  const draftsAfterDelete = listTestDrafts();
+  const deletedInList = draftsAfterDelete.some((d) => d.id === draftId);
+  const deletePass = deleteSuccess && reloadedAfterDelete === null && !deletedInList;
+
+  // Clean up duplicated draft as well
+  if (duplicated) {
+    deleteTestDraft(duplicated.id);
+  }
+
+  recordResult(
+    'deleteTestDraft removes draft from storage and listTestDrafts',
+    'Draft Lifecycle',
+    Boolean(deletePass),
+    deletePass
+      ? `Draft ${draftId} successfully deleted; drafts remaining: ${draftsAfterDelete.length}`
+      : 'Failed to delete draft from storage'
+  );
+}
+
 async function testSupabaseEndToEnd() {
   console.log('\n--- 4. Testing End-to-End Supabase DB Query, Compilation & Diagram URLs ---');
 
@@ -435,6 +601,7 @@ async function main() {
   await testDynamicPoolCompilation();
   await testCambridgeFallback();
   await testDraftSnapshotSerialization();
+  await testDraftLifecycleOperations();
   await testSupabaseEndToEnd();
   await testAutoSelectQuestions();
 

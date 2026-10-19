@@ -27,7 +27,12 @@ import {
   KeyRound,
   RefreshCw,
   Copy,
-  Plus
+  Plus,
+  FileText,
+  Upload,
+  Edit3,
+  FolderOpen,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -40,7 +45,16 @@ import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
 import { CompilerDiagramPreview } from './CompilerDiagramPreview';
 import {
   saveTestDraft,
+  savePrintSnapshot,
+  loadTestDraft,
   listTestDrafts,
+  deleteTestDraft,
+  duplicateTestDraft,
+  renameTestDraft,
+  exportTestDraftJson,
+  importTestDraftJson,
+  formatDefaultDraftTitle,
+  DRAFT_CHANGE_EVENT,
   autoSelectQuestions,
   buildCompiledQuestions,
   SUBJECT_CATALOG,
@@ -64,9 +78,9 @@ import { TestPaperConfig, OnlineQuizAssignment, TopicDistributionItem } from '@/
 
 const TARGET_COHORTS = [
   '10 Economics (0455)',
-  '10A Physics (0625)',
-  '10B Physics (0625)',
-  '11A Physics (0625)'
+  '10 Biology (0610)',
+  '10 Chemistry (0620)',
+  '11 Physics (0625)'
 ];
 
 export default function TestCompilerHub() {
@@ -150,6 +164,32 @@ export default function TestCompilerHub() {
   const [isDraftsModalOpen, setIsDraftsModalOpen] = useState(false);
   const [drafts, setDrafts] = useState<TestPaperConfig[]>([]);
 
+  // --- Active Draft & Persistence Tracking ---
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [draftNotes, setDraftNotes] = useState<string>('');
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string | null>(null);
+  const [lastSavedDraftBanner, setLastSavedDraftBanner] = useState<{
+    id: string;
+    title: string;
+    questionCount: number;
+    updated: boolean;
+  } | null>(null);
+
+  // --- Save Draft Modal State ---
+  const [isSaveDraftModalOpen, setIsSaveDraftModalOpen] = useState(false);
+  const [saveModalTitle, setSaveModalTitle] = useState('');
+  const [saveModalNotes, setSaveModalNotes] = useState('');
+  const [saveModalMode, setSaveModalMode] = useState<'update' | 'new'>('new');
+
+  // --- Saved Drafts Manager Modal State ---
+  const [draftSearch, setDraftSearch] = useState('');
+  const [draftSubjectFilter, setDraftSubjectFilter] = useState('all');
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
+  const [editingDraftTitle, setEditingDraftTitle] = useState('');
+  const [editingDraftNotes, setEditingDraftNotes] = useState('');
+  const [draftModalFeedback, setDraftModalFeedback] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assignCohort, setAssignCohort] = useState('10 Economics (0455)');
   const [cohortList, setCohortList] = useState<string[]>(TARGET_COHORTS);
@@ -216,7 +256,75 @@ export default function TestCompilerHub() {
 
   useEffect(() => {
     setOnlineAssignments(listOnlineAssignments());
+    setDrafts(listTestDrafts());
+
+    const handleDraftsChanged = () => {
+      setDrafts(listTestDrafts());
+    };
+    window.addEventListener(DRAFT_CHANGE_EVENT, handleDraftsChanged);
+    return () => {
+      window.removeEventListener(DRAFT_CHANGE_EVENT, handleDraftsChanged);
+    };
   }, []);
+
+  const currentConfigSignature = useMemo(() => {
+    return JSON.stringify({
+      title: testTitle.trim(),
+      notes: draftNotes.trim(),
+      subjectCode,
+      schoolName: schoolName.trim(),
+      durationMinutes,
+      testCode: testCode.trim(),
+      dateString: dateString.trim(),
+      includeCoverPage,
+      includeCandidateHeader,
+      includeBubbleSheet,
+      includeMarkScheme,
+      includeExplanations,
+      questionIds: selectedQuestionIds,
+    });
+  }, [
+    testTitle,
+    draftNotes,
+    subjectCode,
+    schoolName,
+    durationMinutes,
+    testCode,
+    dateString,
+    includeCoverPage,
+    includeCandidateHeader,
+    includeBubbleSheet,
+    includeMarkScheme,
+    includeExplanations,
+    selectedQuestionIds,
+  ]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!activeDraftId) {
+      return selectedQuestionIds.length > 0 || testTitle.trim().length > 0;
+    }
+    return lastSavedSnapshot !== currentConfigSignature;
+  }, [activeDraftId, lastSavedSnapshot, currentConfigSignature, selectedQuestionIds.length, testTitle]);
+
+  const filteredDrafts = useMemo(() => {
+    return drafts.filter((d) => {
+      if (draftSubjectFilter !== 'all' && d.subjectCode !== draftSubjectFilter) {
+        return false;
+      }
+      if (draftSearch.trim().length > 0) {
+        const q = draftSearch.toLowerCase();
+        const matchTitle = (d.title || '').toLowerCase().includes(q);
+        const matchNotes = (d.notes || '').toLowerCase().includes(q);
+        const matchCode = (d.testCode || '').toLowerCase().includes(q);
+        const matchSubject = `${d.subjectCode} ${d.subjectName || ''}`.toLowerCase().includes(q);
+        const matchTopics = (d.topicSummary || []).some((t) => t.toLowerCase().includes(q));
+        if (!matchTitle && !matchNotes && !matchCode && !matchSubject && !matchTopics) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [drafts, draftSearch, draftSubjectFilter]);
 
   // --- Derived State & Series Extraction ---
   const availableSeries = useMemo(() => {
@@ -356,11 +464,38 @@ export default function TestCompilerHub() {
 
   const handleClearSelection = () => setSelectedQuestionIds([]);
 
-  const generateConfig = (): TestPaperConfig => {
+  const handleMoveQuestion = (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index > 0) {
+      const newIds = [...selectedQuestionIds];
+      [newIds[index - 1], newIds[index]] = [newIds[index], newIds[index - 1]];
+      setSelectedQuestionIds(newIds);
+    } else if (direction === 'down' && index < selectedQuestionIds.length - 1) {
+      const newIds = [...selectedQuestionIds];
+      [newIds[index + 1], newIds[index]] = [newIds[index], newIds[index + 1]];
+      setSelectedQuestionIds(newIds);
+    }
+  };
+
+  const handleRemoveQuestion = (index: number) => {
+    const newIds = [...selectedQuestionIds];
+    newIds.splice(index, 1);
+    setSelectedQuestionIds(newIds);
+  };
+
+  const generateConfig = (
+    customId?: string,
+    customTitle?: string,
+    customNotes?: string
+  ): TestPaperConfig => {
     const compiled = buildCompiledQuestions(selectedQuestionIds, questions);
+    const resolvedTitle = customTitle !== undefined ? customTitle : testTitle;
+    const resolvedNotes = customNotes !== undefined ? customNotes : draftNotes;
+    const topicSummary = topicDistribution.map((t) => t.topic);
+    const now = new Date().toISOString();
+
     return {
-      id: Math.random().toString(36).substring(7),
-      title: testTitle,
+      id: customId || activeDraftId || Math.random().toString(36).substring(2, 9),
+      title: resolvedTitle,
       subjectCode: subjectCode,
       subjectName: subjectName,
       schoolName: schoolName,
@@ -373,22 +508,134 @@ export default function TestCompilerHub() {
       includeBubbleSheet: includeBubbleSheet,
       includeMarkScheme: includeMarkScheme,
       includeExplanations: includeExplanations,
+      notes: resolvedNotes,
+      topicSummary: topicSummary.length > 0 ? topicSummary : undefined,
       questionIds: selectedQuestionIds,
       compiledQuestions: compiled,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
   };
 
-  const handleSaveDraft = () => {
-    const config = generateConfig();
-    saveTestDraft(config);
+  const handleOpenSaveDraftModal = () => {
+    if (testTitle.trim().length > 0) {
+      setSaveModalTitle(testTitle.trim());
+    } else {
+      const topTopic = topicDistribution[0]?.topic;
+      const count = selectedQuestionIds.length;
+      const suggested = `${subjectCode} ${subjectName} — ${topTopic || 'Mixed Topics'} (${count} Qs)`;
+      setSaveModalTitle(suggested);
+    }
+    setSaveModalNotes(draftNotes);
+    setSaveModalMode(activeDraftId ? 'update' : 'new');
+    setIsSaveDraftModalOpen(true);
+  };
+
+  const handleAutoNameDraft = () => {
+    const topTopic = topicDistribution[0]?.topic;
+    const count = selectedQuestionIds.length;
+    const name = `${subjectCode} ${subjectName} — ${topTopic || 'Mixed Topics'} (${count} Qs)`;
+    setSaveModalTitle(name);
+  };
+
+  const handleConfirmSaveDraft = () => {
+    const isUpdatingActive = saveModalMode === 'update' && activeDraftId !== null;
+    const targetId = isUpdatingActive
+      ? activeDraftId!
+      : Math.random().toString(36).substring(2, 9);
+
+    const finalTitle = saveModalTitle.trim() || formatDefaultDraftTitle({
+      subjectCode,
+      subjectName,
+      topicSummary: topicDistribution.map((t) => t.topic),
+      questionIds: selectedQuestionIds,
+    });
+
+    setTestTitle(finalTitle);
+    setDraftNotes(saveModalNotes);
+
+    const configToSave = generateConfig(targetId, finalTitle, saveModalNotes);
+    const saved = saveTestDraft(configToSave);
+
+    setActiveDraftId(saved.id);
+    const newSnapshot = JSON.stringify({
+      title: (saved.title || '').trim(),
+      notes: (saved.notes || '').trim(),
+      subjectCode: saved.subjectCode,
+      schoolName: (saved.schoolName || '').trim(),
+      durationMinutes: saved.durationMinutes,
+      testCode: (saved.testCode || '').trim(),
+      dateString: (saved.dateString || 'October 2026').trim(),
+      includeCoverPage: saved.includeCoverPage,
+      includeCandidateHeader: saved.includeCandidateHeader,
+      includeBubbleSheet: saved.includeBubbleSheet,
+      includeMarkScheme: saved.includeMarkScheme,
+      includeExplanations: saved.includeExplanations ?? true,
+      questionIds: saved.questionIds,
+    });
+    setLastSavedSnapshot(newSnapshot);
+
+    setDrafts(listTestDrafts());
+    setIsSaveDraftModalOpen(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
+
+    setLastSavedDraftBanner({
+      id: saved.id,
+      title: saved.title,
+      questionCount: saved.questionIds.length,
+      updated: isUpdatingActive,
+    });
+    setTimeout(() => {
+      setLastSavedDraftBanner((prev) => (prev?.id === saved.id ? null : prev));
+    }, 6000);
+  };
+
+  const handleQuickUpdateDraft = () => {
+    if (!activeDraftId) {
+      handleOpenSaveDraftModal();
+      return;
+    }
+    const finalTitle = testTitle.trim() || formatDefaultDraftTitle({
+      subjectCode,
+      subjectName,
+      topicSummary: topicDistribution.map((t) => t.topic),
+      questionIds: selectedQuestionIds,
+    });
+    const configToSave = generateConfig(activeDraftId, finalTitle, draftNotes);
+    const saved = saveTestDraft(configToSave);
+
+    setLastSavedSnapshot(currentConfigSignature);
+    setDrafts(listTestDrafts());
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+
+    setLastSavedDraftBanner({
+      id: saved.id,
+      title: saved.title,
+      questionCount: saved.questionIds.length,
+      updated: true,
+    });
+    setTimeout(() => {
+      setLastSavedDraftBanner((prev) => (prev?.id === saved.id ? null : prev));
+    }, 6000);
+  };
+
+  const handleStartNewDraft = () => {
+    setActiveDraftId(null);
+    setTestTitle('');
+    setDraftNotes('');
+    setSelectedQuestionIds([]);
+    setLastSavedSnapshot(null);
+    setIsDraftsModalOpen(false);
   };
 
   const handleGeneratePDF = () => {
     const config = generateConfig();
-    saveTestDraft(config);
+    savePrintSnapshot(config);
+    if (activeDraftId) {
+      saveTestDraft(config);
+    }
     window.open(`/portal/compiler/print?testId=${config.id}`, '_blank');
   };
 
@@ -414,29 +661,140 @@ export default function TestCompilerHub() {
 
   const handleOpenDrafts = () => {
     setDrafts(listTestDrafts());
+    setDraftSearch('');
+    setDraftSubjectFilter('all');
+    setEditingDraftId(null);
+    setDraftModalFeedback(null);
     setIsDraftsModalOpen(true);
   };
 
   const handleLoadDraft = (draft: TestPaperConfig) => {
-    setTestTitle(draft.title);
+    setActiveDraftId(draft.id);
+    setDraftNotes(draft.notes || '');
+    setTestTitle(draft.title || '');
     if (draft.subjectCode) setSubjectCode(draft.subjectCode);
-    setSchoolName(draft.schoolName);
-    setDateString(draft.dateString);
-    setDurationMinutes(draft.durationMinutes);
-    setTestCode(draft.testCode);
-    setIncludeCoverPage(draft.includeCoverPage);
-    setIncludeCandidateHeader(draft.includeCandidateHeader);
-    setIncludeBubbleSheet(draft.includeBubbleSheet);
-    setIncludeMarkScheme(draft.includeMarkScheme);
+    setSchoolName(draft.schoolName || '');
+    setDateString(draft.dateString || 'October 2026');
+    setDurationMinutes(draft.durationMinutes || 45);
+    setTestCode(draft.testCode || '');
+    setIncludeCoverPage(draft.includeCoverPage ?? true);
+    setIncludeCandidateHeader(draft.includeCandidateHeader ?? true);
+    setIncludeBubbleSheet(draft.includeBubbleSheet ?? true);
+    setIncludeMarkScheme(draft.includeMarkScheme ?? true);
     if (draft.includeExplanations !== undefined) setIncludeExplanations(draft.includeExplanations);
-    setSelectedQuestionIds(draft.questionIds);
+    setSelectedQuestionIds(draft.questionIds || []);
+
+    const snapshot = JSON.stringify({
+      title: (draft.title || '').trim(),
+      notes: (draft.notes || '').trim(),
+      subjectCode: draft.subjectCode || subjectCode,
+      schoolName: (draft.schoolName || '').trim(),
+      durationMinutes: draft.durationMinutes || 45,
+      testCode: (draft.testCode || '').trim(),
+      dateString: (draft.dateString || 'October 2026').trim(),
+      includeCoverPage: draft.includeCoverPage ?? true,
+      includeCandidateHeader: draft.includeCandidateHeader ?? true,
+      includeBubbleSheet: draft.includeBubbleSheet ?? true,
+      includeMarkScheme: draft.includeMarkScheme ?? true,
+      includeExplanations: draft.includeExplanations ?? true,
+      questionIds: draft.questionIds || [],
+    });
+    setLastSavedSnapshot(snapshot);
     setIsDraftsModalOpen(false);
   };
 
-  const handleDeleteDraft = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    localStorage.removeItem(`revizz_test_draft_${id}`);
+  const handleDeleteDraft = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    deleteTestDraft(id);
+    if (activeDraftId === id) {
+      setActiveDraftId(null);
+      setLastSavedSnapshot(null);
+    }
     setDrafts(listTestDrafts());
+    setDraftModalFeedback('Draft deleted.');
+    setTimeout(() => setDraftModalFeedback(null), 3000);
+  };
+
+  const handleDuplicateDraft = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const dup = duplicateTestDraft(id);
+    if (dup) {
+      setDrafts(listTestDrafts());
+      setDraftModalFeedback(`Draft duplicated as "${dup.title}"`);
+      setTimeout(() => setDraftModalFeedback(null), 3000);
+    }
+  };
+
+  const handleStartRenameDraft = (draft: TestPaperConfig, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingDraftId(draft.id);
+    setEditingDraftTitle(draft.title || '');
+    setEditingDraftNotes(draft.notes || '');
+  };
+
+  const handleSaveRenameDraft = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const updated = renameTestDraft(id, editingDraftTitle, editingDraftNotes);
+    if (updated) {
+      if (activeDraftId === id) {
+        setTestTitle(updated.title);
+        setDraftNotes(updated.notes || '');
+      }
+      setDrafts(listTestDrafts());
+      setEditingDraftId(null);
+      setDraftModalFeedback('Draft updated successfully.');
+      setTimeout(() => setDraftModalFeedback(null), 3000);
+    }
+  };
+
+  const handleCancelRenameDraft = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingDraftId(null);
+  };
+
+  const handleExportDraft = (draft: TestPaperConfig, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const jsonStr = exportTestDraftJson(draft);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeTitle = (draft.title || 'draft')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      link.href = url;
+      link.download = `${safeTitle || 'revizz-test-draft'}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setDraftModalFeedback('Draft exported as JSON.');
+      setTimeout(() => setDraftModalFeedback(null), 3000);
+    } catch (err) {
+      setDraftModalFeedback('Failed to export draft.');
+      setTimeout(() => setDraftModalFeedback(null), 3000);
+    }
+  };
+
+  const handleImportDraftFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const imported = importTestDraftJson(content);
+        setDrafts(listTestDrafts());
+        setDraftModalFeedback(`Imported draft "${imported.title}" (${imported.questionIds.length} Qs)!`);
+        setTimeout(() => setDraftModalFeedback(null), 4000);
+      } catch (err: any) {
+        setDraftModalFeedback(`Import failed: ${err?.message || 'Invalid draft JSON'}`);
+        setTimeout(() => setDraftModalFeedback(null), 4000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   const handlePublishAssignment = () => {
@@ -462,27 +820,63 @@ export default function TestCompilerHub() {
     setIsAssignModalOpen(false);
   };
 
-  // Close modals on Escape key per revizz-a11y-keyboard standards
+  // Close modals on Escape key & Cmd/Ctrl+S shortcut
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (isSaveDraftModalOpen) {
+          handleConfirmSaveDraft();
+        } else {
+          handleOpenSaveDraftModal();
+        }
+      } else if (e.key === 'Escape') {
         if (isLayoutModalOpen) {
           setIsLayoutModalOpen(false);
+        } else if (isSaveDraftModalOpen) {
+          setIsSaveDraftModalOpen(false);
+        } else if (isDraftsModalOpen) {
+          setIsDraftsModalOpen(false);
         } else if (isCohortDropdownOpen) {
           setIsCohortDropdownOpen(false);
           setIsCustomCohortInputOpen(false);
         } else if (isAutoModalOpen) {
           setIsAutoModalOpen(false);
-        } else if (isDraftsModalOpen) {
-          setIsDraftsModalOpen(false);
         } else if (isAssignModalOpen) {
           setIsAssignModalOpen(false);
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLayoutModalOpen, isCohortDropdownOpen, isAutoModalOpen, isDraftsModalOpen, isAssignModalOpen]);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [
+    isLayoutModalOpen,
+    isSaveDraftModalOpen,
+    isDraftsModalOpen,
+    isCohortDropdownOpen,
+    isAutoModalOpen,
+    isAssignModalOpen,
+    saveModalTitle,
+    saveModalNotes,
+    saveModalMode,
+    activeDraftId,
+    testTitle,
+    draftNotes,
+    selectedQuestionIds,
+    subjectCode,
+    subjectName,
+    schoolName,
+    durationMinutes,
+    testCode,
+    dateString,
+    includeCoverPage,
+    includeCandidateHeader,
+    includeBubbleSheet,
+    includeMarkScheme,
+    includeExplanations,
+    topicDistribution,
+    questions,
+  ]);
 
   return (
     <div className="flex flex-col gap-6 text-[#201e1d] font-body pb-12">
@@ -1164,8 +1558,8 @@ export default function TestCompilerHub() {
                     aria-label="View and load saved test drafts"
                     className="justify-center py-1 px-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center gap-1 transition-all cursor-pointer shadow-xs truncate"
                   >
-                    <Save className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Drafts</span>
+                    <FolderOpen className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Drafts{drafts.length > 0 ? ` (${drafts.length})` : ''}</span>
                   </button>
 
                   <button
@@ -1216,8 +1610,93 @@ export default function TestCompilerHub() {
                   <span>~{estimatedTime} mins</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center font-black text-[#201e1d] shadow-offset-2 text-sm">
-                {selectedQuestionIds.length}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleOpenDrafts}
+                  title="Open Saved Drafts Manager"
+                  aria-label={`Open Saved Drafts (${drafts.length})`}
+                  className="px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-black text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 shadow-[2px_2px_0_0_#201e1d] flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Drafts ({drafts.length})</span>
+                </button>
+                <div
+                  title={`${selectedQuestionIds.length} questions selected`}
+                  className="w-10 h-10 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center font-black text-[#201e1d] shadow-offset-2 text-sm shrink-0"
+                >
+                  {selectedQuestionIds.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Always-Visible Draft Identity & Title Strip */}
+            <div className="shrink-0 flex flex-col gap-2 border-b-[1.5px] border-[#dcd3c4] py-3">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="assessment-title-input" className="text-[11px] font-black uppercase tracking-wider text-[#645c50] flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-[#201e1d]" aria-hidden="true" />
+                    <span>Assessment Title</span>
+                  </label>
+                  {activeDraftId ? (
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                          hasUnsavedChanges
+                            ? 'bg-[#ffe1d0] text-[#c67139] border-[#c67139]'
+                            : 'bg-[#e4ede1] text-[#3d472b] border-[#8fa073]'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? 'bg-[#c67139] animate-pulse' : 'bg-[#556b2f]'}`} />
+                        {hasUnsavedChanges ? 'Unsaved edits' : 'Saved'}
+                      </span>
+                      {hasUnsavedChanges && (
+                        <button
+                          type="button"
+                          onClick={handleQuickUpdateDraft}
+                          title="Quick save changes to active draft"
+                          aria-label="Quick update draft"
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d] border border-[#201e1d] active:translate-y-0.5 transition-all cursor-pointer shadow-[1px_1px_0_0_#201e1d]"
+                        >
+                          Quick Update
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleStartNewDraft}
+                        title="Start a fresh blank paper"
+                        aria-label="New draft"
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-white text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] border border-[#dcd3c4] active:translate-y-0.5 transition-all cursor-pointer"
+                      >
+                        New Draft
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-bold text-[#8c8273]">Unsaved new paper</span>
+                  )}
+                </div>
+                <div className="relative flex items-center">
+                  <input
+                    id="assessment-title-input"
+                    type="text"
+                    value={testTitle}
+                    onChange={(e) => setTestTitle(e.target.value)}
+                    placeholder={`${subjectCode} ${subjectName} Assessment...`}
+                    aria-label="Assessment or draft title"
+                    className="w-full px-3 py-2 pr-8 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] placeholder-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d] shadow-[2px_2px_0_0_rgba(32,30,29,0.1)] transition-all"
+                  />
+                  {testTitle.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setTestTitle('')}
+                      title="Clear title"
+                      aria-label="Clear title"
+                      className="absolute right-2 text-[#8c8273] hover:text-[#201e1d] p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1279,6 +1758,34 @@ export default function TestCompilerHub() {
                 </div>
               )}
 
+              {lastSavedDraftBanner && (
+                <div className="bg-[#e4ede1] border-2 border-[#8fa073] p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-xs mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Check className="w-4 h-4 text-[#556b2f] shrink-0" aria-hidden="true" />
+                    <div className="text-xs font-bold text-[#2b3a1a] truncate">
+                      Draft {lastSavedDraftBanner.updated ? 'updated' : 'saved'}: <span className="font-black">{lastSavedDraftBanner.title}</span> ({lastSavedDraftBanner.questionCount} Qs)
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleOpenDrafts}
+                      className="text-[11px] font-black underline text-[#3d472b] hover:text-[#201e1d] px-1 py-0.5 cursor-pointer"
+                    >
+                      View Drafts ({drafts.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLastSavedDraftBanner(null)}
+                      aria-label="Dismiss saved draft notification"
+                      className="p-1 hover:bg-[#cbe8b7] rounded text-[#2b3a1a] cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {saveSuccess && (
                 <div className="text-[11px] font-bold text-[#56633f] flex items-center justify-center gap-1 mb-1">
                   <Check className="w-3 h-3" /> Draft saved
@@ -1314,7 +1821,7 @@ export default function TestCompilerHub() {
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={handleSaveDraft}
+                  onClick={handleOpenSaveDraftModal}
                   title="Save test configuration as draft"
                   aria-label="Save current test configuration as draft"
                   className="py-2.5 px-1 rounded-2xl bg-white border-2 border-[#201e1d] font-bold text-xs text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 transition-all cursor-pointer text-center"
@@ -1673,63 +2180,559 @@ export default function TestCompilerHub() {
         </div>
       )}
 
-      {/* Saved Drafts Modal */}
-      {isDraftsModalOpen && (
+      {/* Save Draft Modal */}
+      {isSaveDraftModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-labelledby="saved-drafts-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          aria-labelledby="save-draft-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
         >
-          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] w-full max-w-lg flex flex-col gap-4 max-h-[80vh]">
-            <div className="flex items-center justify-between">
-              <h3 id="saved-drafts-modal-title" className="font-heading text-xl font-black text-[#201e1d]">Saved Drafts</h3>
+          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_#201e1d] w-full max-w-md flex flex-col gap-4 max-h-[92vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b-[1.5px] border-[#dcd3c4] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]">
+                  <Save className="w-5 h-5 text-[#201e1d]" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 id="save-draft-modal-title" className="font-heading text-lg font-black text-[#201e1d]">
+                    Save Assessment Draft
+                  </h3>
+                  <p className="text-[11px] font-bold text-[#645c50]">
+                    {activeDraftId ? 'Update active draft or save as a new copy' : 'Save configuration to your local drafts'}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setIsDraftsModalOpen(false)}
-                aria-label="Close saved drafts dialog"
-                title="Close dialog"
+                onClick={() => setIsSaveDraftModalOpen(false)}
+                aria-label="Close save draft dialog"
                 className="p-1 hover:bg-[#dcd3c4] rounded-full active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
-            <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar">
-              {drafts.length === 0 ? (
-                <div className="text-center py-6 text-[#645c50] text-sm font-bold">No saved drafts found.</div>
-              ) : (
-                drafts.map((d) => (
-                  <div
-                    key={d.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Load draft: ${d.title}, ${d.questionIds.length} questions`}
-                    onClick={() => handleLoadDraft(d)}
-                    onKeyDown={(e) => {
-                      if (e.key === ' ' || e.key === 'Enter') {
-                        e.preventDefault();
-                        handleLoadDraft(d);
-                      }
-                    }}
-                    className="p-3 rounded-2xl border-2 border-[#dcd3c4] bg-white hover:border-[#201e1d] cursor-pointer flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 active:translate-y-0.5"
+
+            {/* Save Mode Selector (When activeDraftId exists) */}
+            {activeDraftId && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-black uppercase tracking-wider text-[#645c50]">
+                  Save Action
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSaveModalMode('update')}
+                    className={`p-2.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                      saveModalMode === 'update'
+                        ? 'border-[#201e1d] bg-[#ffe1d0] shadow-[2px_2px_0_0_#201e1d]'
+                        : 'border-[#dcd3c4] bg-white hover:border-[#201e1d]'
+                    }`}
                   >
-                    <div>
-                      <div className="font-bold text-[#201e1d]">{d.title}</div>
-                      <div className="text-xs text-[#645c50] mt-0.5">
-                        {d.questionIds.length} Questions • {new Date(d.createdAt).toLocaleDateString()}
-                      </div>
+                    <div className="text-xs font-black text-[#201e1d] flex items-center justify-between">
+                      <span>Update Active</span>
+                      {saveModalMode === 'update' && <Check className="w-3.5 h-3.5 text-[#c67139]" />}
                     </div>
+                    <div className="text-[10px] font-bold text-[#645c50] mt-0.5">
+                      Overwrite current draft
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSaveModalMode('new')}
+                    className={`p-2.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                      saveModalMode === 'new'
+                        ? 'border-[#201e1d] bg-[#ffe1d0] shadow-[2px_2px_0_0_#201e1d]'
+                        : 'border-[#dcd3c4] bg-white hover:border-[#201e1d]'
+                    }`}
+                  >
+                    <div className="text-xs font-black text-[#201e1d] flex items-center justify-between">
+                      <span>Save as New</span>
+                      {saveModalMode === 'new' && <Check className="w-3.5 h-3.5 text-[#c67139]" />}
+                    </div>
+                    <div className="text-[10px] font-bold text-[#645c50] mt-0.5">
+                      Create separate draft
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Draft Title Input */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="save-draft-title-input" className="text-[11px] font-black uppercase tracking-wider text-[#645c50]">
+                  Draft Title <span className="text-[#c67139]">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleAutoNameDraft}
+                  className="text-[10px] font-bold text-[#c67139] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3" aria-hidden="true" />
+                  <span>Auto-Name</span>
+                </button>
+              </div>
+              <input
+                id="save-draft-title-input"
+                type="text"
+                value={saveModalTitle}
+                onChange={(e) => setSaveModalTitle(e.target.value)}
+                placeholder="e.g. 0455 Economics — Price Elasticity Quiz"
+                className="w-full px-3 py-2 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] placeholder-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d]"
+              />
+            </div>
+
+            {/* Teacher Notes / Description */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="save-draft-notes-input" className="text-[11px] font-black uppercase tracking-wider text-[#645c50]">
+                Teacher Notes & Instructions (Optional)
+              </label>
+              <textarea
+                id="save-draft-notes-input"
+                rows={2}
+                value={saveModalNotes}
+                onChange={(e) => setSaveModalNotes(e.target.value)}
+                placeholder="Add notes, target class, or instructions reminder..."
+                className="w-full px-3 py-2 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] placeholder-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d] resize-none"
+              />
+            </div>
+
+            {/* Draft Snapshot Summary Box */}
+            <div className="p-3 rounded-2xl bg-white border-2 border-[#dcd3c4] flex flex-col gap-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-[#645c50]">Paper Summary:</span>
+                <span className="font-black px-2 py-0.5 rounded-lg bg-[#f0fae1] text-[#3d472b] border border-[#8fa073]">
+                  {subjectCode} {subjectName}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-bold text-[#201e1d]">
+                <span>{selectedQuestionIds.length} Questions</span>
+                <span>•</span>
+                <span>{selectedQuestionIds.length} Marks</span>
+                <span>•</span>
+                <span>~{estimatedTime} mins</span>
+              </div>
+
+              {topicDistribution.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {topicDistribution.slice(0, 3).map((item) => (
+                    <span
+                      key={item.topic}
+                      className="px-2 py-0.5 rounded-md bg-[#f9f4ed] border border-[#dcd3c4] text-[10px] font-bold text-[#645c50]"
+                    >
+                      {item.topic} ({item.count})
+                    </span>
+                  ))}
+                  {topicDistribution.length > 3 && (
+                    <span className="text-[10px] font-bold text-[#8c8273] self-center">
+                      +{topicDistribution.length - 3} more
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {selectedQuestionIds.length === 0 && (
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#c67139] bg-[#ffe1d0] p-2 rounded-xl border border-[#c67139]/30 mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>0 questions selected — this will save your layout and header settings as a template draft.</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t-[1.5px] border-[#dcd3c4]">
+              <button
+                type="button"
+                onClick={() => setIsSaveDraftModalOpen(false)}
+                className="px-4 py-2 rounded-xl border-2 border-[#dcd3c4] text-xs font-bold text-[#645c50] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSaveDraft}
+                className="px-5 py-2 rounded-xl bg-[#c67139] border-2 border-[#201e1d] text-[#f9f4ed] text-xs font-black shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none cursor-pointer flex items-center gap-1.5"
+              >
+                <Save className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Save Draft</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Drafts Manager Modal */}
+      {isDraftsModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="saved-drafts-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
+        >
+          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_#201e1d] w-full max-w-2xl flex flex-col gap-4 max-h-[88vh] overflow-hidden">
+            {/* Header */}
+            <div className="shrink-0 flex items-center justify-between border-b-[1.5px] border-[#dcd3c4] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]">
+                  <FolderOpen className="w-5 h-5 text-[#201e1d]" aria-hidden="true" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 id="saved-drafts-modal-title" className="font-heading text-xl font-black text-[#201e1d]">
+                      Saved Test Drafts
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-[#201e1d] text-[#f9f4ed] text-xs font-black">
+                      {drafts.length}
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-bold text-[#645c50]">
+                    Manage, load, duplicate, and export your compiled test papers
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Toolbar in Header */}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportDraftFile}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Import draft from a JSON file"
+                  aria-label="Import draft JSON"
+                  className="px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-black text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 shadow-[2px_2px_0_0_#201e1d] flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Import JSON</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleStartNewDraft}
+                  title="Clear compiler and start a fresh paper"
+                  aria-label="Start new blank paper"
+                  className="px-2.5 py-1.5 rounded-xl bg-[#c67139] border-2 border-[#201e1d] text-xs font-black text-[#f9f4ed] hover:bg-[#b2622d] active:translate-y-0.5 shadow-[2px_2px_0_0_#201e1d] flex items-center gap-1 transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>+ New Paper</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDraftsModalOpen(false)}
+                  aria-label="Close saved drafts dialog"
+                  title="Close dialog"
+                  className="p-1.5 hover:bg-[#dcd3c4] rounded-full active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] cursor-pointer"
+                >
+                  <X className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {/* Feedback / Notification Banner */}
+            {draftModalFeedback && (
+              <div className="shrink-0 p-2.5 rounded-xl bg-[#e4ede1] border-2 border-[#8fa073] text-xs font-bold text-[#2b3a1a] flex items-center gap-2">
+                <Check className="w-4 h-4 text-[#556b2f] shrink-0" aria-hidden="true" />
+                <span className="flex-1">{draftModalFeedback}</span>
+              </div>
+            )}
+
+            {/* Search & Subject Filter Bar */}
+            {drafts.length > 0 && (
+              <div className="shrink-0 flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#8c8273]" aria-hidden="true" />
+                  <input
+                    type="text"
+                    value={draftSearch}
+                    onChange={(e) => setDraftSearch(e.target.value)}
+                    placeholder="Search drafts by title, notes, topic, or code..."
+                    aria-label="Search saved drafts"
+                    className="w-full pl-9 pr-7 py-2 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] placeholder-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d]"
+                  />
+                  {draftSearch.length > 0 && (
                     <button
                       type="button"
-                      onClick={(e) => handleDeleteDraft(d.id, e)}
-                      aria-label={`Delete draft ${d.title}`}
-                      title="Delete draft"
-                      className="p-2 text-[#c67139] hover:bg-[#ffe1d0] rounded-xl transition-colors active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer"
+                      onClick={() => setDraftSearch('')}
+                      title="Clear search"
+                      aria-label="Clear search"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8c8273] hover:text-[#201e1d] p-0.5 cursor-pointer"
                     >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
+                  )}
+                </div>
+
+                {/* Subject Filter Pills */}
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0 py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setDraftSubjectFilter('all')}
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border-2 ${
+                      draftSubjectFilter === 'all'
+                        ? 'bg-[#201e1d] text-[#f9f4ed] border-[#201e1d]'
+                        : 'bg-white text-[#645c50] border-[#dcd3c4] hover:border-[#201e1d]'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {SUBJECT_CATALOG.map((cat) => (
+                    <button
+                      key={cat.code}
+                      type="button"
+                      onClick={() => setDraftSubjectFilter(cat.code)}
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border-2 ${
+                        draftSubjectFilter === cat.code
+                          ? 'bg-[#ffe1d0] text-[#201e1d] border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
+                          : 'bg-white text-[#645c50] border-[#dcd3c4] hover:border-[#201e1d]'
+                      }`}
+                    >
+                      {cat.code}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Draft Cards List */}
+            <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-3 pr-1">
+              {drafts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                  <div className="w-14 h-14 rounded-3xl bg-[#ffe1d0] border-3 border-[#201e1d] flex items-center justify-center text-[#c67139] shadow-[3px_3px_0_0_#201e1d] mb-3">
+                    <FolderOpen className="w-7 h-7" aria-hidden="true" />
                   </div>
-                ))
+                  <h4 className="font-heading text-base font-black text-[#201e1d] mb-1">
+                    No Saved Drafts Yet
+                  </h4>
+                  <p className="text-xs font-bold text-[#645c50] max-w-sm mb-4">
+                    Compile questions from the question bank and click <span className="font-black text-[#201e1d]">Save Draft</span> in the right drawer, or import a pre-saved <span className="font-black text-[#201e1d]">.json</span> draft!
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 rounded-2xl bg-white border-2 border-[#201e1d] text-xs font-black text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 shadow-[2px_2px_0_0_#201e1d] flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Import JSON Draft</span>
+                  </button>
+                </div>
+              ) : filteredDrafts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                  <p className="text-xs font-bold text-[#645c50] mb-2">
+                    No drafts match your current search or filter.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraftSearch('');
+                      setDraftSubjectFilter('all');
+                    }}
+                    className="text-xs font-black text-[#c67139] underline cursor-pointer"
+                  >
+                    Clear search and subject filters
+                  </button>
+                </div>
+              ) : (
+                filteredDrafts.map((d) => {
+                  const isActive = d.id === activeDraftId;
+                  const isEditing = editingDraftId === d.id;
+
+                  if (isEditing) {
+                    return (
+                      <div
+                        key={d.id}
+                        className="p-4 rounded-2xl border-3 border-[#201e1d] bg-white shadow-[4px_4px_0_0_#201e1d] flex flex-col gap-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black text-[#201e1d] uppercase tracking-wider flex items-center gap-1">
+                            <Edit3 className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
+                            <span>Rename Draft</span>
+                          </span>
+                          <span className="text-[10px] font-bold text-[#8c8273]">ID: {d.id}</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={editingDraftTitle}
+                          onChange={(e) => setEditingDraftTitle(e.target.value)}
+                          placeholder="Draft title..."
+                          className="w-full px-3 py-1.5 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d]"
+                        />
+                        <textarea
+                          rows={2}
+                          value={editingDraftNotes}
+                          onChange={(e) => setEditingDraftNotes(e.target.value)}
+                          placeholder="Draft notes (optional)..."
+                          className="w-full px-3 py-1.5 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] resize-none"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCancelRenameDraft}
+                            className="px-3 py-1 rounded-lg border border-[#dcd3c4] text-xs font-bold text-[#645c50] hover:bg-[#eee7db] cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleSaveRenameDraft(d.id, e)}
+                            className="px-3 py-1 rounded-lg bg-[#201e1d] text-[#f9f4ed] text-xs font-black active:translate-y-0.5 cursor-pointer shadow-[1px_1px_0_0_#201e1d]"
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={d.id}
+                      className={`p-4 rounded-2xl border-2 transition-all flex flex-col gap-2.5 ${
+                        isActive
+                          ? 'border-[#c67139] bg-[#fffbf8] shadow-[3px_3px_0_0_#c67139]'
+                          : 'border-[#201e1d] bg-white shadow-[2px_2px_0_0_#201e1d] hover:shadow-[3px_3px_0_0_#201e1d]'
+                      }`}
+                    >
+                      {/* Top Row: Title + Subject + Active Indicator */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="font-heading text-sm font-black text-[#201e1d] leading-snug">
+                            {d.title || formatDefaultDraftTitle(d)}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-md bg-[#ffe1d0] border border-[#201e1d] text-[10px] font-black text-[#201e1d]">
+                            {d.subjectCode} {d.subjectName || ''}
+                          </span>
+                          {isActive && (
+                            <span className="px-2 py-0.5 rounded-full bg-[#c67139] text-[#f9f4ed] text-[9px] font-black tracking-wider uppercase">
+                              Active in Compiler
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Metadata Row */}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-bold text-[#645c50]">
+                        <span>{d.questionIds?.length || 0} Questions</span>
+                        <span>•</span>
+                        <span>{d.durationMinutes || 45} mins</span>
+                        {d.testCode && (
+                          <>
+                            <span>•</span>
+                            <span className="font-mono text-[11px] text-[#201e1d] font-bold">
+                              {d.testCode}
+                            </span>
+                          </>
+                        )}
+                        <span>•</span>
+                        <span className="text-[11px] text-[#8c8273]">
+                          Saved {new Date(d.updatedAt || d.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {/* Notes snippet */}
+                      {d.notes && d.notes.trim().length > 0 && (
+                        <p className="text-xs text-[#645c50] bg-[#f9f4ed] p-2 rounded-xl border border-[#dcd3c4] italic line-clamp-2">
+                          "{d.notes}"
+                        </p>
+                      )}
+
+                      {/* Topic chips */}
+                      {d.topicSummary && d.topicSummary.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {d.topicSummary.slice(0, 3).map((topicStr, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-md bg-[#f9f4ed] border border-[#dcd3c4] text-[10px] font-bold text-[#645c50]"
+                            >
+                              {topicStr}
+                            </span>
+                          ))}
+                          {d.topicSummary.length > 3 && (
+                            <span className="text-[10px] font-bold text-[#8c8273] self-center">
+                              +{d.topicSummary.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Action Toolbar (6 Buttons) */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#f0eade]">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadDraft(d)}
+                            aria-label={`Load draft ${d.title}`}
+                            className="px-3 py-1.5 rounded-xl bg-[#201e1d] text-[#f9f4ed] hover:bg-[#3d3835] active:translate-y-0.5 text-xs font-black shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 cursor-pointer transition-all"
+                          >
+                            <FileText className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Load Draft</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => window.open(`/portal/compiler/print?testId=${d.id}`, '_blank')}
+                            title="Open printable test paper in new tab"
+                            aria-label={`Print draft ${d.title}`}
+                            className="px-2.5 py-1.5 rounded-xl bg-white border border-[#201e1d] text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 text-xs font-black shadow-[1px_1px_0_0_#201e1d] flex items-center gap-1 cursor-pointer transition-all"
+                          >
+                            <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Print / PDF</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => handleDuplicateDraft(d.id, e)}
+                            title="Duplicate draft"
+                            aria-label={`Duplicate draft ${d.title}`}
+                            className="p-1.5 rounded-lg bg-white border border-[#dcd3c4] text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer transition-colors"
+                          >
+                            <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleStartRenameDraft(d, e)}
+                            title="Rename or edit notes"
+                            aria-label={`Rename draft ${d.title}`}
+                            className="p-1.5 rounded-lg bg-white border border-[#dcd3c4] text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer transition-colors"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleExportDraft(d, e)}
+                            title="Export draft as JSON file"
+                            aria-label={`Export draft ${d.title} as JSON`}
+                            className="p-1.5 rounded-lg bg-white border border-[#dcd3c4] text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteDraft(d.id, e)}
+                            title="Delete draft"
+                            aria-label={`Delete draft ${d.title}`}
+                            className="p-1.5 rounded-lg bg-white border border-[#dcd3c4] text-[#c67139] hover:bg-[#ffe1d0] hover:border-[#c67139] active:translate-y-0.5 cursor-pointer transition-colors ml-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

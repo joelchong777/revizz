@@ -14,9 +14,12 @@ export interface TestPaperConfig {
   includeMarkScheme: boolean;
   includeExplanations?: boolean;
   instructionsText?: string;
+  notes?: string;
+  topicSummary?: string[];
   questionIds: string[];
   compiledQuestions?: CompiledExamQuestion[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CompiledExamQuestion {
