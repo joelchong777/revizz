@@ -60,9 +60,9 @@ In a single atomic execution, `npm run wt ship` orchestrates:
    - Runs `git push origin <branch>:main`.
    - Guarantees that **only** the commits developed in this isolated worktree land on GitHub `main`.
    - Never exposes uncommitted or WIP code from local `main` or other parallel worktrees.
-5. **Step 5 (Vercel Production Redeploy & HTTP 200 Probe)**:
-   - Triggers production redeploy via `npx --yes vercel --prod --yes`.
-   - Probes live production URL (`https://revizz-sand.vercel.app`) with retry loops until an `HTTP 200 OK` is verified.
+5. **Step 5 (Smart Production Probe via GitHub CI/CD)**:
+   - Pushing to GitHub `main` automatically triggers Vercel's GitHub integration for app changes (`app/`, `components/`, `lib/`, `hooks/`, `public/`) and probes `https://revizz-sand.vercel.app` for `HTTP 200`.
+   - If a commit only modifies agent/tooling/docs files (`.agent/`, `scripts/`, `AGENTS.md`), it automatically skips the Vercel probe.
 6. **Step 6 (Automatic Worktree Cleanup)**:
    - Removes `.worktrees/<topic>` and unlinks symlinked assets.
    - Prunes the merged local feature branch (`git branch -d feat/<topic>`).

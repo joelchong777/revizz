@@ -21,6 +21,8 @@
 | 13 | Multi-Agent | **Bundled Verification DoD**: Subagents must compile and test before reporting completion. | Run `npx tsc --noEmit && npm test` inside subagent turn. |
 | 14 | Drag & Drop | **D&D Pointer Events Interception**: Child nodes trigger `dragleave` on dropzone container. | Apply `pointer-events-none` to all dropzone children. |
 | 15 | Keyboard A11y | **Hotkey Input Suppression**: 1-4/A-D/Space shortcuts trigger during text editing. | Check `['INPUT', 'TEXTAREA'].includes(e.target.tagName)` before fire. |
+| 16 | CI/CD Deployment | **Instant HTTP Probe False-Positive**: Checking production URL immediately after git push returns cached prior deployment. | Enforce direct Vercel CLI execution (`npx vercel --prod --yes`) or poll status for `● Ready`. |
+| 17 | Package Dependencies | **Local Cache Dependency Masking**: Locally cached `node_modules` hides missing `package.json` entries (`rehype-raw`, `remark-gfm`). | Validate dependencies directly in `package.json` against imports before shipping. |
 
 ## Reflection Log Entry - 2026-10-19 (Student UI, Auth Gate, 4-Option Format Filter, GFM Tables & Mobile Ergonomics)
 - **Topic**: Student UI, Auth Gate, 4-Option Format Filter, GFM Tables & Mobile Ergonomics
@@ -111,3 +113,21 @@
 - Automated tests added to `scripts/verify-revizz.ts` verifying DOM hierarchy, test IDs, and hook state handling.
 - Verified 100% clean build (`npx tsc --noEmit`) and all 158 tests passing.
 - Shipped atomically to GitHub `main` (`5a571bf`) and deployed to Vercel production (`https://revizz-sand.vercel.app` HTTP 200 OK).
+
+## Reflection Log Entry - 2026-10-19 (Test Compiler Sticky Header Clean-Up, Live Search Relocation & Vercel Build Verification)
+- **Topic**: Test Compiler Sticky Header Clean-Up, Live Search Relocation & Vercel Build Verification
+- **Target Surfaces**: `components/portal/compiler/TestCompilerHub.tsx`, `package.json`, `scripts/wt.ts`
+
+### Architectural Solutions & Key Insights
+- **Test Compiler Sticky Header Modernization**: Removed redundant elements from the question list sticky header (`Question Bank` title, count pill, active filter pill) and placed the responsive question search bar (`id="compiler-search-input"`, `flex-1 min-w-[200px] max-w-md` with `X` clear button) in their place. Removed the duplicate search bar from the right-hand `Question Filters` card to streamline vertical sidebar space.
+- **Vercel Clean-Container Parity Defense**: Restored `"rehype-raw": "^7.0.0"` and `"remark-gfm": "^4.0.1"` to `package.json`. Local `node_modules` caches can silently mask dependencies omitted from `package.json`; clean container CI/CD strictly requires explicit `package.json` entries for webpack module resolution.
+- **Vercel CLI Build Verification Gate**: Upgraded `scripts/wt.ts` from an instantaneous HTTP GET probe to full execution of `npx vercel --prod --yes`. This guarantees that Vercel builds compile, lint, and deploy cleanly before any release is declared successful.
+
+### Anti-Patterns & Bug Traps
+- **Instant HTTP GET False Positive**: Running `curl` or `https.get` against production within milliseconds of `git push` hits the cached previous deployment because Vercel takes 45–60s to compile. Always verify through the Vercel CLI or wait for deployment status `● Ready`.
+- **Local Dependency Cache Masking**: An undeclared package present in local `node_modules` allows `next build` and `tsc` to succeed locally while failing immediately on cloud CI/CD.
+
+### Verification & Quality Assurance
+- Automated tests: `npx tsc --noEmit` passed with 0 errors; all 158 automated tests passed across all 21 suites.
+- Production build: Vercel deployment verified `● Ready` and aliased to `https://revizz-sand.vercel.app`.
+
