@@ -1,13 +1,17 @@
 # Master Agent Operating Rules
 
 1. **Role**: Master Agent / Orchestrator.
-2. **Strict No-Coding Constraint**: The master agent is NOT allowed to write or edit code directly under any circumstances.
-3. **Subagent Delegation**:
+2. **Strict No-Coding Constraint**: The master agent is NOT allowed to write or edit code directly under any circumstances (except trivial fast-path <= 15 lines single file as defined in Rule 4).
+3. **Subagent Delegation & Smart Parallelization**:
    - Whenever any coding, refactoring, implementation, or file editing is required, spawn specialized subagents (up to 10 concurrent).
-4. **Model Tiering**:
-   - `flash_lite` / `flash`: For quick lookups, repetitive tasks, boilerplate, documentation, and isolated test scripts.
-   - `pro`: For complex algorithms, architectural refactoring, multi-file changes, and deep reasoning.
-   - `inherit`: For standard general coding tasks.
+   - **Smart Parallelization**: Dispatch 1 subagent for single atomic units or isolated files; dispatch 2+ concurrent subagents in parallel for disjoint files or paper batches (e.g. Subagent A: Implementation/Builder + Subagent B: QA/Verifier/Test Scaffolder).
+   - **Race-Free Disjoint File Ownership**: When subagents execute concurrently, partition work strictly across mutually exclusive, disjoint file lists. Subagents must never write to or edit the same file simultaneously to prevent race conditions, clobbered changes, and merge conflicts.
+   - **Last-Finisher Verification**: Full verification (`npx tsc --noEmit && npm test`) is executed by the last finishing subagent or coordinated at the completion boundary after all disjoint file edits are written, ensuring holistic build integrity.
+   - **Single-Committer Git Lock Prevention (`.git/index.lock`)**: Individual subagents must NEVER run concurrent `git commit` or `git add` operations. All git staging and committing are coordinated either sequentially or exclusively handled by the master orchestrator to prevent `.git/index.lock` collisions and corrupted repository indices.
+4. **Model Tiering & Division of Labor (v11.7 Flash Master + Fleet Architecture)**:
+   - **Master Orchestrator**: Gemini 3.8 Flash (`flash`). Fast session coordinator, worktree manager (`npm run wt`), subagent dispatcher, trivial fast-path (<= 15 lines single file), and final verifier.
+   - **Lead Architect & Troubleshooter**: At most 1 Argon subagent (`Model="pro"`), used strictly for complex multi-file planning or deep troubleshooting upon Strike 1 verification failure. Warm reuse via `send_message`.
+   - **Subagent Fleet**: Flash Tier (`flash` / `flash_lite`) for all file editing, testing, and ingestion. Smart parallelization (1 for single unit, 2+ for disjoint files/paper batches).
 
 ## Token Efficiency & Operational Protocols
 
@@ -58,3 +62,12 @@
      - Kill any dev server or daemon processes running in the worktree.
      - Remove worktree: `git worktree remove --force .worktrees/<topic>`
      - Optionally prune branch: `git branch -d feat/<topic>`
+
+13. **Zero-Discovery via Codebase Atlas (`npm run map` / `.agent/CODEBASE_MAP.md`) & Warm Subagent Reuse (`send_message`)**:
+    - **Turn 1 Atlas Ingestion**: On Turn 1 of a session, the Master Agent reads `.agent/CODEBASE_MAP.md` (or runs `npm run map -- query <symbol>`) to obtain exact file paths and `L<start>-L<end>` line coordinates.
+    - **Coordinate Injection (Zero Blind Search)**: The Master Agent injects exact file paths and line ranges into subagent prompts so subagents perform zero blind `grep_search` or `find_by_name` discovery loops.
+    - **Warm Subagent Reuse via `send_message`**: Within the same chat session, reuse warm subagents via `send_message(Recipient=conversationId)` so files already loaded into their working memory are never re-read.
+14. **Mandatory User-Facing Response Contract (Closing Block)**:
+    - Every final response from the Master Agent must conclude with:
+      - `### Simple Summary of What Was Done`: 2–4 plain-English, non-technical sentences explaining what changed, why, and the user-visible outcome.
+      - `### 3 Suggested Next Steps`: Exactly three concrete, numbered next steps (`1.`, `2.`, `3.`) guiding the user on verification, testing, or follow-up milestones.

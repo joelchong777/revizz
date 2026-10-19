@@ -35,9 +35,10 @@ yarn-error.log*
 next-env.d.ts
 
 # scratch / local data
-Economics (0455)/
-staging/
-!staging/0455_s24_12.json
+Economics (0455)
+staging/*
+!staging/*.json
+!staging/.gitkeep
 /page*.png
 
 # python
@@ -45,4 +46,13 @@ __pycache__/
 *.pyc
 
 # git worktrees
+.worktrees
 .worktrees/
+
+# agent state
+.agent/state/*.local.json
+.agent/state/*.lock
+.agent/state/*.tmp
+
+
+.env.local
