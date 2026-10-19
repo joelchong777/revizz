@@ -367,13 +367,24 @@ export function useQuizGame() {
   const nextQuestion = () => {
     if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
 
+    let effectiveWrongCount = wrongCount;
+    if (status === 'first-wrong') {
+      const currentQ = questions[currentQuestionIndex];
+      if (currentQ) {
+        setWrongCount(prev => prev + 1);
+        effectiveWrongCount = wrongCount + 1;
+        recordMissed(currentQ, 'wrong', currentQuestionIndex + 1);
+        saveAttempt(currentQ, 'wrong', 0, 0, false);
+      }
+    }
+
     const isEndless = config?.roundLength === 'endless';
     const limit = isEndless ? questions.length : (config?.roundLength as number);
 
     if (currentQuestionIndex + 1 >= Math.min(limit, questions.length)) {
       if (!hasRecordedRoundRef.current) {
         hasRecordedRoundRef.current = true;
-        const totalAnswered = correctFirstTryCount + correctRetryCount + wrongCount;
+        const totalAnswered = correctFirstTryCount + correctRetryCount + effectiveWrongCount;
         recordCompletedRound({
           subject: config?.subject || 'Economics 0455',
           sourceType: config?.sourceType || 'topic',
@@ -381,7 +392,7 @@ export function useQuizGame() {
           totalQuestions: totalAnswered > 0 ? totalAnswered : (currentQuestionIndex + 1),
           correctFirstTry: correctFirstTryCount,
           correctRetry: correctRetryCount,
-          wrongCount,
+          wrongCount: effectiveWrongCount,
           xpEarned: totalXP,
           peakStreak,
           isTimed: Boolean(config?.isTimed),

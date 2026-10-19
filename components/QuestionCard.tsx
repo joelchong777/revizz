@@ -494,29 +494,40 @@ export function QuestionCard({
           initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          className="flex items-center gap-2.5 p-3 px-3.5 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-3"
+          className="flex flex-col gap-2.5 w-full"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-text flex-shrink-0"
+          <button
+            type="button"
+            data-testid="retry-next-button"
+            onClick={onNext}
+            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
           >
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-          </svg>
-          <div className="flex flex-col leading-[1.2]">
-            <span className="font-heading text-base text-text">
-              1 retry left · 50% XP
-            </span>
-            <span className="text-xs font-semibold text-text">
-              Streak reset. Pick another option.
-            </span>
+            <span>{questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}</span>
+            <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
+          </button>
+          <div className="flex items-center gap-2.5 p-3 px-3.5 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-3">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-text flex-shrink-0"
+            >
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+            <div className="flex flex-col leading-[1.2]">
+              <span className="font-heading text-base text-text">
+                1 retry left · 50% XP
+              </span>
+              <span className="text-xs font-semibold text-text">
+                Streak reset. Pick another option or skip to next question.
+              </span>
+            </div>
           </div>
         </motion.div>
       )}

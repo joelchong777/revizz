@@ -1087,6 +1087,44 @@ test('QuestionCard Correct Feedback: Celebratory banner and selected correct opt
   assertEqual(content.includes('isCorrectPick'), true, 'Distinguishes user-picked correct option from revealed correct option');
 });
 
+test('QuestionCard Retry Skip: Renders retry-next-button above retry alert prompt when isRetry', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
+  const content = fs.readFileSync(cardPath, 'utf8');
+
+  assertEqual(content.includes('data-testid="retry-next-button"'), true, 'QuestionCard contains retry-next-button');
+  assertEqual(content.includes('onClick={onNext}'), true, 'Next button wires onClick to onNext');
+
+  // Verify it appears inside {isRetry && ( ... )}
+  const isRetryIndex = content.indexOf('{isRetry && (');
+  assertEqual(isRetryIndex !== -1, true, 'QuestionCard checks isRetry');
+
+  const retryButtonIndex = content.indexOf('data-testid="retry-next-button"', isRetryIndex);
+  assertEqual(retryButtonIndex !== -1, true, 'Retry next button is inside isRetry block');
+
+  const retryCardIndex = content.indexOf('1 retry left · 50% XP', retryButtonIndex);
+  assertEqual(retryCardIndex !== -1, true, 'Retry prompt card exists after next button');
+  assertEqual(retryButtonIndex < retryCardIndex, true, 'Next button is rendered ABOVE retry prompt card');
+
+  // Verify styling and labels
+  assertEqual(content.includes('bg-accent hover:bg-accent-600'), true, 'Retry button has tactile neobrutalist accent styling');
+  assertEqual(content.includes('Streak reset. Pick another option or skip to next question.'), true, 'Retry prompt subtext mentions skip to next question');
+});
+
+test('useQuizGame Question Skip: Correctly accounts for skipped question during first-wrong status', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const hookPath = path.resolve(process.cwd(), 'hooks/useQuizGame.ts');
+  const content = fs.readFileSync(hookPath, 'utf8');
+
+  // Verify nextQuestion handles status === 'first-wrong'
+  assertEqual(content.includes("if (status === 'first-wrong')"), true, 'nextQuestion checks status === "first-wrong"');
+  assertEqual(content.includes("setWrongCount(prev => prev + 1)"), true, 'Increments wrongCount on skip');
+  assertEqual(content.includes("recordMissed(currentQ, 'wrong', currentQuestionIndex + 1)"), true, 'Records missed question on skip');
+  assertEqual(content.includes("saveAttempt(currentQ, 'wrong', 0, 0, false)"), true, 'Saves attempt as wrong on skip');
+});
+
 
 // -----------------------------------------------------------------------------
 // [Suite 10] Simplified Direct JSON Pipeline, Zero-Draft Contract & Supabase Bank
