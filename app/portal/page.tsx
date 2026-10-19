@@ -10,6 +10,7 @@ import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import AssignedHomeworkHub from '@/components/portal/AssignedHomeworkHub';
 import TeacherAnalytics from '@/components/portal/TeacherAnalytics';
+import TeacherOverviewHub from '@/components/portal/TeacherOverviewHub';
 import TestCompilerHub from '@/components/portal/compiler/TestCompilerHub';
 import { fetchWeeklyLeaderboard, LeaderboardEntry } from '@/lib/leaderboard';
 import { getPortalNavItems } from '@/lib/portal/menuConfig';
@@ -360,10 +361,17 @@ function PortalContent() {
   const renderContent = () => {
     switch (activeNav) {
       case 'overview':
+        return (
+          <TeacherOverviewHub
+            key="overview"
+            onNavigate={(tab) => setActiveNav(tab)}
+            userDisplayName={userProfile?.display_name || 'Educator'}
+          />
+        );
       case 'roster':
         return (
           <TeacherAnalytics
-            key={activeNav}
+            key="roster"
             initialView="roster"
             onNavigateToAssign={() => setActiveNav('assign')}
           />
