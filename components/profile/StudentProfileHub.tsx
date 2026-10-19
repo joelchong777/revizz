@@ -32,6 +32,8 @@ import { StudentSettingsPanel } from './StudentSettingsPanel';
 import { StudentStatsPanel } from './StudentStatsPanel';
 import { StudentReviewPanel } from './StudentReviewPanel';
 import { StudentAchievementsActivityPanel } from './StudentAchievementsActivityPanel';
+import { StudentHomeworkPanel } from './StudentHomeworkPanel';
+import { getHomeworkAssignments, subscribeHomeworkChanges } from '@/lib/homework';
 import {
   ArrowLeft,
   Zap,
@@ -53,6 +55,7 @@ import {
   BookOpen,
   Lock,
   Layers,
+  ClipboardCheck,
 } from 'lucide-react';
 
 export interface StudentProfileHubProps {
@@ -66,6 +69,7 @@ const TAB_CONFIG: Array<{
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   { key: 'overview', label: 'Profile Home', shortLabel: 'Home', icon: Home },
+  { key: 'homework', label: 'Assigned Homework', shortLabel: 'Homework', icon: ClipboardCheck },
   { key: 'stats', label: 'Stats & Mastery', shortLabel: 'Stats', icon: BarChart3 },
   { key: 'review', label: 'Questions to Review', shortLabel: 'Review', icon: Brain },
   { key: 'achievements', label: 'Badges & Activity', shortLabel: 'Badges', icon: Award },
@@ -89,7 +93,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   // Tab State
   const tabFromQuery = searchParams?.get('tab') as StudentProfileTab | null;
   const validTab: StudentProfileTab =
-    tabFromQuery && ['overview', 'stats', 'review', 'achievements', 'settings'].includes(tabFromQuery)
+    tabFromQuery && ['overview', 'homework', 'stats', 'review', 'achievements', 'settings'].includes(tabFromQuery)
       ? tabFromQuery
       : initialTab || 'overview';
 
@@ -100,15 +104,27 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   const [topics, setTopics] = useState<SyllabusTopic[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState<boolean>(true);
   const [isAuthModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [pendingHomeworkCount, setPendingHomeworkCount] = useState<number>(0);
 
   // Sync tab with URL search parameter or initialTab prop changes
   useEffect(() => {
-    if (tabFromQuery && ['overview', 'stats', 'review', 'achievements', 'settings'].includes(tabFromQuery)) {
+    if (tabFromQuery && ['overview', 'homework', 'stats', 'review', 'achievements', 'settings'].includes(tabFromQuery)) {
       setActiveTab(tabFromQuery);
     } else if (initialTab) {
       setActiveTab(initialTab);
     }
   }, [tabFromQuery, initialTab]);
+
+  // Reactive subscription to homework assignments count
+  useEffect(() => {
+    const updateHomeworkCount = () => {
+      const items = getHomeworkAssignments();
+      const pending = items.filter((item) => item.status === 'pending' || item.status === 'overdue').length;
+      setPendingHomeworkCount(pending);
+    };
+    updateHomeworkCount();
+    return subscribeHomeworkChanges(updateHomeworkCount);
+  }, []);
 
   // Reactive subscription to student profile updates across tabs and windows
   useEffect(() => {
@@ -261,7 +277,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   const recommendedTopic = statsSummary.weakestTopics?.[0] || statsSummary.topicStats?.[0];
 
   return (
-    <main className="w-full max-w-[560px] mx-auto py-3 pb-16 flex flex-col gap-4 sm:gap-5 select-none">
+    <main className={`w-full ${activeTab === 'homework' ? 'max-w-4xl' : 'max-w-[560px]'} mx-auto py-3 pb-16 flex flex-col gap-4 sm:gap-5 select-none px-3 sm:px-4 transition-all duration-150`}>
       {/* Top Bar: Back to Quiz Arena + Page Title + Quick Start Practice */}
       <header className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -291,10 +307,10 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
         </button>
       </header>
 
-      {/* Tactile 5-Tab Navigation Dock */}
+      {/* Tactile 6-Tab Navigation Dock */}
       <nav
         data-testid="student-profile-tabs"
-        className="grid grid-cols-5 gap-1 sm:gap-1.5 p-1.5 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d]"
+        className="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-1.5 p-1.5 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d]"
         aria-label="Student profile sections"
       >
         {TAB_CONFIG.map((tab) => {
@@ -305,7 +321,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
               key={tab.key}
               type="button"
               onClick={() => handleTabChange(tab.key)}
-              className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs leading-tight transition-all duration-75 cursor-pointer ${
+              className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl text-[11px] sm:text-xs leading-tight transition-all duration-75 cursor-pointer min-h-[48px] ${
                 isActive
                   ? 'bg-[#FFDE59] text-[#201e1d] font-heading border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                   : 'bg-transparent hover:bg-neutral-200/60 text-[#201e1d] font-bold border-2 border-transparent hover:border-[#201e1d]/20 active:translate-x-0.5 active:translate-y-0.5'
@@ -314,10 +330,23 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
               <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#201e1d] stroke-[2.5]' : 'text-neutral-700'}`} />
               <span className="truncate max-w-full text-center">{tab.shortLabel}</span>
 
+              {/* Badge count for Homework tab */}
+              {tab.key === 'homework' && pendingHomeworkCount > 0 && (
+                <span
+                  className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-black border leading-tight ${
+                    isActive
+                      ? 'bg-[#201e1d] text-[#FFDE59] border-[#201e1d]'
+                      : 'bg-[#FB7185] text-white border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]'
+                  }`}
+                >
+                  {pendingHomeworkCount}
+                </span>
+              )}
+
               {/* Badge count for Review tab */}
               {tab.key === 'review' && reviewQueueTotal > 0 && (
                 <span
-                  className={`absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black border leading-tight ${
+                  className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-black border leading-tight ${
                     isActive
                       ? 'bg-[#201e1d] text-[#FFDE59] border-[#201e1d]'
                       : 'bg-[#FB7185] text-white border-[#201e1d] shadow-[1px_1px_0_0_#201e1d]'
@@ -791,6 +820,15 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
                 </div>
               )}
             </section>
+          </div>
+        )}
+
+        {/* ===================================================================
+            TAB: Assigned Homework
+           =================================================================== */}
+        {activeTab === 'homework' && (
+          <div className="animate-fadeIn">
+            <StudentHomeworkPanel questions={questions} />
           </div>
         )}
 

@@ -117,6 +117,15 @@ import {
   EnrichedBankQuestion,
   BankFilterState,
 } from '../lib/portal/bankFilters';
+import {
+  getHomeworkAssignments,
+  findAssignmentByTestCode,
+  getHomeworkSubmissions,
+  saveHomeworkSubmission,
+  getSeedHomeworkAssignments,
+  HOMEWORK_SUBMISSIONS_KEY,
+  HomeworkSubmission,
+} from '../lib/homework';
 
 // Setup Mock LocalStorage for Node.js environment
 class LocalStorageMock {
@@ -4241,11 +4250,144 @@ async function runSuite22() {
   });
 }
 
+async function runSuite23() {
+  console.log('\n\x1b[1m\x1b[34m[Suite 23] Student Homework & Online Assessment Engine Architecture\x1b[0m');
+
+  test('Homework Engine: getHomeworkAssignments returns default seed assignments on clean state', () => {
+    mockStorage.clear();
+    const items = getHomeworkAssignments();
+    assertEqual(items.length, 3, 'Returns exactly 3 seed assignments');
+    const hw1 = items.find((i) => i.testCode === 'ECO-0455-HW1');
+    assert(Boolean(hw1), 'Seed assignment ECO-0455-HW1 is present');
+    assertEqual(hw1?.subjectCode, '0455', 'ECO-0455-HW1 has subjectCode 0455');
+    assertEqual(hw1?.status, 'pending', 'ECO-0455-HW1 has pending status');
+    assertEqual(hw1?.isOverdue, false, 'ECO-0455-HW1 is not overdue');
+  });
+
+  test('Homework Engine: findAssignmentByTestCode performs case-insensitive lookup', () => {
+    const foundUpper = findAssignmentByTestCode('ECO-0455-HW1');
+    assert(Boolean(foundUpper), 'findAssignmentByTestCode finds uppercase');
+    const foundLower = findAssignmentByTestCode('eco-0455-hw1');
+    assert(Boolean(foundLower), 'findAssignmentByTestCode finds lowercase');
+    const foundSpaced = findAssignmentByTestCode('   ECO-0455-HW2   ');
+    assert(Boolean(foundSpaced), 'findAssignmentByTestCode handles whitespace');
+    const notFound = findAssignmentByTestCode('NON-EXISTENT-CODE');
+    assertEqual(notFound, null, 'Returns null for unknown code');
+  });
+
+  test('Homework Engine: saveHomeworkSubmission and getHomeworkSubmissions persist correctly', () => {
+    const submission: HomeworkSubmission = {
+      assignmentId: 'ECO-0455-HW1',
+      testCode: 'ECO-0455-HW1',
+      completedAt: new Date().toISOString(),
+      score: 5,
+      totalQuestions: 5,
+      percentage: 100,
+      timeSpentSeconds: 120,
+    };
+    saveHomeworkSubmission(submission);
+    const subs = getHomeworkSubmissions();
+    assert(Boolean(subs['ECO-0455-HW1']), 'Submission is retrieved from storage');
+    assertEqual(subs['ECO-0455-HW1'].percentage, 100, 'Stored submission has percentage 100');
+
+    // Status is now completed
+    const items = getHomeworkAssignments();
+    const item = items.find((i) => i.testCode === 'ECO-0455-HW1');
+    assertEqual(item?.status, 'completed', 'Status updated to completed');
+    assertEqual(item?.isOverdue, false, 'isOverdue is false when completed');
+  });
+
+  test('Homework Engine: Overdue calculation and recovery', () => {
+    const pastDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    saveOnlineAssignment({
+      id: 'OVERDUE-HW-01',
+      title: 'Past Task',
+      subjectCode: '0455',
+      subjectName: 'Economics',
+      cohortName: 'Year 10',
+      dueDate: pastDate,
+      durationMinutes: 15,
+      questionIds: ['0455-s24-12-q01'],
+      testCode: 'OVERDUE-01',
+      createdAt: new Date().toISOString(),
+    });
+
+    const items = getHomeworkAssignments();
+    const overdueItem = items.find((i) => i.id === 'OVERDUE-HW-01');
+    assertEqual(overdueItem?.status, 'overdue', 'Unsubmitted past-due assignment has status overdue');
+    assertEqual(overdueItem?.isOverdue, true, 'isOverdue is true');
+
+    // Submit it
+    saveHomeworkSubmission({
+      assignmentId: 'OVERDUE-HW-01',
+      testCode: 'OVERDUE-01',
+      completedAt: new Date().toISOString(),
+      score: 1,
+      totalQuestions: 1,
+      percentage: 100,
+    });
+    const itemsAfter = getHomeworkAssignments();
+    const recovered = itemsAfter.find((i) => i.id === 'OVERDUE-HW-01');
+    assertEqual(recovered?.status, 'completed', 'Status recovers to completed upon submission');
+    assertEqual(recovered?.isOverdue, false, 'isOverdue becomes false');
+  });
+
+  test('Static Code Contract: components/profile/StudentHomeworkPanel.tsx exists and matches UI/UX spec', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.resolve(process.cwd(), 'components/profile/StudentHomeworkPanel.tsx');
+    assertEqual(fs.existsSync(filePath), true, 'components/profile/StudentHomeworkPanel.tsx exists');
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert(content.includes('border-2 border-[#201e1d]'), 'Panel uses neobrutalist borders');
+    assert(content.includes('shadow-[3px_3px_0_0_#201e1d]'), 'Panel uses neobrutalist shadow');
+    assert(content.includes('Quick-Join Assignment'), 'Panel contains quick-join section');
+    assert(content.includes('Find & Start') || content.includes('Find &amp; Start'), 'Panel contains find and start action');
+    assert(content.includes('getHomeworkAssignments'), 'Panel uses getHomeworkAssignments');
+    assert(content.includes('saveHomeworkSubmission'), 'Panel uses saveHomeworkSubmission');
+    assert(content.includes('handleSubmitQuiz'), 'Panel contains quiz submission handler');
+  });
+
+  test('Static Code Contract: components/profile/StudentProfileHub.tsx registers homework tab and dock', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.resolve(process.cwd(), 'components/profile/StudentProfileHub.tsx');
+    assertEqual(fs.existsSync(filePath), true, 'components/profile/StudentProfileHub.tsx exists');
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert(content.includes("key: 'homework'"), 'TAB_CONFIG includes homework');
+    assert(content.includes('StudentHomeworkPanel'), 'StudentProfileHub imports StudentHomeworkPanel');
+    assert(content.includes('grid-cols-3 sm:grid-cols-6'), 'Dock updated to 6 columns');
+    assert(content.includes('pendingHomeworkCount'), 'Dock tracks pendingHomeworkCount badge');
+    assert(content.includes("activeTab === 'homework'"), 'Renders StudentHomeworkPanel on homework tab');
+  });
+
+  test('Static Code Contract: app/homework/page.tsx and app/profile/homework/page.tsx exist', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const p1 = path.resolve(process.cwd(), 'app/homework/page.tsx');
+    const p2 = path.resolve(process.cwd(), 'app/profile/homework/page.tsx');
+    assertEqual(fs.existsSync(p1), true, 'app/homework/page.tsx exists');
+    assertEqual(fs.existsSync(p2), true, 'app/profile/homework/page.tsx exists');
+    const c1 = fs.readFileSync(p1, 'utf8');
+    assert(c1.includes('initialTab="homework"'), 'app/homework/page.tsx passes initialTab="homework"');
+    assert(c1.includes('Assigned Homework & Tests | Revizz'), 'app/homework/page.tsx specifies metadata title');
+  });
+
+  test('Static Code Contract: components/LeaderboardModal.tsx links to /homework', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.resolve(process.cwd(), 'components/LeaderboardModal.tsx');
+    const content = fs.readFileSync(filePath, 'utf8');
+    assert(content.includes('href="/homework"'), 'LeaderboardModal links to /homework');
+    assert(content.includes('Assigned Homework'), 'LeaderboardModal includes Assigned Homework label');
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
   await runSuite21();
   await runSuite22();
+  await runSuite23();
 
   // Summary Output
   console.log('\n========================================================');

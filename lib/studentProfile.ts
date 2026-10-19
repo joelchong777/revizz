@@ -31,7 +31,7 @@ export const BOOKMARKED_QUESTIONS_KEY = 'revizz_bookmarked_questions_v1';
 export const ROUND_HISTORY_KEY = 'revizz_student_round_history_v1';
 export const STUDENT_PROFILE_EVENT = 'revizz:student-profile-updated';
 
-export type StudentProfileTab = 'overview' | 'stats' | 'review' | 'achievements' | 'settings';
+export type StudentProfileTab = 'overview' | 'homework' | 'stats' | 'review' | 'achievements' | 'settings';
 
 function isClient(): boolean {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined';

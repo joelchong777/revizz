@@ -191,6 +191,13 @@ export default function LeaderboardModal({
                   </Link>
                   <div className="grid grid-cols-2 gap-2">
                     <Link
+                      href="/homework"
+                      onClick={onClose}
+                      className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all col-span-2"
+                    >
+                      📝 Assigned Homework
+                    </Link>
+                    <Link
                       href="/profile?tab=stats"
                       onClick={onClose}
                       className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
