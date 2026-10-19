@@ -512,15 +512,31 @@ export default function TestCompilerHub() {
         <div className="flex flex-col gap-3 min-w-0">
           {/* Sleek, Compact Sticky Header Bar */}
           <div className="sticky top-0 z-10 px-4 py-2.5 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex items-center justify-between gap-3 flex-wrap backdrop-blur-sm">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="font-heading font-black text-[#201e1d] text-base">Question Bank</h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-xs font-bold text-[#645c50]">
-                {filteredQuestions.length} of {questions.length} questions
-              </span>
-              {activeFilterCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#c67139] text-[10px] font-bold">
-                  {activeFilterCount} active
-                </span>
+            {/* Search Input (moved from Question Filters) */}
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <label htmlFor="compiler-search-input" className="sr-only">
+                Search stems, question IDs, citations, and option texts
+              </label>
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none" aria-hidden="true" />
+              <input
+                id="compiler-search-input"
+                type="text"
+                placeholder="Search stems, citations, IDs, options..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search questions by stem, citations, IDs, or option text"
+                className="w-full py-1.5 pl-8 pr-7 rounded-xl bg-white border border-[#dcd3c4] text-xs font-medium text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] placeholder:text-[#a19786] transition-all"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search query"
+                  title="Clear search query"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
               )}
             </div>
 
@@ -875,34 +891,6 @@ export default function TestCompilerHub() {
             {/* Collapsible Body */}
             {isFiltersExpanded && (
               <div className="flex flex-col gap-2.5 pt-1 border-t border-[#dcd3c4]">
-                {/* Search Input */}
-                <div className="relative">
-                  <label htmlFor="compiler-search-input" className="sr-only">
-                    Search stems, question IDs, citations, and option texts
-                  </label>
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none" aria-hidden="true" />
-                  <input
-                    id="compiler-search-input"
-                    type="text"
-                    placeholder="Search stems, citations, IDs, options..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    aria-label="Search questions by stem, citations, IDs, or option text"
-                    className="w-full py-1.5 pl-8 pr-7 rounded-xl bg-white border border-[#dcd3c4] text-xs font-medium text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] placeholder:text-[#a19786] transition-all"
-                  />
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch('')}
-                      aria-label="Clear search query"
-                      title="Clear search query"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-
                 {/* Dropdowns Grid */}
                 <div className="grid grid-cols-2 gap-1.5">
                   <div className="col-span-2 relative" ref={topicDropdownRef}>
