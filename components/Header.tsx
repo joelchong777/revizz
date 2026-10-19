@@ -191,7 +191,7 @@ export function Header({
 
       <header
         className={cn(
-          'sticky top-0 z-20 bg-bg/95 backdrop-blur-xs border-b-2 border-text select-none transition-all py-2 px-3 sm:px-4',
+          'sticky top-0 z-20 bg-bg border-b-2 border-text select-none transition-all py-2 px-3 sm:px-4',
           className
         )}
       >

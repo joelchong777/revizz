@@ -237,7 +237,7 @@ export function StudentSettingsPanel({
               type="text"
               value={displayNameInput}
               onChange={(e) => setDisplayNameInput(e.target.value)}
-              placeholder="e.g. Alex Cambridge"
+              placeholder="e.g. Cambridge Scholar"
               maxLength={40}
               className="flex-1 px-4 py-3 rounded-2xl border-2 border-[#201e1d] bg-white font-bold text-[#201e1d] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#FEF08A] shadow-[2px_2px_0_0_#201e1d] transition-all text-base"
             />
@@ -411,7 +411,7 @@ export function StudentSettingsPanel({
           <label className="block text-xs font-black uppercase tracking-wider text-neutral-500 mb-2.5">
             Daily Question Target (Paced Revision)
           </label>
-          <div className="grid grid-cols-5 gap-2.5">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5">
             {GOAL_OPTIONS.map((goal) => {
               const isSelected = preferences.dailyQuestionGoal === goal;
               return (
@@ -419,13 +419,14 @@ export function StudentSettingsPanel({
                   key={goal}
                   type="button"
                   onClick={() => onUpdatePreferences({ dailyQuestionGoal: goal })}
-                  className={`shrink-0 whitespace-nowrap py-3 rounded-2xl font-heading font-black text-sm sm:text-base text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                  className={`min-w-0 py-2.5 sm:py-3 rounded-2xl font-heading font-black text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                     isSelected
                       ? 'bg-[#FEF08A] text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]'
                       : 'bg-[#F9F4ED] text-[#201e1d] border-2 border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-white'
                   }`}
                 >
-                  {goal} <span className="text-xs font-bold block sm:inline">Q/day</span>
+                  <span className="block text-sm sm:text-base leading-tight">{goal}</span>
+                  <span className="block text-[10px] sm:text-xs font-bold text-neutral-600 leading-tight">Q/day</span>
                 </button>
               );
             })}
@@ -454,7 +455,7 @@ export function StudentSettingsPanel({
           <label className="block text-xs font-black uppercase tracking-wider text-neutral-500 mb-2.5">
             Default Round Length
           </label>
-          <div className="grid grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
             {ROUND_LENGTH_OPTIONS.map((length) => {
               const isSelected = preferences.defaultRoundLength === length;
               return (
@@ -462,9 +463,9 @@ export function StudentSettingsPanel({
                   key={length}
                   type="button"
                   onClick={() => onUpdatePreferences({ defaultRoundLength: length })}
-                  className={`shrink-0 whitespace-nowrap py-3 sm:py-3.5 rounded-2xl font-heading font-black text-sm sm:text-base text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                  className={`min-w-0 px-2 py-3 sm:py-3.5 rounded-2xl font-heading font-black text-sm sm:text-base text-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                     isSelected
-                      ? 'bg-[#FEF08A] text-[#201e1d] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] scale-[1.02]'
+                      ? 'bg-[#FEF08A] text-[#201e1d] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d]'
                       : 'bg-[#F9F4ED] text-[#201e1d] border-2 border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-white'
                   }`}
                 >
