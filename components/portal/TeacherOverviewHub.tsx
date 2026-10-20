@@ -86,23 +86,28 @@ interface ToastMessage {
   type?: 'success' | 'info' | 'warning';
 }
 
-const AVAILABLE_COHORTS = [
-  'All Cohorts',
-  '10 Economics (0455)',
-  'Grade 10 Physics (0625)',
-  'Year 11 Physics (0625)',
-];
-
 const DEFAULT_FALLBACK_DRAFTS: TestPaperConfig[] = [];
 
 const DEFAULT_FALLBACK_ASSIGNMENTS: MockAssignmentStats[] = [];
 
 const INITIAL_TRIAGE_STUDENTS: TriageStudent[] = [];
 
-const TOPIC_MASTERY_STRONG: { topic: string; accuracy: number; attempts: number; subject: string }[] = [];
+export const TOPIC_MASTERY_WEAK: { topic: string; accuracy: number; strugglingCount: number; subject: string }[] = [];
 
-const TOPIC_MASTERY_GAPS: { topic: string; accuracy: number; strugglingCount: number; subject: string }[] = [];
-export const TOPIC_MASTERY_WEAK = TOPIC_MASTERY_GAPS;
+function formatDueRelative(dateStr: string): string {
+  try {
+    const dueTime = new Date(dateStr).getTime();
+    if (isNaN(dueTime)) return 'No due date';
+    const diffMs = dueTime - Date.now();
+    if (diffMs < 0) return 'Past Due';
+    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+    if (diffHours < 24) return `Due in ${Math.max(1, diffHours)}h`;
+    const diffDays = Math.round(diffHours / 24);
+    return `Due in ${diffDays}d`;
+  } catch {
+    return 'Due soon';
+  }
+}
 
 export default function TeacherOverviewHub({
   onNavigate,
@@ -126,8 +131,8 @@ export default function TeacherOverviewHub({
   const [diagSubject, setDiagSubject] = useState<string>('0455');
   const [diagCount, setDiagCount] = useState<number>(10);
   const [diagFocus, setDiagFocus] = useState<'gap' | 'mixed' | 'topic'>('gap');
-  const [diagTopic, setDiagTopic] = useState<string>('Price Elasticity of Demand');
-  const [diagCohort, setDiagCohort] = useState<string>('10 Economics (0455)');
+  const [diagTopic, setDiagTopic] = useState<string>('');
+  const [diagCohort, setDiagCohort] = useState<string>('');
   const [isGeneratingDiag, setIsGeneratingDiag] = useState<boolean>(false);
 
   // Toast notification helper
@@ -217,8 +222,44 @@ export default function TeacherOverviewHub({
           if (mounted) setAssignmentsList([]);
         }
 
-        // 3. Zero fake data invariant: Never invent fake error rates, fake guessing speeds, or fake student triage entries
-        // Real triage students will only populate if explicit error telemetries exist
+        // 3. Zero fake data invariant: Populate real triage students strictly from explicit error telemetry
+        const realTriage: TriageStudent[] = [];
+        const seen = new Set<string>();
+        storedAssignments.forEach((a) => {
+          const hw = findHomeworkByIdAnyTeacher(a.id) || getAssignedHomeworkByCode(a.testCode || '');
+          if (hw && hw.submissions) {
+            hw.submissions.forEach((sub) => {
+              const key = sub.studentId || sub.studentName;
+              if (!key || seen.has(key)) return;
+              if (sub.accuracyPercentage < 50) {
+                seen.add(key);
+                const initials = sub.studentName
+                  ? sub.studentName
+                      .trim()
+                      .split(/\s+/)
+                      .map((p) => p[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()
+                  : 'ST';
+                realTriage.push({
+                  id: sub.studentId || `triage-${Date.now()}-${Math.random()}`,
+                  name: sub.studentName || 'Student',
+                  initials,
+                  cohort: a.cohortName || 'General',
+                  avatarBg: '#ffe1d0',
+                  reason: 'error_rate',
+                  reasonBadge: 'High Error Rate',
+                  detail: `Accuracy dropped to ${sub.accuracyPercentage}% on "${a.title}".`,
+                  accuracy: sub.accuracyPercentage,
+                  lastActive: 'Recently',
+                  status: 'flagged',
+                });
+              }
+            });
+          }
+        });
+        if (mounted) setTriageStudents(realTriage);
       } catch (err) {
         console.warn('TeacherOverviewHub: Non-fatal error loading hub data, using fallbacks:', err);
       } finally {
@@ -232,11 +273,35 @@ export default function TeacherOverviewHub({
     };
   }, []);
 
-  // Filtered Assignments based on Cohort Selector
+  // Dynamically derive real cohorts from active assignments & saved teacher classes
+  const availableCohorts = useMemo(() => {
+    const cohortSet = new Set<string>();
+    assignmentsList.forEach((a) => {
+      if (a.cohortName && a.cohortName.trim()) {
+        cohortSet.add(a.cohortName.trim());
+      }
+    });
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('revizz_teacher_classes');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((c: { name?: string }) => {
+              if (c.name && c.name.trim()) cohortSet.add(c.name.trim());
+            });
+          }
+        }
+      } catch {}
+    }
+    return Array.from(cohortSet);
+  }, [assignmentsList]);
+
+  // Filtered Assignments based on Cohort Selector (real dynamic matching)
   const filteredAssignments = useMemo(() => {
     if (selectedCohort === 'All Cohorts') return assignmentsList;
-    return assignmentsList.filter((a) =>
-      a.cohortName.toLowerCase().includes(selectedCohort.toLowerCase().split(' ')[0])
+    return assignmentsList.filter(
+      (a) => a.cohortName.trim().toLowerCase() === selectedCohort.trim().toLowerCase()
     );
   }, [assignmentsList, selectedCohort]);
 
@@ -245,11 +310,67 @@ export default function TeacherOverviewHub({
     return triageStudents.filter((student) => {
       const matchesCohort =
         selectedCohort === 'All Cohorts' ||
-        student.cohort.toLowerCase().includes(selectedCohort.toLowerCase().split(' ')[0]);
+        student.cohort.trim().toLowerCase() === selectedCohort.trim().toLowerCase();
       const matchesFilter = triageFilter === 'all' || student.reason === triageFilter;
       return matchesCohort && matchesFilter;
     });
   }, [triageStudents, selectedCohort, triageFilter]);
+
+  // Real dynamic topic telemetry derived from actual homework submissions
+  const dynamicTopicGaps = useMemo(() => {
+    const topicStatsMap: Record<string, { totalAcc: number; count: number; subject: string; struggling: number }> = {};
+    assignmentsList.forEach((a) => {
+      const hw = findHomeworkByIdAnyTeacher(a.id) || getAssignedHomeworkByCode(a.testCode || '');
+      if (hw && hw.submissions && hw.submissions.length > 0) {
+        const topicName = hw.topics && hw.topics.length > 0 ? hw.topics[0] : a.title;
+        if (!topicStatsMap[topicName]) {
+          topicStatsMap[topicName] = { totalAcc: 0, count: 0, subject: a.subjectCode, struggling: 0 };
+        }
+        hw.submissions.forEach((s) => {
+          topicStatsMap[topicName].totalAcc += s.accuracyPercentage;
+          topicStatsMap[topicName].count += 1;
+          if (s.accuracyPercentage < 60) {
+            topicStatsMap[topicName].struggling += 1;
+          }
+        });
+      }
+    });
+
+    return Object.entries(topicStatsMap)
+      .filter(([_, stats]) => stats.count > 0 && Math.round(stats.totalAcc / stats.count) < 65)
+      .map(([topic, stats]) => ({
+        topic,
+        accuracy: Math.round(stats.totalAcc / stats.count),
+        strugglingCount: stats.struggling,
+        subject: stats.subject,
+      }));
+  }, [assignmentsList]);
+
+  const dynamicTopicStrong = useMemo(() => {
+    const topicStatsMap: Record<string, { totalAcc: number; count: number; subject: string }> = {};
+    assignmentsList.forEach((a) => {
+      const hw = findHomeworkByIdAnyTeacher(a.id) || getAssignedHomeworkByCode(a.testCode || '');
+      if (hw && hw.submissions && hw.submissions.length > 0) {
+        const topicName = hw.topics && hw.topics.length > 0 ? hw.topics[0] : a.title;
+        if (!topicStatsMap[topicName]) {
+          topicStatsMap[topicName] = { totalAcc: 0, count: 0, subject: a.subjectCode };
+        }
+        hw.submissions.forEach((s) => {
+          topicStatsMap[topicName].totalAcc += s.accuracyPercentage;
+          topicStatsMap[topicName].count += 1;
+        });
+      }
+    });
+
+    return Object.entries(topicStatsMap)
+      .filter(([_, stats]) => stats.count > 0 && Math.round(stats.totalAcc / stats.count) >= 65)
+      .map(([topic, stats]) => ({
+        topic,
+        accuracy: Math.round(stats.totalAcc / stats.count),
+        attempts: stats.count,
+        subject: stats.subject,
+      }));
+  }, [assignmentsList]);
 
   // Triage category counts for immediate dashboard visibility
   const triageCounts = useMemo(() => {
@@ -329,7 +450,7 @@ export default function TeacherOverviewHub({
       setDiagSubject('0455');
       setDiagCount(10);
       setDiagFocus('gap');
-      setDiagTopic('Price Elasticity of Demand');
+      setDiagTopic(dynamicTopicGaps[0]?.topic || '');
       setIsDiagModalOpen(true);
     } else if (presetType === 'mock') {
       setDiagSubject('0455');
@@ -340,7 +461,7 @@ export default function TeacherOverviewHub({
       setDiagSubject('0455');
       setDiagCount(15);
       setDiagFocus('topic');
-      setDiagTopic('Price Elasticity of Demand (PED & PES)');
+      setDiagTopic(dynamicTopicGaps[0]?.topic || '');
       setIsDiagModalOpen(true);
     }
   };
@@ -425,12 +546,13 @@ export default function TeacherOverviewHub({
           window.open(`/portal/compiler/print?testId=${newDraft.id}`, '_blank');
         }
       } else {
+        const targetCohortName = diagCohort.trim() || (availableCohorts[0] || 'General Cohort');
         const newAssignment: OnlineQuizAssignment = {
           id: `asg-online-${Date.now()}`,
           title: testTitle,
           subjectCode: subjectMeta.code,
           subjectName: subjectMeta.name,
-          cohortName: diagCohort,
+          cohortName: targetCohortName,
           dueDate: new Date(Date.now() + 3600000 * 48).toISOString(),
           durationMinutes: diagCount * 2,
           questionIds: selectedIds,
@@ -442,12 +564,12 @@ export default function TeacherOverviewHub({
         const augmented: MockAssignmentStats = {
           ...newAssignment,
           completedCount: 0,
-          totalStudents: 22,
+          totalStudents: 0,
           averageScorePercent: 0,
         };
         setAssignmentsList((prev) => [augmented, ...prev]);
         setIsDiagModalOpen(false);
-        showToast(`🚀 "${testTitle}" assigned to ${diagCohort}! Students notified.`, 'success');
+        showToast(`🚀 "${testTitle}" assigned to ${targetCohortName}! Students notified.`, 'success');
       }
     } catch (e) {
       console.error('Error generating diagnostic:', e);
@@ -531,14 +653,22 @@ export default function TeacherOverviewHub({
                   setSelectedCohort(e.target.value);
                   showToast(`Switched view to ${e.target.value}`, 'info');
                 }}
-                className="w-full sm:w-auto appearance-none min-h-[44px] px-4 py-2.5 pr-9 bg-[#f9f4ed] text-[#201e1d] font-bold text-xs sm:text-sm rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:shadow-offset-3 focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                disabled={availableCohorts.length === 0}
+                className="w-full sm:w-auto appearance-none min-h-[44px] px-4 py-2.5 pr-9 bg-[#f9f4ed] text-[#201e1d] font-bold text-xs sm:text-sm rounded-xl border-2 border-border shadow-[4px_4px_0px_0px_#1E1B4B] hover:shadow-[5px_5px_0px_0px_#1E1B4B] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60 disabled:cursor-not-allowed"
                 aria-label="Filter by cohort"
               >
-                {AVAILABLE_COHORTS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
+                {availableCohorts.length === 0 ? (
+                  <option value="All Cohorts">All Cohorts (Empty)</option>
+                ) : (
+                  <>
+                    <option value="All Cohorts">All Cohorts</option>
+                    {availableCohorts.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
               <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#201e1d]">
                 <Filter className="w-4 h-4" />
@@ -564,24 +694,28 @@ export default function TeacherOverviewHub({
         <button
           type="button"
           onClick={() => scrollToSection('section-health')}
-          className="p-5 rounded-2xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-offset-4 transition-all duration-150 hover:-translate-y-1 hover:shadow-offset-6 active:translate-x-[2px] active:translate-y-[2px] active:shadow-offset-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+          className="p-5 rounded-2xl border-2 border-border bg-[#f9f4ed] shadow-[4px_4px_0px_0px_#1E1B4B] transition-all duration-150 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1E1B4B] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#1E1B4B] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
           title="Jump to Class Health Radar"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-black uppercase text-[#645c50] tracking-wider font-heading">
               Cohort Accuracy
             </span>
-            <span className="p-1.5 rounded-lg bg-[#ccdbb2] border-2 border-[#201e1d] text-[#272e1b] shadow-offset-2">
+            <span className="p-1.5 rounded-lg bg-[#ccdbb2] border-2 border-border text-[#272e1b] shadow-[2px_2px_0px_0px_#1E1B4B]">
               <TrendingUp className="w-4 h-4" />
             </span>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black text-[#201e1d] font-heading">
-              {averageAccuracyPercent > 0 ? `${averageAccuracyPercent}%` : '0%'}
+              {totalCompletedAcrossAssignments > 0 && averageAccuracyPercent > 0 ? `${averageAccuracyPercent}%` : '—'}
             </span>
-            {averageAccuracyPercent > 0 && (
-              <span className="text-xs font-bold text-[#272e1b] bg-[#ccdbb2] px-2 py-0.5 rounded-full border border-[#201e1d]">
+            {totalCompletedAcrossAssignments > 0 && averageAccuracyPercent > 0 ? (
+              <span className="text-xs font-bold text-[#272e1b] bg-[#ccdbb2] px-2 py-0.5 rounded-full border border-border">
                 Live Average
+              </span>
+            ) : (
+              <span className="text-[10px] font-black uppercase text-[#645c50] bg-[#eee7db] px-2 py-0.5 rounded-full border border-border">
+                Empty
               </span>
             )}
           </div>
@@ -599,27 +733,37 @@ export default function TeacherOverviewHub({
         <button
           type="button"
           onClick={() => scrollToSection('section-homework')}
-          className="p-5 rounded-2xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-offset-4 transition-all duration-150 hover:-translate-y-1 hover:shadow-offset-6 active:translate-x-[2px] active:translate-y-[2px] active:shadow-offset-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+          className="p-5 rounded-2xl border-2 border-border bg-[#f9f4ed] shadow-[4px_4px_0px_0px_#1E1B4B] transition-all duration-150 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1E1B4B] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#1E1B4B] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
           title="Jump to Assigned Homework"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-black uppercase text-[#645c50] tracking-wider font-heading">
               Homework Turn-in
             </span>
-            <span className="p-1.5 rounded-lg bg-[#ffe1d0] border-2 border-[#201e1d] text-[#643312] shadow-offset-2">
+            <span className="p-1.5 rounded-lg bg-[#ffe1d0] border-2 border-border text-[#643312] shadow-[2px_2px_0px_0px_#1E1B4B]">
               <FileCheck className="w-4 h-4" />
             </span>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black text-[#201e1d] font-heading">
-              {totalEnrolledAcrossAssignments > 0 ? `${turnInPercentage}%` : '0%'}
+              {totalEnrolledAcrossAssignments > 0 ? `${turnInPercentage}%` : '—'}
             </span>
-            <span className="text-xs font-bold text-[#643312] bg-[#ffe1d0] px-2 py-0.5 rounded-full border border-[#201e1d]">
-              {totalCompletedAcrossAssignments} / {totalEnrolledAcrossAssignments}
-            </span>
+            {totalEnrolledAcrossAssignments > 0 ? (
+              <span className="text-xs font-bold text-[#643312] bg-[#ffe1d0] px-2 py-0.5 rounded-full border border-border">
+                {totalCompletedAcrossAssignments} / {totalEnrolledAcrossAssignments}
+              </span>
+            ) : (
+              <span className="text-[10px] font-black uppercase text-[#645c50] bg-[#eee7db] px-2 py-0.5 rounded-full border border-border">
+                Empty
+              </span>
+            )}
           </div>
           <p className="text-[11px] font-semibold text-[#645c50] mt-2 flex items-center justify-between">
-            <span>{totalPendingAcrossAssignments} pending across {filteredAssignments.length} sets</span>
+            <span>
+              {filteredAssignments.length > 0
+                ? `${totalPendingAcrossAssignments} pending across ${filteredAssignments.length} sets`
+                : 'No assignments active'}
+            </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#201e1d]" />
           </p>
         </button>
@@ -628,14 +772,14 @@ export default function TeacherOverviewHub({
         <button
           type="button"
           onClick={() => scrollToSection('section-compiler')}
-          className="p-5 rounded-2xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-offset-4 transition-all duration-150 hover:-translate-y-1 hover:shadow-offset-6 active:translate-x-[2px] active:translate-y-[2px] active:shadow-offset-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+          className="p-5 rounded-2xl border-2 border-border bg-[#f9f4ed] shadow-[4px_4px_0px_0px_#1E1B4B] transition-all duration-150 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1E1B4B] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#1E1B4B] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
           title="Jump to Test Compiler Studio"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-black uppercase text-[#645c50] tracking-wider font-heading">
               Tests Compiled
             </span>
-            <span className="p-1.5 rounded-lg bg-[#fed7aa] border-2 border-[#201e1d] text-[#201e1d] shadow-offset-2">
+            <span className="p-1.5 rounded-lg bg-[#fed7aa] border-2 border-border text-[#201e1d] shadow-[2px_2px_0px_0px_#1E1B4B]">
               <FileText className="w-4 h-4" />
             </span>
           </div>
@@ -643,12 +787,22 @@ export default function TeacherOverviewHub({
             <span className="text-3xl font-black text-[#201e1d] font-heading">
               {draftsList.length + assignmentsList.length}
             </span>
-            <span className="text-xs font-bold text-[#201e1d] bg-[#fed7aa] px-2 py-0.5 rounded-full border border-[#201e1d]">
-              {draftsList.length} Drafts
-            </span>
+            {draftsList.length + assignmentsList.length > 0 ? (
+              <span className="text-xs font-bold text-[#201e1d] bg-[#fed7aa] px-2 py-0.5 rounded-full border border-border">
+                {draftsList.length} Drafts
+              </span>
+            ) : (
+              <span className="text-[10px] font-black uppercase text-[#645c50] bg-[#eee7db] px-2 py-0.5 rounded-full border border-border">
+                Empty
+              </span>
+            )}
           </div>
           <p className="text-[11px] font-semibold text-[#645c50] mt-2 flex items-center justify-between">
-            <span>{assignmentsList.length} live digital quizzes running</span>
+            <span>
+              {assignmentsList.length > 0
+                ? `${assignmentsList.length} live digital quizzes running`
+                : 'No tests or quizzes compiled'}
+            </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#201e1d]" />
           </p>
         </button>
@@ -657,14 +811,14 @@ export default function TeacherOverviewHub({
         <button
           type="button"
           onClick={() => scrollToSection('section-triage')}
-          className="p-5 rounded-2xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-offset-4 transition-all duration-150 hover:-translate-y-1 hover:shadow-offset-6 active:translate-x-[2px] active:translate-y-[2px] active:shadow-offset-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
+          className="p-5 rounded-2xl border-2 border-border bg-[#f9f4ed] shadow-[4px_4px_0px_0px_#1E1B4B] transition-all duration-150 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1E1B4B] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#1E1B4B] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d]"
           title="Jump to Student Triage Hub"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-black uppercase text-[#645c50] tracking-wider font-heading">
               Triage Flagged
             </span>
-            <span className="p-1.5 rounded-lg bg-[#fde8e8] border-2 border-[#201e1d] text-[#991b1b] shadow-offset-2">
+            <span className="p-1.5 rounded-lg bg-[#fde8e8] border-2 border-border text-[#991b1b] shadow-[2px_2px_0px_0px_#1E1B4B]">
               <ShieldAlert className="w-4 h-4" />
             </span>
           </div>
@@ -673,17 +827,21 @@ export default function TeacherOverviewHub({
               {activeTriageCount}
             </span>
             {activeTriageCount > 0 ? (
-              <span className="text-xs font-bold text-[#991b1b] bg-[#fde8e8] px-2 py-0.5 rounded-full border border-[#201e1d] animate-pulse">
+              <span className="text-xs font-bold text-[#991b1b] bg-[#fde8e8] px-2 py-0.5 rounded-full border border-border animate-pulse">
                 Requires Action
               </span>
             ) : (
-              <span className="text-xs font-bold text-[#272e1b] bg-[#ccdbb2] px-2 py-0.5 rounded-full border border-[#201e1d]">
-                All Clear ✓
+              <span className="text-[10px] font-black uppercase text-[#272e1b] bg-[#ccdbb2] px-2 py-0.5 rounded-full border border-border">
+                Empty (All Clear)
               </span>
             )}
           </div>
           <p className="text-[11px] font-semibold text-[#645c50] mt-2 flex items-center justify-between">
-            <span>{activeTriageCount > 0 ? 'Spikes & rapid guessing' : 'All student activity within expected thresholds'}</span>
+            <span>
+              {activeTriageCount > 0
+                ? 'Spikes & rapid guessing'
+                : 'No students currently flagged'}
+            </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#201e1d]" />
           </p>
         </button>
@@ -775,25 +933,25 @@ export default function TeacherOverviewHub({
               </div>
 
               {/* Preset 3 */}
-              <div className="p-4 rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-offset-2 flex flex-col justify-between hover:bg-[#fed7aa]/30 hover:-translate-y-0.5 transition-all duration-150">
+              <div className="p-4 rounded-xl border-2 border-border bg-[#f9f4ed] shadow-[2px_2px_0px_0px_#1E1B4B] flex flex-col justify-between hover:bg-[#fed7aa]/30 hover:-translate-y-0.5 transition-all duration-150">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="px-2 py-0.5 rounded-full bg-[#fed7aa] border border-[#201e1d] text-[10px] font-bold text-[#643312]">
+                    <span className="px-2 py-0.5 rounded-full bg-[#fed7aa] border border-border text-[10px] font-bold text-[#643312]">
                       15 Qs • Topic Sprint
                     </span>
                     <Target className="w-3.5 h-3.5 text-[#201e1d]" />
                   </div>
                   <h3 className="font-heading font-black text-sm text-[#201e1d]">
-                    Elasticity &amp; Macro
+                    Targeted Topic Sprint
                   </h3>
                   <p className="text-[11px] text-[#645c50] mt-1 leading-snug">
-                    Deep dive into PED, PES, and fiscal policy tradeoffs.
+                    Deep dive into a specific syllabus unit of your choice.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleLaunchPreset('topic')}
-                  className="mt-3.5 w-full min-h-[36px] py-1.5 px-3 bg-[#fed7aa] hover:bg-[#fcd34d] text-[#201e1d] font-black text-xs rounded-lg border-2 border-[#201e1d] shadow-offset-2 hover:shadow-offset-3 hover:-translate-y-0.5 transition-all duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-1 cursor-pointer"
+                  className="mt-3.5 w-full min-h-[36px] py-1.5 px-3 bg-[#fed7aa] hover:bg-[#fcd34d] text-[#201e1d] font-black text-xs rounded-lg border-2 border-border shadow-[2px_2px_0px_0px_#1E1B4B] hover:shadow-[3px_3px_0px_0px_#1E1B4B] hover:-translate-y-0.5 transition-all duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" /> Launch
                 </button>
@@ -812,10 +970,13 @@ export default function TeacherOverviewHub({
               </div>
 
               {draftsList.length === 0 ? (
-                <div className="p-6 text-center bg-[#eee7db] rounded-2xl border-2 border-dashed border-[#201e1d] space-y-2">
+                <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-border shadow-[4px_4px_0px_0px_#1E1B4B] space-y-3">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f9f4ed] border-2 border-border text-xs font-black text-[#201e1d] shadow-[2px_2px_0px_0px_#1E1B4B] uppercase tracking-wider mb-1">
+                    Empty Notice
+                  </div>
                   <FileText className="w-8 h-8 text-[#645c50] mx-auto" />
-                  <p className="font-heading font-black text-sm text-[#201e1d]">No draft papers saved yet</p>
-                  <p className="text-xs text-[#645c50]">Use the Quick Diagnostic Generator or Full Compiler to build your first exam paper.</p>
+                  <p className="font-heading font-black text-base text-[#201e1d]">No draft papers saved yet</p>
+                  <p className="text-xs text-[#645c50] max-w-sm mx-auto">Use the Quick Diagnostic Generator or Full Compiler to build your first exam paper.</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -914,22 +1075,25 @@ export default function TeacherOverviewHub({
             </div>
 
             {filteredAssignments.length === 0 ? (
-              <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-dashed border-[#201e1d] space-y-3">
+              <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-border shadow-[4px_4px_0px_0px_#1E1B4B] space-y-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f9f4ed] border-2 border-border text-xs font-black text-[#201e1d] shadow-[2px_2px_0px_0px_#1E1B4B] uppercase tracking-wider mb-1">
+                  Empty Notice
+                </div>
                 <FileCheck className="w-8 h-8 text-[#645c50] mx-auto" />
-                <h4 className="font-heading font-black text-sm text-[#201e1d]">
+                <h4 className="font-heading font-black text-base text-[#201e1d]">
                   {assignmentsList.length === 0
-                    ? 'No active homework assignments yet.'
+                    ? 'No active homework assignments yet'
                     : `No active assignments for ${selectedCohort}`}
                 </h4>
                 <p className="text-xs text-[#645c50] max-w-sm mx-auto">
                   {assignmentsList.length === 0
-                    ? "Click '+ New Assignment' to create one."
+                    ? "Click '+ New Assignment' to create your first round for students."
                     : 'Assign a diagnostic or practice round to start tracking live student completion and submission stats.'}
                 </p>
                 <button
                   type="button"
                   onClick={() => onNavigate('assign')}
-                  className="mt-2 min-h-[38px] px-4 py-2 bg-[#ffe1d0] hover:bg-[#ffc6a5] text-[#201e1d] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+                  className="mt-2 min-h-[38px] px-5 py-2 bg-[#ffe1d0] hover:bg-[#ffc6a5] text-[#201e1d] font-black text-xs rounded-xl border-2 border-border shadow-[2px_2px_0px_0px_#1E1B4B] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
                 >
                   + New Assignment
                 </button>
@@ -937,24 +1101,24 @@ export default function TeacherOverviewHub({
             ) : (
               <div className="space-y-3">
                 {filteredAssignments.map((asg) => {
-                  const percent = Math.round((asg.completedCount / asg.totalStudents) * 100);
-                  const pendingCount = asg.totalStudents - asg.completedCount;
+                  const percent = asg.totalStudents > 0 ? Math.round((asg.completedCount / asg.totalStudents) * 100) : 0;
+                  const pendingCount = Math.max(0, asg.totalStudents - asg.completedCount);
                   const isNudged = Boolean(nudgedAssignments[asg.id]);
 
                   return (
                     <div
                       key={asg.id}
-                      className="p-5 rounded-2xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-offset-2 space-y-3"
+                      className="p-5 rounded-2xl border-2 border-border bg-[#f9f4ed] shadow-[4px_4px_0px_0px_#1E1B4B] space-y-3"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="space-y-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-full bg-[#eee7db] border border-[#201e1d] text-[10px] font-bold text-[#645c50]">
+                            <span className="px-2 py-0.5 rounded-full bg-[#eee7db] border border-border text-[10px] font-bold text-[#645c50]">
                               {asg.cohortName}
                             </span>
-                            <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-bold text-[#272e1b] flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] border border-border text-[10px] font-bold text-[#272e1b] flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {new Date(asg.dueDate) > new Date() ? 'Due in 2 days' : 'Due Today'}
+                              {formatDueRelative(asg.dueDate)}
                             </span>
                             <span className="text-xs font-mono font-bold text-[#645c50]">
                               {asg.questionIds.length} Qs • {asg.durationMinutes} min
@@ -966,8 +1130,8 @@ export default function TeacherOverviewHub({
                         </div>
 
                         <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                          <span className="px-3 py-1 rounded-full bg-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-2 text-xs font-black text-[#201e1d]">
-                            Avg {asg.averageScorePercent}%
+                          <span className="px-3 py-1 rounded-full bg-[#f9f4ed] border-2 border-border shadow-[2px_2px_0px_0px_#1E1B4B] text-xs font-black text-[#201e1d]">
+                            {asg.completedCount > 0 ? `Avg ${asg.averageScorePercent}%` : 'No Submissions'}
                           </span>
                         </div>
                       </div>
@@ -979,16 +1143,18 @@ export default function TeacherOverviewHub({
                             {asg.completedCount} of {asg.totalStudents} completed ({percent}%)
                           </span>
                           <span>
-                            {pendingCount > 0 ? (
+                            {asg.totalStudents === 0 ? (
+                              <span className="text-[#645c50] font-semibold">0 students enrolled</span>
+                            ) : pendingCount > 0 ? (
                               `${pendingCount} pending`
                             ) : (
                               <span className="text-[#272e1b] font-black">All completed! 🎉</span>
                             )}
                           </span>
                         </div>
-                        <div className="w-full h-3 bg-[#eee7db] rounded-full border-2 border-[#201e1d] overflow-hidden">
+                        <div className="w-full h-3 bg-[#eee7db] rounded-full border-2 border-border overflow-hidden">
                           <div
-                            className="h-full bg-[#ccdbb2] border-r-2 border-[#201e1d] transition-all duration-500"
+                            className="h-full bg-[#ccdbb2] border-r-2 border-border transition-all duration-500"
                             style={{ width: `${percent}%` }}
                           />
                         </div>
@@ -1077,20 +1243,23 @@ export default function TeacherOverviewHub({
               </p>
             </div>
 
-            {TOPIC_MASTERY_GAPS.length === 0 && TOPIC_MASTERY_STRONG.length === 0 ? (
-              <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-dashed border-[#201e1d] space-y-2">
+            {dynamicTopicGaps.length === 0 && dynamicTopicStrong.length === 0 ? (
+              <div className="p-8 text-center bg-[#eee7db] rounded-2xl border-2 border-border shadow-[4px_4px_0px_0px_#1E1B4B] space-y-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f9f4ed] border-2 border-border text-xs font-black text-[#201e1d] shadow-[2px_2px_0px_0px_#1E1B4B] uppercase tracking-wider mb-1">
+                  Empty Notice
+                </div>
                 <Target className="w-8 h-8 text-[#645c50] mx-auto" />
-                <h4 className="font-heading font-black text-sm text-[#201e1d]">
-                  No topic mastery telemetry recorded yet.
+                <h4 className="font-heading font-black text-base text-[#201e1d]">
+                  No topic mastery telemetry recorded yet
                 </h4>
                 <p className="text-xs text-[#645c50] max-w-sm mx-auto">
-                  Class accuracy will populate as students complete quiz rounds.
+                  Cognitive gap detection and syllabus unit accuracy will automatically populate here as students complete quiz rounds.
                 </p>
               </div>
             ) : (
               <>
-                {/* Critical Gap Topics (< 60% accuracy) */}
-                {TOPIC_MASTERY_GAPS.length > 0 && (
+                {/* Critical Gap Topics (< 65% accuracy) */}
+                {dynamicTopicGaps.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-1.5 text-xs font-black uppercase text-[#991b1b] tracking-wider font-heading">
                       <AlertTriangle className="w-3.5 h-3.5" />
@@ -1098,16 +1267,16 @@ export default function TeacherOverviewHub({
                     </div>
 
                     <div className="space-y-2.5">
-                      {TOPIC_MASTERY_GAPS.map((gap, idx) => (
+                      {dynamicTopicGaps.map((gap, idx) => (
                         <div
                           key={idx}
-                          className="p-3.5 rounded-xl border-2 border-[#201e1d] bg-[#fde8e8]/50 shadow-offset-2 space-y-2 hover:bg-[#fde8e8] transition-colors"
+                          className="p-3.5 rounded-xl border-2 border-border bg-[#fde8e8]/50 shadow-[2px_2px_0px_0px_#1E1B4B] space-y-2 hover:bg-[#fde8e8] transition-colors"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d]">
                               {gap.topic}
                             </span>
-                            <span className="px-2 py-0.5 rounded-md bg-[#fde8e8] border border-[#201e1d] font-mono text-xs font-black text-[#991b1b]">
+                            <span className="px-2 py-0.5 rounded-md bg-[#fde8e8] border border-border font-mono text-xs font-black text-[#991b1b]">
                               {gap.accuracy}%
                             </span>
                           </div>
@@ -1119,7 +1288,7 @@ export default function TeacherOverviewHub({
                             <button
                               type="button"
                               onClick={() => handleRemedialRound(gap.topic, gap.subject)}
-                              className="min-h-[32px] px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#ffe1d0] hover:bg-[#ffc6a5] text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2 hover:shadow-offset-3 hover:-translate-y-0.5 transition-all duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center gap-1 cursor-pointer"
+                              className="min-h-[32px] px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#ffe1d0] hover:bg-[#ffc6a5] text-[#201e1d] border-2 border-border shadow-[2px_2px_0px_0px_#1E1B4B] hover:shadow-[3px_3px_0px_0px_#1E1B4B] hover:-translate-y-0.5 transition-all duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center gap-1 cursor-pointer"
                               title={`Generate remedial round for ${gap.topic}`}
                             >
                               <Zap className="w-3 h-3 fill-[#201e1d]" />
@@ -1132,8 +1301,8 @@ export default function TeacherOverviewHub({
                   </div>
                 )}
 
-                {/* Strongest Topics (>= 80% accuracy) */}
-                {TOPIC_MASTERY_STRONG.length > 0 && (
+                {/* Strongest Topics (>= 65% accuracy) */}
+                {dynamicTopicStrong.length > 0 && (
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center gap-1.5 text-xs font-black uppercase text-[#272e1b] tracking-wider font-heading">
                       <Award className="w-3.5 h-3.5 text-[#272e1b]" />
@@ -1141,10 +1310,10 @@ export default function TeacherOverviewHub({
                     </div>
 
                     <div className="space-y-2">
-                      {TOPIC_MASTERY_STRONG.slice(0, 3).map((st, idx) => (
+                      {dynamicTopicStrong.slice(0, 3).map((st, idx) => (
                         <div
                           key={idx}
-                          className="p-3 rounded-xl border-2 border-[#201e1d] bg-[#f0fae1]/50 shadow-offset-2 flex items-center justify-between gap-2"
+                          className="p-3 rounded-xl border-2 border-border bg-[#f0fae1]/50 shadow-[2px_2px_0px_0px_#1E1B4B] flex items-center justify-between gap-2"
                         >
                           <div>
                             <h4 className="font-heading font-bold text-xs text-[#201e1d]">
@@ -1154,7 +1323,7 @@ export default function TeacherOverviewHub({
                               {st.attempts} question rounds completed
                             </span>
                           </div>
-                          <span className="px-2 py-0.5 rounded-md bg-[#ccdbb2] border border-[#201e1d] font-mono text-xs font-black text-[#272e1b]">
+                          <span className="px-2 py-0.5 rounded-md bg-[#ccdbb2] border border-border font-mono text-xs font-black text-[#272e1b]">
                             {st.accuracy}%
                           </span>
                         </div>
@@ -1551,17 +1720,27 @@ export default function TeacherOverviewHub({
                   <label className="text-xs font-black uppercase text-[#645c50] tracking-wider font-heading">
                     Target Cohort
                   </label>
-                  <select
-                    value={diagCohort}
-                    onChange={(e) => setDiagCohort(e.target.value)}
-                    className="w-full min-h-[44px] px-4 py-2.5 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl text-xs sm:text-sm font-bold text-[#201e1d] shadow-offset-2 focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer"
-                  >
-                    {AVAILABLE_COHORTS.filter((c) => c !== 'All Cohorts').map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                  {availableCohorts.length > 0 ? (
+                    <select
+                      value={diagCohort || availableCohorts[0]}
+                      onChange={(e) => setDiagCohort(e.target.value)}
+                      className="w-full min-h-[44px] px-4 py-2.5 bg-[#f9f4ed] border-2 border-border rounded-xl text-xs sm:text-sm font-bold text-[#201e1d] shadow-[4px_4px_0px_0px_#1E1B4B] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer"
+                    >
+                      {availableCohorts.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={diagCohort}
+                      onChange={(e) => setDiagCohort(e.target.value)}
+                      placeholder="e.g. Year 10 Physics"
+                      className="w-full min-h-[44px] px-4 py-2 bg-[#f9f4ed] border-2 border-border rounded-xl text-xs sm:text-sm font-bold text-[#201e1d] shadow-[4px_4px_0px_0px_#1E1B4B] focus:outline-none focus:ring-2 focus:ring-[#201e1d]"
+                    />
+                  )}
                 </div>
               </div>
 
