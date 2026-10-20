@@ -40,6 +40,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
+import Select, { SelectOption } from '@/components/ui/select';
 import { useQuestions, useTopics, Question, resolveDiagramUrl } from '@/lib/questions';
 import { useAuth } from '@/lib/auth';
 import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
@@ -358,6 +359,23 @@ export default function TestCompilerHub() {
   const availableSeries = useMemo(() => {
     return getAvailableSeries(questions);
   }, [questions]);
+
+  const seriesOptions: SelectOption[] = useMemo(
+    () => [
+      { value: 'all', label: 'All Series / Years' },
+      ...availableSeries.map((s) => ({ value: s, label: s })),
+    ],
+    [availableSeries]
+  );
+
+  const sortOptions: SelectOption[] = useMemo(
+    () => [
+      { value: 'paper', label: 'Paper Order' },
+      { value: 'shortest', label: 'Shortest Stem' },
+      { value: 'longest', label: 'Longest / Scenario' },
+    ],
+    []
+  );
 
   const filteredQuestions = useMemo(() => {
     return filterAndSortQuestions(questions, {
@@ -909,6 +927,8 @@ export default function TestCompilerHub() {
     questions,
   ]);
 
+  const isTopicFiltered = selectedTopicIds.length > 0 && !selectedTopicIds.includes('all');
+
   return (
     <div className="flex flex-col gap-6 text-[#201e1d] font-body pb-12">
       {/* Main Two-Column Layout */}
@@ -1309,13 +1329,17 @@ export default function TestCompilerHub() {
                       onClick={() => setIsTopicDropdownOpen((prev) => !prev)}
                       aria-haspopup="listbox"
                       aria-expanded={isTopicDropdownOpen}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white border border-[#dcd3c4] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] transition-all cursor-pointer text-left"
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs font-bold focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 transition-all cursor-pointer text-left ${
+                        isTopicFiltered
+                          ? 'bg-[#faeee5] border-[#c67139] text-[#c67139]'
+                          : 'bg-white border-[#dcd3c4] text-[#201e1d] hover:border-[#201e1d]'
+                      }`}
                     >
                       <span className="truncate mr-2">{triggerLabel}</span>
                       <ChevronDown
-                        className={`w-3.5 h-3.5 text-[#645c50] shrink-0 transition-transform ${
-                          isTopicDropdownOpen ? 'rotate-180' : ''
-                        }`}
+                        className={`w-3.5 h-3.5 shrink-0 transition-transform ${
+                          isTopicFiltered ? 'text-[#c67139]' : 'text-[#645c50]'
+                        } ${isTopicDropdownOpen ? 'rotate-180' : ''}`}
                         aria-hidden="true"
                       />
                     </button>
@@ -1436,37 +1460,33 @@ export default function TestCompilerHub() {
                     <label htmlFor="compiler-series-filter" className="sr-only">
                       Exam Series / Year
                     </label>
-                    <select
+                    <Select
                       id="compiler-series-filter"
                       aria-label="Filter by exam series or year"
                       value={selectedSeries}
-                      onChange={(e) => setSelectedSeries(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all truncate cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-                    >
-                      <option value="all">All Series / Years</option>
-                      {availableSeries.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setSelectedSeries(val)}
+                      options={seriesOptions}
+                      variant="button"
+                      isActive={selectedSeries !== 'all'}
+                      className="w-full"
+                    />
                   </div>
 
                   <div>
                     <label htmlFor="compiler-sort-control" className="sr-only">
                       Sort By
                     </label>
-                    <select
+                    <Select
                       id="compiler-sort-control"
                       aria-label="Sort questions"
                       value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as SortOption)}
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] transition-all truncate cursor-pointer hover:bg-[#fbf7f0] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-                    >
-                      <option value="paper">Paper Order</option>
-                      <option value="shortest">Shortest Stem</option>
-                      <option value="longest">Longest / Scenario</option>
-                    </select>
+                      onChange={(val) => setSortBy(val as SortOption)}
+                      options={sortOptions}
+                      variant="button"
+                      align="right"
+                      isActive={sortBy !== 'paper'}
+                      className="w-full"
+                    />
                   </div>
                 </div>
 
