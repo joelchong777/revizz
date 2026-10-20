@@ -99,9 +99,6 @@ export default function AppAdminNav({
                     REVIZZ
                   </span>
                 </div>
-                <span className="font-mono text-[9px] uppercase tracking-wider text-[#645c50] font-bold mt-0.5">
-                  Command Deck
-                </span>
               </div>
             )}
           </div>
@@ -119,16 +116,6 @@ export default function AppAdminNav({
             )}
           </div>
         </div>
-
-        {/* Platform Ops Badge */}
-        {!compact && (
-          <div className="px-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d] font-mono text-[10px] font-bold tracking-wider shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-              APP ADMIN · PLATFORM OPS
-            </span>
-          </div>
-        )}
 
         {/* Quick Cross-Portal Switcher Actions */}
         <div className="flex flex-col gap-1.5 pt-0.5">
@@ -178,7 +165,6 @@ export default function AppAdminNav({
                 <span className="font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
                   Content Pipeline
                 </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </div>
             )}
             <nav className="flex flex-col gap-1">
@@ -202,12 +188,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(History, 'history')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Ingestion History</span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-[#f5ead8] text-[#474238] text-[10px] font-mono font-bold border border-[#201e1d]/20 shrink-0">
-                      Ledger
-                    </span>
-                  </>
+                  <span className="flex-1 min-w-0 truncate">Ingestion History</span>
                 )}
               </button>
 
@@ -219,12 +200,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(BookOpen, 'papers')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Whole Papers</span>
-                    <span className="px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#8c491a] font-mono text-[9px] font-black border border-[#201e1d]/20 shrink-0">
-                      NEW
-                    </span>
-                  </>
+                  <span className="flex-1 min-w-0 truncate">Whole Papers</span>
                 )}
               </button>
 
@@ -236,13 +212,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(Sparkles, 'diagnostics')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Ingestion Diagnostics</span>
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#f0fae1] text-[#3d472b] text-[10px] font-bold border border-[#201e1d]/15 shrink-0 whitespace-nowrap">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                      <span>Live</span>
-                    </span>
-                  </>
+                  <span className="flex-1 min-w-0 truncate">Ingestion Diagnostics</span>
                 )}
               </button>
 
@@ -254,16 +224,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(BookOpen, 'bank')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Global Question Bank</span>
-                    {questionsLoading ? (
-                      <span className="w-6 h-4 rounded-full bg-[#f5ead8] border border-[#201e1d]/20 animate-pulse shrink-0" />
-                    ) : questionCount !== undefined ? (
-                      <span className="px-1.5 py-0.5 rounded-md bg-[#f9f4ed] text-[#201e1d] font-mono text-[10px] font-bold border border-[#201e1d]/20 shrink-0">
-                        {questionCount}
-                      </span>
-                    ) : null}
-                  </>
+                  <span className="flex-1 min-w-0 truncate">Global Question Bank</span>
                 )}
               </button>
 
@@ -306,12 +267,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(Users, 'users')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">User Management</span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-mono font-bold border border-[#201e1d]/25 shrink-0">
-                      Roles
-                    </span>
-                  </>
+                  <span className="flex-1 min-w-0 truncate">User Management</span>
                 )}
               </button>
 
@@ -323,12 +279,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(Sliders, 'settings')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Settings</span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-[#ccdbb2] text-[#272e1b] text-[10px] font-mono font-bold border border-[#201e1d]/25 shrink-0">
-                      6 Panels
-                    </span>
-                  </>
+                  <span className="flex-1 min-w-0 truncate">Settings</span>
                 )}
               </button>
 
@@ -342,12 +293,7 @@ export default function AppAdminNav({
               >
                 {renderIcon(Megaphone, 'ads')}
                 {!compact && (
-                  <>
-                    <span className="flex-1 min-w-0 truncate">Ads & Monetization</span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#201e1d] text-[10px] font-mono font-bold border border-[#201e1d]/25 shrink-0">
-                      Studio
-                    </span>
-                  </>
+                  <span className="flex-1 min-w-0 truncate">Ads & Monetization</span>
                 )}
               </button>
             </nav>

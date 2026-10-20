@@ -241,6 +241,18 @@ export default function AdminNav({
                 </button>
               )}
 
+              {isEnabled('bank') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('bank')}
+                  className={navItemClass('bank')}
+                  title="Question bank"
+                >
+                  {renderIcon(BookOpen, 'bank')}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Question bank</span>}
+                </button>
+              )}
+
               {isEnabled('roster') && (
                 <button
                   type="button"
@@ -311,27 +323,6 @@ export default function AdminNav({
                   {!compact && <span className="flex-1 min-w-0 truncate">Leaderboard & XP</span>}
                 </button>
               )}
-            </div>
-          )}
-
-          {/* Question Verification Section */}
-          {isEnabled('bank') && (
-            <div className="flex flex-col gap-1">
-              {!compact && (
-                <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">
-                  Question Verification
-                </span>
-              )}
-
-              <button
-                type="button"
-                onClick={() => handleNavClick('bank')}
-                className={navItemClass('bank')}
-                title="Question bank"
-              >
-                {renderIcon(BookOpen, 'bank')}
-                {!compact && <span className="flex-1 min-w-0 truncate">Question bank</span>}
-              </button>
             </div>
           )}
 
