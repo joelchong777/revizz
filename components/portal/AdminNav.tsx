@@ -11,7 +11,6 @@ import {
   BookOpen, 
   Flag, 
   Building2, 
-  Sparkles,
   X,
   FileText,
   Home,
@@ -53,7 +52,6 @@ export default function AdminNav({
   flaggedCount = 0,
 }: AdminNavProps) {
   const isTeacher = true;
-  const agentLine = '3 tasks need approval';
   const initials = userDisplayName
     ? userDisplayName
         .split(' ')
@@ -162,9 +160,6 @@ export default function AdminNav({
                     EDUCATOR
                   </span>
                 </div>
-                <span className="font-mono text-[9px] uppercase tracking-widest text-[#645c50] font-bold">
-                  Command Deck
-                </span>
               </div>
             )}
           </div>
@@ -278,14 +273,7 @@ export default function AdminNav({
                   title="Test compiler"
                 >
                   {renderIcon(FileText, 'compiler')}
-                  {!compact && (
-                    <>
-                      <span className="flex-1 min-w-0 truncate">Test compiler</span>
-                      <span className="px-1.5 py-0.5 rounded-md bg-[#ffe1d0] text-[#c67139] text-[9px] font-black uppercase tracking-wider shrink-0 whitespace-nowrap">
-                        New
-                      </span>
-                    </>
-                  )}
+                  {!compact && <span className="flex-1 min-w-0 truncate">Test compiler</span>}
                 </button>
               )}
             </div>
@@ -395,26 +383,8 @@ export default function AdminNav({
         </div>
       </div>
 
-      {/* Footer: AI Agent Card & User Profile */}
+      {/* Footer: User Profile */}
       <div className="mt-auto flex flex-col gap-2.5 pt-3 border-t-2 border-[#201e1d]/15">
-        {/* Docked AI Agent Card */}
-        <button
-          type="button"
-          onClick={() => handleNavClick(isTeacher ? 'overview' : 'flagged')}
-          className="w-full flex items-center gap-2.5 p-2 rounded-xl bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-left hover:bg-[#e1eecc] transition-colors active:translate-y-0.5 shadow-xs cursor-pointer"
-          title={`Agent: ${agentLine}`}
-        >
-          <span className="w-7 h-7 shrink-0 rounded-lg bg-[#8fa073] text-[#f9f4ed] grid place-items-center">
-            <Sparkles className="w-3.5 h-3.5" />
-          </span>
-          {!compact && (
-            <span className="flex flex-col leading-tight flex-1 min-w-0">
-              <span className="font-bold text-[12px] text-[#201e1d]">Agent Assistant</span>
-              <span className="text-[10px] text-[#3d472b] truncate">{agentLine}</span>
-            </span>
-          )}
-        </button>
-
         {/* User Card */}
         <div className="flex items-center gap-2.5 px-1 py-1">
           <span
