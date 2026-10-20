@@ -1327,7 +1327,7 @@ export async function commandShip(
 
     // Fast-forward root repo to origin/main so local directory and Vercel CLI builds match the shipped commit
     try {
-      execSync('git pull --ff-only origin main', { cwd: repoRoot, stdio: 'ignore' });
+      execSync('git pull --rebase --autostash origin main', { cwd: repoRoot, stdio: 'ignore' });
     } catch {
       // Graceful fallback if root working tree has local unstaged modifications
     }
@@ -1349,7 +1349,12 @@ export async function commandShip(
   if (!options.skipVercel && hasAppChanges) {
     info('Triggering Vercel production deployment and verifying live build...');
     try {
-      execSync('npx vercel --prod --yes', { cwd: repoRoot, stdio: 'inherit' });
+      const rootVercel = path.join(repoRoot, '.vercel');
+      const wtVercel = path.join(worktreePath, '.vercel');
+      if (fs.existsSync(rootVercel) && !fs.existsSync(wtVercel)) {
+        fs.cpSync(rootVercel, wtVercel, { recursive: true });
+      }
+      execSync('npx vercel --prod --yes', { cwd: worktreePath, stdio: 'inherit' });
       success('Vercel production deployment verified and aliased to https://revizz-sand.vercel.app!');
     } catch (deployErr) {
       const msg = deployErr instanceof Error ? deployErr.message : String(deployErr);

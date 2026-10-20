@@ -1581,7 +1581,11 @@ export default function AdminTools({
             <div>
               <span className="text-xs font-bold text-[#645c50]">Question bank</span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
-                {questionsLoading ? '...' : `${bankQuestions.length} questions`}
+                {(isLoadingLive || questionsLoading) && bankQuestions.length === 0
+                  ? '0 questions'
+                  : filteredBankItems.length === baseBankQuestions.length
+                  ? `${baseBankQuestions.length} questions`
+                  : `${filteredBankItems.length} of ${baseBankQuestions.length} questions`}
               </h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
