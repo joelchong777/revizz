@@ -33,6 +33,7 @@ import {
   ShieldCheck,
   Hash,
   HelpCircle,
+  Trash2,
 } from 'lucide-react';
 import type { StagedPaperSummary, StagingPaper, StagingQuestion } from '@/types/ingestion';
 import { useQuestions, type Question } from '@/lib/questions';
@@ -230,6 +231,32 @@ export default function IngestionHistoryHub({
       return paperId;
     });
   }, [fetchPaperDetails]);
+
+  // Handle deleting a staged or draft paper
+  const [deletingPaperId, setDeletingPaperId] = useState<string | null>(null);
+  const handleDeletePaper = useCallback(async (paperId: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${paperId}"? This will remove the paper and its questions.`)) {
+      return;
+    }
+    setDeletingPaperId(paperId);
+    try {
+      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to delete paper');
+      }
+      setPapers((prev) => prev.filter((p) => p.id !== paperId));
+      if (expandedPaperId === paperId) {
+        setExpandedPaperId(null);
+      }
+    } catch (err: any) {
+      alert(`Error deleting paper: ${err?.message || 'Unknown error'}`);
+    } finally {
+      setDeletingPaperId(null);
+    }
+  }, [expandedPaperId]);
 
   // Handle opening directly in Ingestion Studio
   const handleOpenInStudio = useCallback(async (paperId: string) => {
@@ -887,6 +914,19 @@ export default function IngestionHistoryHub({
                       <ExternalLink className="w-3.5 h-3.5 text-[#201e1d]" />
                       <span className="hidden sm:inline">Open in Studio</span>
                     </button>
+
+                    {!paper.is_published && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePaper(paper.id)}
+                        disabled={deletingPaperId === paper.id}
+                        className="inline-flex items-center justify-center gap-1.5 p-2 rounded-xl bg-white hover:bg-red-50 border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] text-xs font-bold text-red-600 hover:text-red-700 transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer disabled:opacity-50"
+                        title="Delete this paper from staging"
+                        aria-label={`Delete paper ${paper.id}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

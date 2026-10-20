@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      if (deletedSet.has(cleanId) && cleanId !== '0455_s24_12') {
+      if (deletedSet.has(cleanId)) {
         return NextResponse.json(
           { success: false, error: `Staged paper "${cleanId}" not found in staging directory.` },
           { status: 404 }
@@ -470,8 +470,8 @@ export async function GET(request: NextRequest) {
     }));
     const liveCleanIdSet = new Set(livePaperSummaries.map((p) => p.id));
 
-    // Ensure at least one paper exists: if no papers found, provide fallback 0455_s24_12
-    const activeCleanIds = Array.from(discoveredMap.keys()).filter((id) => !deletedSet.has(id) || id === '0455_s24_12');
+    // Fallback: if no papers found at all, check if fallback 0455_s24_12 is available and not deleted
+    const activeCleanIds = Array.from(discoveredMap.keys()).filter((id) => !deletedSet.has(id));
     if (activeCleanIds.length === 0 && livePaperSummaries.length === 0 && !deletedSet.has('0455_s24_12')) {
       discoveredMap.set('0455_s24_12', {
         cleanId: '0455_s24_12',
@@ -487,7 +487,7 @@ export async function GET(request: NextRequest) {
     const sortedCleanIds = Array.from(discoveredMap.keys()).sort((a, b) => a.localeCompare(b));
 
     for (const cleanId of sortedCleanIds) {
-      if (deletedSet.has(cleanId) && cleanId !== '0455_s24_12') {
+      if (deletedSet.has(cleanId)) {
         continue;
       }
 

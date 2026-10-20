@@ -55,7 +55,7 @@ export async function fetchPersistentPaperStates(): Promise<StagedPaperStates> {
         : [],
       deleted: Array.isArray(parsed?.deleted)
         ? parsed.deleted.filter(
-            (id: any) => typeof id === 'string' && id.trim() && id.trim() !== '0455_s24_12'
+            (id: any) => typeof id === 'string' && id.trim()
           )
         : [],
     };
@@ -69,8 +69,7 @@ export async function savePersistentPaperStates(states: StagedPaperStates): Prom
   try {
     const supabase = getSupabaseClient();
     const deletedList = Array.from(new Set(states.deleted || []))
-      .filter(Boolean)
-      .filter((id) => id !== '0455_s24_12');
+      .filter(Boolean);
     const deletedSet = new Set(deletedList);
     const archivedList = Array.from(new Set(states.archived || []))
       .filter(Boolean)
