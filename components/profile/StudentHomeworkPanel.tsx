@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import { RichMarkdown } from '@/components/ui/RichMarkdown';
 import confetti from 'canvas-confetti';
 import {
   BookOpen,
@@ -32,7 +29,6 @@ import {
 
 import { Question } from '@/lib/questions';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
-import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { playChime, playFanfare, playPop } from '@/lib/audio';
 import {
   HomeworkItem,
@@ -947,13 +943,12 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
                           )}
                         </div>
 
-                        <MarkdownErrorBoundary fallbackText={currentQ.stem_markdown}>
-                          <div className="prose prose-sm sm:prose-base max-w-none text-[#201e1d] font-semibold leading-relaxed">
-                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                              {currentQ.stem_markdown}
-                            </ReactMarkdown>
-                          </div>
-                        </MarkdownErrorBoundary>
+                        <div className="prose prose-sm sm:prose-base max-w-none text-[#201e1d] font-semibold leading-relaxed">
+                          <RichMarkdown
+                            content={currentQ.stem_markdown}
+                            variant="neobrutalist"
+                          />
+                        </div>
 
                         {/* Optional Diagram */}
                         {diagramUrl && (
@@ -1017,11 +1012,10 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
                               </span>
 
                               <div className="flex-1 text-xs sm:text-sm font-semibold leading-relaxed pt-0.5">
-                                <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
-                                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                    {opt.text_markdown}
-                                  </ReactMarkdown>
-                                </MarkdownErrorBoundary>
+                                <RichMarkdown
+                                  content={opt.text_markdown}
+                                  variant="plain"
+                                />
                               </div>
 
                               {modalMode === 'review' && isCorrect && (
@@ -1048,13 +1042,12 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
                             <Sparkles className="w-4 h-4 text-[#16A34A]" />
                             Cambridge Mark Scheme Rationale &amp; Key Explanation:
                           </span>
-                          <MarkdownErrorBoundary fallbackText={currentQ.explanation_markdown}>
-                            <div className="prose prose-xs sm:prose-sm max-w-none text-[#14532D] leading-relaxed">
-                              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                {currentQ.explanation_markdown}
-                              </ReactMarkdown>
-                            </div>
-                          </MarkdownErrorBoundary>
+                          <div className="prose prose-xs sm:prose-sm max-w-none text-[#14532D] leading-relaxed">
+                            <RichMarkdown
+                              content={currentQ.explanation_markdown}
+                              variant="neobrutalist"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

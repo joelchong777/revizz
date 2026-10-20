@@ -1,13 +1,8 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import { RichMarkdown } from '@/components/ui/RichMarkdown';
 import { TestPaperConfig, CompiledExamQuestion } from '@/types/testCompiler';
 import { Code128Barcode } from '@/lib/barcode';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
-import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
-import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
 import { stripCambridgeIgcse } from '@/lib/compilerFilters';
 
 interface Props {
@@ -59,11 +54,7 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
                       <td className="p-1.5 sm:p-2 text-xs">
                         {q.explanationMarkdown ? (
                           <div className="prose prose-sm max-w-none text-black">
-                            <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(q.explanationMarkdown)}>
-                              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                {escapeCurrencyDollars(q.explanationMarkdown)}
-                              </ReactMarkdown>
-                            </MarkdownErrorBoundary>
+                            <RichMarkdown content={q.explanationMarkdown} variant="printable" />
                           </div>
                         ) : '-'}
                       </td>
@@ -205,11 +196,7 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
             <div className="font-bold text-base w-7 shrink-0">{q.questionNumber}</div>
             <div className="flex-1 min-w-0">
               <div className="prose prose-sm max-w-none text-black mb-3">
-                <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(q.stemMarkdown)}>
-                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                    {escapeCurrencyDollars(q.stemMarkdown)}
-                  </ReactMarkdown>
-                </MarkdownErrorBoundary>
+                <RichMarkdown content={q.stemMarkdown} variant="printable" />
               </div>
               {q.imageUrl && (
                 <div className="my-2">
@@ -230,11 +217,7 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
                   >
                     <span className="font-bold shrink-0 w-4 text-black">{opt.label}</span>
                     <div className="prose prose-sm max-w-none text-black">
-                      <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(opt.textMarkdown)}>
-                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                          {escapeCurrencyDollars(opt.textMarkdown)}
-                        </ReactMarkdown>
-                      </MarkdownErrorBoundary>
+                      <RichMarkdown content={opt.textMarkdown} variant="plain" />
                     </div>
                   </div>
                 ))}

@@ -35,15 +35,11 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
-import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
+// RichMarkdown provides internal MarkdownErrorBoundary defensive wrapper
+import { RichMarkdown } from '@/components/ui/RichMarkdown';
 import Select, { SelectOption } from '@/components/ui/select';
 import { useQuestions, useTopics, Question, resolveDiagramUrl } from '@/lib/questions';
 import { useAuth } from '@/lib/auth';
-import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
 import { CompilerDiagramPreview } from './CompilerDiagramPreview';
 import {
   saveTestDraft,
@@ -1067,11 +1063,7 @@ export default function TestCompilerHub() {
                   </div>
 
                   <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed mb-3">
-                    <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(q.stem_markdown || '')}>
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {escapeCurrencyDollars(q.stem_markdown || '')}
-                      </ReactMarkdown>
-                    </MarkdownErrorBoundary>
+                    <RichMarkdown content={q.stem_markdown || ''} variant="neobrutalist" />
                   </div>
 
                   {q.image_url && (
@@ -1124,11 +1116,7 @@ export default function TestCompilerHub() {
                             >
                               <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
                               <div className="flex-1">
-                                <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(opt.text_markdown)}>
-                                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                    {escapeCurrencyDollars(opt.text_markdown)}
-                                  </ReactMarkdown>
-                                </MarkdownErrorBoundary>
+                                <RichMarkdown content={opt.text_markdown} variant="plain" />
                               </div>
                             </div>
                           ))}
@@ -1148,11 +1136,7 @@ export default function TestCompilerHub() {
                         >
                           <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
                           <div className="flex-1">
-                            <MarkdownErrorBoundary fallbackText={escapeCurrencyDollars(opt.text_markdown)}>
-                              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                {escapeCurrencyDollars(opt.text_markdown)}
-                              </ReactMarkdown>
-                            </MarkdownErrorBoundary>
+                            <RichMarkdown content={opt.text_markdown} variant="plain" />
                           </div>
                         </div>
                       ))}

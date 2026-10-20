@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import { RichMarkdown } from '@/components/ui/RichMarkdown';
 import { Question } from '@/hooks/useQuizGame';
 import { SyllabusTopic } from '@/lib/questions';
 import { getReviewPile, resolveFromReviewPile, ReviewPileMap } from '@/lib/mastery';
@@ -18,7 +15,6 @@ import {
 } from '@/lib/studentProfile';
 import { stripCambridgeIgcse } from '@/lib/compilerFilters';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
-import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 
 export interface StudentReviewPanelProps {
   questions: Question[];
@@ -536,15 +532,11 @@ export function StudentReviewPanel({
 
                   {/* Stem Preview: Exam Paper Snippet Box */}
                   <div className="mt-3.5 p-4 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d]/20 text-neutral-900 leading-relaxed font-normal">
-                    <MarkdownErrorBoundary fallbackText={q.stem_markdown}>
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                        className="prose prose-sm max-w-none text-neutral-900"
-                      >
-                        {q.stem_markdown}
-                      </ReactMarkdown>
-                    </MarkdownErrorBoundary>
+                    <RichMarkdown
+                      content={q.stem_markdown}
+                      variant="neobrutalist"
+                      className="prose prose-sm max-w-none text-neutral-900"
+                    />
                   </div>
 
                   {/* Expanded Inspector Section */}
@@ -596,14 +588,10 @@ export function StudentReviewPanel({
                                 </span>
 
                                 <div className="flex-1 text-xs sm:text-sm font-medium pt-0.5">
-                                  <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
-                                    <ReactMarkdown
-                                      remarkPlugins={[remarkMath]}
-                                      rehypePlugins={[rehypeKatex]}
-                                    >
-                                      {opt.text_markdown}
-                                    </ReactMarkdown>
-                                  </MarkdownErrorBoundary>
+                                  <RichMarkdown
+                                    content={opt.text_markdown}
+                                    variant="plain"
+                                  />
                                 </div>
 
                                 {isCorrect && (
@@ -624,16 +612,12 @@ export function StudentReviewPanel({
                             <span>💡</span> Step-by-Step Mark Scheme Explanation
                           </p>
                           <div className="text-xs font-medium leading-relaxed">
-                            <MarkdownErrorBoundary fallbackText={q.explanation_markdown || 'Key explanation unavailable.'}>
-                              <ReactMarkdown
-                                remarkPlugins={[remarkMath]}
-                                rehypePlugins={[rehypeKatex]}
-                                className="prose prose-sm max-w-none text-amber-950"
-                              >
-                                {q.explanation_markdown ||
-                                  `This question tests understanding of "${q.topic || 'the syllabus'}". Review the correct option above to consolidate this concept.`}
-                              </ReactMarkdown>
-                            </MarkdownErrorBoundary>
+                            <RichMarkdown
+                              content={q.explanation_markdown ||
+                                `This question tests understanding of "${q.topic || 'the syllabus'}". Review the correct option above to consolidate this concept.`}
+                              variant="neobrutalist"
+                              className="prose prose-sm max-w-none text-amber-950"
+                            />
                           </div>
                         </div>
                       )}

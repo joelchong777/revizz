@@ -237,6 +237,96 @@ async function verifyQuizTables() {
     'RoundSummary Q29: table header renders unescaped <br/> tag'
   );
 
+  // ── RichMarkdown Component Verification ──
+  console.log('\nTesting RichMarkdown component variants');
+  const richMarkdownModule = await import('../components/ui/RichMarkdown');
+  const RichMarkdown = richMarkdownModule.RichMarkdown;
+
+  const testTableContent = `
+### Summary Table
+| Metric | Value | Status |
+| :--- | :---: | ---: |
+| Accuracy | 98% | **Pass** |
+| Latency | 45ms | _Optimal_ |
+`;
+
+  // 1. RichMarkdown - neobrutalist variant
+  const neobrutalistHtml = renderToStaticMarkup(
+    React.createElement(RichMarkdown, {
+      content: testTableContent,
+      variant: 'neobrutalist',
+    })
+  );
+  assert(neobrutalistHtml.includes('<table') && neobrutalistHtml.includes('</table>'), 'RichMarkdown (neobrutalist): contains <table>');
+  assert(neobrutalistHtml.includes('<thead') && neobrutalistHtml.includes('</thead>'), 'RichMarkdown (neobrutalist): contains <thead>');
+  assert(neobrutalistHtml.includes('<tbody') && neobrutalistHtml.includes('</tbody>'), 'RichMarkdown (neobrutalist): contains <tbody>');
+  assert(neobrutalistHtml.includes('<tr') && neobrutalistHtml.includes('</tr>'), 'RichMarkdown (neobrutalist): contains <tr>');
+  assert(neobrutalistHtml.includes('<th') && neobrutalistHtml.includes('</th>'), 'RichMarkdown (neobrutalist): contains <th>');
+  assert(neobrutalistHtml.includes('<td') && neobrutalistHtml.includes('</td>'), 'RichMarkdown (neobrutalist): contains <td>');
+  assert(
+    neobrutalistHtml.includes('shadow-offset-2') && neobrutalistHtml.includes('border-text'),
+    'RichMarkdown (neobrutalist): table has neobrutalist shadow and border'
+  );
+  assert(
+    neobrutalistHtml.includes('bg-accent-2-100') && neobrutalistHtml.includes('font-heading'),
+    'RichMarkdown (neobrutalist): thead has neobrutalist styling'
+  );
+
+  // 2. RichMarkdown - printable variant
+  const printableHtml = renderToStaticMarkup(
+    React.createElement(RichMarkdown, {
+      content: testTableContent,
+      variant: 'printable',
+    })
+  );
+  assert(printableHtml.includes('<table') && printableHtml.includes('</table>'), 'RichMarkdown (printable): contains <table>');
+  assert(printableHtml.includes('<thead') && printableHtml.includes('</thead>'), 'RichMarkdown (printable): contains <thead>');
+  assert(printableHtml.includes('<tbody') && printableHtml.includes('</tbody>'), 'RichMarkdown (printable): contains <tbody>');
+  assert(printableHtml.includes('<tr') && printableHtml.includes('</tr>'), 'RichMarkdown (printable): contains <tr>');
+  assert(printableHtml.includes('<th') && printableHtml.includes('</th>'), 'RichMarkdown (printable): contains <th>');
+  assert(printableHtml.includes('<td') && printableHtml.includes('</td>'), 'RichMarkdown (printable): contains <td>');
+  assert(
+    printableHtml.includes('border-black') && printableHtml.includes('divide-black'),
+    'RichMarkdown (printable): table has clean print border styling'
+  );
+
+  // 3. Question 0455/11 w24 Q2 table stem verification
+  console.log('\nTesting Question 0455/11 w24 Q2 table stem markdown rendering');
+  const q0455W24Q2Stem =
+    'In which case is it possible to set the level of reward before production takes place for the first factor of production but not for the second factor? \n\n| | first factor | second factor |\n| :---: | :---: | :---: |\n| **A** | capital | land |\n| **B** | enterprise | labour |\n| **C** | labour | capital |\n| **D** | land | enterprise |\n';
+
+  const q2NeoHtml = renderToStaticMarkup(
+    React.createElement(RichMarkdown, {
+      content: q0455W24Q2Stem,
+      variant: 'neobrutalist',
+    })
+  );
+
+  assert(q2NeoHtml.includes('<table') && q2NeoHtml.includes('</table>'), '0455/11 w24 Q2 (neobrutalist): contains <table>');
+  assert(q2NeoHtml.includes('<thead') && q2NeoHtml.includes('</thead>'), '0455/11 w24 Q2 (neobrutalist): contains <thead>');
+  assert(q2NeoHtml.includes('<tbody') && q2NeoHtml.includes('</tbody>'), '0455/11 w24 Q2 (neobrutalist): contains <tbody>');
+  assert(q2NeoHtml.includes('<tr') && q2NeoHtml.includes('</tr>'), '0455/11 w24 Q2 (neobrutalist): contains <tr>');
+  assert(q2NeoHtml.includes('<th') && q2NeoHtml.includes('</th>'), '0455/11 w24 Q2 (neobrutalist): contains <th>');
+  assert(q2NeoHtml.includes('<td') && q2NeoHtml.includes('</td>'), '0455/11 w24 Q2 (neobrutalist): contains <td>');
+  assert(!q2NeoHtml.includes('| :---: |'), '0455/11 w24 Q2: does not contain raw delimiter row "| :---: |"');
+  assert(!q2NeoHtml.includes('| first factor |'), '0455/11 w24 Q2: does not contain unparsed header pipes');
+  assert(!q2NeoHtml.includes('<p>|'), '0455/11 w24 Q2: does not contain raw pipe paragraph text');
+  assert(q2NeoHtml.includes('<strong>A</strong>'), '0455/11 w24 Q2: renders bold row label <strong>A</strong> inside cell');
+
+  const q2PrintHtml = renderToStaticMarkup(
+    React.createElement(RichMarkdown, {
+      content: q0455W24Q2Stem,
+      variant: 'printable',
+    })
+  );
+  assert(q2PrintHtml.includes('<table') && q2PrintHtml.includes('</table>'), '0455/11 w24 Q2 (printable): contains <table>');
+  assert(q2PrintHtml.includes('<thead') && q2PrintHtml.includes('</thead>'), '0455/11 w24 Q2 (printable): contains <thead>');
+  assert(q2PrintHtml.includes('<tbody') && q2PrintHtml.includes('</tbody>'), '0455/11 w24 Q2 (printable): contains <tbody>');
+  assert(q2PrintHtml.includes('<tr') && q2PrintHtml.includes('</tr>'), '0455/11 w24 Q2 (printable): contains <tr>');
+  assert(q2PrintHtml.includes('<th') && q2PrintHtml.includes('</th>'), '0455/11 w24 Q2 (printable): contains <th>');
+  assert(q2PrintHtml.includes('<td') && q2PrintHtml.includes('</td>'), '0455/11 w24 Q2 (printable): contains <td>');
+  assert(!q2PrintHtml.includes('<p>|'), '0455/11 w24 Q2 (printable): does not contain raw pipe paragraph text');
+
   console.log('\n================================================================');
   console.log(`TOTAL: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('================================================================');

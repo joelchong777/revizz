@@ -25,15 +25,11 @@ import {
   ArrowRight,
   ExternalLink,
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import { RichMarkdown } from '@/components/ui/RichMarkdown';
 
 import type { StagingPaper, StagedPaperSummary, StagingQuestion } from '@/types/ingestion';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
-import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 
 export interface WholePaperViewerProps {
   initialPaperId?: string;
@@ -771,11 +767,10 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
 
                   {/* Question Stem Text */}
                   <div className="prose prose-sm sm:prose-base max-w-none text-[#201e1d] font-medium leading-relaxed">
-                    <MarkdownErrorBoundary fallbackText={sanitizedStem}>
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {sanitizedStem || '_No question stem content provided._'}
-                      </ReactMarkdown>
-                    </MarkdownErrorBoundary>
+                    <RichMarkdown
+                      content={sanitizedStem || '_No question stem content provided._'}
+                      variant="neobrutalist"
+                    />
                   </div>
 
                   {/* Question Diagram / Graphic */}
@@ -867,11 +862,10 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
 
                             {/* Option markdown */}
                             <div className="flex-1 min-w-0 prose prose-sm max-w-none text-xs sm:text-sm font-medium leading-relaxed">
-                              <MarkdownErrorBoundary fallbackText={sanitizedOpt}>
-                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                  {sanitizedOpt || '_Empty option_'}
-                                </ReactMarkdown>
-                              </MarkdownErrorBoundary>
+                              <RichMarkdown
+                                content={sanitizedOpt || '_Empty option_'}
+                                variant="plain"
+                              />
                             </div>
 
                             {/* Correct indicator badge */}
@@ -945,15 +939,12 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
 
                         {/* Full explanation markdown */}
                         <div className="prose prose-sm max-w-none text-[#201e1d] leading-relaxed">
-                          <MarkdownErrorBoundary
-                            fallbackText={sanitizeKaTeX(q.explanation_markdown || '')}
-                          >
-                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                              {sanitizeKaTeX(
-                                q.explanation_markdown || '_No official explanation provided._'
-                              )}
-                            </ReactMarkdown>
-                          </MarkdownErrorBoundary>
+                          <RichMarkdown
+                            content={sanitizeKaTeX(
+                              q.explanation_markdown || '_No official explanation provided._'
+                            )}
+                            variant="neobrutalist"
+                          />
                         </div>
                       </div>
                     </div>
