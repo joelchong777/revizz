@@ -195,53 +195,90 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: cleanEmail,
-        password: cleanPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: cleanName || cleanEmail.split('@')[0],
-          display_name: cleanName || cleanEmail.split('@')[0],
-          role: userRole,
-        },
+      // First attempt: call secure SECURITY DEFINER RPC public.admin_create_user
+      // This directly seeds auth.users and auth.identities safely even without service_role key
+      const { data: rpcData, error: rpcError } = await supabase.rpc('admin_create_user', {
+        new_email: cleanEmail,
+        new_password: cleanPassword,
+        new_role: userRole,
+        new_name: cleanName || cleanEmail.split('@')[0],
+        new_cohort: cleanCohort,
+        new_is_school: isSchool,
       });
 
-      if (error || !data?.user) {
+      if (rpcError) {
+        // Fallback to supabase.auth.admin.createUser if service role key is configured
+        if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+          const { data, error } = await supabase.auth.admin.createUser({
+            email: cleanEmail,
+            password: cleanPassword,
+            email_confirm: true,
+            user_metadata: {
+              full_name: cleanName || cleanEmail.split('@')[0],
+              display_name: cleanName || cleanEmail.split('@')[0],
+              role: userRole,
+            },
+          });
+
+          if (error || !data?.user) {
+            return NextResponse.json(
+              { success: false, error: error?.message || 'Failed to create user in auth' },
+              { status: 400 }
+            );
+          }
+
+          const profilePayload = {
+            id: data.user.id,
+            email: cleanEmail,
+            display_name: cleanName || cleanEmail.split('@')[0],
+            role: userRole,
+            is_school_account: isSchool,
+            created_at: new Date().toISOString(),
+          };
+
+          await supabase.from('profiles').upsert(profilePayload, { onConflict: 'id' });
+
+          const createdUser: ManagedUser = {
+            id: data.user.id,
+            name: cleanName || cleanEmail.split('@')[0],
+            email: cleanEmail,
+            role: userRole,
+            is_school_account: isSchool,
+            total_xp: 0,
+            current_streak: 0,
+            status: 'active',
+            cohort: cleanCohort,
+            created_at: data.user.created_at || new Date().toISOString(),
+            isInvite: false,
+          };
+
+          return NextResponse.json({
+            success: true,
+            user: createdUser,
+            credentials: {
+              email: cleanEmail,
+              password: cleanPassword,
+            },
+          });
+        }
+
         return NextResponse.json(
-          { success: false, error: error?.message || 'Failed to create user in auth' },
+          { success: false, error: rpcError.message || 'Failed to create user in auth' },
           { status: 400 }
         );
       }
 
-      const profilePayload = {
-        id: data.user.id,
-        email: cleanEmail,
-        display_name: cleanName || cleanEmail.split('@')[0],
-        role: userRole,
-        cohort: cleanCohort,
-        is_school_account: isSchool,
-        created_at: new Date().toISOString(),
-      };
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert(profilePayload, { onConflict: 'id' });
-
-      if (profileError) {
-        console.warn('Upsert into profiles warning:', profileError.message);
-      }
-
       const createdUser: ManagedUser = {
-        id: data.user.id,
-        name: cleanName || cleanEmail.split('@')[0],
+        id: rpcData?.id || `usr_${Date.now()}`,
+        name: rpcData?.display_name || cleanName || cleanEmail.split('@')[0],
         email: cleanEmail,
-        role: userRole,
-        is_school_account: isSchool,
+        role: (rpcData?.role as UserRole) || userRole,
+        is_school_account: rpcData?.is_school_account !== undefined ? rpcData.is_school_account : isSchool,
         total_xp: 0,
         current_streak: 0,
         status: 'active',
-        cohort: cleanCohort,
-        created_at: data.user.created_at || new Date().toISOString(),
+        cohort: rpcData?.cohort || cleanCohort,
+        created_at: rpcData?.created_at || new Date().toISOString(),
         isInvite: false,
       };
 
