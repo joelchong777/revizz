@@ -10,6 +10,29 @@ import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
 
+export const cambridgeTableComponents = {
+  table: ({ node, ...props }: any) => (
+    <div className="my-3 overflow-x-auto flex justify-center sm:justify-start">
+      <table className="w-fit max-w-full text-xs sm:text-sm border-collapse border border-neutral-900 bg-white" {...props} />
+    </div>
+  ),
+  thead: ({ node, ...props }: any) => (
+    <thead className="bg-neutral-50/80 border-b border-neutral-900 font-semibold text-neutral-900" {...props} />
+  ),
+  tbody: ({ node, ...props }: any) => (
+    <tbody className="divide-y divide-neutral-900 text-neutral-900" {...props} />
+  ),
+  tr: ({ node, ...props }: any) => (
+    <tr className="hover:bg-neutral-50/50 transition-colors" {...props} />
+  ),
+  th: ({ node, ...props }: any) => (
+    <th className="px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-neutral-900 border-r border-neutral-900 last:border-r-0 text-center" {...props} />
+  ),
+  td: ({ node, ...props }: any) => (
+    <td className="px-4 sm:px-6 py-2 text-xs sm:text-sm font-normal text-neutral-900 border-r border-neutral-900 last:border-r-0 text-center" {...props} />
+  ),
+};
+
 export const neobrutalistTableComponents = {
   table: ({ node, ...props }: any) => (
     <div className="my-3 overflow-x-auto rounded-xl border-2 border-text bg-white shadow-offset-2">
@@ -59,20 +82,22 @@ export const printableTableComponents = {
 export interface RichMarkdownProps {
   content: string;
   className?: string;
-  variant?: 'neobrutalist' | 'printable' | 'plain';
+  variant?: 'cambridge' | 'neobrutalist' | 'printable' | 'plain';
   components?: Record<string, any>;
 }
 
 export function RichMarkdown({
   content,
   className,
-  variant = 'neobrutalist',
+  variant = 'cambridge',
   components,
 }: RichMarkdownProps): React.ReactElement {
   const sanitizedContent = escapeCurrencyDollars(content || '');
 
   let tableComponents: Record<string, any> | undefined;
-  if (variant === 'neobrutalist') {
+  if (variant === 'cambridge') {
+    tableComponents = cambridgeTableComponents;
+  } else if (variant === 'neobrutalist') {
     tableComponents = neobrutalistTableComponents;
   } else if (variant === 'printable') {
     tableComponents = printableTableComponents;

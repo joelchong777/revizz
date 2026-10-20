@@ -10,6 +10,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
+import { cambridgeTableComponents } from '@/components/ui/RichMarkdown';
 import { MissedQuestionItem } from '../hooks/useQuizGame';
 import { playFanfare, playPop } from '../lib/audio';
 import { cn } from '@/lib/utils';
@@ -244,28 +245,7 @@ export function RoundSummary({
                             <ReactMarkdown
                               remarkPlugins={[remarkMath, remarkGfm]}
                               rehypePlugins={[rehypeRaw, rehypeKatex]}
-                              components={{
-                                table: ({ node, ...props }) => (
-                                  <div className="my-2 overflow-x-auto rounded-lg border-2 border-text bg-white shadow-offset-2">
-                                    <table className="w-full text-left text-xs sm:text-sm border-collapse" {...props} />
-                                  </div>
-                                ),
-                                thead: ({ node, ...props }) => (
-                                  <thead className="bg-accent-2-100 border-b-2 border-text font-bold" {...props} />
-                                ),
-                                tbody: ({ node, ...props }) => (
-                                  <tbody className="divide-y-2 divide-neutral-200" {...props} />
-                                ),
-                                tr: ({ node, ...props }) => (
-                                  <tr className="hover:bg-neutral-50/80 transition-colors" {...props} />
-                                ),
-                                th: ({ node, ...props }) => (
-                                  <th className="px-2.5 sm:px-3 py-2 font-heading text-[11px] sm:text-xs tracking-wider uppercase text-text border-r-2 last:border-r-0 border-text/20" {...props} />
-                                ),
-                                td: ({ node, ...props }) => (
-                                  <td className="px-2.5 sm:px-3 py-1.5 sm:py-2 font-medium text-text border-r-2 last:border-r-0 border-neutral-200" {...props} />
-                                ),
-                              }}
+                              components={cambridgeTableComponents}
                             >
                               {item.question.stem_markdown}
                             </ReactMarkdown>

@@ -1063,7 +1063,7 @@ export default function TestCompilerHub() {
                   </div>
 
                   <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed mb-3">
-                    <RichMarkdown content={q.stem_markdown || ''} variant="neobrutalist" />
+                    <RichMarkdown content={q.stem_markdown || ''} variant="cambridge" />
                   </div>
 
                   {q.image_url && (

@@ -98,14 +98,14 @@ async function verifyQuizTables() {
     assert(html.includes('<th') && html.includes('</th>'), `${qId}: contains <th> element`);
     assert(html.includes('<td') && html.includes('</td>'), `${qId}: contains <td> element`);
 
-    // 2. Custom Neobrutalist Table Classes
+    // 2. Custom Cambridge Exam Table Classes
     assert(
-      html.includes('shadow-offset-2') && html.includes('border-text'),
-      `${qId}: table container has neobrutalist border and shadow classes`
+      (html.includes('border-neutral-900') || html.includes('border-black')) && html.includes('w-fit'),
+      `${qId}: table container has authentic Cambridge exam styling (border-neutral-900/border-black, w-fit)`
     );
     assert(
-      html.includes('bg-accent-2-100') && html.includes('font-heading'),
-      `${qId}: thead has bg-accent-2-100 and font-heading classes`
+      html.includes('divide-neutral-900'),
+      `${qId}: tbody has divide-neutral-900 class`
     );
 
     // 3. Raw HTML in table headers (Q29, Q30 contain <br>)
@@ -203,6 +203,10 @@ async function verifyQuizTables() {
   assert(roundSummaryHtmlQ14.includes('<thead') && roundSummaryHtmlQ14.includes('</thead>'), 'RoundSummary Q14: expanded accordion contains <thead>');
   assert(roundSummaryHtmlQ14.includes('<th') && roundSummaryHtmlQ14.includes('</th>'), 'RoundSummary Q14: expanded accordion contains <th>');
   assert(roundSummaryHtmlQ14.includes('<td') && roundSummaryHtmlQ14.includes('</td>'), 'RoundSummary Q14: expanded accordion contains <td>');
+  assert(
+    (roundSummaryHtmlQ14.includes('border-neutral-900') || roundSummaryHtmlQ14.includes('border-black')) && roundSummaryHtmlQ14.includes('w-fit'),
+    'RoundSummary Q14: expanded accordion table has authentic Cambridge exam styling'
+  );
 
   // Verify collapsed trigger preview does NOT leak markdown table pipes
   const q14TriggerText = missedQ14.stem_markdown.split(/\n\s*\|/)[0].trim().replace(/[*#$]/g, '');
@@ -250,7 +254,40 @@ async function verifyQuizTables() {
 | Latency | 45ms | _Optimal_ |
 `;
 
-  // 1. RichMarkdown - neobrutalist variant
+  // 1. RichMarkdown - cambridge variant (default)
+  const cambridgeHtml = renderToStaticMarkup(
+    React.createElement(RichMarkdown, {
+      content: testTableContent,
+      variant: 'cambridge',
+    })
+  );
+  assert(cambridgeHtml.includes('<table') && cambridgeHtml.includes('</table>'), 'RichMarkdown (cambridge): contains <table>');
+  assert(cambridgeHtml.includes('<thead') && cambridgeHtml.includes('</thead>'), 'RichMarkdown (cambridge): contains <thead>');
+  assert(cambridgeHtml.includes('<tbody') && cambridgeHtml.includes('</tbody>'), 'RichMarkdown (cambridge): contains <tbody>');
+  assert(cambridgeHtml.includes('<tr') && cambridgeHtml.includes('</tr>'), 'RichMarkdown (cambridge): contains <tr>');
+  assert(cambridgeHtml.includes('<th') && cambridgeHtml.includes('</th>'), 'RichMarkdown (cambridge): contains <th>');
+  assert(cambridgeHtml.includes('<td') && cambridgeHtml.includes('</td>'), 'RichMarkdown (cambridge): contains <td>');
+  assert(
+    (cambridgeHtml.includes('border-neutral-900') || cambridgeHtml.includes('border-black')) && cambridgeHtml.includes('w-fit'),
+    'RichMarkdown (cambridge): table has authentic Cambridge exam styling (border-neutral-900, w-fit)'
+  );
+  assert(
+    cambridgeHtml.includes('divide-neutral-900'),
+    'RichMarkdown (cambridge): tbody has divide-neutral-900 class'
+  );
+
+  // Default variant (no variant prop -> defaults to cambridge)
+  const defaultHtml = renderToStaticMarkup(
+    React.createElement(RichMarkdown, {
+      content: testTableContent,
+    })
+  );
+  assert(
+    (defaultHtml.includes('border-neutral-900') || defaultHtml.includes('border-black')) && defaultHtml.includes('w-fit'),
+    'RichMarkdown (default): defaults to authentic Cambridge exam styling'
+  );
+
+  // 2. RichMarkdown - neobrutalist variant
   const neobrutalistHtml = renderToStaticMarkup(
     React.createElement(RichMarkdown, {
       content: testTableContent,
@@ -294,6 +331,32 @@ async function verifyQuizTables() {
   console.log('\nTesting Question 0455/11 w24 Q2 table stem markdown rendering');
   const q0455W24Q2Stem =
     'In which case is it possible to set the level of reward before production takes place for the first factor of production but not for the second factor? \n\n| | first factor | second factor |\n| :---: | :---: | :---: |\n| **A** | capital | land |\n| **B** | enterprise | labour |\n| **C** | labour | capital |\n| **D** | land | enterprise |\n';
+
+  const q2CambridgeHtml = renderToStaticMarkup(
+    React.createElement(RichMarkdown, {
+      content: q0455W24Q2Stem,
+      variant: 'cambridge',
+    })
+  );
+
+  assert(q2CambridgeHtml.includes('<table') && q2CambridgeHtml.includes('</table>'), '0455/11 w24 Q2 (cambridge): contains <table>');
+  assert(q2CambridgeHtml.includes('<thead') && q2CambridgeHtml.includes('</thead>'), '0455/11 w24 Q2 (cambridge): contains <thead>');
+  assert(q2CambridgeHtml.includes('<tbody') && q2CambridgeHtml.includes('</tbody>'), '0455/11 w24 Q2 (cambridge): contains <tbody>');
+  assert(q2CambridgeHtml.includes('<tr') && q2CambridgeHtml.includes('</tr>'), '0455/11 w24 Q2 (cambridge): contains <tr>');
+  assert(q2CambridgeHtml.includes('<th') && q2CambridgeHtml.includes('</th>'), '0455/11 w24 Q2 (cambridge): contains <th>');
+  assert(q2CambridgeHtml.includes('<td') && q2CambridgeHtml.includes('</td>'), '0455/11 w24 Q2 (cambridge): contains <td>');
+  assert(!q2CambridgeHtml.includes('| :---: |'), '0455/11 w24 Q2 (cambridge): does not contain raw delimiter row "| :---: |"');
+  assert(!q2CambridgeHtml.includes('| first factor |'), '0455/11 w24 Q2 (cambridge): does not contain unparsed header pipes');
+  assert(!q2CambridgeHtml.includes('<p>|'), '0455/11 w24 Q2 (cambridge): does not contain raw pipe paragraph text');
+  assert(q2CambridgeHtml.includes('<strong>A</strong>'), '0455/11 w24 Q2 (cambridge): renders bold row label <strong>A</strong> inside cell');
+  assert(
+    (q2CambridgeHtml.includes('border-neutral-900') || q2CambridgeHtml.includes('border-black')) && q2CambridgeHtml.includes('w-fit'),
+    '0455/11 w24 Q2 (cambridge): table container has authentic Cambridge exam styling'
+  );
+  assert(
+    q2CambridgeHtml.includes('divide-neutral-900'),
+    '0455/11 w24 Q2 (cambridge): tbody has divide-neutral-900 class'
+  );
 
   const q2NeoHtml = renderToStaticMarkup(
     React.createElement(RichMarkdown, {
