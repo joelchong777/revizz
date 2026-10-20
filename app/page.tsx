@@ -31,6 +31,22 @@ export default function HomePage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [topics, setTopics] = useState<SyllabusTopic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inviteParam, setInviteParam] = useState<string | undefined>(undefined);
+  const [emailParam, setEmailParam] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const invite = searchParams.get('invite') || searchParams.get('inviteId') || undefined;
+        const email = searchParams.get('email') || undefined;
+        if (invite) setInviteParam(invite);
+        if (email) setEmailParam(email);
+      } catch (err) {
+        console.warn('Failed to parse URL search params for invite:', err);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -298,7 +314,11 @@ export default function HomePage() {
   if (!userProfile) {
     return (
       <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
-        <StudentAuthGate />
+        <StudentAuthGate
+          initialInviteId={inviteParam}
+          initialEmail={emailParam}
+          autoOpenAuthModal={Boolean(inviteParam || emailParam)}
+        />
       </main>
     );
   }

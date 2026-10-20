@@ -16,6 +16,8 @@ export interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: 'signin' | 'signup';
+  initialEmail?: string;
+  initialInviteId?: string;
   onSuccess?: () => void;
 }
 
@@ -23,11 +25,13 @@ export function AuthModal({
   isOpen,
   onClose,
   initialMode = 'signin',
+  initialEmail = '',
+  initialInviteId,
   onSuccess,
 }: AuthModalProps) {
   // Unconditional React hook declarations (React Error #310 Defense)
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail || '');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loadingGoogle, setLoadingGoogle] = useState(false);
@@ -39,10 +43,13 @@ export function AuthModal({
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode || 'signin');
+      if (initialEmail) {
+        setEmail(initialEmail);
+      }
       setErrorMessage(null);
       setSuccessMessage(null);
     }
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, initialEmail]);
 
   const resetFormFeedback = () => {
     setErrorMessage(null);
@@ -198,13 +205,18 @@ export function AuthModal({
 
         {/* Modal Scrollable Body */}
         <div className="p-5 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)] flex flex-col gap-4">
-          {/* Informational Pill in Signup Mode */}
-          {mode === 'signup' && (
+          {/* Informational Pill / Invite Banner */}
+          {initialInviteId ? (
+            <div className="p-3 rounded-xl bg-amber-100 border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] flex items-center gap-2">
+              <span className="text-base shrink-0">🎟️</span>
+              <span>You&apos;ve been invited to Revizz! Set your password to activate your account.</span>
+            </div>
+          ) : mode === 'signup' ? (
             <div className="p-3 rounded-xl bg-[#ccdbb2]/30 border-2 border-[#8fa073] text-xs font-bold text-[#272e1b] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
               <span>Account will save your XP, streaks, and quiz history.</span>
             </div>
-          )}
+          ) : null}
 
           {/* Feedback: Error Alert */}
           {errorMessage && (

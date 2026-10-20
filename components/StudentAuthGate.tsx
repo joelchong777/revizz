@@ -1,18 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signInWithGoogle, signInAsDemoStudent, isProviderNotEnabledError } from '@/lib/auth';
 import { AuthModal } from './AuthModal';
 
 interface StudentAuthGateProps {
   onSuccess?: () => void;
+  initialEmail?: string;
+  initialInviteId?: string;
+  autoOpenAuthModal?: boolean;
 }
 
-export function StudentAuthGate({ onSuccess }: StudentAuthGateProps) {
+export function StudentAuthGate({
+  onSuccess,
+  initialEmail,
+  initialInviteId,
+  autoOpenAuthModal,
+}: StudentAuthGateProps) {
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+  const [isAuthModalOpen, setAuthModalOpen] = useState(
+    Boolean(autoOpenAuthModal || initialInviteId || initialEmail)
+  );
+
+  useEffect(() => {
+    if (autoOpenAuthModal || initialInviteId || initialEmail) {
+      setAuthModalOpen(true);
+    }
+  }, [autoOpenAuthModal, initialInviteId, initialEmail]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -68,6 +84,23 @@ export function StudentAuthGate({ onSuccess }: StudentAuthGateProps) {
             Master past papers with spaced repetition, instant explanations, and tactile telemetry.
           </p>
         </div>
+
+        {/* Invitation Welcome Badge */}
+        {(initialEmail || initialInviteId) && (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setAuthModalOpen(true)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setAuthModalOpen(true); }}
+            className="p-3.5 rounded-2xl bg-amber-100 hover:bg-amber-200 border-2 border-text shadow-offset-2 text-left flex items-start gap-2.5 cursor-pointer transition-colors"
+          >
+            <p className="text-xs sm:text-sm font-bold text-text leading-snug">
+              {initialEmail
+                ? `🎟️ Invitation detected for ${initialEmail}! Click below to complete account activation.`
+                : '🎟️ Invitation detected! Click below to complete account activation.'}
+            </p>
+          </div>
+        )}
 
         {/* Error / Notice Banner */}
         {errorMessage && (
@@ -166,6 +199,9 @@ export function StudentAuthGate({ onSuccess }: StudentAuthGateProps) {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setAuthModalOpen(false)}
+        initialMode="signup"
+        initialEmail={initialEmail}
+        initialInviteId={initialInviteId}
         onSuccess={onSuccess}
       />
     </div>
