@@ -168,9 +168,93 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, name, role, cohort, is_school_account } = body || {};
+    const { email, name, role, cohort, is_school_account, password } = body || {};
 
     const cleanEmail = (email || '').trim().toLowerCase();
+    const validRoles: UserRole[] = ['student', 'teacher', 'admin'];
+    const userRole: UserRole = validRoles.includes(role) ? role : 'student';
+    const cleanCohort = (cohort || 'General').trim();
+    const cleanName = (name || '').trim();
+    const isSchool = is_school_account !== undefined ? Boolean(is_school_account) : true;
+    const supabase = getSupabaseClient();
+
+    // Check if password is provided in request body (manual user creation with credentials)
+    if (password !== undefined && password !== null) {
+      if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+        return NextResponse.json(
+          { success: false, error: 'A valid email address is required (e.g. user@domain.com)' },
+          { status: 400 }
+        );
+      }
+
+      const cleanPassword = String(password).trim();
+      if (cleanPassword.length < 6) {
+        return NextResponse.json(
+          { success: false, error: 'Password must be at least 6 characters long' },
+          { status: 400 }
+        );
+      }
+
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: cleanEmail,
+        password: cleanPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: cleanName || cleanEmail.split('@')[0],
+          display_name: cleanName || cleanEmail.split('@')[0],
+          role: userRole,
+        },
+      });
+
+      if (error || !data?.user) {
+        return NextResponse.json(
+          { success: false, error: error?.message || 'Failed to create user in auth' },
+          { status: 400 }
+        );
+      }
+
+      const profilePayload = {
+        id: data.user.id,
+        email: cleanEmail,
+        display_name: cleanName || cleanEmail.split('@')[0],
+        role: userRole,
+        cohort: cleanCohort,
+        is_school_account: isSchool,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'id' });
+
+      if (profileError) {
+        console.warn('Upsert into profiles warning:', profileError.message);
+      }
+
+      const createdUser: ManagedUser = {
+        id: data.user.id,
+        name: cleanName || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        role: userRole,
+        is_school_account: isSchool,
+        total_xp: 0,
+        current_streak: 0,
+        status: 'active',
+        cohort: cleanCohort,
+        created_at: data.user.created_at || new Date().toISOString(),
+        isInvite: false,
+      };
+
+      return NextResponse.json({
+        success: true,
+        user: createdUser,
+        credentials: {
+          email: cleanEmail,
+          password: cleanPassword,
+        },
+      });
+    }
+
     if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
       return NextResponse.json(
         { success: false, error: 'A valid email address is required (e.g. user@domain.com)' },
@@ -178,13 +262,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const validRoles: UserRole[] = ['student', 'teacher', 'admin'];
-    const userRole: UserRole = validRoles.includes(role) ? role : 'student';
-    const cleanCohort = (cohort || 'General').trim();
-    const cleanName = (name || '').trim();
-    const isSchool = is_school_account !== undefined ? Boolean(is_school_account) : true;
-
-    const supabase = getSupabaseClient();
     const inviteId =
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()

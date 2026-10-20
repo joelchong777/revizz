@@ -6,6 +6,10 @@ import {
   Search,
   X,
   Plus,
+  UserPlus,
+  Eye,
+  EyeOff,
+  Key,
   Download,
   RefreshCw,
   ShieldCheck,
@@ -194,6 +198,23 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     };
   } | null>(null);
   const [copiedInviteLinkId, setCopiedInviteLinkId] = useState<string | null>(null);
+
+  // Create User with Password Modal states
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState<boolean>(false);
+  const [createUserName, setCreateUserName] = useState<string>('');
+  const [createUserEmail, setCreateUserEmail] = useState<string>('');
+  const [createUserPassword, setCreateUserPassword] = useState<string>('');
+  const [createUserRole, setCreateUserRole] = useState<UserRole>('student');
+  const [createUserCohort, setCreateUserCohort] = useState<string>('General');
+  const [createUserIsSchool, setCreateUserIsSchool] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [submittingCreateUser, setSubmittingCreateUser] = useState<boolean>(false);
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [lastCreatedUserResult, setLastCreatedUserResult] = useState<{
+    user: ManagedUser;
+    password: string;
+  } | null>(null);
+  const [copiedCredentials, setCopiedCredentials] = useState<boolean>(false);
 
   // Delete confirmation state
   const [userToDelete, setUserToDelete] = useState<ManagedUser | null>(null);
@@ -788,6 +809,116 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     setInviteError(null);
   };
 
+  // Create User with Password Handlers
+  const handleGeneratePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+    let randomPart = '';
+    for (let i = 0; i < 4; i++) {
+      randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const generated = `Revizz!2026_${randomPart}`;
+    setCreateUserPassword(generated);
+    setShowPassword(true);
+  };
+
+  const handleCloseCreateUserModal = () => {
+    setIsCreateUserModalOpen(false);
+    setLastCreatedUserResult(null);
+    setCreateUserError(null);
+    setCreateUserName('');
+    setCreateUserEmail('');
+    setCreateUserPassword('');
+    setCreateUserRole('student');
+    setCreateUserCohort('General');
+    setCreateUserIsSchool(false);
+    setShowPassword(false);
+    setCopiedCredentials(false);
+  };
+
+  const handleCopyCredentials = (email: string, pass: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const text = `Revizz Account Credentials:\nEmail: ${email}\nPassword: ${pass}\nLogin: ${origin}`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedCredentials(true);
+      setTimeout(() => setCopiedCredentials(false), 2500);
+      showFeedback(`Credentials for ${email} copied to clipboard!`);
+    }
+  };
+
+  const handleSubmitCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanEmail = createUserEmail.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setCreateUserError('Please enter a valid email address (e.g. user@domain.com).');
+      return;
+    }
+    if (!createUserPassword || createUserPassword.trim().length < 6) {
+      setCreateUserError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setSubmittingCreateUser(true);
+    setCreateUserError(null);
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          name: createUserName.trim() || undefined,
+          role: createUserRole,
+          cohort: createUserCohort.trim() || 'General',
+          is_school_account: createUserIsSchool,
+          password: createUserPassword.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to create user account.');
+      }
+
+      const newUser: ManagedUser = data.user;
+
+      if (createUserIsSchool) {
+        const overrides = getStoredOverrides();
+        overrides[newUser.id] = {
+          ...(overrides[newUser.id] || {}),
+          is_school_account: true,
+          role: createUserRole,
+        };
+        saveStoredOverrides(overrides);
+      }
+
+      // Prepend to users list
+      setUsers((prev) => [newUser, ...prev.filter((u) => u.id !== newUser.id && u.email !== newUser.email)]);
+      const currentCache = getStoredUsersCache();
+      saveStoredUsersCache([newUser, ...currentCache.filter((u) => u.id !== newUser.id && u.email !== newUser.email)]);
+
+      showFeedback(`User ${cleanEmail} created successfully!`);
+      setLastCreatedUserResult({
+        user: newUser,
+        password: createUserPassword.trim(),
+      });
+
+      // Clear input fields
+      setCreateUserName('');
+      setCreateUserEmail('');
+      setCreateUserPassword('');
+      setCreateUserRole('student');
+      setCreateUserCohort('General');
+      setCreateUserIsSchool(false);
+      setShowPassword(false);
+    } catch (err: any) {
+      console.error('Failed to create user with credentials:', err);
+      setCreateUserError(err?.message || 'Failed to create user account.');
+    } finally {
+      setSubmittingCreateUser(false);
+    }
+  };
+
   // Metrics computation
   const metrics = useMemo(() => {
     const totalUsers = users.length;
@@ -933,6 +1064,19 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>+ Invite User</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setLastCreatedUserResult(null);
+              setCreateUserError(null);
+              setIsCreateUserModalOpen(true);
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#bfdbfe] border-2 border-[#201e1d] text-[#1e3a8a] font-heading font-black text-xs shadow-offset-2 hover:bg-[#93c5fd] active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4 stroke-[3]" />
+            <span>+ Add User</span>
           </button>
         </div>
       </div>
@@ -1214,6 +1358,19 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
                 <span>+ Invite User</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLastCreatedUserResult(null);
+                  setCreateUserError(null);
+                  setIsCreateUserModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#bfdbfe] border-2 border-[#201e1d] font-heading font-black text-xs text-[#1e3a8a] shadow-offset-2 hover:bg-[#93c5fd] active:translate-y-0.5 cursor-pointer flex items-center gap-1.5"
+              >
+                <UserPlus className="w-4 h-4 stroke-[3]" />
+                <span>+ Add User</span>
               </button>
             </div>
           </div>
@@ -1706,6 +1863,312 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                       <>
                         <Plus className="w-3.5 h-3.5 stroke-[3]" />
                         <span>Send Invitation</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* "+ Add User" Modal (with credentials) */}
+      {isCreateUserModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#201e1d]/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-[#fcfaf6] border-2 border-[#201e1d] rounded-3xl shadow-offset-4 overflow-hidden animate-in fade-in duration-150">
+            {/* Modal Header */}
+            <div className="p-5 bg-[#dbeafe] border-b-2 border-[#201e1d] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#bfdbfe] border-2 border-[#201e1d] flex items-center justify-center text-[#1e3a8a] shadow-offset-1">
+                  {lastCreatedUserResult ? (
+                    <CheckCircle2 className="w-5 h-5 text-[#166534]" />
+                  ) : (
+                    <UserPlus className="w-5 h-5 stroke-[2.5]" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-heading font-black text-base text-[#201e1d]">
+                    {lastCreatedUserResult ? 'User Created with Credentials!' : 'Add New User'}
+                  </h3>
+                  <p className="text-[11px] text-[#645c50]">
+                    {lastCreatedUserResult
+                      ? `Direct credentials generated for ${lastCreatedUserResult.user.email}`
+                      : 'Instantly create an active account with login credentials.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseCreateUserModal}
+                className="p-1 rounded-lg border border-transparent hover:border-[#201e1d] hover:bg-white text-[#645c50] hover:text-[#201e1d] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {lastCreatedUserResult ? (
+              /* Success / Credentials View */
+              <div className="p-5 space-y-4">
+                <div className="p-3.5 rounded-2xl bg-[#dcfce7] border-2 border-[#166534] text-[#166534] flex items-start gap-3 shadow-offset-1">
+                  <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#166534]" />
+                  <div className="space-y-0.5">
+                    <div className="font-heading font-black text-xs">
+                      Account Active &amp; Ready for Login!
+                    </div>
+                    <div className="text-[11px] text-[#166534]/90">
+                      The user profile has been created and verified in Supabase Auth. Share these credentials with the user.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Credentials Card */}
+                <div className="p-4 rounded-2xl bg-white border-2 border-[#201e1d] shadow-offset-1 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#201e1d]/10">
+                    <div className="font-heading font-black text-xs text-[#201e1d] flex items-center gap-2">
+                      <span>{lastCreatedUserResult.user.name}</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase bg-[#f5ead8] border border-[#201e1d]">
+                        {lastCreatedUserResult.user.role}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-[#166534] bg-[#dcfce7] px-2 py-0.5 rounded-md border border-[#166534]/30">
+                      active
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50] block mb-0.5">
+                        Email Address
+                      </span>
+                      <div className="font-mono font-bold text-[#201e1d] bg-[#fcfaf6] px-3 py-2 rounded-xl border border-[#201e1d]/20 select-all">
+                        {lastCreatedUserResult.user.email}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50] block mb-0.5">
+                        Temporary / Set Password
+                      </span>
+                      <div className="font-mono font-bold text-[#201e1d] bg-[#f5ead8] px-3 py-2 rounded-xl border-2 border-[#201e1d] select-all flex items-center justify-between">
+                        <span>{lastCreatedUserResult.password}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50] block mb-0.5">
+                        Login URL
+                      </span>
+                      <div className="font-mono text-[11px] text-[#645c50] bg-[#fcfaf6] px-3 py-2 rounded-xl border border-[#201e1d]/20 select-all truncate">
+                        {typeof window !== 'undefined' ? window.location.origin : 'https://revizz.app'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopyCredentials(
+                        lastCreatedUserResult.user.email,
+                        lastCreatedUserResult.password
+                      )
+                    }
+                    className={`w-full py-2.5 rounded-xl border-2 border-[#201e1d] font-heading font-black text-xs transition-all shadow-offset-1 flex items-center justify-center gap-2 cursor-pointer ${
+                      copiedCredentials
+                        ? 'bg-[#ccdbb2] text-[#166534]'
+                        : 'bg-[#bfdbfe] text-[#1e3a8a] hover:bg-[#93c5fd]'
+                    }`}
+                  >
+                    {copiedCredentials ? (
+                      <>
+                        <Check className="w-4 h-4 text-[#166534]" />
+                        <span>✓ Credentials Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Copy Credentials (Email &amp; Password)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Success Modal Footer Actions */}
+                <div className="pt-2 flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLastCreatedUserResult(null);
+                      setCreateUserError(null);
+                      setCopiedCredentials(false);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white text-xs font-bold text-[#645c50] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer"
+                  >
+                    + Add Another User
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCloseCreateUserModal}
+                    className="px-5 py-2.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] font-heading font-black text-xs text-[#272e1b] shadow-offset-2 hover:bg-[#b8c99d] active:translate-y-0.5 cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Modal Form */
+              <form onSubmit={handleSubmitCreateUser} className="p-5 space-y-4">
+                {createUserError && (
+                  <div className="p-3 rounded-xl bg-[#ffe4e6] border-2 border-[#e11d48] text-[#9f1239] text-xs font-bold flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{createUserError}</span>
+                  </div>
+                )}
+
+                {/* Display Name */}
+                <div>
+                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
+                    Display Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Charlie Campbell"
+                    value={createUserName}
+                    onChange={(e) => setCreateUserName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
+                  />
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
+                    Email Address <span className="text-[#e11d48]">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    required
+                    value={createUserEmail}
+                    onChange={(e) => setCreateUserEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
+                  />
+                </div>
+
+                {/* Password with generator & visibility toggle */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50]">
+                      Initial Password <span className="text-[#e11d48]">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGeneratePassword}
+                      className="text-[11px] font-heading font-black text-[#1e3a8a] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-[#2563eb]" />
+                      <span>Generate Password</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Min 6 characters (e.g. Revizz!2026_x7)"
+                      required
+                      minLength={6}
+                      value={createUserPassword}
+                      onChange={(e) => setCreateUserPassword(e.target.value)}
+                      className="w-full pl-3.5 pr-10 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-mono font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#645c50] hover:text-[#201e1d] cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="mt-1 text-[10px] text-[#645c50]">
+                    Password must be at least 6 characters. User will be created directly in Supabase Auth.
+                  </div>
+                </div>
+
+                {/* Role & Cohort */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
+                      Role &amp; Permissions
+                    </label>
+                    <select
+                      value={createUserRole}
+                      onChange={(e) => setCreateUserRole(e.target.value as UserRole)}
+                      className="w-full px-3 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none cursor-pointer"
+                    >
+                      <option value="student">Student (Learner)</option>
+                      <option value="teacher">Teacher (Educator)</option>
+                      <option value="admin">Administrator (Deck)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
+                      Cohort / Dept
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 11B Physics or General"
+                      value={createUserCohort}
+                      onChange={(e) => setCreateUserCohort(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-bold text-[#201e1d] focus:outline-none focus:bg-[#fcfaf6]"
+                    />
+                  </div>
+                </div>
+
+                {/* School Account Toggle */}
+                <div className="p-3 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-between">
+                  <div>
+                    <div className="font-heading font-black text-xs text-[#201e1d]">
+                      Institutional School Campus
+                    </div>
+                    <div className="text-[10px] text-[#645c50]">
+                      Grants access to school-wide license seats and cohort assignments.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={createUserIsSchool}
+                    onChange={(e) => setCreateUserIsSchool(e.target.checked)}
+                    className="w-5 h-5 accent-[#201e1d] cursor-pointer"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleCloseCreateUserModal}
+                    className="px-4 py-2.5 rounded-xl border-2 border-[#201e1d] bg-white text-xs font-bold text-[#645c50] hover:bg-[#eee7db] active:translate-y-0.5 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingCreateUser}
+                    className="px-5 py-2.5 rounded-xl bg-[#bfdbfe] border-2 border-[#201e1d] font-heading font-black text-xs text-[#1e3a8a] shadow-offset-2 hover:bg-[#93c5fd] active:translate-y-0.5 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {submittingCreateUser ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Creating User...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Create User</span>
                       </>
                     )}
                   </button>
