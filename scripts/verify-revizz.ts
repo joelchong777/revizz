@@ -173,6 +173,36 @@ const eventLog: { type: string; detail?: any }[] = [];
 };
 
 // Lightweight Test Runner
+const VERBOSE = process.argv.includes('--verbose');
+const startMs = Date.now();
+
+const origConsoleLog = console.log;
+const origConsoleError = console.error;
+const origConsoleWarn = console.warn;
+
+let currentTestLogs: string[] = [];
+let inTest = false;
+
+if (!VERBOSE) {
+  console.log = (...args: any[]) => {
+    if (inTest) {
+      currentTestLogs.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
+    }
+  };
+  console.warn = (...args: any[]) => {
+    if (inTest) {
+      currentTestLogs.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
+    }
+  };
+  console.error = (...args: any[]) => {
+    if (inTest) {
+      currentTestLogs.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
+    } else {
+      origConsoleError(...args);
+    }
+  };
+}
+
 let totalTests = 0;
 let passedTests = 0;
 let failedTests = 0;
@@ -180,29 +210,49 @@ const failures: string[] = [];
 
 function test(name: string, fn: () => void) {
   totalTests++;
+  currentTestLogs = [];
+  inTest = true;
   try {
     fn();
     passedTests++;
-    console.log(`  \x1b[32m✓\x1b[0m ${name}`);
+    if (VERBOSE) {
+      origConsoleLog(`  \x1b[32m✓\x1b[0m ${name}`);
+    }
   } catch (err: any) {
     failedTests++;
     const message = `  \x1b[31m✗\x1b[0m ${name}\n    Error: ${err.message || err}`;
     failures.push(message);
-    console.log(message);
+    origConsoleError(message);
+    if (currentTestLogs.length > 0) {
+      origConsoleError('    Captured logs:\n    ' + currentTestLogs.join('\n    '));
+    }
+  } finally {
+    inTest = false;
+    currentTestLogs = [];
   }
 }
 
 async function testAsync(name: string, fn: () => void | Promise<void>) {
   totalTests++;
+  currentTestLogs = [];
+  inTest = true;
   try {
     await fn();
     passedTests++;
-    console.log(`  \x1b[32m✓\x1b[0m ${name}`);
+    if (VERBOSE) {
+      origConsoleLog(`  \x1b[32m✓\x1b[0m ${name}`);
+    }
   } catch (err: any) {
     failedTests++;
     const message = `  \x1b[31m✗\x1b[0m ${name}\n    Error: ${err.message || err}`;
     failures.push(message);
-    console.log(message);
+    origConsoleError(message);
+    if (currentTestLogs.length > 0) {
+      origConsoleError('    Captured logs:\n    ' + currentTestLogs.join('\n    '));
+    }
+  } finally {
+    inTest = false;
+    currentTestLogs = [];
   }
 }
 
@@ -4398,22 +4448,31 @@ async function main() {
   await runSuite23();
 
   // Summary Output
-  console.log('\n========================================================');
-  console.log(`   TOTAL TESTS: ${totalTests}`);
-  console.log(`   \x1b[32mPASSED:      ${passedTests}\x1b[0m`);
+  const duration = ((Date.now() - startMs) / 1000).toFixed(2);
   if (failedTests > 0) {
-    console.log(`   \x1b[31mFAILED:      ${failedTests}\x1b[0m`);
-    console.log('========================================================\n');
+    origConsoleError('\n========================================================');
+    origConsoleError(`   TOTAL TESTS: ${totalTests}`);
+    origConsoleError(`   \x1b[32mPASSED:      ${passedTests}\x1b[0m`);
+    origConsoleError(`   \x1b[31mFAILED:      ${failedTests}\x1b[0m`);
+    origConsoleError('========================================================\n');
     process.exit(1);
   } else {
-    console.log(`   \x1b[32mALL ASSERTIONS PASSED PERFECTLY!\x1b[0m`);
-    console.log('========================================================\n');
+    if (VERBOSE) {
+      origConsoleLog('\n========================================================');
+      origConsoleLog(`   TOTAL TESTS: ${totalTests}`);
+      origConsoleLog(`   \x1b[32mPASSED:      ${passedTests}\x1b[0m`);
+      origConsoleLog(`   \x1b[32mALL ASSERTIONS PASSED PERFECTLY!\x1b[0m`);
+      origConsoleLog(`   Duration:    ${duration}s`);
+      origConsoleLog('========================================================\n');
+    } else {
+      origConsoleLog(`✔ QA Suite: ${passedTests} passed, 0 failed (${duration}s)`);
+    }
     process.exit(0);
   }
 }
 
 main().catch((err) => {
-  console.error('Fatal test error in test suite runner:', err);
+  origConsoleError('Fatal test error in test suite runner:', err);
   process.exit(1);
 });
 

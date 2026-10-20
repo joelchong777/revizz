@@ -325,6 +325,7 @@ export function syncAgentTooling(repoRoot: string, worktreePath: string): void {
     'scripts/blackboard.ts',
     'scripts/verify-ui.ts',
     '.agent/CODEBASE_MAP.md',
+    '.agent/state/codebase-map.json',
     '.agent/memory/learnings_and_reflections.md',
     '.agent/prompts',
     '.agent/skills/revizz-local-server',
@@ -374,12 +375,12 @@ export function syncAgentTooling(repoRoot: string, worktreePath: string): void {
 // --- CLI Commands ---
 
 /**
- * 1. create <topic>
+ * 1. create <topic> [query_terms...]
  */
-export function commandCreate(topic: string | undefined, repoRoot: string): void {
+export function commandCreate(topic: string | undefined, repoRoot: string, queryTerms: string[] = []): void {
   if (!topic) {
     error('Missing topic name for create command.');
-    console.log(`\nUsage: npx tsx scripts/wt.ts create <topic>\nExample: npx tsx scripts/wt.ts create fast-ingestion-engine\n`);
+    console.log(`\nUsage: npx tsx scripts/wt.ts create <topic> [query_terms...]\nExample: npx tsx scripts/wt.ts create fast-ingestion Header QuestionCard\n`);
     process.exit(1);
   }
 
@@ -463,17 +464,60 @@ export function commandCreate(topic: string | undefined, repoRoot: string): void
   // 7. Verify .gitignore
   verifyGitignore(repoRoot);
 
-  // 8. Output clear status & instructions
-  console.log(`\n${colors.green}${colors.bold}🚀 Worktree Created Successfully!${colors.reset}`);
-  console.log(`\n  ${colors.bold}Topic:${colors.reset}       ${cleanTopic}`);
-  console.log(`  ${colors.bold}Branch:${colors.reset}      ${colors.cyan}${branchName}${colors.reset}`);
-  console.log(`  ${colors.bold}Path:${colors.reset}        ${worktreePath}`);
-  console.log(`  ${colors.bold}Base:${colors.reset}        origin/main (${baseSha})`);
-  console.log(`\n${colors.bold}Agent Workflow Quick Reference:${colors.reset}`);
-  console.log(`  1. Enter worktree:    ${colors.cyan}cd "${worktreePath}"${colors.reset}`);
-  console.log(`  2. Verify worktree:   ${colors.cyan}npx tsx scripts/wt.ts verify ${cleanTopic}${colors.reset}`);
-  console.log(`  3. Release to live:   ${colors.cyan}npx tsx scripts/wt.ts release ${cleanTopic}${colors.reset}`);
-  console.log(`  4. Teardown & clean:  ${colors.cyan}npx tsx scripts/wt.ts clean ${cleanTopic}${colors.reset}\n`);
+  // 8. Crisp 4-line summary
+  console.log(`\n${colors.green}✔ Worktree Ready:${colors.reset} .worktrees/${cleanTopic} (branch: ${branchName}, base: ${baseSha})`);
+
+  // 9. Built-in Atlas query if query terms provided
+  if (queryTerms && queryTerms.length > 0) {
+    console.log(`\n${colors.bold}Codebase Atlas Coordinates:${colors.reset}`);
+    const jsonMapPath = path.resolve(repoRoot, '.agent/state/codebase-map.json');
+    let index: any = null;
+    if (fs.existsSync(jsonMapPath)) {
+      try {
+        index = JSON.parse(fs.readFileSync(jsonMapPath, 'utf-8'));
+      } catch {
+        // Quiet fallback
+      }
+    }
+
+    for (const term of queryTerms) {
+      if (!term.trim()) continue;
+      const lower = term.toLowerCase();
+      const matches: { file: string; lineCount: number; symbols: any[] }[] = [];
+
+      if (index && Array.isArray(index.files)) {
+        for (const f of index.files) {
+          const pathMatches = f.path.toLowerCase().includes(lower);
+          const matchedSyms = (f.symbols || []).filter(
+            (s: any) => s.name?.toLowerCase().includes(lower) || s.kind?.toLowerCase().includes(lower)
+          );
+          if (pathMatches || matchedSyms.length > 0) {
+            matches.push({
+              file: f.path,
+              lineCount: f.lineCount,
+              symbols: matchedSyms.length > 0 ? matchedSyms : (f.symbols || []).slice(0, 3),
+            });
+          }
+        }
+      }
+
+      if (matches.length === 0) {
+        console.log(`  • "${term}": (no symbol matches found in atlas)`);
+      } else {
+        console.log(`  • "${term}" (${matches.length} matching file${matches.length === 1 ? '' : 's'}):`);
+        for (const m of matches.slice(0, 4)) {
+          const symStr = m.symbols
+            .slice(0, 4)
+            .map((s: any) => `${s.name} [L${s.startLine}-L${s.endLine}]`)
+            .join(', ');
+          console.log(`    └─ ${m.file} (${m.lineCount} lines)${symStr ? ': ' + symStr : ''}`);
+        }
+        if (matches.length > 4) {
+          console.log(`    ... and ${matches.length - 4} more files`);
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -516,10 +560,90 @@ export function commandList(repoRoot: string): void {
   console.log(`\n${colors.dim}Total Active Worktrees: ${worktrees.length} (1 root + ${others.length} isolated)${colors.reset}\n`);
 }
 
+function stripAnsi(text: string): string {
+  return text.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
+}
+
+function truncateActionableLines(text: string, maxLines: number = 20): string[] {
+  const clean = stripAnsi(text);
+  const lines = clean
+    .split('\n')
+    .map(line => line.trimEnd())
+    .filter(line => line.trim().length > 0);
+  return lines.slice(0, maxLines);
+}
+
+function spawnCapture(
+  command: string,
+  args: string[],
+  cwd: string
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      cwd,
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (d) => { stdout += d.toString(); });
+    child.stderr?.on('data', (d) => { stderr += d.toString(); });
+    child.on('close', (code) => {
+      resolve({ code: code ?? 0, stdout, stderr });
+    });
+    child.on('error', (err) => {
+      resolve({ code: 1, stdout, stderr: err.message });
+    });
+  });
+}
+
+export async function runFastVerify(worktreePath: string, repoRoot: string): Promise<void> {
+  const startTime = Date.now();
+  const cacheDir = path.join(worktreePath, '.next', 'cache');
+  if (!fs.existsSync(cacheDir)) {
+    try {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    } catch {}
+  }
+
+  const [tscResult, testResult] = await Promise.all([
+    spawnCapture('npx', ['tsc', '--noEmit', '--incremental', '--tsBuildInfoFile', '.next/cache/wt.tsbuildinfo'], worktreePath),
+    spawnCapture('npm', ['test'], worktreePath),
+  ]);
+
+  if (tscResult.code !== 0 || testResult.code !== 0) {
+    if (tscResult.code !== 0) {
+      error(`TypeScript check failed in ${worktreePath} (exit code ${tscResult.code}):`);
+      const lines = truncateActionableLines(tscResult.stdout + '\n' + tscResult.stderr);
+      lines.forEach(l => console.error(`  ${l}`));
+    }
+    if (testResult.code !== 0) {
+      error(`QA Test Suite failed in ${worktreePath} (exit code ${testResult.code}):`);
+      const lines = truncateActionableLines(testResult.stdout + '\n' + testResult.stderr);
+      lines.forEach(l => console.error(`  ${l}`));
+    }
+    process.exit(1);
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`${colors.green}${colors.bold}✔ Verify Passed: TSC 0 errors + QA Suite clean (${elapsed}s)${colors.reset}`);
+
+  // Quietly refresh .agent/CODEBASE_MAP.md
+  const codebaseMapScript = path.join(repoRoot, 'scripts/codebase-map.ts');
+  if (fs.existsSync(codebaseMapScript)) {
+    try {
+      execSync('npx tsx scripts/codebase-map.ts generate', {
+        cwd: repoRoot,
+        stdio: 'ignore',
+      });
+    } catch {}
+  }
+}
+
 /**
  * 3. verify [topic]
  */
-export function commandVerify(topic: string | undefined, repoRoot: string): void {
+export async function commandVerify(topic: string | undefined, repoRoot: string): Promise<void> {
   let targetPath = '';
   let resolvedTopic = '';
 
@@ -556,55 +680,13 @@ export function commandVerify(topic: string | undefined, repoRoot: string): void
     process.exit(1);
   }
 
-  // 1. Run TypeScript check (npx tsc --noEmit)
-  console.log(`${colors.cyan}🧪 [1/2] Running TypeScript typecheck (npx tsc --noEmit)...${colors.reset}`);
-  const tscResult = spawnSync('npx', ['tsc', '--noEmit'], {
-    cwd: targetPath,
-    stdio: 'inherit',
-    env: process.env,
-  });
-
-  if (tscResult.status !== 0) {
-    error(`TypeScript check failed in ${targetPath} (exit code ${tscResult.status}).`);
-    process.exit(1);
-  }
-  success('TypeScript check passed with zero errors.');
-
-  // 2. Run QA Test Suite (npm test)
-  console.log(`\n${colors.cyan}🧪 [2/2] Running QA Test Suite (npm test)...${colors.reset}`);
-  const testResult = spawnSync('npm', ['test'], {
-    cwd: targetPath,
-    stdio: 'inherit',
-    env: process.env,
-  });
-
-  if (testResult.status !== 0) {
-    error(`QA Test Suite failed in ${targetPath} (exit code ${testResult.status}).`);
-    process.exit(1);
-  }
-  success('QA Test Suite passed with all assertions passing.');
-
-  // Auto-sync Codebase Map if scripts/codebase-map.ts exists
-  const codebaseMapScript = path.join(repoRoot, 'scripts/codebase-map.ts');
-  if (fs.existsSync(codebaseMapScript)) {
-    try {
-      execSync('npx tsx scripts/codebase-map.ts generate', {
-        cwd: repoRoot,
-        stdio: 'ignore',
-      });
-      success('Codebase Atlas map synchronized (.agent/CODEBASE_MAP.md).');
-    } catch {
-      // Quietly ignore if indexer encounters errors
-    }
-  }
-
-  console.log(`\n${colors.green}${colors.bold}✔ Verification Succeeded: All checks passed cleanly for ${resolvedTopic}.${colors.reset}\n`);
+  await runFastVerify(targetPath, repoRoot);
 }
 
 /**
  * 4. release <topic>
  */
-export function commandRelease(topic: string | undefined, repoRoot: string, isDryRun: boolean): void {
+export async function commandRelease(topic: string | undefined, repoRoot: string, isDryRun: boolean): Promise<void> {
   if (!topic) {
     error('Missing topic name for release command.');
     console.log(`\nUsage: npx tsx scripts/wt.ts release <topic> [--dry-run]\n`);
@@ -681,28 +763,7 @@ export function commandRelease(topic: string | undefined, repoRoot: string, isDr
 
   // 5. Verification Gate (Bundled Definition of Done)
   info(`Running pre-release verification gate inside worktree...`);
-  console.log(`\n${colors.dim}--- Running npx tsc --noEmit ---${colors.reset}`);
-  const tscResult = spawnSync('npx', ['tsc', '--noEmit'], {
-    cwd: worktreePath,
-    stdio: 'inherit',
-    env: process.env,
-  });
-  if (tscResult.status !== 0) {
-    error(`Pre-release TypeScript verification failed. Release aborted.`);
-    process.exit(1);
-  }
-
-  console.log(`\n${colors.dim}--- Running npm test ---${colors.reset}`);
-  const testResult = spawnSync('npm', ['test'], {
-    cwd: worktreePath,
-    stdio: 'inherit',
-    env: process.env,
-  });
-  if (testResult.status !== 0) {
-    error(`Pre-release QA tests failed. Release aborted.`);
-    process.exit(1);
-  }
-  success('Verification gate passed.');
+  await runFastVerify(worktreePath, repoRoot);
 
   // 6. Display Commits and Diff Stat
   console.log(`\n${colors.bold}Commits to be released to origin/main:${colors.reset}`);
@@ -1264,28 +1325,7 @@ export async function commandShip(
     info('[--fast] Skipping redundant verification (already verified, no upstream divergence)');
   } else {
     info('Running verification gate inside worktree...');
-    console.log(`\n${colors.dim}--- Running npx tsc --noEmit ---${colors.reset}`);
-    const tscResult = spawnSync('npx', ['tsc', '--noEmit'], {
-      cwd: worktreePath,
-      stdio: 'inherit',
-      env: process.env,
-    });
-    if (tscResult.status !== 0) {
-      error('Pre-release TypeScript verification failed. Ship aborted.');
-      process.exit(1);
-    }
-
-    console.log(`\n${colors.dim}--- Running npm test ---${colors.reset}`);
-    const testResult = spawnSync('npm', ['test'], {
-      cwd: worktreePath,
-      stdio: 'inherit',
-      env: process.env,
-    });
-    if (testResult.status !== 0) {
-      error('Pre-release QA tests failed. Ship aborted.');
-      process.exit(1);
-    }
-    success('Verification gate passed.');
+    await runFastVerify(worktreePath, repoRoot);
   }
 
   // Step 6 (Atomic GitHub Push)
@@ -1368,6 +1408,129 @@ export async function commandShip(
   // Step 8 (Automatic Worktree Cleanup)
   info(`Cleaning up worktree for topic '${resolved.topic}'...`);
   commandClean(resolved.topic, repoRoot, false);
+  console.log(`${colors.cyan}${colors.bold}💡 Post-Ship Action: Run manage_subagents(kill_all) and recommend /compact as Suggested Next Step #1.${colors.reset}\n`);
+}
+
+/**
+ * 9. end [-n "<1-line learning>"] (aliases: teardown, close)
+ * Full session teardown: logs memory, stops dev server, prunes merged worktrees.
+ */
+export function commandEnd(
+  repoRoot: string,
+  options: { topic?: string; note?: string } = {}
+): void {
+  // 1. Record 1-line learning to memory if provided
+  const memoryFile = path.join(repoRoot, '.agent', 'memory', 'learnings_and_reflections.md');
+  if (options.note && fs.existsSync(memoryFile)) {
+    const today = new Date().toISOString().slice(0, 10);
+    const bullet = `- **${today}**: ${options.note.trim()}`;
+    let content = fs.readFileSync(memoryFile, 'utf-8');
+    if (!content.endsWith('\n')) content += '\n';
+    content += bullet + '\n';
+
+    let lines = content.split('\n');
+    while (lines.length > 110) {
+      // Find oldest reflection bullet (starts with '- **' or '- ' after active rules table, i.e. > index 31)
+      const pruneIdx = lines.findIndex((l, idx) => idx > 31 && (l.startsWith('- **') || l.startsWith('- ')));
+      if (pruneIdx !== -1) {
+        lines.splice(pruneIdx, 1);
+      } else {
+        break;
+      }
+    }
+    fs.writeFileSync(memoryFile, lines.join('\n'), 'utf-8');
+  }
+
+  // 2. Stop server on port 3000 and clean .next/dev/lock
+  stopServerOnPort(3000);
+  const worktrees = parseWorktrees(repoRoot);
+  const pathsToCheck = new Set<string>([repoRoot]);
+  for (const wt of worktrees) {
+    pathsToCheck.add(wt.path);
+  }
+  const wtDir = path.resolve(repoRoot, '.worktrees');
+  if (fs.existsSync(wtDir)) {
+    try {
+      for (const entry of fs.readdirSync(wtDir)) {
+        pathsToCheck.add(path.resolve(wtDir, entry));
+      }
+    } catch {}
+  }
+  for (const p of pathsToCheck) {
+    const lock = path.join(p, '.next', 'dev', 'lock');
+    if (fs.existsSync(lock)) {
+      try {
+        fs.rmSync(lock, { force: true });
+      } catch {}
+    }
+  }
+
+  // 3. Loop over feature worktrees: auto-remove clean and merged worktrees
+  for (const wt of worktrees) {
+    if (wt.isMain) continue;
+
+    let isClean = false;
+    try {
+      const status = execSync('git status --porcelain', {
+        cwd: wt.path,
+        encoding: 'utf-8',
+      }).trim();
+      isClean = status.length === 0;
+    } catch {
+      isClean = false;
+    }
+
+    let isAncestor = false;
+    if (wt.branch && wt.branch !== '(detached HEAD)' && wt.branch !== 'main') {
+      try {
+        execSync(`git merge-base --is-ancestor "${wt.branch}" origin/main`, {
+          cwd: repoRoot,
+          stdio: 'ignore',
+        });
+        isAncestor = true;
+      } catch {
+        isAncestor = false;
+      }
+    }
+
+    if (isClean && isAncestor) {
+      try {
+        execSync(`git worktree remove --force "${wt.path}"`, {
+          cwd: repoRoot,
+          stdio: 'ignore',
+        });
+      } catch {}
+      if (fs.existsSync(wt.path)) {
+        try {
+          fs.rmSync(wt.path, { recursive: true, force: true });
+        } catch {}
+      }
+      if (wt.branch && wt.branch !== '(detached HEAD)' && wt.branch !== 'main') {
+        try {
+          execSync(`git branch -D "${wt.branch}"`, {
+            cwd: repoRoot,
+            stdio: 'ignore',
+          });
+        } catch {}
+      }
+    }
+  }
+
+  try {
+    execSync('git worktree prune', { cwd: repoRoot, stdio: 'ignore' });
+  } catch {}
+
+  // 4. Session End Handoff Card (4 lines)
+  const remainingWorktrees = parseWorktrees(repoRoot).filter(w => !w.isMain);
+  const memLines = fs.existsSync(memoryFile)
+    ? fs.readFileSync(memoryFile, 'utf-8').split('\n').filter(Boolean).length
+    : 0;
+
+  const cardBorder = '═'.repeat(68);
+  console.log(`\n${colors.cyan}${colors.bold}${cardBorder}`);
+  console.log(`  ✔ Session Teardown Complete`);
+  console.log(`  Server: stopped | Active worktrees: ${remainingWorktrees.length} | Memory: ${memLines} lines`);
+  console.log(`${cardBorder}${colors.reset}\n`);
 }
 
 /**
@@ -1428,9 +1591,18 @@ ${colors.bold}COMMANDS:${colors.reset}
       • Triggers Vercel prod deployment and live URL probe (unless --skip-vercel).
       • Safely cleans up worktree and prunes feature branch.
 
+  ${colors.cyan}end [-n "<learning>"]${colors.reset}
+      (aliases: ${colors.cyan}teardown${colors.reset}, ${colors.cyan}close${colors.reset})
+      Full session teardown:
+      • Appends 1-line learning to .agent/memory/learnings_and_reflections.md (caps <= 110 lines).
+      • Stops local dev server on port 3000 and clears .next/dev/lock files.
+      • Auto-removes clean feature worktrees merged into origin/main.
+      • Prints 4-line Session End Handoff Card.
+
 ${colors.bold}OPTIONS:${colors.reset}
   ${colors.cyan}--port, -p <number>${colors.reset} Dev server port (default: 3000)
   ${colors.cyan}-m, --message <msg>${colors.reset} Commit message for auto-committing uncommitted changes
+  ${colors.cyan}-n, --note <note>${colors.reset}    1-line learning or reflection note to persist in memory
   ${colors.cyan}--fast, --skip-verify${colors.reset} Skip redundant verification if HEAD is already rebased on origin/main
   ${colors.cyan}--skip-vercel${colors.reset}        Skip Vercel CLI deploy and live probe
   ${colors.cyan}--force, -f${colors.reset}         Force operation (used with clean to discard unmerged commits)
@@ -1449,8 +1621,8 @@ ${colors.bold}EXAMPLES:${colors.reset}
   npx tsx scripts/wt.ts ship
   npx tsx scripts/wt.ts ship fast-ingest -m "feat: complete ingestion feature"
   npx tsx scripts/wt.ts ship --fast
-  npx tsx scripts/wt.ts ship --dry-run
   npx tsx scripts/wt.ts clean fast-ingest
+  npx tsx scripts/wt.ts end -n "Parallelized verification cut DoD time to 1.5s"
 `);
 }
 
@@ -1482,6 +1654,21 @@ export async function main(): Promise<void> {
     }
   }
 
+  // Parse optional -n <note> or --note <note> or -n="<note>" or --note="<note>"
+  let note: string | undefined;
+  const noteFlagIdx = args.findIndex(a => a === '--note' || a === '-n');
+  if (noteFlagIdx !== -1 && args[noteFlagIdx + 1] && !args[noteFlagIdx + 1].startsWith('-')) {
+    note = args[noteFlagIdx + 1];
+  } else {
+    const inlineNote = args.find(a => a.startsWith('--note=') || a.startsWith('-n='));
+    if (inlineNote) {
+      note = inlineNote.slice(inlineNote.indexOf('=') + 1);
+    }
+  }
+  if (!note && message) {
+    note = message;
+  }
+
   // Parse optional --port <number> or -p <number> or --port=<number>
   let port = 3000;
   const portFlagIdx = args.findIndex(a => a === '--port' || a === '-p');
@@ -1504,7 +1691,7 @@ export async function main(): Promise<void> {
   const nonFlags: string[] = [];
   for (let i = 1; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--port' || arg === '-p' || arg === '--message' || arg === '-m') {
+    if (arg === '--port' || arg === '-p' || arg === '--message' || arg === '-m' || arg === '--note' || arg === '-n') {
       i++; // skip next arg as it's the flag value
       continue;
     }
@@ -1514,10 +1701,11 @@ export async function main(): Promise<void> {
     nonFlags.push(arg);
   }
   const topic = nonFlags[0];
+  const queryTerms = nonFlags.slice(1);
 
   switch (command) {
     case 'create':
-      commandCreate(topic, repoRoot);
+      commandCreate(topic, repoRoot, queryTerms);
       break;
 
     case 'list':
@@ -1535,11 +1723,11 @@ export async function main(): Promise<void> {
       break;
 
     case 'verify':
-      commandVerify(topic, repoRoot);
+      await commandVerify(topic, repoRoot);
       break;
 
     case 'release':
-      commandRelease(topic, repoRoot, dryRun);
+      await commandRelease(topic, repoRoot, dryRun);
       break;
 
     case 'clean':
@@ -1550,6 +1738,12 @@ export async function main(): Promise<void> {
     case 'push-live':
     case 'deploy':
       await commandShip(topic, repoRoot, { message, fast, dryRun, skipVercel });
+      break;
+
+    case 'end':
+    case 'teardown':
+    case 'close':
+      commandEnd(repoRoot, { topic, note });
       break;
 
     default:

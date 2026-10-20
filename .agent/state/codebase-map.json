@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-19T11:05:38.368Z",
+  "generatedAt": "2026-10-20T08:16:48.219Z",
   "stats": {
-    "totalFiles": 163,
-    "totalLines": 89775,
-    "totalSymbols": 804,
-    "scanDurationMs": 227
+    "totalFiles": 169,
+    "totalLines": 94968,
+    "totalSymbols": 845,
+    "scanDurationMs": 491
   },
   "sections": {
     "app": [
@@ -280,6 +280,28 @@
         ]
       },
       {
+        "path": "app/homework/page.tsx",
+        "lineCount": 33,
+        "purpose": "App router page for page",
+        "category": "app",
+        "symbols": [
+          {
+            "name": "metadata",
+            "kind": "const",
+            "startLine": 5,
+            "endLine": 8,
+            "exported": true
+          },
+          {
+            "name": "HomeworkPage",
+            "kind": "component",
+            "startLine": 26,
+            "endLine": 32,
+            "exported": true
+          }
+        ]
+      },
+      {
         "path": "app/layout.tsx",
         "lineCount": 95,
         "purpose": "Root layout with neobrutalist aesthetic, fonts, and theme providers",
@@ -325,15 +347,15 @@
       },
       {
         "path": "app/page.tsx",
-        "lineCount": 409,
+        "lineCount": 403,
         "purpose": "Revizz student home page and interactive quiz game launchpad",
         "category": "app",
         "symbols": [
           {
             "name": "HomePage",
             "kind": "component",
-            "startLine": 24,
-            "endLine": 408,
+            "startLine": 23,
+            "endLine": 402,
             "exported": true
           }
         ]
@@ -355,15 +377,37 @@
       },
       {
         "path": "app/portal/page.tsx",
-        "lineCount": 977,
+        "lineCount": 994,
         "purpose": "Teacher and student portal hub with tabs and analytics",
         "category": "app",
         "symbols": [
           {
             "name": "PortalPage",
             "kind": "component",
-            "startLine": 959,
-            "endLine": 976,
+            "startLine": 976,
+            "endLine": 993,
+            "exported": true
+          }
+        ]
+      },
+      {
+        "path": "app/profile/homework/page.tsx",
+        "lineCount": 33,
+        "purpose": "App router page for page",
+        "category": "app",
+        "symbols": [
+          {
+            "name": "metadata",
+            "kind": "const",
+            "startLine": 5,
+            "endLine": 8,
+            "exported": true
+          },
+          {
+            "name": "ProfileHomeworkPage",
+            "kind": "component",
+            "startLine": 26,
+            "endLine": 32,
             "exported": true
           }
         ]
@@ -512,7 +556,7 @@
       },
       {
         "path": "components/LeaderboardModal.tsx",
-        "lineCount": 354,
+        "lineCount": 361,
         "purpose": "Global student XP rankings and school leaderboard modal",
         "category": "components",
         "symbols": [
@@ -520,7 +564,7 @@
             "name": "LeaderboardModal",
             "kind": "component",
             "startLine": 20,
-            "endLine": 353,
+            "endLine": 360,
             "exported": true
           }
         ]
@@ -878,7 +922,7 @@
       },
       {
         "path": "components/portal/AdminCMS.tsx",
-        "lineCount": 1154,
+        "lineCount": 1155,
         "purpose": "Question bank CMS table with filtering, search, and inline editor",
         "category": "components",
         "symbols": [
@@ -893,165 +937,165 @@
             "name": "AdminCMS",
             "kind": "component",
             "startLine": 45,
-            "endLine": 1153,
+            "endLine": 1154,
             "exported": true
           }
         ]
       },
       {
         "path": "components/portal/AdminNav.tsx",
-        "lineCount": 437,
+        "lineCount": 407,
         "purpose": "Portal navigation bar with school badge and mode indicator",
         "category": "components",
         "symbols": [
           {
             "name": "AdminNavProps",
             "kind": "interface",
-            "startLine": 26,
-            "endLine": 39,
+            "startLine": 25,
+            "endLine": 38,
             "exported": true
           },
           {
             "name": "AdminNav",
             "kind": "component",
-            "startLine": 41,
-            "endLine": 436,
+            "startLine": 40,
+            "endLine": 406,
             "exported": true
           }
         ]
       },
       {
         "path": "components/portal/AdminTools.tsx",
-        "lineCount": 2818,
+        "lineCount": 2821,
         "purpose": "Question audit and management tools for administrators",
         "category": "components",
         "symbols": [
           {
             "name": "applyMassTopicReassign",
             "kind": "const",
-            "startLine": 71,
-            "endLine": 71,
+            "startLine": 69,
+            "endLine": 69,
             "exported": true
           },
           {
             "name": "BankQuestionOption",
             "kind": "interface",
-            "startLine": 73,
-            "endLine": 79,
+            "startLine": 71,
+            "endLine": 77,
             "exported": true
           },
           {
             "name": "QuestionBankItem",
             "kind": "interface",
-            "startLine": 81,
-            "endLine": 107,
+            "startLine": 79,
+            "endLine": 105,
             "exported": true
           },
           {
             "name": "getStatusBadgeClass",
             "kind": "function",
-            "startLine": 109,
-            "endLine": 122,
+            "startLine": 107,
+            "endLine": 120,
             "exported": true
           },
           {
             "name": "createInitialBankItems",
             "kind": "function",
-            "startLine": 124,
-            "endLine": 214,
+            "startLine": 122,
+            "endLine": 212,
             "exported": true
           },
           {
             "name": "TeacherQuestionAnnotation",
             "kind": "interface",
-            "startLine": 216,
-            "endLine": 221,
+            "startLine": 214,
+            "endLine": 219,
             "exported": true
           },
           {
             "name": "TEACHER_ANNOTATION_STORAGE_KEY",
             "kind": "const",
-            "startLine": 223,
-            "endLine": 223,
+            "startLine": 221,
+            "endLine": 221,
             "exported": true
           },
           {
             "name": "AdminToolsProps",
             "kind": "interface",
-            "startLine": 225,
-            "endLine": 229,
+            "startLine": 223,
+            "endLine": 227,
             "exported": true
           },
           {
             "name": "BankFilterOption",
             "kind": "interface",
-            "startLine": 231,
-            "endLine": 235,
+            "startLine": 229,
+            "endLine": 233,
             "exported": true
           },
           {
             "name": "BankFilterDropdownProps",
             "kind": "interface",
-            "startLine": 237,
-            "endLine": 246,
+            "startLine": 235,
+            "endLine": 244,
             "exported": true
           },
           {
             "name": "BankFilterDropdown",
             "kind": "component",
-            "startLine": 248,
-            "endLine": 398,
+            "startLine": 246,
+            "endLine": 396,
             "exported": true
           },
           {
             "name": "AdminTools",
             "kind": "component",
-            "startLine": 400,
-            "endLine": 2817,
+            "startLine": 398,
+            "endLine": 2820,
             "exported": true
           }
         ]
       },
       {
         "path": "components/portal/AssignedHomeworkHub.tsx",
-        "lineCount": 636,
+        "lineCount": 616,
         "purpose": "Portal & ingestion component: AssignedHomeworkHub",
         "category": "components",
         "symbols": [
           {
             "name": "AssignedHomeworkHubProps",
             "kind": "interface",
-            "startLine": 40,
-            "endLine": 44,
+            "startLine": 38,
+            "endLine": 42,
             "exported": true
           },
           {
             "name": "AssignedHomeworkHub",
             "kind": "component",
-            "startLine": 46,
-            "endLine": 635,
+            "startLine": 44,
+            "endLine": 615,
             "exported": true
           }
         ]
       },
       {
         "path": "components/portal/AssignedHomeworkModal.tsx",
-        "lineCount": 864,
+        "lineCount": 871,
         "purpose": "Portal & ingestion component: AssignedHomeworkModal",
         "category": "components",
         "symbols": [
           {
             "name": "NewHomeworkModal",
             "kind": "component",
-            "startLine": 77,
-            "endLine": 611,
+            "startLine": 76,
+            "endLine": 618,
             "exported": true
           },
           {
             "name": "SubmissionsDetailModal",
             "kind": "component",
-            "startLine": 623,
-            "endLine": 863,
+            "startLine": 630,
+            "endLine": 870,
             "exported": true
           }
         ]
@@ -1616,36 +1660,79 @@
       },
       {
         "path": "components/portal/TeacherAnalytics.tsx",
-        "lineCount": 1085,
+        "lineCount": 2565,
         "purpose": "Teacher analytics dashboard for student accuracy and distractor metrics",
         "category": "components",
         "symbols": [
           {
             "name": "TeacherAnalyticsProps",
             "kind": "interface",
-            "startLine": 27,
-            "endLine": 30,
+            "startLine": 61,
+            "endLine": 65,
             "exported": true
           },
           {
             "name": "RosterStudent",
             "kind": "interface",
-            "startLine": 32,
-            "endLine": 45,
+            "startLine": 67,
+            "endLine": 87,
             "exported": true
           },
           {
             "name": "HeatRow",
             "kind": "interface",
-            "startLine": 47,
-            "endLine": 50,
+            "startLine": 89,
+            "endLine": 92,
             "exported": true
           },
           {
             "name": "TeacherAnalytics",
             "kind": "component",
-            "startLine": 52,
-            "endLine": 1084,
+            "startLine": 202,
+            "endLine": 2564,
+            "exported": true
+          }
+        ]
+      },
+      {
+        "path": "components/portal/TeacherOverviewHub.tsx",
+        "lineCount": 1605,
+        "purpose": "Portal & ingestion component: TeacherOverviewHub",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "TeacherOverviewHubProps",
+            "kind": "interface",
+            "startLine": 57,
+            "endLine": 60,
+            "exported": true
+          },
+          {
+            "name": "TriageStudent",
+            "kind": "interface",
+            "startLine": 62,
+            "endLine": 75,
+            "exported": true
+          },
+          {
+            "name": "MockAssignmentStats",
+            "kind": "interface",
+            "startLine": 77,
+            "endLine": 81,
+            "exported": true
+          },
+          {
+            "name": "TOPIC_MASTERY_WEAK",
+            "kind": "const",
+            "startLine": 105,
+            "endLine": 105,
+            "exported": true
+          },
+          {
+            "name": "TeacherOverviewHub",
+            "kind": "component",
+            "startLine": 107,
+            "endLine": 1604,
             "exported": true
           }
         ]
@@ -1696,15 +1783,15 @@
       },
       {
         "path": "components/portal/compiler/TestCompilerHub.tsx",
-        "lineCount": 3226,
+        "lineCount": 3232,
         "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
         "category": "components",
         "symbols": [
           {
             "name": "TestCompilerHub",
             "kind": "component",
-            "startLine": 87,
-            "endLine": 3225,
+            "startLine": 88,
+            "endLine": 3231,
             "exported": true
           }
         ]
@@ -1783,23 +1870,38 @@
         ]
       },
       {
+        "path": "components/profile/StudentHomeworkPanel.tsx",
+        "lineCount": 1157,
+        "purpose": "UI component: StudentHomeworkPanel",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "StudentHomeworkPanel",
+            "kind": "component",
+            "startLine": 115,
+            "endLine": 1156,
+            "exported": true
+          }
+        ]
+      },
+      {
         "path": "components/profile/StudentProfileHub.tsx",
-        "lineCount": 874,
+        "lineCount": 912,
         "purpose": "UI component: StudentProfileHub",
         "category": "components",
         "symbols": [
           {
             "name": "StudentProfileHubProps",
             "kind": "interface",
-            "startLine": 58,
-            "endLine": 60,
+            "startLine": 61,
+            "endLine": 63,
             "exported": true
           },
           {
             "name": "StudentProfileHub",
             "kind": "component",
-            "startLine": 75,
-            "endLine": 873,
+            "startLine": 79,
+            "endLine": 911,
             "exported": true
           }
         ]
@@ -1994,7 +2096,7 @@
       },
       {
         "path": "components/ui/select.tsx",
-        "lineCount": 236,
+        "lineCount": 274,
         "purpose": "Accessible dropdown select menu wrapper using Radix UI primitives",
         "category": "components",
         "symbols": [
@@ -2009,21 +2111,21 @@
             "name": "SelectProps",
             "kind": "interface",
             "startLine": 11,
-            "endLine": 28,
+            "endLine": 29,
             "exported": true
           },
           {
             "name": "Select",
             "kind": "component",
-            "startLine": 30,
-            "endLine": 232,
+            "startLine": 31,
+            "endLine": 270,
             "exported": true
           },
           {
             "name": "NeobrutalistDropdown",
             "kind": "component",
-            "startLine": 234,
-            "endLine": 234,
+            "startLine": 272,
+            "endLine": 272,
             "exported": true
           }
         ]
@@ -2887,6 +2989,98 @@
         ]
       },
       {
+        "path": "lib/homework.ts",
+        "lineCount": 182,
+        "purpose": "Returns default realistic Cambridge IGCSE homework assignments.",
+        "category": "lib",
+        "symbols": [
+          {
+            "name": "HomeworkStatus",
+            "kind": "type",
+            "startLine": 5,
+            "endLine": 5,
+            "exported": true
+          },
+          {
+            "name": "HomeworkSubmission",
+            "kind": "interface",
+            "startLine": 7,
+            "endLine": 16,
+            "exported": true
+          },
+          {
+            "name": "HomeworkItem",
+            "kind": "interface",
+            "startLine": 18,
+            "endLine": 23,
+            "exported": true
+          },
+          {
+            "name": "HOMEWORK_SUBMISSIONS_KEY",
+            "kind": "const",
+            "startLine": 25,
+            "endLine": 25,
+            "exported": true
+          },
+          {
+            "name": "HOMEWORK_CHANGE_EVENT",
+            "kind": "const",
+            "startLine": 26,
+            "endLine": 26,
+            "exported": true
+          },
+          {
+            "name": "getSeedHomeworkAssignments",
+            "kind": "function",
+            "startLine": 32,
+            "endLine": 34,
+            "exported": true
+          },
+          {
+            "name": "notifyHomeworkChanged",
+            "kind": "function",
+            "startLine": 39,
+            "endLine": 47,
+            "exported": true
+          },
+          {
+            "name": "subscribeHomeworkChanges",
+            "kind": "function",
+            "startLine": 52,
+            "endLine": 61,
+            "exported": true
+          },
+          {
+            "name": "getHomeworkSubmissions",
+            "kind": "function",
+            "startLine": 66,
+            "endLine": 76,
+            "exported": true
+          },
+          {
+            "name": "saveHomeworkSubmission",
+            "kind": "function",
+            "startLine": 81,
+            "endLine": 94,
+            "exported": true
+          },
+          {
+            "name": "getHomeworkAssignments",
+            "kind": "function",
+            "startLine": 100,
+            "endLine": 157,
+            "exported": true
+          },
+          {
+            "name": "findAssignmentByTestCode",
+            "kind": "function",
+            "startLine": 162,
+            "endLine": 181,
+            "exported": true
+          }
+        ]
+      },
+      {
         "path": "lib/ingestion/diagramCropper.ts",
         "lineCount": 561,
         "purpose": "Client-side interface for PDF diagram bounding-box cropping",
@@ -3605,120 +3799,120 @@
       },
       {
         "path": "lib/portal/assignedHomework.ts",
-        "lineCount": 768,
+        "lineCount": 303,
         "purpose": "Core library utility module: assignedHomework",
         "category": "lib",
         "symbols": [
           {
             "name": "StudentSubmission",
             "kind": "interface",
-            "startLine": 5,
-            "endLine": 14,
+            "startLine": 4,
+            "endLine": 13,
             "exported": true
           },
           {
             "name": "AssignedHomeworkRound",
             "kind": "interface",
-            "startLine": 16,
-            "endLine": 41,
+            "startLine": 15,
+            "endLine": 40,
             "exported": true
           },
           {
             "name": "HomeworkMetricsSummary",
             "kind": "interface",
-            "startLine": 43,
-            "endLine": 48,
+            "startLine": 42,
+            "endLine": 47,
             "exported": true
           },
           {
             "name": "HOMEWORK_CHANGED_EVENT",
             "kind": "const",
-            "startLine": 51,
-            "endLine": 51,
+            "startLine": 50,
+            "endLine": 50,
             "exported": true
           },
           {
             "name": "getStorageKey",
             "kind": "function",
-            "startLine": 56,
-            "endLine": 59,
+            "startLine": 55,
+            "endLine": 58,
             "exported": true
           },
           {
             "name": "isHomeworkDue",
             "kind": "function",
-            "startLine": 67,
-            "endLine": 71,
+            "startLine": 66,
+            "endLine": 70,
             "exported": true
           },
           {
             "name": "computeHomeworkMetrics",
             "kind": "function",
-            "startLine": 73,
-            "endLine": 106,
+            "startLine": 72,
+            "endLine": 105,
             "exported": true
           },
           {
             "name": "getAssignedHomeworkList",
             "kind": "function",
-            "startLine": 108,
-            "endLine": 121,
+            "startLine": 107,
+            "endLine": 131,
             "exported": true
           },
           {
             "name": "getAssignedHomeworkById",
             "kind": "function",
-            "startLine": 123,
-            "endLine": 126,
+            "startLine": 133,
+            "endLine": 136,
             "exported": true
           },
           {
             "name": "getAssignedHomeworkByCode",
             "kind": "function",
-            "startLine": 128,
-            "endLine": 150,
+            "startLine": 138,
+            "endLine": 164,
             "exported": true
           },
           {
             "name": "findHomeworkByIdAnyTeacher",
             "kind": "function",
-            "startLine": 152,
-            "endLine": 172,
+            "startLine": 166,
+            "endLine": 193,
             "exported": true
           },
           {
             "name": "saveAssignedHomework",
             "kind": "function",
-            "startLine": 174,
-            "endLine": 212,
+            "startLine": 195,
+            "endLine": 233,
             "exported": true
           },
           {
             "name": "deleteAssignedHomework",
             "kind": "function",
-            "startLine": 214,
-            "endLine": 232,
+            "startLine": 235,
+            "endLine": 253,
             "exported": true
           },
           {
             "name": "recordStudentSubmission",
             "kind": "function",
-            "startLine": 234,
-            "endLine": 259,
+            "startLine": 255,
+            "endLine": 280,
             "exported": true
           },
           {
             "name": "subscribeToHomeworkChanges",
             "kind": "function",
-            "startLine": 261,
-            "endLine": 270,
+            "startLine": 282,
+            "endLine": 291,
             "exported": true
           },
           {
             "name": "seedInitialHomeworkIfEmpty",
             "kind": "function",
-            "startLine": 275,
-            "endLine": 767,
+            "startLine": 297,
+            "endLine": 302,
             "exported": true
           }
         ]
@@ -4077,7 +4271,7 @@
       },
       {
         "path": "lib/portal/menuConfig.ts",
-        "lineCount": 275,
+        "lineCount": 281,
         "purpose": "Teacher Portal Navigation & Menu Configuration Manager Manages customizable navigation items for the Teacher Educator...",
         "category": "lib",
         "symbols": [
@@ -4127,56 +4321,56 @@
             "name": "getPortalNavItems",
             "kind": "function",
             "startLine": 135,
-            "endLine": 154,
+            "endLine": 160,
             "exported": true
           },
           {
             "name": "getActivePortalMenuItems",
             "kind": "function",
-            "startLine": 159,
-            "endLine": 161,
+            "startLine": 165,
+            "endLine": 167,
             "exported": true
           },
           {
             "name": "savePortalNavItems",
             "kind": "function",
-            "startLine": 166,
-            "endLine": 175,
+            "startLine": 172,
+            "endLine": 181,
             "exported": true
           },
           {
             "name": "togglePortalMenuItem",
             "kind": "function",
-            "startLine": 181,
-            "endLine": 192,
+            "startLine": 187,
+            "endLine": 198,
             "exported": true
           },
           {
             "name": "setPortalMenuItemEnabled",
             "kind": "function",
-            "startLine": 197,
-            "endLine": 208,
+            "startLine": 203,
+            "endLine": 214,
             "exported": true
           },
           {
             "name": "addPortalMenuItem",
             "kind": "function",
-            "startLine": 214,
-            "endLine": 237,
+            "startLine": 220,
+            "endLine": 243,
             "exported": true
           },
           {
             "name": "removePortalMenuItem",
             "kind": "function",
-            "startLine": 243,
-            "endLine": 258,
+            "startLine": 249,
+            "endLine": 264,
             "exported": true
           },
           {
             "name": "resetPortalNavToDefaults",
             "kind": "function",
-            "startLine": 263,
-            "endLine": 274,
+            "startLine": 269,
+            "endLine": 280,
             "exported": true
           }
         ]
@@ -4466,7 +4660,7 @@
       },
       {
         "path": "lib/roster.ts",
-        "lineCount": 273,
+        "lineCount": 535,
         "purpose": "Core library utility module: roster",
         "category": "lib",
         "symbols": [
@@ -4510,6 +4704,90 @@
             "kind": "async-function",
             "startLine": 208,
             "endLine": 272,
+            "exported": true
+          },
+          {
+            "name": "TeacherClassRoom",
+            "kind": "interface",
+            "startLine": 278,
+            "endLine": 288,
+            "exported": true
+          },
+          {
+            "name": "TEACHER_CLASSES_STORAGE_KEY",
+            "kind": "const",
+            "startLine": 290,
+            "endLine": 290,
+            "exported": true
+          },
+          {
+            "name": "STUDENT_CLASS_OVERRIDES_KEY",
+            "kind": "const",
+            "startLine": 291,
+            "endLine": 291,
+            "exported": true
+          },
+          {
+            "name": "DEFAULT_TEACHER_CLASSES",
+            "kind": "const",
+            "startLine": 293,
+            "endLine": 349,
+            "exported": true
+          },
+          {
+            "name": "getTeacherClasses",
+            "kind": "function",
+            "startLine": 351,
+            "endLine": 363,
+            "exported": true
+          },
+          {
+            "name": "saveTeacherClasses",
+            "kind": "function",
+            "startLine": 365,
+            "endLine": 373,
+            "exported": true
+          },
+          {
+            "name": "createTeacherClass",
+            "kind": "function",
+            "startLine": 375,
+            "endLine": 414,
+            "exported": true
+          },
+          {
+            "name": "updateTeacherClass",
+            "kind": "function",
+            "startLine": 416,
+            "endLine": 426,
+            "exported": true
+          },
+          {
+            "name": "deleteTeacherClass",
+            "kind": "function",
+            "startLine": 428,
+            "endLine": 433,
+            "exported": true
+          },
+          {
+            "name": "StudentClassOverride",
+            "kind": "interface",
+            "startLine": 435,
+            "endLine": 444,
+            "exported": true
+          },
+          {
+            "name": "getStudentClassOverrides",
+            "kind": "function",
+            "startLine": 446,
+            "endLine": 456,
+            "exported": true
+          },
+          {
+            "name": "saveStudentClassOverride",
+            "kind": "function",
+            "startLine": 458,
+            "endLine": 478,
             "exported": true
           }
         ]
@@ -5689,7 +5967,7 @@
       },
       {
         "path": "scripts/verify-assigned-homework.ts",
-        "lineCount": 1016,
+        "lineCount": 1018,
         "purpose": "Revizz QA & Verification Test Suite Account-Unique Assigned Homework Engine & Data Invariants Verification File: scri...",
         "category": "scripts",
         "symbols": [
@@ -6049,6 +6327,35 @@
             "kind": "function",
             "startLine": 47,
             "endLine": 95,
+            "exported": false
+          }
+        ]
+      },
+      {
+        "path": "scripts/verify-homework.ts",
+        "lineCount": 272,
+        "purpose": "Revizz Student Homework & Online Assessment Engine Verification Suite Standalone TypeScript verification script (pure...",
+        "category": "scripts",
+        "symbols": [
+          {
+            "name": "assert",
+            "kind": "function",
+            "startLine": 66,
+            "endLine": 74,
+            "exported": false
+          },
+          {
+            "name": "assertEqual",
+            "kind": "function",
+            "startLine": 76,
+            "endLine": 84,
+            "exported": false
+          },
+          {
+            "name": "runTests",
+            "kind": "function",
+            "startLine": 86,
+            "endLine": 269,
             "exported": false
           }
         ]
@@ -6446,64 +6753,78 @@
       },
       {
         "path": "scripts/verify-revizz.ts",
-        "lineCount": 4120,
+        "lineCount": 4479,
         "purpose": "Master Revizz QA and gameplay test suite with 56 assertions",
         "category": "scripts",
         "symbols": [
           {
             "name": "test",
             "kind": "function",
-            "startLine": 167,
-            "endLine": 179,
+            "startLine": 211,
+            "endLine": 233,
             "exported": false
           },
           {
             "name": "testAsync",
             "kind": "function",
-            "startLine": 181,
-            "endLine": 193,
+            "startLine": 235,
+            "endLine": 257,
             "exported": false
           },
           {
             "name": "assert",
             "kind": "function",
-            "startLine": 195,
-            "endLine": 199,
+            "startLine": 259,
+            "endLine": 263,
             "exported": false
           },
           {
             "name": "assertEqual",
             "kind": "function",
-            "startLine": 201,
-            "endLine": 205,
+            "startLine": 265,
+            "endLine": 269,
             "exported": false
           },
           {
             "name": "runSuite13",
             "kind": "function",
-            "startLine": 1551,
-            "endLine": 3763,
+            "startLine": 1615,
+            "endLine": 3830,
             "exported": false
           },
           {
             "name": "runSuite20",
             "kind": "function",
-            "startLine": 3768,
-            "endLine": 3940,
+            "startLine": 3835,
+            "endLine": 4007,
             "exported": false
           },
           {
             "name": "runSuite21",
             "kind": "function",
-            "startLine": 3942,
-            "endLine": 4094,
+            "startLine": 4009,
+            "endLine": 4161,
+            "exported": false
+          },
+          {
+            "name": "runSuite22",
+            "kind": "function",
+            "startLine": 4163,
+            "endLine": 4301,
+            "exported": false
+          },
+          {
+            "name": "runSuite23",
+            "kind": "function",
+            "startLine": 4303,
+            "endLine": 4441,
             "exported": false
           },
           {
             "name": "main",
             "kind": "function",
-            "startLine": 4096,
-            "endLine": 4114,
+            "startLine": 4443,
+            "endLine": 4472,
             "exported": false
           }
         ]
@@ -6727,7 +7048,7 @@
       },
       {
         "path": "scripts/wt.ts",
-        "lineCount": 1557,
+        "lineCount": 1763,
         "purpose": "Git worktree isolation manager and atomic release CLI",
         "category": "scripts",
         "symbols": [
@@ -6798,98 +7119,112 @@
             "name": "syncAgentTooling",
             "kind": "function",
             "startLine": 320,
-            "endLine": 372,
+            "endLine": 373,
             "exported": true
           },
           {
             "name": "commandCreate",
             "kind": "function",
-            "startLine": 379,
-            "endLine": 477,
+            "startLine": 380,
+            "endLine": 521,
             "exported": true
           },
           {
             "name": "commandList",
             "kind": "function",
-            "startLine": 482,
-            "endLine": 517,
+            "startLine": 526,
+            "endLine": 561,
+            "exported": true
+          },
+          {
+            "name": "runFastVerify",
+            "kind": "async-function",
+            "startLine": 600,
+            "endLine": 641,
             "exported": true
           },
           {
             "name": "commandVerify",
-            "kind": "function",
-            "startLine": 522,
-            "endLine": 602,
+            "kind": "async-function",
+            "startLine": 646,
+            "endLine": 684,
             "exported": true
           },
           {
             "name": "commandRelease",
-            "kind": "function",
-            "startLine": 607,
-            "endLine": 750,
+            "kind": "async-function",
+            "startLine": 689,
+            "endLine": 811,
             "exported": true
           },
           {
             "name": "commandClean",
             "kind": "function",
-            "startLine": 755,
-            "endLine": 875,
+            "startLine": 816,
+            "endLine": 936,
             "exported": true
           },
           {
             "name": "listWorktrees",
             "kind": "const",
-            "startLine": 878,
-            "endLine": 878,
+            "startLine": 939,
+            "endLine": 939,
             "exported": true
           },
           {
             "name": "resolveTargetWorktree",
             "kind": "const",
-            "startLine": 879,
-            "endLine": 879,
+            "startLine": 940,
+            "endLine": 940,
             "exported": true
           },
           {
             "name": "stopServerOnPort",
             "kind": "function",
-            "startLine": 886,
-            "endLine": 919,
+            "startLine": 947,
+            "endLine": 980,
             "exported": true
           },
           {
             "name": "commandServe",
             "kind": "async-function",
-            "startLine": 925,
-            "endLine": 1074,
+            "startLine": 986,
+            "endLine": 1135,
             "exported": true
           },
           {
             "name": "commandStop",
             "kind": "function",
-            "startLine": 1080,
-            "endLine": 1110,
+            "startLine": 1141,
+            "endLine": 1171,
             "exported": true
           },
           {
             "name": "commandShip",
             "kind": "async-function",
-            "startLine": 1117,
-            "endLine": 1359,
+            "startLine": 1178,
+            "endLine": 1412,
+            "exported": true
+          },
+          {
+            "name": "commandEnd",
+            "kind": "function",
+            "startLine": 1418,
+            "endLine": 1534,
             "exported": true
           },
           {
             "name": "commandHelp",
             "kind": "function",
-            "startLine": 1364,
-            "endLine": 1443,
+            "startLine": 1539,
+            "endLine": 1627,
             "exported": true
           },
           {
             "name": "main",
             "kind": "async-function",
-            "startLine": 1446,
-            "endLine": 1548,
+            "startLine": 1630,
+            "endLine": 1754,
             "exported": true
           }
         ]
@@ -7221,6 +7556,28 @@
       ]
     },
     {
+      "path": "app/homework/page.tsx",
+      "lineCount": 33,
+      "purpose": "App router page for page",
+      "category": "app",
+      "symbols": [
+        {
+          "name": "metadata",
+          "kind": "const",
+          "startLine": 5,
+          "endLine": 8,
+          "exported": true
+        },
+        {
+          "name": "HomeworkPage",
+          "kind": "component",
+          "startLine": 26,
+          "endLine": 32,
+          "exported": true
+        }
+      ]
+    },
+    {
       "path": "app/layout.tsx",
       "lineCount": 95,
       "purpose": "Root layout with neobrutalist aesthetic, fonts, and theme providers",
@@ -7266,15 +7623,15 @@
     },
     {
       "path": "app/page.tsx",
-      "lineCount": 409,
+      "lineCount": 403,
       "purpose": "Revizz student home page and interactive quiz game launchpad",
       "category": "app",
       "symbols": [
         {
           "name": "HomePage",
           "kind": "component",
-          "startLine": 24,
-          "endLine": 408,
+          "startLine": 23,
+          "endLine": 402,
           "exported": true
         }
       ]
@@ -7296,15 +7653,37 @@
     },
     {
       "path": "app/portal/page.tsx",
-      "lineCount": 977,
+      "lineCount": 994,
       "purpose": "Teacher and student portal hub with tabs and analytics",
       "category": "app",
       "symbols": [
         {
           "name": "PortalPage",
           "kind": "component",
-          "startLine": 959,
-          "endLine": 976,
+          "startLine": 976,
+          "endLine": 993,
+          "exported": true
+        }
+      ]
+    },
+    {
+      "path": "app/profile/homework/page.tsx",
+      "lineCount": 33,
+      "purpose": "App router page for page",
+      "category": "app",
+      "symbols": [
+        {
+          "name": "metadata",
+          "kind": "const",
+          "startLine": 5,
+          "endLine": 8,
+          "exported": true
+        },
+        {
+          "name": "ProfileHomeworkPage",
+          "kind": "component",
+          "startLine": 26,
+          "endLine": 32,
           "exported": true
         }
       ]
@@ -7451,7 +7830,7 @@
     },
     {
       "path": "components/LeaderboardModal.tsx",
-      "lineCount": 354,
+      "lineCount": 361,
       "purpose": "Global student XP rankings and school leaderboard modal",
       "category": "components",
       "symbols": [
@@ -7459,7 +7838,7 @@
           "name": "LeaderboardModal",
           "kind": "component",
           "startLine": 20,
-          "endLine": 353,
+          "endLine": 360,
           "exported": true
         }
       ]
@@ -7817,7 +8196,7 @@
     },
     {
       "path": "components/portal/AdminCMS.tsx",
-      "lineCount": 1154,
+      "lineCount": 1155,
       "purpose": "Question bank CMS table with filtering, search, and inline editor",
       "category": "components",
       "symbols": [
@@ -7832,165 +8211,165 @@
           "name": "AdminCMS",
           "kind": "component",
           "startLine": 45,
-          "endLine": 1153,
+          "endLine": 1154,
           "exported": true
         }
       ]
     },
     {
       "path": "components/portal/AdminNav.tsx",
-      "lineCount": 437,
+      "lineCount": 407,
       "purpose": "Portal navigation bar with school badge and mode indicator",
       "category": "components",
       "symbols": [
         {
           "name": "AdminNavProps",
           "kind": "interface",
-          "startLine": 26,
-          "endLine": 39,
+          "startLine": 25,
+          "endLine": 38,
           "exported": true
         },
         {
           "name": "AdminNav",
           "kind": "component",
-          "startLine": 41,
-          "endLine": 436,
+          "startLine": 40,
+          "endLine": 406,
           "exported": true
         }
       ]
     },
     {
       "path": "components/portal/AdminTools.tsx",
-      "lineCount": 2818,
+      "lineCount": 2821,
       "purpose": "Question audit and management tools for administrators",
       "category": "components",
       "symbols": [
         {
           "name": "applyMassTopicReassign",
           "kind": "const",
-          "startLine": 71,
-          "endLine": 71,
+          "startLine": 69,
+          "endLine": 69,
           "exported": true
         },
         {
           "name": "BankQuestionOption",
           "kind": "interface",
-          "startLine": 73,
-          "endLine": 79,
+          "startLine": 71,
+          "endLine": 77,
           "exported": true
         },
         {
           "name": "QuestionBankItem",
           "kind": "interface",
-          "startLine": 81,
-          "endLine": 107,
+          "startLine": 79,
+          "endLine": 105,
           "exported": true
         },
         {
           "name": "getStatusBadgeClass",
           "kind": "function",
-          "startLine": 109,
-          "endLine": 122,
+          "startLine": 107,
+          "endLine": 120,
           "exported": true
         },
         {
           "name": "createInitialBankItems",
           "kind": "function",
-          "startLine": 124,
-          "endLine": 214,
+          "startLine": 122,
+          "endLine": 212,
           "exported": true
         },
         {
           "name": "TeacherQuestionAnnotation",
           "kind": "interface",
-          "startLine": 216,
-          "endLine": 221,
+          "startLine": 214,
+          "endLine": 219,
           "exported": true
         },
         {
           "name": "TEACHER_ANNOTATION_STORAGE_KEY",
           "kind": "const",
-          "startLine": 223,
-          "endLine": 223,
+          "startLine": 221,
+          "endLine": 221,
           "exported": true
         },
         {
           "name": "AdminToolsProps",
           "kind": "interface",
-          "startLine": 225,
-          "endLine": 229,
+          "startLine": 223,
+          "endLine": 227,
           "exported": true
         },
         {
           "name": "BankFilterOption",
           "kind": "interface",
-          "startLine": 231,
-          "endLine": 235,
+          "startLine": 229,
+          "endLine": 233,
           "exported": true
         },
         {
           "name": "BankFilterDropdownProps",
           "kind": "interface",
-          "startLine": 237,
-          "endLine": 246,
+          "startLine": 235,
+          "endLine": 244,
           "exported": true
         },
         {
           "name": "BankFilterDropdown",
           "kind": "component",
-          "startLine": 248,
-          "endLine": 398,
+          "startLine": 246,
+          "endLine": 396,
           "exported": true
         },
         {
           "name": "AdminTools",
           "kind": "component",
-          "startLine": 400,
-          "endLine": 2817,
+          "startLine": 398,
+          "endLine": 2820,
           "exported": true
         }
       ]
     },
     {
       "path": "components/portal/AssignedHomeworkHub.tsx",
-      "lineCount": 636,
+      "lineCount": 616,
       "purpose": "Portal & ingestion component: AssignedHomeworkHub",
       "category": "components",
       "symbols": [
         {
           "name": "AssignedHomeworkHubProps",
           "kind": "interface",
-          "startLine": 40,
-          "endLine": 44,
+          "startLine": 38,
+          "endLine": 42,
           "exported": true
         },
         {
           "name": "AssignedHomeworkHub",
           "kind": "component",
-          "startLine": 46,
-          "endLine": 635,
+          "startLine": 44,
+          "endLine": 615,
           "exported": true
         }
       ]
     },
     {
       "path": "components/portal/AssignedHomeworkModal.tsx",
-      "lineCount": 864,
+      "lineCount": 871,
       "purpose": "Portal & ingestion component: AssignedHomeworkModal",
       "category": "components",
       "symbols": [
         {
           "name": "NewHomeworkModal",
           "kind": "component",
-          "startLine": 77,
-          "endLine": 611,
+          "startLine": 76,
+          "endLine": 618,
           "exported": true
         },
         {
           "name": "SubmissionsDetailModal",
           "kind": "component",
-          "startLine": 623,
-          "endLine": 863,
+          "startLine": 630,
+          "endLine": 870,
           "exported": true
         }
       ]
@@ -8555,36 +8934,79 @@
     },
     {
       "path": "components/portal/TeacherAnalytics.tsx",
-      "lineCount": 1085,
+      "lineCount": 2565,
       "purpose": "Teacher analytics dashboard for student accuracy and distractor metrics",
       "category": "components",
       "symbols": [
         {
           "name": "TeacherAnalyticsProps",
           "kind": "interface",
-          "startLine": 27,
-          "endLine": 30,
+          "startLine": 61,
+          "endLine": 65,
           "exported": true
         },
         {
           "name": "RosterStudent",
           "kind": "interface",
-          "startLine": 32,
-          "endLine": 45,
+          "startLine": 67,
+          "endLine": 87,
           "exported": true
         },
         {
           "name": "HeatRow",
           "kind": "interface",
-          "startLine": 47,
-          "endLine": 50,
+          "startLine": 89,
+          "endLine": 92,
           "exported": true
         },
         {
           "name": "TeacherAnalytics",
           "kind": "component",
-          "startLine": 52,
-          "endLine": 1084,
+          "startLine": 202,
+          "endLine": 2564,
+          "exported": true
+        }
+      ]
+    },
+    {
+      "path": "components/portal/TeacherOverviewHub.tsx",
+      "lineCount": 1605,
+      "purpose": "Portal & ingestion component: TeacherOverviewHub",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "TeacherOverviewHubProps",
+          "kind": "interface",
+          "startLine": 57,
+          "endLine": 60,
+          "exported": true
+        },
+        {
+          "name": "TriageStudent",
+          "kind": "interface",
+          "startLine": 62,
+          "endLine": 75,
+          "exported": true
+        },
+        {
+          "name": "MockAssignmentStats",
+          "kind": "interface",
+          "startLine": 77,
+          "endLine": 81,
+          "exported": true
+        },
+        {
+          "name": "TOPIC_MASTERY_WEAK",
+          "kind": "const",
+          "startLine": 105,
+          "endLine": 105,
+          "exported": true
+        },
+        {
+          "name": "TeacherOverviewHub",
+          "kind": "component",
+          "startLine": 107,
+          "endLine": 1604,
           "exported": true
         }
       ]
@@ -8635,15 +9057,15 @@
     },
     {
       "path": "components/portal/compiler/TestCompilerHub.tsx",
-      "lineCount": 3226,
+      "lineCount": 3232,
       "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
       "category": "components",
       "symbols": [
         {
           "name": "TestCompilerHub",
           "kind": "component",
-          "startLine": 87,
-          "endLine": 3225,
+          "startLine": 88,
+          "endLine": 3231,
           "exported": true
         }
       ]
@@ -8722,23 +9144,38 @@
       ]
     },
     {
+      "path": "components/profile/StudentHomeworkPanel.tsx",
+      "lineCount": 1157,
+      "purpose": "UI component: StudentHomeworkPanel",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "StudentHomeworkPanel",
+          "kind": "component",
+          "startLine": 115,
+          "endLine": 1156,
+          "exported": true
+        }
+      ]
+    },
+    {
       "path": "components/profile/StudentProfileHub.tsx",
-      "lineCount": 874,
+      "lineCount": 912,
       "purpose": "UI component: StudentProfileHub",
       "category": "components",
       "symbols": [
         {
           "name": "StudentProfileHubProps",
           "kind": "interface",
-          "startLine": 58,
-          "endLine": 60,
+          "startLine": 61,
+          "endLine": 63,
           "exported": true
         },
         {
           "name": "StudentProfileHub",
           "kind": "component",
-          "startLine": 75,
-          "endLine": 873,
+          "startLine": 79,
+          "endLine": 911,
           "exported": true
         }
       ]
@@ -8933,7 +9370,7 @@
     },
     {
       "path": "components/ui/select.tsx",
-      "lineCount": 236,
+      "lineCount": 274,
       "purpose": "Accessible dropdown select menu wrapper using Radix UI primitives",
       "category": "components",
       "symbols": [
@@ -8948,21 +9385,21 @@
           "name": "SelectProps",
           "kind": "interface",
           "startLine": 11,
-          "endLine": 28,
+          "endLine": 29,
           "exported": true
         },
         {
           "name": "Select",
           "kind": "component",
-          "startLine": 30,
-          "endLine": 232,
+          "startLine": 31,
+          "endLine": 270,
           "exported": true
         },
         {
           "name": "NeobrutalistDropdown",
           "kind": "component",
-          "startLine": 234,
-          "endLine": 234,
+          "startLine": 272,
+          "endLine": 272,
           "exported": true
         }
       ]
@@ -9824,6 +10261,98 @@
       ]
     },
     {
+      "path": "lib/homework.ts",
+      "lineCount": 182,
+      "purpose": "Returns default realistic Cambridge IGCSE homework assignments.",
+      "category": "lib",
+      "symbols": [
+        {
+          "name": "HomeworkStatus",
+          "kind": "type",
+          "startLine": 5,
+          "endLine": 5,
+          "exported": true
+        },
+        {
+          "name": "HomeworkSubmission",
+          "kind": "interface",
+          "startLine": 7,
+          "endLine": 16,
+          "exported": true
+        },
+        {
+          "name": "HomeworkItem",
+          "kind": "interface",
+          "startLine": 18,
+          "endLine": 23,
+          "exported": true
+        },
+        {
+          "name": "HOMEWORK_SUBMISSIONS_KEY",
+          "kind": "const",
+          "startLine": 25,
+          "endLine": 25,
+          "exported": true
+        },
+        {
+          "name": "HOMEWORK_CHANGE_EVENT",
+          "kind": "const",
+          "startLine": 26,
+          "endLine": 26,
+          "exported": true
+        },
+        {
+          "name": "getSeedHomeworkAssignments",
+          "kind": "function",
+          "startLine": 32,
+          "endLine": 34,
+          "exported": true
+        },
+        {
+          "name": "notifyHomeworkChanged",
+          "kind": "function",
+          "startLine": 39,
+          "endLine": 47,
+          "exported": true
+        },
+        {
+          "name": "subscribeHomeworkChanges",
+          "kind": "function",
+          "startLine": 52,
+          "endLine": 61,
+          "exported": true
+        },
+        {
+          "name": "getHomeworkSubmissions",
+          "kind": "function",
+          "startLine": 66,
+          "endLine": 76,
+          "exported": true
+        },
+        {
+          "name": "saveHomeworkSubmission",
+          "kind": "function",
+          "startLine": 81,
+          "endLine": 94,
+          "exported": true
+        },
+        {
+          "name": "getHomeworkAssignments",
+          "kind": "function",
+          "startLine": 100,
+          "endLine": 157,
+          "exported": true
+        },
+        {
+          "name": "findAssignmentByTestCode",
+          "kind": "function",
+          "startLine": 162,
+          "endLine": 181,
+          "exported": true
+        }
+      ]
+    },
+    {
       "path": "lib/ingestion/diagramCropper.ts",
       "lineCount": 561,
       "purpose": "Client-side interface for PDF diagram bounding-box cropping",
@@ -10542,120 +11071,120 @@
     },
     {
       "path": "lib/portal/assignedHomework.ts",
-      "lineCount": 768,
+      "lineCount": 303,
       "purpose": "Core library utility module: assignedHomework",
       "category": "lib",
       "symbols": [
         {
           "name": "StudentSubmission",
           "kind": "interface",
-          "startLine": 5,
-          "endLine": 14,
+          "startLine": 4,
+          "endLine": 13,
           "exported": true
         },
         {
           "name": "AssignedHomeworkRound",
           "kind": "interface",
-          "startLine": 16,
-          "endLine": 41,
+          "startLine": 15,
+          "endLine": 40,
           "exported": true
         },
         {
           "name": "HomeworkMetricsSummary",
           "kind": "interface",
-          "startLine": 43,
-          "endLine": 48,
+          "startLine": 42,
+          "endLine": 47,
           "exported": true
         },
         {
           "name": "HOMEWORK_CHANGED_EVENT",
           "kind": "const",
-          "startLine": 51,
-          "endLine": 51,
+          "startLine": 50,
+          "endLine": 50,
           "exported": true
         },
         {
           "name": "getStorageKey",
           "kind": "function",
-          "startLine": 56,
-          "endLine": 59,
+          "startLine": 55,
+          "endLine": 58,
           "exported": true
         },
         {
           "name": "isHomeworkDue",
           "kind": "function",
-          "startLine": 67,
-          "endLine": 71,
+          "startLine": 66,
+          "endLine": 70,
           "exported": true
         },
         {
           "name": "computeHomeworkMetrics",
           "kind": "function",
-          "startLine": 73,
-          "endLine": 106,
+          "startLine": 72,
+          "endLine": 105,
           "exported": true
         },
         {
           "name": "getAssignedHomeworkList",
           "kind": "function",
-          "startLine": 108,
-          "endLine": 121,
+          "startLine": 107,
+          "endLine": 131,
           "exported": true
         },
         {
           "name": "getAssignedHomeworkById",
           "kind": "function",
-          "startLine": 123,
-          "endLine": 126,
+          "startLine": 133,
+          "endLine": 136,
           "exported": true
         },
         {
           "name": "getAssignedHomeworkByCode",
           "kind": "function",
-          "startLine": 128,
-          "endLine": 150,
+          "startLine": 138,
+          "endLine": 164,
           "exported": true
         },
         {
           "name": "findHomeworkByIdAnyTeacher",
           "kind": "function",
-          "startLine": 152,
-          "endLine": 172,
+          "startLine": 166,
+          "endLine": 193,
           "exported": true
         },
         {
           "name": "saveAssignedHomework",
           "kind": "function",
-          "startLine": 174,
-          "endLine": 212,
+          "startLine": 195,
+          "endLine": 233,
           "exported": true
         },
         {
           "name": "deleteAssignedHomework",
           "kind": "function",
-          "startLine": 214,
-          "endLine": 232,
+          "startLine": 235,
+          "endLine": 253,
           "exported": true
         },
         {
           "name": "recordStudentSubmission",
           "kind": "function",
-          "startLine": 234,
-          "endLine": 259,
+          "startLine": 255,
+          "endLine": 280,
           "exported": true
         },
         {
           "name": "subscribeToHomeworkChanges",
           "kind": "function",
-          "startLine": 261,
-          "endLine": 270,
+          "startLine": 282,
+          "endLine": 291,
           "exported": true
         },
         {
           "name": "seedInitialHomeworkIfEmpty",
           "kind": "function",
-          "startLine": 275,
-          "endLine": 767,
+          "startLine": 297,
+          "endLine": 302,
           "exported": true
         }
       ]
@@ -11014,7 +11543,7 @@
     },
     {
       "path": "lib/portal/menuConfig.ts",
-      "lineCount": 275,
+      "lineCount": 281,
       "purpose": "Teacher Portal Navigation & Menu Configuration Manager Manages customizable navigation items for the Teacher Educator...",
       "category": "lib",
       "symbols": [
@@ -11064,56 +11593,56 @@
           "name": "getPortalNavItems",
           "kind": "function",
           "startLine": 135,
-          "endLine": 154,
+          "endLine": 160,
           "exported": true
         },
         {
           "name": "getActivePortalMenuItems",
           "kind": "function",
-          "startLine": 159,
-          "endLine": 161,
+          "startLine": 165,
+          "endLine": 167,
           "exported": true
         },
         {
           "name": "savePortalNavItems",
           "kind": "function",
-          "startLine": 166,
-          "endLine": 175,
+          "startLine": 172,
+          "endLine": 181,
           "exported": true
         },
         {
           "name": "togglePortalMenuItem",
           "kind": "function",
-          "startLine": 181,
-          "endLine": 192,
+          "startLine": 187,
+          "endLine": 198,
           "exported": true
         },
         {
           "name": "setPortalMenuItemEnabled",
           "kind": "function",
-          "startLine": 197,
-          "endLine": 208,
+          "startLine": 203,
+          "endLine": 214,
           "exported": true
         },
         {
           "name": "addPortalMenuItem",
           "kind": "function",
-          "startLine": 214,
-          "endLine": 237,
+          "startLine": 220,
+          "endLine": 243,
           "exported": true
         },
         {
           "name": "removePortalMenuItem",
           "kind": "function",
-          "startLine": 243,
-          "endLine": 258,
+          "startLine": 249,
+          "endLine": 264,
           "exported": true
         },
         {
           "name": "resetPortalNavToDefaults",
           "kind": "function",
-          "startLine": 263,
-          "endLine": 274,
+          "startLine": 269,
+          "endLine": 280,
           "exported": true
         }
       ]
@@ -11403,7 +11932,7 @@
     },
     {
       "path": "lib/roster.ts",
-      "lineCount": 273,
+      "lineCount": 535,
       "purpose": "Core library utility module: roster",
       "category": "lib",
       "symbols": [
@@ -11447,6 +11976,90 @@
           "kind": "async-function",
           "startLine": 208,
           "endLine": 272,
+          "exported": true
+        },
+        {
+          "name": "TeacherClassRoom",
+          "kind": "interface",
+          "startLine": 278,
+          "endLine": 288,
+          "exported": true
+        },
+        {
+          "name": "TEACHER_CLASSES_STORAGE_KEY",
+          "kind": "const",
+          "startLine": 290,
+          "endLine": 290,
+          "exported": true
+        },
+        {
+          "name": "STUDENT_CLASS_OVERRIDES_KEY",
+          "kind": "const",
+          "startLine": 291,
+          "endLine": 291,
+          "exported": true
+        },
+        {
+          "name": "DEFAULT_TEACHER_CLASSES",
+          "kind": "const",
+          "startLine": 293,
+          "endLine": 349,
+          "exported": true
+        },
+        {
+          "name": "getTeacherClasses",
+          "kind": "function",
+          "startLine": 351,
+          "endLine": 363,
+          "exported": true
+        },
+        {
+          "name": "saveTeacherClasses",
+          "kind": "function",
+          "startLine": 365,
+          "endLine": 373,
+          "exported": true
+        },
+        {
+          "name": "createTeacherClass",
+          "kind": "function",
+          "startLine": 375,
+          "endLine": 414,
+          "exported": true
+        },
+        {
+          "name": "updateTeacherClass",
+          "kind": "function",
+          "startLine": 416,
+          "endLine": 426,
+          "exported": true
+        },
+        {
+          "name": "deleteTeacherClass",
+          "kind": "function",
+          "startLine": 428,
+          "endLine": 433,
+          "exported": true
+        },
+        {
+          "name": "StudentClassOverride",
+          "kind": "interface",
+          "startLine": 435,
+          "endLine": 444,
+          "exported": true
+        },
+        {
+          "name": "getStudentClassOverrides",
+          "kind": "function",
+          "startLine": 446,
+          "endLine": 456,
+          "exported": true
+        },
+        {
+          "name": "saveStudentClassOverride",
+          "kind": "function",
+          "startLine": 458,
+          "endLine": 478,
           "exported": true
         }
       ]
@@ -12624,7 +13237,7 @@
     },
     {
       "path": "scripts/verify-assigned-homework.ts",
-      "lineCount": 1016,
+      "lineCount": 1018,
       "purpose": "Revizz QA & Verification Test Suite Account-Unique Assigned Homework Engine & Data Invariants Verification File: scri...",
       "category": "scripts",
       "symbols": [
@@ -12984,6 +13597,35 @@
           "kind": "function",
           "startLine": 47,
           "endLine": 95,
+          "exported": false
+        }
+      ]
+    },
+    {
+      "path": "scripts/verify-homework.ts",
+      "lineCount": 272,
+      "purpose": "Revizz Student Homework & Online Assessment Engine Verification Suite Standalone TypeScript verification script (pure...",
+      "category": "scripts",
+      "symbols": [
+        {
+          "name": "assert",
+          "kind": "function",
+          "startLine": 66,
+          "endLine": 74,
+          "exported": false
+        },
+        {
+          "name": "assertEqual",
+          "kind": "function",
+          "startLine": 76,
+          "endLine": 84,
+          "exported": false
+        },
+        {
+          "name": "runTests",
+          "kind": "function",
+          "startLine": 86,
+          "endLine": 269,
           "exported": false
         }
       ]
@@ -13381,64 +14023,78 @@
     },
     {
       "path": "scripts/verify-revizz.ts",
-      "lineCount": 4120,
+      "lineCount": 4479,
       "purpose": "Master Revizz QA and gameplay test suite with 56 assertions",
       "category": "scripts",
       "symbols": [
         {
           "name": "test",
           "kind": "function",
-          "startLine": 167,
-          "endLine": 179,
+          "startLine": 211,
+          "endLine": 233,
           "exported": false
         },
         {
           "name": "testAsync",
           "kind": "function",
-          "startLine": 181,
-          "endLine": 193,
+          "startLine": 235,
+          "endLine": 257,
           "exported": false
         },
         {
           "name": "assert",
           "kind": "function",
-          "startLine": 195,
-          "endLine": 199,
+          "startLine": 259,
+          "endLine": 263,
           "exported": false
         },
         {
           "name": "assertEqual",
           "kind": "function",
-          "startLine": 201,
-          "endLine": 205,
+          "startLine": 265,
+          "endLine": 269,
           "exported": false
         },
         {
           "name": "runSuite13",
           "kind": "function",
-          "startLine": 1551,
-          "endLine": 3763,
+          "startLine": 1615,
+          "endLine": 3830,
           "exported": false
         },
         {
           "name": "runSuite20",
           "kind": "function",
-          "startLine": 3768,
-          "endLine": 3940,
+          "startLine": 3835,
+          "endLine": 4007,
           "exported": false
         },
         {
           "name": "runSuite21",
           "kind": "function",
-          "startLine": 3942,
-          "endLine": 4094,
+          "startLine": 4009,
+          "endLine": 4161,
+          "exported": false
+        },
+        {
+          "name": "runSuite22",
+          "kind": "function",
+          "startLine": 4163,
+          "endLine": 4301,
+          "exported": false
+        },
+        {
+          "name": "runSuite23",
+          "kind": "function",
+          "startLine": 4303,
+          "endLine": 4441,
           "exported": false
         },
         {
           "name": "main",
           "kind": "function",
-          "startLine": 4096,
-          "endLine": 4114,
+          "startLine": 4443,
+          "endLine": 4472,
           "exported": false
         }
       ]
@@ -13662,7 +14318,7 @@
     },
     {
       "path": "scripts/wt.ts",
-      "lineCount": 1557,
+      "lineCount": 1763,
       "purpose": "Git worktree isolation manager and atomic release CLI",
       "category": "scripts",
       "symbols": [
@@ -13733,98 +14389,112 @@
           "name": "syncAgentTooling",
           "kind": "function",
           "startLine": 320,
-          "endLine": 372,
+          "endLine": 373,
           "exported": true
         },
         {
           "name": "commandCreate",
           "kind": "function",
-          "startLine": 379,
-          "endLine": 477,
+          "startLine": 380,
+          "endLine": 521,
           "exported": true
         },
         {
           "name": "commandList",
           "kind": "function",
-          "startLine": 482,
-          "endLine": 517,
+          "startLine": 526,
+          "endLine": 561,
+          "exported": true
+        },
+        {
+          "name": "runFastVerify",
+          "kind": "async-function",
+          "startLine": 600,
+          "endLine": 641,
           "exported": true
         },
         {
           "name": "commandVerify",
-          "kind": "function",
-          "startLine": 522,
-          "endLine": 602,
+          "kind": "async-function",
+          "startLine": 646,
+          "endLine": 684,
           "exported": true
         },
         {
           "name": "commandRelease",
-          "kind": "function",
-          "startLine": 607,
-          "endLine": 750,
+          "kind": "async-function",
+          "startLine": 689,
+          "endLine": 811,
           "exported": true
         },
         {
           "name": "commandClean",
           "kind": "function",
-          "startLine": 755,
-          "endLine": 875,
+          "startLine": 816,
+          "endLine": 936,
           "exported": true
         },
         {
           "name": "listWorktrees",
           "kind": "const",
-          "startLine": 878,
-          "endLine": 878,
+          "startLine": 939,
+          "endLine": 939,
           "exported": true
         },
         {
           "name": "resolveTargetWorktree",
           "kind": "const",
-          "startLine": 879,
-          "endLine": 879,
+          "startLine": 940,
+          "endLine": 940,
           "exported": true
         },
         {
           "name": "stopServerOnPort",
           "kind": "function",
-          "startLine": 886,
-          "endLine": 919,
+          "startLine": 947,
+          "endLine": 980,
           "exported": true
         },
         {
           "name": "commandServe",
           "kind": "async-function",
-          "startLine": 925,
-          "endLine": 1074,
+          "startLine": 986,
+          "endLine": 1135,
           "exported": true
         },
         {
           "name": "commandStop",
           "kind": "function",
-          "startLine": 1080,
-          "endLine": 1110,
+          "startLine": 1141,
+          "endLine": 1171,
           "exported": true
         },
         {
           "name": "commandShip",
           "kind": "async-function",
-          "startLine": 1117,
-          "endLine": 1359,
+          "startLine": 1178,
+          "endLine": 1412,
+          "exported": true
+        },
+        {
+          "name": "commandEnd",
+          "kind": "function",
+          "startLine": 1418,
+          "endLine": 1534,
           "exported": true
         },
         {
           "name": "commandHelp",
           "kind": "function",
-          "startLine": 1364,
-          "endLine": 1443,
+          "startLine": 1539,
+          "endLine": 1627,
           "exported": true
         },
         {
           "name": "main",
           "kind": "async-function",
-          "startLine": 1446,
-          "endLine": 1548,
+          "startLine": 1630,
+          "endLine": 1754,
           "exported": true
         }
       ]

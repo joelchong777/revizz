@@ -37,3 +37,10 @@
 - **Worktree Lockfile Pinning**: Next.js 15 inferred the parent root repo because of multiple lockfiles, returning 404 for worktree-added pages (`/homework`). Pinned `outputFileTracingRoot: path.resolve(__dirname)` in `next.config.ts` to ensure route resolution within the worktree.
 - **Online Assigned Work Hub**: Implemented `lib/homework.ts` and `StudentHomeworkPanel.tsx` with dynamic urgency badges (*Overdue*, *Due today*, *Completed*), test code auto-formatting, and full-screen mobile assessment modal with sticky header/timer and sticky bottom navigation.
 - **Verification & Release**: Passed `scripts/verify-homework.ts` (43/43 tests), full QA suite (170/170 assertions across 23 suites in `scripts/verify-revizz.ts`), and `npx tsc --noEmit` (0 errors). Shipped to `origin/main` (`b78a804`) and verified `HTTP/2 200` on Vercel production edge CDN.
+
+## Recent Session Reflection — 2026-10-19: Test Compiler Hub Field Deduplication
+- **Topic**: Removed Redundant "Test Name" Input in Test Assembly Sidebar (`components/portal/compiler/TestCompilerHub.tsx`)
+- **Key Insights**: The drawer previously contained two inputs bound to `testTitle` ("Assessment Title" and duplicate "Test Name"). Removed the secondary input while keeping the primary "Assessment Title" with full placeholder and reset support. Passed all 170 QA test assertions and released live to Vercel edge production.
+
+- **2026-10-19**: Parallelized verification cut DoD time and automated session end teardown
+- **2026-10-19**: Purged synthetic mock homework fallbacks from Assigned Rounds and Teacher Overview; enforced zero-fake-data invariant with automated legacy cache purging.

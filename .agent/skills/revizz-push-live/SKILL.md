@@ -63,10 +63,10 @@ In a single atomic execution, `npm run wt ship` orchestrates:
 5. **Step 5 (Smart Production Probe via GitHub CI/CD)**:
    - Pushing to GitHub `main` automatically triggers Vercel's GitHub integration for app changes (`app/`, `components/`, `lib/`, `hooks/`, `public/`) and probes `https://revizz-sand.vercel.app` for `HTTP 200`.
    - If a commit only modifies agent/tooling/docs files (`.agent/`, `scripts/`, `AGENTS.md`), it automatically skips the Vercel probe.
-6. **Step 6 (Automatic Worktree Cleanup)**:
+6. **Step 6 (Automatic Worktree Cleanup & Post-Ship Context Reset)**:
    - Removes `.worktrees/<topic>` and unlinks symlinked assets.
    - Prunes the merged local feature branch (`git branch -d feat/<topic>`).
-   - Ensures zero disk bloat or leftover worktree remnants.
+   - Master Agent immediately calls `manage_subagents(Action="kill_all")` to clear stale worktree subagents and recommends `/compact` as Suggested Next Step #1 to free completed milestone context.
 
 ---
 

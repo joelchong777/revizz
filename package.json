@@ -13,7 +13,7 @@
     "memory": "tsx scripts/agent-memory.ts",
     "blackboard": "tsx scripts/blackboard.ts",
     "test:ui": "tsx scripts/verify-ui.ts",
-    "test": "tsc scripts/verify-revizz.ts --module commonjs --target es2020 --esModuleInterop --skipLibCheck --moduleResolution node --outDir dist-test && node --experimental-websocket dist-test/scripts/verify-revizz.js"
+    "test": "tsx scripts/verify-revizz.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.2.0",

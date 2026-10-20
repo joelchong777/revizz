@@ -1,0 +1,10 @@
+{
+  "session_id": "session_1792163067980",
+  "active_worktrees": {},
+  "ports": {
+    "frontend": 3000,
+    "test_server": 3001
+  },
+  "workers": {},
+  "shared_data": {}
+}
