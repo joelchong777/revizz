@@ -1,6 +1,6 @@
 # Revizz Codebase Atlas & Line Coordinates
 
-> **Automated Symbol Atlas**: Indexing 170 files, 96,200 lines, and 852 symbols across core modules. Generated in 445ms.
+> **Automated Symbol Atlas**: Indexing 171 files, 96,326 lines, and 854 symbols across core modules. Generated in 408ms.
 
 Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact `[L<start>-L<end>]` coordinates.
 
@@ -35,7 +35,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`components/AuthModal.tsx`** (406 lines): `AuthModalProps [L15-L22]`, `AuthModal [L24-L403]`
 - **`components/Header.tsx`** (312 lines): `Header [L19-L309]`
 - **`components/LeaderboardModal.tsx`** (361 lines): `LeaderboardModal [L20-L360]`
-- **`components/QuestionCard.tsx`** (887 lines): `QuestionCard [L37-L884]`
+- **`components/QuestionCard.tsx`** (892 lines): `QuestionCard [L37-L889]`
 - **`components/RoundSummary.tsx`** (368 lines): `RoundSummary [L32-L365]`
 - **`components/SoundToggle.tsx`** (64 lines): `SoundToggle [L12-L61]`
 - **`components/StartFlow.tsx`** (990 lines): `StartFlow [L23-L987]`
@@ -78,7 +78,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`components/portal/TeacherOverviewHub.tsx`** (1784 lines): `TeacherOverviewHubProps [L57-L60]`, `TriageStudent [L62-L75]`, `MockAssignmentStats [L77-L81]`, `TeacherOverviewHub [L112-L1783]`
 - **`components/portal/compiler/CompilerDiagramPreview.tsx`** (272 lines): `CompilerDiagramPreviewProps [L19-L25]`, `CompilerDiagramPreview [L34-L271]`
 - **`components/portal/compiler/PrintableExamLayout.tsx`** (320 lines): `PrintableExamLayout [L14-L319]`
-- **`components/portal/compiler/TestCompilerHub.tsx`** (3216 lines): `TestCompilerHub [L84-L3215]`
+- **`components/portal/compiler/TestCompilerHub.tsx`** (3225 lines): `TestCompilerHub [L85-L3224]`
 - **`components/portal/staged/StagedPaperAuditor.tsx`** (663 lines): `StagedPaperAuditorProps [L30-L34]`, `StagedPaperAuditor [L42-L660]`
 - **`components/portal/staged/StagedPapersQueue.tsx`** (733 lines): `StagedPaperItem [L29-L46]`, `StagedPapersQueueProps [L48-L51]`, `StagedPapersQueue [L87-L732]`
 - **`components/profile/StudentAchievementsActivityPanel.tsx`** (584 lines): `StudentAchievementsActivityPanelProps [L14-L20]`, `StudentAchievementsActivityPanel [L22-L583]`
@@ -87,8 +87,9 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`components/profile/StudentReviewPanel.tsx`** (768 lines): `StudentReviewPanelProps [L19-L25]`, `StudentReviewPanel [L27-L767]`
 - **`components/profile/StudentSettingsPanel.tsx`** (717 lines): `StudentSettingsPanelProps [L31-L39]`, `StudentSettingsPanel [L59-L716]`
 - **`components/profile/StudentStatsPanel.tsx`** (569 lines): `StudentStatsPanelProps [L7-L13]`, `StudentStatsPanel [L15-L568]`
+- **`components/ui/AutoFitTable.tsx`** (59 lines): `AutoFitTableProps [L5-L8]`, `AutoFitTable [L10-L56]`
 - **`components/ui/MarkdownErrorBoundary.tsx`** (59 lines): `MarkdownErrorBoundary [L22-L56]`
-- **`components/ui/RichMarkdown.tsx`** (128 lines): `cambridgeTableComponents [L13-L34]`, `neobrutalistTableComponents [L36-L57]`, `printableTableComponents [L59-L80]`, `RichMarkdownProps [L82-L87]`, `RichMarkdown [L89-L125]`
+- **`components/ui/RichMarkdown.tsx`** (132 lines): `cambridgeTableComponents [L14-L38]`, `neobrutalistTableComponents [L40-L61]`, `printableTableComponents [L63-L84]`, `RichMarkdownProps [L86-L91]`, `RichMarkdown [L93-L129]`
 - **`components/ui/badge.tsx`** (47 lines): `Badge [L40-L44]`
 - **`components/ui/dialog.tsx`** (131 lines): `DialogFooter [L81-L92]`, `Dialog [L119-L130]`, `DialogPortal [L119-L130]`, `DialogOverlay [L119-L130]`, `DialogClose [L119-L130]`
 - **`components/ui/select.tsx`** (274 lines): `SelectOption [L5-L9]`, `SelectProps [L11-L29]`, `Select [L31-L270]`, `NeobrutalistDropdown [L272-L272]`
@@ -120,7 +121,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`lib/portal/massActions.ts`** (386 lines): `BaseQuestionBankItem [L8-L18]`, `toggleSelectQuestion [L47-L58]`, `toggleSelectPage [L65-L80]`, `calculateClampedPage [L170-L183]`, `openMassActionModal [L305-L320]`
 - **`lib/portal/menuConfig.ts`** (281 lines): `DEFAULT_PORTAL_NAV_ITEMS [L26-L107]`, `getPortalNavItems [L135-L160]`, `togglePortalMenuItem [L187-L198]`, `addPortalMenuItem [L220-L243]`, `removePortalMenuItem [L249-L264]`
 - **`lib/portal/questionMetadata.ts`** (206 lines): `CambridgeQuestionMeta [L1-L17]`, `SUGGESTED_TAGS [L19-L28]`, `SUBJECT_OPTIONS [L42-L47]`, `formatCambridgeCitation [L58-L71]`, `parseCambridgeQuestionMetadata [L73-L205]`
-- **`lib/questions.ts`** (1060 lines): `CAMBRIDGE_QUESTIONS [L47-L478]`, `mapDbQuestionToQuestion [L795-L843]`, `fetchQuestionsFromDb [L849-L930]`, `useQuestions [L978-L1011]`, `useTopics [L1024-L1057]`
+- **`lib/questions.ts`** (1070 lines): `CAMBRIDGE_QUESTIONS [L48-L479]`, `mapDbQuestionToQuestion [L805-L853]`, `fetchQuestionsFromDb [L859-L940]`, `useQuestions [L988-L1021]`, `useTopics [L1034-L1067]`
 - **`lib/resolveDiagramUrl.ts`** (32 lines): `resolveDiagramUrl [L6-L31]`
 - **`lib/roster.ts`** (535 lines): `addRosterInvite [L53-L133]`, `getRosterInvites [L140-L182]`, `checkAndClaimInvite [L208-L272]`, `DEFAULT_TEACHER_CLASSES [L293-L349]`, `createTeacherClass [L375-L414]`
 - **`lib/scoring.ts`** (98 lines): `AttemptOutcome [L19-L24]`, `ScoreCalculation [L26-L31]`, `getStreakMultiplier [L39-L43]`, `calculateAttemptScore [L48-L97]`

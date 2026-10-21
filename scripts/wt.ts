@@ -1455,7 +1455,7 @@ export async function commandShip(
   // Step 8 (Automatic Worktree Cleanup)
   info(`Cleaning up worktree for topic '${resolved.topic}'...`);
   commandClean(resolved.topic, repoRoot, false);
-  console.log(`${colors.cyan}${colors.bold}💡 Post-Ship Action: Run manage_subagents(kill_all) and recommend /compact as Suggested Next Step #1.${colors.reset}\n`);
+  console.log(`${colors.cyan}${colors.bold}💡 Post-Ship Action: Run manage_subagents(kill_all). In response, include mandatory "### Push Summary" (Feature Add vs Bugfix + exact app changes).${colors.reset}\n`);
 }
 
 /**

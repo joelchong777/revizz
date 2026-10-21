@@ -499,13 +499,20 @@
       "question_number": 11,
       "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q11",
       "topic_name": "Microeconomic decision makers",
-      "stem_markdown": "Bus drivers receive a wage of $15 000 a year. The government introduces a national minimum wage. Under which circumstances will the largest number of bus drivers become unemployed as a result of the minimum wage?",
+      "stem_markdown": "Bus drivers receive a wage of \\$15 000 a year. The government introduces a national minimum wage. Under which circumstances will the largest number of bus drivers become unemployed as a result of the minimum wage?",
       "page_number": 4,
       "diagram": {
         "has_diagram": true,
+        "bounding_box": {
+          "ymin": 684,
+          "xmin": 108,
+          "ymax": 902,
+          "xmax": 516,
+          "page_number": 4
+        },
         "image_url": "/questions/0455_2024_w_11_q11.png",
         "storage_path": "0455_2024_w_11_q11.png",
-        "alt_description": "Authentic Cambridge IGCSE Economics past paper table for question 11"
+        "alt_description": "Cambridge Economics past paper diagram for question 11 showing economic curves, axis values and labeled points."
       },
       "options": [
         {
@@ -1026,9 +1033,16 @@
       "page_number": 8,
       "diagram": {
         "has_diagram": true,
+        "bounding_box": {
+          "ymin": 519,
+          "xmin": 108,
+          "ymax": 688,
+          "xmax": 532,
+          "page_number": 8
+        },
         "image_url": "/questions/0455_2024_w_11_q23.png",
         "storage_path": "0455_2024_w_11_q23.png",
-        "alt_description": "Authentic Cambridge IGCSE Economics past paper table for question 23"
+        "alt_description": "Cambridge Economics past paper diagram for question 23 showing economic curves, axis values and labeled points."
       },
       "options": [
         {

@@ -8,18 +8,28 @@
 
 ---
 
-## Active Prompts Table (`v12.4`)
+## Active Prompts Table (`v12.5`)
 
 | Prompt File | Version | 1-Word Trigger | Model Target | Core Discipline |
 | :--- | :---: | :---: | :---: | :--- |
-| [`flash.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/flash.md) | `v12.4` | `"flash"` | Flash / Fast Lead | Low-latency dispatcher; edits <= 15L fast-path; max 1 Argon subagent on Strike 1 fail |
-| [`argon.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/argon.md) | `v12.4` | `"argon"` / `"pro"` / `"argon/pro"` | Argon (`pro`) Lead | In-brain multi-file architecture; strictly all-flash subagent fleet (`Model="flash"`, 0 `pro`) |
-| [`opus.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/opus.md) | `v12.4` | `"opus"` | Claude Opus 5.5 Lead | Frontier Architect; razor-thin context shielding (`<= 80L` reads, `<= 8L` replies, all-fast fleet) |
-| [`universal.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/universal.md) | `v12.4` | *Agnostic* | Any Model Lead | 100% project-agnostic orchestrator rulebook portable to any repo |
+| [`flash.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/flash.md) | `v12.5` | `"flash"` | Flash / Fast Lead | Low-latency dispatcher; edits <= 15L fast-path; mandatory post-push ### Push Summary |
+| [`argon.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/argon.md) | `v12.5` | `"argon"` / `"pro"` / `"argon/pro"` | Argon (`pro`) Lead | In-brain multi-file architecture; all-flash subagent fleet; mandatory post-push ### Push Summary |
+| [`opus.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/opus.md) | `v12.5` | `"opus"` | Claude Opus 5.5 Lead | Frontier Architect; context shielding (`<= 80L` reads, `<= 8L` replies); mandatory post-push ### Push Summary |
+| [`universal.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/universal.md) | `v12.5` | *Agnostic* | Any Model Lead | 100% project-agnostic orchestrator rulebook portable to any repo with post-push ### Push Summary |
 
 ---
 
 ## Chronological Version History
+
+### `v12.5` (2026-10-21) — Post-Push "Push Summary" Response Contract & Scope Transparency
+- **Mandatory `### Push Summary` Response Section**:
+  - Enforced a required `### Push Summary` section in every final response following a live push command (`npm run wt -- ship ...`).
+  - Standardized transparency on what was shipped: Type of change (Feature Add, Bugfix, UI Enhancement, Refactor), exact application surfaces affected, concrete functional/visual behavior added or fixed, and deployment verification status.
+  - Placed before `### Simple Summary of What Was Done` and `### 3 Suggested Next Steps` to provide instantaneous clarity on code deployed to production.
+- **Push Live Tooling Alignment**:
+  - Updated `scripts/wt.ts` and `revizz-push-live/SKILL.md` to instruct the agent to provide the `### Push Summary` block after worktree cleanup and subagent kill.
+- **Prompt Snapshot Archiving**:
+  - Snapshot archived in `.agent/prompts/history/v12.5/` across `flash.md`, `argon.md`, `opus.md`, and `universal.md`.
 
 ### `v12.4` (2026-10-20) — GitHub Semantic Commit Naming, Multi-Line Descriptions, & Single-Trigger Vercel Webhook Rule
 - **Semantic GitHub Commit Naming & Multi-Line Change Summaries**:

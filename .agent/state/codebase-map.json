@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-21T04:40:58.005Z",
+  "generatedAt": "2026-10-21T05:39:47.333Z",
   "stats": {
-    "totalFiles": 170,
-    "totalLines": 96200,
-    "totalSymbols": 852,
-    "scanDurationMs": 445
+    "totalFiles": 171,
+    "totalLines": 96326,
+    "totalSymbols": 854,
+    "scanDurationMs": 408
   },
   "sections": {
     "app": [
@@ -571,7 +571,7 @@
       },
       {
         "path": "components/QuestionCard.tsx",
-        "lineCount": 887,
+        "lineCount": 892,
         "purpose": "Tactile 3D neobrutalist question card with markdown and KaTeX math",
         "category": "components",
         "symbols": [
@@ -579,7 +579,7 @@
             "name": "QuestionCard",
             "kind": "component",
             "startLine": 37,
-            "endLine": 884,
+            "endLine": 889,
             "exported": true
           }
         ]
@@ -1783,15 +1783,15 @@
       },
       {
         "path": "components/portal/compiler/TestCompilerHub.tsx",
-        "lineCount": 3216,
+        "lineCount": 3225,
         "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
         "category": "components",
         "symbols": [
           {
             "name": "TestCompilerHub",
             "kind": "component",
-            "startLine": 84,
-            "endLine": 3215,
+            "startLine": 85,
+            "endLine": 3224,
             "exported": true
           }
         ]
@@ -1973,6 +1973,28 @@
         ]
       },
       {
+        "path": "components/ui/AutoFitTable.tsx",
+        "lineCount": 59,
+        "purpose": "Neobrutalist UI design primitive: AutoFitTable",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "AutoFitTableProps",
+            "kind": "interface",
+            "startLine": 5,
+            "endLine": 8,
+            "exported": true
+          },
+          {
+            "name": "AutoFitTable",
+            "kind": "component",
+            "startLine": 10,
+            "endLine": 56,
+            "exported": true
+          }
+        ]
+      },
+      {
         "path": "components/ui/MarkdownErrorBoundary.tsx",
         "lineCount": 59,
         "purpose": "Defensive React error boundary isolating math/markdown render failures",
@@ -1989,43 +2011,43 @@
       },
       {
         "path": "components/ui/RichMarkdown.tsx",
-        "lineCount": 128,
+        "lineCount": 132,
         "purpose": "Neobrutalist UI design primitive: RichMarkdown",
         "category": "components",
         "symbols": [
           {
             "name": "cambridgeTableComponents",
             "kind": "const",
-            "startLine": 13,
-            "endLine": 34,
+            "startLine": 14,
+            "endLine": 38,
             "exported": true
           },
           {
             "name": "neobrutalistTableComponents",
             "kind": "const",
-            "startLine": 36,
-            "endLine": 57,
+            "startLine": 40,
+            "endLine": 61,
             "exported": true
           },
           {
             "name": "printableTableComponents",
             "kind": "const",
-            "startLine": 59,
-            "endLine": 80,
+            "startLine": 63,
+            "endLine": 84,
             "exported": true
           },
           {
             "name": "RichMarkdownProps",
             "kind": "interface",
-            "startLine": 82,
-            "endLine": 87,
+            "startLine": 86,
+            "endLine": 91,
             "exported": true
           },
           {
             "name": "RichMarkdown",
             "kind": "component",
-            "startLine": 89,
-            "endLine": 125,
+            "startLine": 93,
+            "endLine": 129,
             "exported": true
           }
         ]
@@ -4505,183 +4527,183 @@
       },
       {
         "path": "lib/questions.ts",
-        "lineCount": 1060,
+        "lineCount": 1070,
         "purpose": "Cambridge 0455 Economics question bank and topic definitions",
         "category": "lib",
         "symbols": [
           {
             "name": "resolveDiagramUrl",
             "kind": "const",
-            "startLine": 5,
-            "endLine": 5,
+            "startLine": 6,
+            "endLine": 6,
             "exported": true
           },
           {
             "name": "SyllabusTopic",
             "kind": "interface",
-            "startLine": 8,
-            "endLine": 12,
+            "startLine": 9,
+            "endLine": 13,
             "exported": true
           },
           {
             "name": "CAMBRIDGE_TOPICS",
             "kind": "const",
-            "startLine": 14,
-            "endLine": 45,
+            "startLine": 15,
+            "endLine": 46,
             "exported": true
           },
           {
             "name": "CAMBRIDGE_QUESTIONS",
             "kind": "const",
-            "startLine": 47,
-            "endLine": 478,
+            "startLine": 48,
+            "endLine": 479,
             "exported": true
           },
           {
             "name": "setCachedQuestions",
             "kind": "function",
-            "startLine": 482,
-            "endLine": 484,
+            "startLine": 483,
+            "endLine": 485,
             "exported": true
           },
           {
             "name": "getCachedQuestions",
             "kind": "function",
-            "startLine": 486,
-            "endLine": 488,
+            "startLine": 487,
+            "endLine": 489,
             "exported": true
           },
           {
             "name": "getAllQuestions",
             "kind": "function",
-            "startLine": 490,
-            "endLine": 492,
+            "startLine": 491,
+            "endLine": 493,
             "exported": true
           },
           {
             "name": "getQuestionsForTopic",
             "kind": "function",
-            "startLine": 494,
-            "endLine": 497,
+            "startLine": 495,
+            "endLine": 498,
             "exported": true
           },
           {
             "name": "getQuestionsByIds",
             "kind": "function",
-            "startLine": 499,
-            "endLine": 503,
+            "startLine": 500,
+            "endLine": 504,
             "exported": true
           },
           {
             "name": "isDiagramQuestion",
             "kind": "function",
-            "startLine": 505,
-            "endLine": 512,
+            "startLine": 506,
+            "endLine": 513,
             "exported": true
           },
           {
             "name": "isGraphQuestion",
             "kind": "function",
-            "startLine": 514,
-            "endLine": 518,
+            "startLine": 518,
+            "endLine": 523,
             "exported": true
           },
           {
             "name": "filterQuestionsByDiagram",
             "kind": "function",
-            "startLine": 520,
-            "endLine": 542,
+            "startLine": 525,
+            "endLine": 552,
             "exported": true
           },
           {
             "name": "deleteQuestionsFromDb",
             "kind": "async-function",
-            "startLine": 552,
-            "endLine": 554,
+            "startLine": 562,
+            "endLine": 564,
             "exported": true
           },
           {
             "name": "QuestionDbUpdates",
             "kind": "interface",
-            "startLine": 622,
-            "endLine": 627,
+            "startLine": 632,
+            "endLine": 637,
             "exported": true
           },
           {
             "name": "updateQuestionsInDb",
             "kind": "async-function",
-            "startLine": 636,
-            "endLine": 639,
+            "startLine": 646,
+            "endLine": 649,
             "exported": true
           },
           {
             "name": "shuffleQuestions",
             "kind": "function",
-            "startLine": 773,
-            "endLine": 780,
+            "startLine": 783,
+            "endLine": 790,
             "exported": true
           },
           {
             "name": "FetchQuestionsFilters",
             "kind": "interface",
-            "startLine": 782,
-            "endLine": 791,
+            "startLine": 792,
+            "endLine": 801,
             "exported": true
           },
           {
             "name": "QuestionQueryFilters",
             "kind": "type",
-            "startLine": 793,
-            "endLine": 793,
+            "startLine": 803,
+            "endLine": 803,
             "exported": true
           },
           {
             "name": "mapDbQuestionToQuestion",
             "kind": "function",
-            "startLine": 795,
-            "endLine": 843,
+            "startLine": 805,
+            "endLine": 853,
             "exported": true
           },
           {
             "name": "fetchQuestionsFromDb",
             "kind": "async-function",
-            "startLine": 849,
-            "endLine": 930,
+            "startLine": 859,
+            "endLine": 940,
             "exported": true
           },
           {
             "name": "fetchTopicsFromDb",
             "kind": "async-function",
-            "startLine": 936,
-            "endLine": 965,
+            "startLine": 946,
+            "endLine": 975,
             "exported": true
           },
           {
             "name": "UseQuestionsResult",
             "kind": "interface",
-            "startLine": 967,
-            "endLine": 972,
+            "startLine": 977,
+            "endLine": 982,
             "exported": true
           },
           {
             "name": "useQuestions",
             "kind": "hook",
-            "startLine": 978,
-            "endLine": 1011,
+            "startLine": 988,
+            "endLine": 1021,
             "exported": true
           },
           {
             "name": "UseTopicsResult",
             "kind": "interface",
-            "startLine": 1013,
-            "endLine": 1018,
+            "startLine": 1023,
+            "endLine": 1028,
             "exported": true
           },
           {
             "name": "useTopics",
             "kind": "hook",
-            "startLine": 1024,
-            "endLine": 1057,
+            "startLine": 1034,
+            "endLine": 1067,
             "exported": true
           }
         ]
@@ -5693,7 +5715,7 @@
       },
       {
         "path": "scripts/fast-ingest.py",
-        "lineCount": 1034,
+        "lineCount": 1036,
         "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
         "category": "scripts",
         "symbols": [
@@ -5763,36 +5785,36 @@
           {
             "name": "assemble_staging_paper",
             "kind": "def",
-            "startLine": 825,
-            "endLine": 830,
+            "startLine": 827,
+            "endLine": 832,
             "exported": true
           },
           {
             "name": "ingest_single_paper",
             "kind": "def",
-            "startLine": 873,
-            "endLine": 879,
+            "startLine": 875,
+            "endLine": 881,
             "exported": true
           },
           {
             "name": "find_matching_ms",
             "kind": "def",
-            "startLine": 925,
-            "endLine": 944,
+            "startLine": 927,
+            "endLine": 946,
             "exported": true
           },
           {
             "name": "ingest_batch_directory",
             "kind": "def",
-            "startLine": 947,
-            "endLine": 952,
+            "startLine": 949,
+            "endLine": 954,
             "exported": true
           },
           {
             "name": "main",
             "kind": "def",
-            "startLine": 990,
-            "endLine": 1029,
+            "startLine": 992,
+            "endLine": 1031,
             "exported": true
           }
         ]
@@ -6247,7 +6269,7 @@
       },
       {
         "path": "scripts/verify-diagram-filter.ts",
-        "lineCount": 118,
+        "lineCount": 131,
         "purpose": "1.",
         "category": "scripts",
         "symbols": []
@@ -6788,7 +6810,7 @@
       },
       {
         "path": "scripts/verify-quiz-tables.ts",
-        "lineCount": 409,
+        "lineCount": 433,
         "purpose": "Standalone Verification Script for Quiz Table Rendering.",
         "category": "scripts",
         "symbols": [
@@ -6803,7 +6825,7 @@
             "name": "verifyQuizTables",
             "kind": "function",
             "startLine": 33,
-            "endLine": 403,
+            "endLine": 427,
             "exported": false
           }
         ]
@@ -7902,7 +7924,7 @@
     },
     {
       "path": "components/QuestionCard.tsx",
-      "lineCount": 887,
+      "lineCount": 892,
       "purpose": "Tactile 3D neobrutalist question card with markdown and KaTeX math",
       "category": "components",
       "symbols": [
@@ -7910,7 +7932,7 @@
           "name": "QuestionCard",
           "kind": "component",
           "startLine": 37,
-          "endLine": 884,
+          "endLine": 889,
           "exported": true
         }
       ]
@@ -9114,15 +9136,15 @@
     },
     {
       "path": "components/portal/compiler/TestCompilerHub.tsx",
-      "lineCount": 3216,
+      "lineCount": 3225,
       "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
       "category": "components",
       "symbols": [
         {
           "name": "TestCompilerHub",
           "kind": "component",
-          "startLine": 84,
-          "endLine": 3215,
+          "startLine": 85,
+          "endLine": 3224,
           "exported": true
         }
       ]
@@ -9304,6 +9326,28 @@
       ]
     },
     {
+      "path": "components/ui/AutoFitTable.tsx",
+      "lineCount": 59,
+      "purpose": "Neobrutalist UI design primitive: AutoFitTable",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "AutoFitTableProps",
+          "kind": "interface",
+          "startLine": 5,
+          "endLine": 8,
+          "exported": true
+        },
+        {
+          "name": "AutoFitTable",
+          "kind": "component",
+          "startLine": 10,
+          "endLine": 56,
+          "exported": true
+        }
+      ]
+    },
+    {
       "path": "components/ui/MarkdownErrorBoundary.tsx",
       "lineCount": 59,
       "purpose": "Defensive React error boundary isolating math/markdown render failures",
@@ -9320,43 +9364,43 @@
     },
     {
       "path": "components/ui/RichMarkdown.tsx",
-      "lineCount": 128,
+      "lineCount": 132,
       "purpose": "Neobrutalist UI design primitive: RichMarkdown",
       "category": "components",
       "symbols": [
         {
           "name": "cambridgeTableComponents",
           "kind": "const",
-          "startLine": 13,
-          "endLine": 34,
+          "startLine": 14,
+          "endLine": 38,
           "exported": true
         },
         {
           "name": "neobrutalistTableComponents",
           "kind": "const",
-          "startLine": 36,
-          "endLine": 57,
+          "startLine": 40,
+          "endLine": 61,
           "exported": true
         },
         {
           "name": "printableTableComponents",
           "kind": "const",
-          "startLine": 59,
-          "endLine": 80,
+          "startLine": 63,
+          "endLine": 84,
           "exported": true
         },
         {
           "name": "RichMarkdownProps",
           "kind": "interface",
-          "startLine": 82,
-          "endLine": 87,
+          "startLine": 86,
+          "endLine": 91,
           "exported": true
         },
         {
           "name": "RichMarkdown",
           "kind": "component",
-          "startLine": 89,
-          "endLine": 125,
+          "startLine": 93,
+          "endLine": 129,
           "exported": true
         }
       ]
@@ -11834,183 +11878,183 @@
     },
     {
       "path": "lib/questions.ts",
-      "lineCount": 1060,
+      "lineCount": 1070,
       "purpose": "Cambridge 0455 Economics question bank and topic definitions",
       "category": "lib",
       "symbols": [
         {
           "name": "resolveDiagramUrl",
           "kind": "const",
-          "startLine": 5,
-          "endLine": 5,
+          "startLine": 6,
+          "endLine": 6,
           "exported": true
         },
         {
           "name": "SyllabusTopic",
           "kind": "interface",
-          "startLine": 8,
-          "endLine": 12,
+          "startLine": 9,
+          "endLine": 13,
           "exported": true
         },
         {
           "name": "CAMBRIDGE_TOPICS",
           "kind": "const",
-          "startLine": 14,
-          "endLine": 45,
+          "startLine": 15,
+          "endLine": 46,
           "exported": true
         },
         {
           "name": "CAMBRIDGE_QUESTIONS",
           "kind": "const",
-          "startLine": 47,
-          "endLine": 478,
+          "startLine": 48,
+          "endLine": 479,
           "exported": true
         },
         {
           "name": "setCachedQuestions",
           "kind": "function",
-          "startLine": 482,
-          "endLine": 484,
+          "startLine": 483,
+          "endLine": 485,
           "exported": true
         },
         {
           "name": "getCachedQuestions",
           "kind": "function",
-          "startLine": 486,
-          "endLine": 488,
+          "startLine": 487,
+          "endLine": 489,
           "exported": true
         },
         {
           "name": "getAllQuestions",
           "kind": "function",
-          "startLine": 490,
-          "endLine": 492,
+          "startLine": 491,
+          "endLine": 493,
           "exported": true
         },
         {
           "name": "getQuestionsForTopic",
           "kind": "function",
-          "startLine": 494,
-          "endLine": 497,
+          "startLine": 495,
+          "endLine": 498,
           "exported": true
         },
         {
           "name": "getQuestionsByIds",
           "kind": "function",
-          "startLine": 499,
-          "endLine": 503,
+          "startLine": 500,
+          "endLine": 504,
           "exported": true
         },
         {
           "name": "isDiagramQuestion",
           "kind": "function",
-          "startLine": 505,
-          "endLine": 512,
+          "startLine": 506,
+          "endLine": 513,
           "exported": true
         },
         {
           "name": "isGraphQuestion",
           "kind": "function",
-          "startLine": 514,
-          "endLine": 518,
+          "startLine": 518,
+          "endLine": 523,
           "exported": true
         },
         {
           "name": "filterQuestionsByDiagram",
           "kind": "function",
-          "startLine": 520,
-          "endLine": 542,
+          "startLine": 525,
+          "endLine": 552,
           "exported": true
         },
         {
           "name": "deleteQuestionsFromDb",
           "kind": "async-function",
-          "startLine": 552,
-          "endLine": 554,
+          "startLine": 562,
+          "endLine": 564,
           "exported": true
         },
         {
           "name": "QuestionDbUpdates",
           "kind": "interface",
-          "startLine": 622,
-          "endLine": 627,
+          "startLine": 632,
+          "endLine": 637,
           "exported": true
         },
         {
           "name": "updateQuestionsInDb",
           "kind": "async-function",
-          "startLine": 636,
-          "endLine": 639,
+          "startLine": 646,
+          "endLine": 649,
           "exported": true
         },
         {
           "name": "shuffleQuestions",
           "kind": "function",
-          "startLine": 773,
-          "endLine": 780,
+          "startLine": 783,
+          "endLine": 790,
           "exported": true
         },
         {
           "name": "FetchQuestionsFilters",
           "kind": "interface",
-          "startLine": 782,
-          "endLine": 791,
+          "startLine": 792,
+          "endLine": 801,
           "exported": true
         },
         {
           "name": "QuestionQueryFilters",
           "kind": "type",
-          "startLine": 793,
-          "endLine": 793,
+          "startLine": 803,
+          "endLine": 803,
           "exported": true
         },
         {
           "name": "mapDbQuestionToQuestion",
           "kind": "function",
-          "startLine": 795,
-          "endLine": 843,
+          "startLine": 805,
+          "endLine": 853,
           "exported": true
         },
         {
           "name": "fetchQuestionsFromDb",
           "kind": "async-function",
-          "startLine": 849,
-          "endLine": 930,
+          "startLine": 859,
+          "endLine": 940,
           "exported": true
         },
         {
           "name": "fetchTopicsFromDb",
           "kind": "async-function",
-          "startLine": 936,
-          "endLine": 965,
+          "startLine": 946,
+          "endLine": 975,
           "exported": true
         },
         {
           "name": "UseQuestionsResult",
           "kind": "interface",
-          "startLine": 967,
-          "endLine": 972,
+          "startLine": 977,
+          "endLine": 982,
           "exported": true
         },
         {
           "name": "useQuestions",
           "kind": "hook",
-          "startLine": 978,
-          "endLine": 1011,
+          "startLine": 988,
+          "endLine": 1021,
           "exported": true
         },
         {
           "name": "UseTopicsResult",
           "kind": "interface",
-          "startLine": 1013,
-          "endLine": 1018,
+          "startLine": 1023,
+          "endLine": 1028,
           "exported": true
         },
         {
           "name": "useTopics",
           "kind": "hook",
-          "startLine": 1024,
-          "endLine": 1057,
+          "startLine": 1034,
+          "endLine": 1067,
           "exported": true
         }
       ]
@@ -13020,7 +13064,7 @@
     },
     {
       "path": "scripts/fast-ingest.py",
-      "lineCount": 1034,
+      "lineCount": 1036,
       "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
       "category": "scripts",
       "symbols": [
@@ -13090,36 +13134,36 @@
         {
           "name": "assemble_staging_paper",
           "kind": "def",
-          "startLine": 825,
-          "endLine": 830,
+          "startLine": 827,
+          "endLine": 832,
           "exported": true
         },
         {
           "name": "ingest_single_paper",
           "kind": "def",
-          "startLine": 873,
-          "endLine": 879,
+          "startLine": 875,
+          "endLine": 881,
           "exported": true
         },
         {
           "name": "find_matching_ms",
           "kind": "def",
-          "startLine": 925,
-          "endLine": 944,
+          "startLine": 927,
+          "endLine": 946,
           "exported": true
         },
         {
           "name": "ingest_batch_directory",
           "kind": "def",
-          "startLine": 947,
-          "endLine": 952,
+          "startLine": 949,
+          "endLine": 954,
           "exported": true
         },
         {
           "name": "main",
           "kind": "def",
-          "startLine": 990,
-          "endLine": 1029,
+          "startLine": 992,
+          "endLine": 1031,
           "exported": true
         }
       ]
@@ -13574,7 +13618,7 @@
     },
     {
       "path": "scripts/verify-diagram-filter.ts",
-      "lineCount": 118,
+      "lineCount": 131,
       "purpose": "1.",
       "category": "scripts",
       "symbols": []
@@ -14115,7 +14159,7 @@
     },
     {
       "path": "scripts/verify-quiz-tables.ts",
-      "lineCount": 409,
+      "lineCount": 433,
       "purpose": "Standalone Verification Script for Quiz Table Rendering.",
       "category": "scripts",
       "symbols": [
@@ -14130,7 +14174,7 @@
           "name": "verifyQuizTables",
           "kind": "function",
           "startLine": 33,
-          "endLine": 403,
+          "endLine": 427,
           "exported": false
         }
       ]

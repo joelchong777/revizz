@@ -88,3 +88,16 @@ In a single atomic execution, `npm run wt ship` orchestrates:
 - **Explicit User Permission Mandatory**: NEVER invoke `npm run wt ship` autonomously. Only run it when the user explicitly issues instructions such as `"push live"`, `"ship it"`, `"push and redeploy"`, or `"deploy to production"`.
 - **Single Master Orchestrator Execution**: Subagents must NEVER run `npm run wt ship`, `git push`, or `git commit`. Live shipping is strictly reserved for the Master Agent.
 - **Timeout Buffer**: Always use `WaitMsBeforeAsync: 10000` to allow the build, push, deploy, and HTTP health probe adequate time to stream output.
+
+---
+
+## 5. Mandatory Post-Ship "Push Summary" Response Contract
+
+Whenever a push command completes, the final response MUST include a dedicated section:
+```markdown
+### Push Summary
+- **Type**: [Feature Addition | Bugfix | UI Enhancement | Architectural Refactor | Tooling]
+- **Surfaces Affected**: Exact routes, components, libraries, or APIs updated.
+- **What Exactly Changed in App**: Concrete explanation of what behavior or visual capability was added or repaired in the live application.
+- **Deployment Status**: Commit SHA, production URL status (`HTTP 200`), and GitHub commit title.
+```

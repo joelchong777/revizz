@@ -1,6 +1,6 @@
 ---
 name: revizz-webperf
-description: Core Web Vitals optimization guidelines for Revizz: zero CLS KaTeX formulas, 0ms touch delay, and asset preloading.
+description: "Core Web Vitals optimization guidelines for Revizz: zero CLS KaTeX formulas, 0ms touch delay, and asset preloading."
 ---
 
 # Revizz Core Web Vitals & Performance Engineering
