@@ -29,6 +29,7 @@ import {
   type DiagramFilter,
 } from '@/lib/paperViewer';
 import { PaperQuestionCard } from '@/components/admin/paper-viewer/PaperQuestionCard';
+import { PaperDropdown } from '@/components/admin/paper-viewer/PaperDropdown';
 import { PaperTableView } from '@/components/admin/paper-viewer/PaperTableView';
 
 export interface WholePaperViewerProps {
@@ -602,31 +603,20 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
             </div>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 min-w-0">
-                <select
+                <PaperDropdown
                   id="paper-select"
+                  ariaLabel="Select paper"
                   value={selectedPaperId}
-                  onChange={(e) => setSelectedPaperId(e.target.value)}
+                  onChange={setSelectedPaperId}
                   disabled={loadingList || stagedPapers.length === 0}
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-2 text-xs font-heading font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] appearance-none cursor-pointer truncate"
-                >
-                  {stagedPapers.length === 0 ? (
-                    <option value="">{loadingList ? 'Loading papers...' : 'No papers found'}</option>
-                  ) : (
-                    stagedPapers.map((p) => {
-                      const series = formatSeriesText(p.paper?.series, p.paper?.year);
-                      const code = p.paper?.paper_code ? ` · P${p.paper.paper_code}` : '';
-                      const qs = p.questionsCount !== undefined ? ` · ${p.questionsCount} Qs` : '';
-                      return (
-                        <option key={p.id} value={p.id}>
-                          {p.id} · {series}
-                          {code}
-                          {qs}
-                        </option>
-                      );
-                    })
-                  )}
-                </select>
-                <ChevronDown className="w-4 h-4 text-[#201e1d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  placeholder={loadingList ? 'Loading papers...' : 'No papers found'}
+                  options={stagedPapers.map((p) => {
+                    const series = formatSeriesText(p.paper?.series, p.paper?.year);
+                    const code = p.paper?.paper_code ? ` · P${p.paper.paper_code}` : '';
+                    const qs = p.questionsCount !== undefined ? ` · ${p.questionsCount} Qs` : '';
+                    return { value: p.id, label: p.id, sublabel: `${series}${code}${qs}` };
+                  })}
+                />
               </div>
               <button
                 type="button"
@@ -698,19 +688,16 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
                 ]}
               />
               {topicsList.length > 0 && (
-                <select
+                <PaperDropdown
+                  size="sm"
                   value={topicFilter}
-                  onChange={(e) => setTopicFilter(e.target.value)}
-                  aria-label="Filter by topic"
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] cursor-pointer"
-                >
-                  <option value="all">All topics ({topicsList.length})</option>
-                  {topicsList.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setTopicFilter}
+                  ariaLabel="Filter by topic"
+                  options={[
+                    { value: 'all', label: `All topics (${topicsList.length})` },
+                    ...topicsList.map((t) => ({ value: t, label: t })),
+                  ]}
+                />
               )}
               <ToggleRow label="Show answers" pressed={showAnswers} onClick={() => setShowAnswers((v) => !v)} />
               <ToggleRow label="Expand explanations" pressed={allExpanded} onClick={handleToggleAllExplanations} />
