@@ -169,7 +169,7 @@ check('IngestionHub.tsx exists on disk', () => fs.existsSync(studioPath));
 if (fs.existsSync(studioPath)) {
   const sc = fs.readFileSync(studioPath, 'utf8');
   check('IngestionHub has tablist with studio-tab-new and studio-tab-history testids',
-    () => sc.includes('role="tablist"') && sc.includes('studio-tab-new') && sc.includes('studio-tab-history'));
+    () => sc.includes('role="tablist"') && sc.includes('data-testid={`studio-tab-${t.id}`}') && /id:\s*"new"/.test(sc) && /id:\s*"history"/.test(sc));
   check('IngestionHub accepts initialView/onViewChange/onOpenEditor props',
     () => sc.includes('initialView') && sc.includes('onViewChange') && sc.includes('onOpenEditor'));
   check('IngestionHub renders embedded IngestionHistoryHub with onOpenInStudio',
