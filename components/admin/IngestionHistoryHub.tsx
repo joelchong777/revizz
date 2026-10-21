@@ -3,12 +3,10 @@ import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Clock,
   Calendar,
   FileText,
   CheckCircle2,
   AlertTriangle,
-  Layers,
   Search,
   Filter,
   ArrowUpDown,
@@ -17,8 +15,6 @@ import {
   ExternalLink,
   RefreshCw,
   BookOpen,
-  Sparkles,
-  Database,
   Image as ImageIcon,
   Tag,
   Check,
@@ -57,12 +53,8 @@ export interface IngestionHistoryItem extends StagedPaperSummary {
 export interface IngestionHistoryHubProps {
   onSelectTab?: (tab: string, sub?: string) => void;
   onOpenEditor?: (questionId: string) => void;
-  /** Render inside the Ingestion Studio: compact banner, h2 heading. */
-  embedded?: boolean;
   /** Called after a paper is preloaded into the Studio store. */
   onOpenInStudio?: (paperId: string) => void;
-  /** Embedded "+ New Ingest" action (defaults to onSelectTab('ingestion')). */
-  onNewIngest?: () => void;
 }
 
 // Formatting helpers
@@ -121,9 +113,7 @@ function formatRelativeTime(isoString?: string | null, fallbackYear?: number): s
 export default function IngestionHistoryHub({
   onSelectTab,
   onOpenEditor,
-  embedded = false,
   onOpenInStudio,
-  onNewIngest,
 }: IngestionHistoryHubProps) {
   // UNCONDITIONAL HOOKS DECLARATION AT TOP (Error #310 rule compliance)
   const { questions: liveQuestions, loading: questionsLoading, refetch: refetchLiveQuestions } = useQuestions();
@@ -149,6 +139,7 @@ export default function IngestionHistoryHub({
   const [selectedTopicFilter, setSelectedTopicFilter] = useState<string | null>(null);
   const [inspectorSearchQuery, setInspectorSearchQuery] = useState<string>('');
   const [inspectorFilter, setInspectorFilter] = useState<'all' | 'diagrams' | 'needs_review'>('all');
+  const [visibleCount, setVisibleCount] = useState<number>(10);
   const [expandedExplanationMap, setExpandedExplanationMap] = useState<Record<number, boolean>>({});
 
   // Load staged papers from API
@@ -500,6 +491,20 @@ export default function IngestionHistoryHub({
     });
   }, [activeExpandedPaper, selectedTopicFilter, inspectorFilter, inspectorSearchQuery]);
 
+  // Reset manifest pagination when the viewed set changes
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [expandedPaperId, selectedTopicFilter, inspectorSearchQuery, inspectorFilter]);
+
+  const receiptStats = useMemo(() => {
+    const qs = activeExpandedPaper?.questions || [];
+    return {
+      active: qs.filter((q) => q.status === 'active').length,
+      review: qs.filter((q) => q.status === 'needs_review').length,
+      diagrams: qs.filter((q) => q.diagram?.has_diagram || q.diagram?.image_url).length,
+    };
+  }, [activeExpandedPaper]);
+
   // Topic breakdown from expanded paper
   const activePaperTopicDistribution = useMemo(() => {
     if (!activeExpandedPaper?.questions) return [];
@@ -517,155 +522,63 @@ export default function IngestionHistoryHub({
   }, [activeExpandedPaper]);
 
   return (
-    <div className="space-y-6">
-      {/* SECTION 1: NEOBRUTALIST HEADER BANNER & QUICK ACTIONS */}
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 sm:p-6 shadow-[3px_3px_0px_#201e1d]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            {embedded ? (
-              <h2 className="text-xl font-black font-heading tracking-tight text-[#201e1d]">
-                Ingestion History & Batch Contents
-              </h2>
-            ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] font-bold uppercase tracking-wider bg-[#ffe1d0] text-[#201e1d] border border-[#201e1d] px-2.5 py-0.5 rounded-full shadow-xs">
-                    CONTENT PIPELINE · AUDIT LEDGER
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-black font-heading tracking-tight text-[#201e1d]">
-                  Ingestion History & Batch Contents
-                </h1>
-                <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-2xl leading-relaxed">
-                  Track every exam paper ingested into Revizz, when it was processed, its lifecycle status, and inspect the exact questions, topics, and diagrams inside each ingest.
-                </p>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                fetchStagedPapers(true);
-                refetchLiveQuestions();
-              }}
-              disabled={isRefreshing || loading}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#f5ead8] hover:bg-[#ffe1d0] border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] text-xs font-bold text-[#201e1d] transition-all active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 cursor-pointer"
-              title="Refresh ledger with latest disk & cloud state"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? 'Refreshing...' : 'Refresh Ledger'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => (onNewIngest ? onNewIngest() : onSelectTab?.('ingestion'))}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffe1d0] hover:bg-[#ffc6a5] border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] text-xs font-bold text-[#201e1d] transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-              title="Start a new exam paper ingestion session in Studio"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#201e1d]" />
-              <span>+ New Ingest in Studio</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 4 SUMMARY KPI CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          {/* KPI 1: Total Ingested Batches */}
-          <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-4 shadow-[2px_2px_0px_#201e1d] flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
-                Total Ingested Batches
-              </span>
-              <span className="w-7 h-7 rounded-lg bg-[#ffe1d0] border border-[#201e1d] flex items-center justify-center text-xs">
-                <Layers className="w-4 h-4 text-[#201e1d]" />
-              </span>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-                {kpiData.totalBatches}
-              </div>
-              <div className="text-[11px] font-medium text-[#645c50] mt-0.5">
-                {kpiData.activeStagedCount} Active Staged · {kpiData.archivedCount} Archived
-              </div>
-            </div>
-          </div>
-
-          {/* KPI 2: Published Live Papers */}
-          <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-4 shadow-[2px_2px_0px_#201e1d] flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
-                Published Live Papers
-              </span>
-              <span className="w-7 h-7 rounded-lg bg-[#ccdbb2] border border-[#201e1d] flex items-center justify-center text-xs">
-                <CheckCircle2 className="w-4 h-4 text-[#201e1d]" />
-              </span>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-                {kpiData.publishedCount}
-              </div>
-              <div className="text-[11px] font-medium text-[#645c50] mt-0.5">
-                {kpiData.publishedPercent}% of all batches live in bank
-              </div>
-            </div>
-          </div>
-
-          {/* KPI 3: Total Questions Ingested */}
-          <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-4 shadow-[2px_2px_0px_#201e1d] flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
-                Total Questions Ingested
-              </span>
-              <span className="w-7 h-7 rounded-lg bg-[#b8dcff] border border-[#201e1d] flex items-center justify-center text-xs">
-                <Database className="w-4 h-4 text-[#201e1d]" />
-              </span>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-                {kpiData.totalQuestions}
-              </div>
-              <div className="text-[11px] font-medium text-[#645c50] mt-0.5">
-                🖼️ {kpiData.totalDiagrams} diagrams cropped & resolved
-              </div>
-            </div>
-          </div>
-
-          {/* KPI 4: Latest Ingest Activity */}
-          <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-4 shadow-[2px_2px_0px_#201e1d] flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
-                Latest Ingest Activity
-              </span>
-              <span className="w-7 h-7 rounded-lg bg-[#fde68a] border border-[#201e1d] flex items-center justify-center text-xs">
-                <Clock className="w-4 h-4 text-[#201e1d]" />
-              </span>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d] truncate">
-                {kpiData.latestTimeFormatted}
-              </div>
-              <div className="text-[11px] font-medium text-[#645c50] mt-0.5 truncate" title={kpiData.latestPaperLabel}>
-                {kpiData.latestPaperLabel}
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* HEADER ROW */}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-black font-heading tracking-tight text-[#201e1d]">
+          Ingestion history
+          <span className="ml-2 text-xs font-mono font-bold text-[#645c50]">
+            {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
+          </span>
+        </h2>
+        <button
+          type="button"
+          onClick={() => {
+            fetchStagedPapers(true);
+            refetchLiveQuestions();
+          }}
+          disabled={isRefreshing || loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f5ead8] hover:bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] transition-colors disabled:opacity-50 cursor-pointer"
+          title="Refresh with latest disk & cloud state"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+        </button>
       </div>
 
-      {/* SECTION 2: FILTER, SEARCH & SORT CONTROLS BAR */}
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 shadow-[2px_2px_0px_#201e1d] flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
-        {/* Search input */}
-        <div className="relative flex-1 min-w-[240px]">
+      {/* COMPACT STAT STRIP */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 bg-white border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0px_#201e1d] overflow-hidden">
+        {[
+          { label: 'Papers', value: String(kpiData.totalBatches), sub: `${kpiData.archivedCount} archived` },
+          { label: 'Live', value: String(kpiData.publishedCount), sub: `${kpiData.publishedPercent}% of papers` },
+          { label: 'Questions', value: String(kpiData.totalQuestions), sub: `${kpiData.totalDiagrams} diagrams` },
+          { label: 'Last ingest', value: kpiData.latestPaperLabel, sub: kpiData.latestTimeFormatted, isText: true },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="px-3.5 py-2.5 min-w-0 border-[#201e1d]/20 border-r [&:nth-child(2)]:border-r-0 sm:[&:nth-child(2)]:border-r [&:nth-child(4)]:border-r-0 [&:nth-child(-n+2)]:border-b sm:[&:nth-child(-n+2)]:border-b-0"
+          >
+            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#645c50]">{s.label}</div>
+            <div
+              className={`font-black font-heading text-[#201e1d] ${s.isText ? 'text-sm leading-snug pt-1 break-words' : 'text-lg leading-tight'}`}
+            >
+              {s.value}
+            </div>
+            <div className="text-[11px] font-medium text-[#645c50]">{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* FILTER BAR */}
+      <div className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap gap-2 sm:items-center">
+        <div className="relative w-full sm:flex-1 sm:basis-56 min-w-0">
           <Search className="w-4 h-4 text-[#645c50] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             data-testid="ingestion-history-search"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search paper (e.g. 0455, s24, 12), subject, session, or topic..."
+            placeholder="Search paper, subject, session or topic..."
             className="w-full pl-9 pr-8 py-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-medium text-[#201e1d] placeholder:text-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d]"
           />
           {searchQuery && (
@@ -680,49 +593,42 @@ export default function IngestionHistoryHub({
           )}
         </div>
 
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
-          {(
-            [
-              { key: 'all', label: 'All', count: statusCounts.all },
-              { key: 'published', label: 'Published Live', count: statusCounts.published },
-              { key: 'staged', label: 'Staged Review', count: statusCounts.staged },
-              { key: 'archived', label: 'Archived', count: statusCounts.archived },
-            ] as const
-          ).map((tab) => {
-            const isActive = statusFilter === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setStatusFilter(tab.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all border-2 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#201e1d] text-white border-[#201e1d] font-bold shadow-[1px_1px_0px_#201e1d]'
-                    : 'bg-white text-[#474238] border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-[#f5ead8] font-medium'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className={`ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-[#ebddc5] text-[#201e1d]'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex flex-wrap border-2 border-[#201e1d] rounded-xl overflow-hidden bg-white" role="group" aria-label="Status filter">
+            {(
+              [
+                { key: 'all', label: 'All', count: statusCounts.all },
+                { key: 'published', label: 'Published', count: statusCounts.published },
+                { key: 'staged', label: 'Staged', count: statusCounts.staged },
+                { key: 'archived', label: 'Archived', count: statusCounts.archived },
+              ] as const
+            ).map((tab) => {
+              const isActive = statusFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.key)}
+                  aria-pressed={isActive}
+                  className={`px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors cursor-pointer border-r border-[#201e1d]/20 last:border-r-0 ${
+                    isActive ? 'bg-[#201e1d] text-white font-bold' : 'bg-white text-[#474238] hover:bg-[#f5ead8] font-medium'
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`ml-1 text-[10px] font-mono ${isActive ? 'text-white/70' : 'text-[#645c50]'}`}>{tab.count}</span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Dropdowns for Subject & Sort */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Subject dropdown */}
           <div className="relative">
             <select
               value={subjectFilter}
               onChange={(e) => setSubjectFilter(e.target.value)}
-              className="appearance-none bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer"
+              aria-label="Subject filter"
+              className="appearance-none bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer max-w-[180px]"
             >
-              <option value="all">All Subjects ({papers.length})</option>
+              <option value="all">All subjects ({papers.length})</option>
               {uniqueSubjects.map((sub) => (
                 <option key={sub.code} value={sub.code}>
                   {sub.code} · {sub.name} ({sub.count})
@@ -732,17 +638,17 @@ export default function IngestionHistoryHub({
             <ChevronDown className="w-3.5 h-3.5 text-[#201e1d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Sort dropdown */}
           <div className="relative">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
+              aria-label="Sort papers"
               className="appearance-none bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer"
             >
-              <option value="newest">Newest Ingested First</option>
-              <option value="oldest">Oldest Ingested First</option>
-              <option value="year">Exam Year (Newest)</option>
-              <option value="questions">Most Questions</option>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="year">Exam year</option>
+              <option value="questions">Most questions</option>
             </select>
             <ArrowUpDown className="w-3.5 h-3.5 text-[#201e1d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
@@ -751,13 +657,13 @@ export default function IngestionHistoryHub({
 
       {/* SECTION 3: INGEST HISTORY LEDGER & EXPANDABLE INSPECTOR */}
       {loading ? (
-        <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-12 text-center shadow-[2px_2px_0px_#201e1d]">
+        <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-12 text-center shadow-[3px_3px_0px_#201e1d]">
           <RefreshCw className="w-8 h-8 text-[#201e1d] animate-spin mx-auto mb-3" />
           <h3 className="text-base font-bold text-[#201e1d]">Loading Ingestion Audit Ledger...</h3>
           <p className="text-xs text-[#645c50] mt-1">Reading staged paper files and matching published state.</p>
         </div>
       ) : error ? (
-        <div className="bg-[#ffe1d0] border-2 border-[#201e1d] rounded-2xl p-6 text-center shadow-[2px_2px_0px_#201e1d]">
+        <div className="bg-[#ffe1d0] border-2 border-[#201e1d] rounded-2xl p-6 text-center shadow-[3px_3px_0px_#201e1d]">
           <AlertTriangle className="w-8 h-8 text-amber-700 mx-auto mb-2" />
           <h3 className="text-base font-bold text-[#201e1d]">Failed to load ingestion history</h3>
           <p className="text-xs text-red-700 mt-1 font-mono">{error}</p>
@@ -770,13 +676,13 @@ export default function IngestionHistoryHub({
           </button>
         </div>
       ) : filteredPapers.length === 0 ? (
-        <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-12 text-center shadow-[2px_2px_0px_#201e1d]">
+        <div className="bg-white border-2 border-[#201e1d] rounded-2xl p-12 text-center shadow-[3px_3px_0px_#201e1d]">
           <FolderOpen className="w-10 h-10 text-[#8c8273] mx-auto mb-3" />
           <h3 className="text-base font-bold text-[#201e1d]">No Ingested Papers Found</h3>
           <p className="text-xs text-[#645c50] mt-1 max-w-md mx-auto">
             {searchQuery || statusFilter !== 'all' || subjectFilter !== 'all'
               ? 'No ingested paper batches match your current search query or active filter settings.'
-              : 'No exam paper batches have been ingested yet. Click "+ New Ingest in Studio" above to extract your first paper.'}
+              : 'No exam paper batches have been ingested yet. Use the "New paper" tab to extract your first paper.'}
           </p>
           {(searchQuery || statusFilter !== 'all' || subjectFilter !== 'all') && (
             <button
@@ -793,7 +699,7 @@ export default function IngestionHistoryHub({
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filteredPapers.map((paper) => {
             const isExpanded = expandedPaperId === paper.id;
             const sCode = paper.subject?.code || paper.id.split('_')[0] || 'Unknown';
@@ -813,126 +719,67 @@ export default function IngestionHistoryHub({
               <div
                 key={paper.id}
                 data-testid="ingest-history-row"
-                className={`bg-white border-2 border-[#201e1d] rounded-2xl shadow-[2px_2px_0px_#201e1d] transition-all overflow-hidden ${
-                  isExpanded ? 'ring-2 ring-[#201e1d]' : 'hover:border-[#201e1d]'
+                className={`bg-white border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0px_#201e1d] overflow-hidden ${
+                  isExpanded ? 'ring-2 ring-[#201e1d]' : ''
                 }`}
               >
                 {/* PAPER ROW SUMMARY BAR */}
-                <div className="p-4 sm:p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                  {/* Left: Subject, Session, and Filename info */}
-                  <div className="space-y-2 flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Subject Badge */}
-                      <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#f5ead8] text-[#201e1d] border border-[#201e1d]">
-                        {sCode} · {sName}
-                      </span>
-
-                      {/* Filename Pill */}
-                      <span className="font-mono text-[11px] text-[#645c50] bg-[#f9f4ed] border border-[#201e1d]/30 px-2 py-0.5 rounded-md">
-                        {paper.id}.json
-                      </span>
-
-                      {/* Source PDF filenames if present */}
-                      {(paper.source_qp_filename || paper.source_ms_filename) && (
-                        <span className="font-mono text-[10px] text-[#645c50] bg-[#f0ebe1] px-2 py-0.5 rounded-md border border-[#201e1d]/20 hidden sm:inline-block">
-                          📄 {paper.source_qp_filename || 'QP'} {paper.source_ms_filename ? `| ${paper.source_ms_filename}` : ''}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Paper Title & Session */}
-                    <div className="flex items-center gap-2.5">
-                      <h2 className="text-base sm:text-lg font-black font-heading text-[#201e1d] tracking-tight">
+                <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                      <h3 className="text-base font-black font-heading text-[#201e1d] tracking-tight lg:whitespace-nowrap">
                         {seriesFormatted} {yearStr} · Paper {paperCodeStr}
-                      </h2>
-                    </div>
-
-                    {/* Content Preview Pills: Questions, Diagrams, Topics */}
-                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#ffe1d0] border border-[#201e1d]/40 text-[#201e1d]">
-                        <FileText className="w-3 h-3" />
-                        {questionsCount} Questions
-                      </span>
-
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#b8dcff] border border-[#201e1d]/40 text-[#201e1d]">
-                        <ImageIcon className="w-3 h-3" />
-                        {diagramsCount} Diagrams
-                      </span>
-
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#ccdbb2] border border-[#201e1d]/40 text-[#201e1d]">
-                        <BookOpen className="w-3 h-3" />
-                        {topicsCount} Topics
-                      </span>
-
-                      {/* Top Topic Preview Chips */}
-                      {paper.topicBreakdown && paper.topicBreakdown.slice(0, 2).map((t, idx) => (
-                        <span
-                          key={idx}
-                          className="font-mono text-[10px] text-[#474238] bg-[#f5ead8] border border-[#201e1d]/20 px-2 py-0.5 rounded-md hidden md:inline-block truncate max-w-[180px]"
-                          title={`${t.name} (${t.count} questions)`}
-                        >
-                          {t.name} ({t.count})
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Middle/Right: Timestamp & Lifecycle Status */}
-                  <div className="flex flex-wrap lg:flex-col items-start lg:items-end gap-2 lg:gap-1.5 shrink-0">
-                    {/* Timestamp pill */}
-                    <div className="flex items-center gap-1.5 font-mono text-xs text-[#201e1d]">
-                      <Clock className="w-3.5 h-3.5 text-[#645c50]" />
-                      <span className="font-semibold">{timeStr}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-[#f5ead8] border border-[#201e1d]/30 text-[10px] font-bold">
-                        {relTime}
-                      </span>
-                    </div>
-
-                    {/* Status badge */}
-                    <div>
+                      </h3>
                       {paper.is_published ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d] font-mono text-[10px] font-bold shadow-xs">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d]/40 font-mono text-[10px] font-bold whitespace-nowrap">
                           <CheckCircle2 className="w-3 h-3 text-emerald-700" />
                           PUBLISHED LIVE
                         </span>
                       ) : paper.is_archived ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-neutral-200 text-[#474238] border border-[#201e1d]/40 font-mono text-[10px] font-bold">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-200 text-[#474238] border border-[#201e1d]/30 font-mono text-[10px] font-bold whitespace-nowrap">
                           <Archive className="w-3 h-3 text-neutral-600" />
                           ARCHIVED
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#fde68a] text-[#201e1d] border border-[#201e1d] font-mono text-[10px] font-bold">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fde68a] text-[#201e1d] border border-[#201e1d]/40 font-mono text-[10px] font-bold whitespace-nowrap">
                           <AlertTriangle className="w-3 h-3 text-amber-700" />
                           STAGED REVIEW
                         </span>
                       )}
                     </div>
+
+                    <div className="text-[11px] font-mono text-[#645c50] truncate" title={`${sCode} · ${sName} · ${paper.source_qp_filename || `${paper.id}.json`}`}>
+                      {sCode} · {sName} · {paper.source_qp_filename || `${paper.id}.json`}{yearStr ? ` · ${yearStr}` : ''}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] font-bold text-[#201e1d]">
+                      <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3 text-[#645c50]" />{questionsCount} Qs</span>
+                      <span className="inline-flex items-center gap-1"><ImageIcon className="w-3 h-3 text-[#645c50]" />{diagramsCount} diagrams</span>
+                      <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3 text-[#645c50]" />{topicsCount} topics</span>
+                      <span className="font-medium text-[#645c50]" title={timeStr}>{relTime}</span>
+                    </div>
                   </div>
 
-                  {/* Far Right: Actions */}
-                  <div className="flex items-center gap-2 w-full lg:w-auto pt-2 lg:pt-0 border-t lg:border-t-0 border-[#201e1d]/10">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
                     <button
                       type="button"
-                      data-testid="inspect-ingest-btn"
-                      onClick={() => handleToggleExpand(paper.id)}
-                      className="flex-1 lg:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#ffe1d0] hover:bg-[#ffc6a5] border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] text-xs font-bold text-[#201e1d] transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                      onClick={() => handleOpenInStudio(paper.id)}
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#201e1d] hover:bg-[#3a3735] border-2 border-[#201e1d] text-xs font-bold text-white transition-colors cursor-pointer"
+                      title="Open this paper directly in Ingestion Studio"
                     >
-                      <span>{isExpanded ? 'Hide Contents' : 'Inspect Ingest Contents'}</span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Open in Studio</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => handleOpenInStudio(paper.id)}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#f5ead8] hover:bg-[#ebddc5] border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] text-xs font-bold text-[#201e1d] transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-                      title="Open this paper directly in Ingestion Studio"
+                      data-testid="inspect-ingest-btn"
+                      onClick={() => handleToggleExpand(paper.id)}
+                      aria-expanded={isExpanded}
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#f5ead8] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] transition-colors cursor-pointer"
                     >
-                      <ExternalLink className="w-3.5 h-3.5 text-[#201e1d]" />
-                      <span className="hidden sm:inline">Open in Studio</span>
+                      <span>Inspect</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </button>
 
                     {!paper.is_published && (
@@ -940,7 +787,7 @@ export default function IngestionHistoryHub({
                         type="button"
                         onClick={() => handleDeletePaper(paper.id)}
                         disabled={deletingPaperId === paper.id}
-                        className="inline-flex items-center justify-center gap-1.5 p-2 rounded-xl bg-white hover:bg-red-50 border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] text-xs font-bold text-red-600 hover:text-red-700 transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer disabled:opacity-50"
+                        className="inline-flex items-center justify-center p-2 rounded-xl bg-white hover:bg-red-50 border-2 border-[#201e1d]/30 hover:border-red-600 text-red-600 hover:text-red-700 transition-colors cursor-pointer disabled:opacity-50"
                         title="Delete this paper from staging"
                         aria-label={`Delete paper ${paper.id}`}
                       >
@@ -972,7 +819,7 @@ export default function IngestionHistoryHub({
                     ) : activeExpandedPaper ? (
                       <>
                         {/* 1. INGEST RECEIPT METADATA STRIP */}
-                        <div className="bg-[#f5ead8] border-2 border-[#201e1d] rounded-xl p-4 shadow-[1px_1px_0px_#201e1d] flex flex-wrap items-center justify-between gap-4">
+                        <div className="bg-[#f5ead8] border-2 border-[#201e1d]/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-4">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-[11px] font-bold text-[#201e1d]">
@@ -991,13 +838,13 @@ export default function IngestionHistoryHub({
                           <div className="flex flex-wrap items-center gap-2">
                             {/* Active vs Review Counts */}
                             <span className="px-2.5 py-1 rounded-md bg-[#ccdbb2] border border-[#201e1d] text-[11px] font-mono font-bold text-[#201e1d]">
-                              ✓ {activeExpandedPaper.questions.filter((q) => q.status === 'active').length} Active
+                              ✓ {receiptStats.active} Active
                             </span>
                             <span className="px-2.5 py-1 rounded-md bg-[#fde68a] border border-[#201e1d] text-[11px] font-mono font-bold text-[#201e1d]">
-                              ⚠️ {activeExpandedPaper.questions.filter((q) => q.status === 'needs_review').length} Review
+                              ⚠️ {receiptStats.review} Review
                             </span>
                             <span className="px-2.5 py-1 rounded-md bg-[#b8dcff] border border-[#201e1d] text-[11px] font-mono font-bold text-[#201e1d]">
-                              🖼️ {activeExpandedPaper.questions.filter((q) => q.diagram?.has_diagram || q.diagram?.image_url).length} Diagrams
+                              🖼️ {receiptStats.diagrams} Diagrams
                             </span>
                           </div>
                         </div>
@@ -1020,14 +867,14 @@ export default function IngestionHistoryHub({
                             )}
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5">
                             {/* All Topics Reset Card */}
                             <button
                               type="button"
                               onClick={() => setSelectedTopicFilter(null)}
-                              className={`p-2.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                              className={`px-2 py-1.5 rounded-lg border-2 text-left transition-colors cursor-pointer ${
                                 selectedTopicFilter === null
-                                  ? 'bg-[#ffe1d0] border-[#201e1d] shadow-[2px_2px_0px_#201e1d] font-bold'
+                                  ? 'bg-[#ffe1d0] border-[#201e1d] font-bold'
                                   : 'bg-white border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-[#f5ead8]'
                               }`}
                             >
@@ -1037,7 +884,7 @@ export default function IngestionHistoryHub({
                                   {activeExpandedPaper.questions.length} Qs
                                 </span>
                               </div>
-                              <div className="w-full bg-[#201e1d]/10 rounded-full h-1.5 mt-2 overflow-hidden">
+                              <div className="w-full bg-[#201e1d]/10 rounded-full h-1 mt-1.5 overflow-hidden">
                                 <div className="bg-[#201e1d] h-full w-full" />
                               </div>
                             </button>
@@ -1049,9 +896,9 @@ export default function IngestionHistoryHub({
                                   key={t.name}
                                   type="button"
                                   onClick={() => setSelectedTopicFilter(isSelected ? null : t.name)}
-                                  className={`p-2.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                                  className={`px-2 py-1.5 rounded-lg border-2 text-left transition-colors cursor-pointer ${
                                     isSelected
-                                      ? 'bg-[#ffe1d0] border-[#201e1d] shadow-[2px_2px_0px_#201e1d] font-bold'
+                                      ? 'bg-[#ffe1d0] border-[#201e1d] font-bold'
                                       : 'bg-white border-[#201e1d]/30 hover:border-[#201e1d] hover:bg-[#f5ead8]'
                                   }`}
                                 >
@@ -1059,11 +906,11 @@ export default function IngestionHistoryHub({
                                     <span className="font-semibold text-[#201e1d] truncate" title={t.name}>
                                       {t.name}
                                     </span>
-                                    <span className="font-mono text-[11px] bg-[#201e1d]/10 px-1.5 py-0.5 rounded shrink-0">
-                                      {t.count} Qs ({t.percent}%)
+                                    <span className="font-mono text-[10px] bg-[#201e1d]/10 px-1 py-0.5 rounded shrink-0">
+                                      {t.count} ({t.percent}%)
                                     </span>
                                   </div>
-                                  <div className="w-full bg-[#201e1d]/10 rounded-full h-1.5 mt-2 overflow-hidden">
+                                  <div className="w-full bg-[#201e1d]/10 rounded-full h-1 mt-1.5 overflow-hidden">
                                     <div
                                       className="bg-[#ccdbb2] h-full"
                                       style={{ width: `${t.percent}%` }}
@@ -1156,7 +1003,7 @@ export default function IngestionHistoryHub({
                             </div>
                           ) : (
                             <div className="space-y-4">
-                              {filteredExpandedQuestions.map((q) => {
+                              {filteredExpandedQuestions.slice(0, visibleCount).map((q) => {
                                 const liveQuestionId = findLiveQuestionId(activeExpandedPaper, q);
                                 const correctOption = (q.options || []).find((o) => o.is_correct);
                                 const correctLabel = correctOption?.label || '?';
@@ -1167,7 +1014,7 @@ export default function IngestionHistoryHub({
                                 return (
                                   <div
                                     key={q.question_number}
-                                    className="bg-white border-2 border-[#201e1d] rounded-xl p-4 shadow-[2px_2px_0px_#201e1d] space-y-3"
+                                    className="bg-white border-2 border-[#201e1d]/25 rounded-xl p-4 space-y-3"
                                   >
                                     {/* Question Header */}
                                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1213,7 +1060,7 @@ export default function IngestionHistoryHub({
                                         <button
                                           type="button"
                                           onClick={() => onOpenEditor(liveQuestionId)}
-                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#f5ead8] hover:bg-[#ffe1d0] border border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-xs cursor-pointer"
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#f5ead8] hover:bg-[#ffe1d0] border border-[#201e1d] text-xs font-bold text-[#201e1d] cursor-pointer"
                                           title={`Open live Question ${q.question_number} in Admin Question Editor`}
                                         >
                                           <Edit3 className="w-3 h-3" />
@@ -1229,7 +1076,7 @@ export default function IngestionHistoryHub({
 
                                     {/* Diagram Preview if present */}
                                     {hasDiagram && resolvedImageUrl && (
-                                      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl p-2.5 max-w-lg">
+                                      <div className="bg-[#f9f4ed] border border-[#201e1d]/30 rounded-xl p-2.5 max-w-lg">
                                         <div className="text-[10px] font-mono font-bold text-[#645c50] mb-1.5 flex items-center gap-1">
                                           <ImageIcon className="w-3 h-3" />
                                           <span>Diagram · {q.diagram?.alt_description || 'Extracted Question Diagram'}</span>
@@ -1240,6 +1087,8 @@ export default function IngestionHistoryHub({
                                           <img
                                             src={resolvedImageUrl}
                                             alt={q.diagram?.alt_description || `Question ${q.question_number} diagram`}
+                                            loading="lazy"
+                                            decoding="async"
                                             className="max-h-60 max-w-full object-contain rounded"
                                             onError={(e) => {
                                               // Fallback when image fails to load
@@ -1267,7 +1116,7 @@ export default function IngestionHistoryHub({
                                             key={opt.label}
                                             className={`p-2.5 rounded-xl border-2 flex items-start gap-2.5 transition-all ${
                                               isCorrect
-                                                ? 'bg-[#ccdbb2] border-[#201e1d] font-bold shadow-[1px_1px_0px_#201e1d]'
+                                                ? 'bg-[#ccdbb2] border-[#201e1d]/40 font-bold'
                                                 : 'bg-[#fdfbf7] border-[#201e1d]/20 text-[#474238]'
                                             }`}
                                           >
@@ -1349,6 +1198,15 @@ export default function IngestionHistoryHub({
                                   </div>
                                 );
                               })}
+                              {filteredExpandedQuestions.length > visibleCount && (
+                                <button
+                                  type="button"
+                                  onClick={() => setVisibleCount((c) => c + 10)}
+                                  className="w-full py-2 rounded-xl bg-white hover:bg-[#f5ead8] border-2 border-[#201e1d]/30 hover:border-[#201e1d] text-xs font-bold text-[#201e1d] cursor-pointer"
+                                >
+                                  Show 10 more ({filteredExpandedQuestions.length - visibleCount} left)
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>

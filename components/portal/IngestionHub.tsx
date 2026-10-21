@@ -21,7 +21,14 @@ import {
 } from "lucide-react";
 
 import IngestionSetupWizard from "./IngestionSetupWizard";
-import IngestionHistoryHub from "@/components/admin/IngestionHistoryHub";
+import dynamic from "next/dynamic";
+
+const IngestionHistoryHub = dynamic(() => import("@/components/admin/IngestionHistoryHub"), {
+  ssr: false,
+  loading: () => (
+    <div className="py-10 text-center text-xs font-mono font-bold text-[#645c50]">Loading history…</div>
+  ),
+});
 
 export type StudioSetupView = "new" | "history";
 
@@ -563,9 +570,7 @@ export default function IngestionHub({
             <div role="tabpanel" id="studio-tabpanel" aria-labelledby={`studio-tab-${setupView}`}>
             {setupView === "history" ? (
               <IngestionHistoryHub
-                embedded
                 onOpenEditor={onOpenEditor}
-                onNewIngest={() => changeSetupView("new")}
                 onOpenInStudio={() => {
                   setSetupView("new");
                   setIsSetupOpen(false);
