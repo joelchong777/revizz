@@ -1090,6 +1090,27 @@ test('QuestionCard Protection: QuestionCard wraps stem and options in MarkdownEr
   assertEqual(content.includes("<MarkdownErrorBoundary fallbackText={opt.text_markdown}>"), true, 'Option labels protected by error boundary');
 });
 
+test('Student sanitize: QuestionCard and RoundSummary run sanitizeKaTeX and keep boundary fallbacks', () => {
+  const fs = require('fs');
+  const path = require('path');
+  for (const rel of ['components/QuestionCard.tsx', 'components/RoundSummary.tsx']) {
+    const content = fs.readFileSync(path.resolve(process.cwd(), rel), 'utf8');
+    assertEqual(
+      /import\s*\{[^}]*\bsanitizeKaTeX\b[^}]*\}\s*from\s*['"]@\/lib\/ingestion\/katexSanitizer['"]/.test(content),
+      true,
+      `${rel} imports sanitizeKaTeX from '@/lib/ingestion/katexSanitizer'`
+    );
+    for (const raw of ['{question.stem_markdown}', '{item.question.stem_markdown}', "{correctOption?.text_markdown || ''}"]) {
+      const re = new RegExp('>\\s*' + raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*</ReactMarkdown>');
+      assertEqual(re.test(content), false, `${rel} does not pass raw ${raw} as ReactMarkdown children`);
+    }
+    const boundaries = (content.match(/<MarkdownErrorBoundary\b/g) || []).length;
+    const withFallback = (content.match(/<MarkdownErrorBoundary\s+fallbackText=/g) || []).length;
+    assertEqual(boundaries > 0, true, `${rel} still uses MarkdownErrorBoundary`);
+    assertEqual(withFallback, boundaries, `${rel}: every MarkdownErrorBoundary has fallbackText=`);
+  }
+});
+
 test('QuestionCard Layout: Citation pill is rendered first in the pills container', () => {
   const fs = require('fs');
   const path = require('path');

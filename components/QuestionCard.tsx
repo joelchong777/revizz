@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -12,6 +12,7 @@ import 'katex/dist/katex.min.css';
 import { Question, resolveDiagramUrl } from '@/lib/questions';
 import { formatTableOptionText } from '../lib/compilerFilters';
 import { cn } from '@/lib/utils';
+import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { cambridgeTableComponents } from '@/components/ui/RichMarkdown';
 import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
@@ -53,6 +54,7 @@ export function QuestionCard({
   subject,
 }: QuestionCardProps) {
   const shouldReduceMotion = useReducedMotion();
+  const sanitizedStem = useMemo(() => sanitizeKaTeX(question.stem_markdown || ''), [question.stem_markdown]);
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
   const lowTimeAnnouncedRef = useRef(false);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
@@ -415,7 +417,7 @@ export function QuestionCard({
               rehypePlugins={[rehypeRaw, rehypeKatex]}
               components={cambridgeTableComponents}
             >
-              {question.stem_markdown}
+              {sanitizedStem}
             </ReactMarkdown>
           </MarkdownErrorBoundary>
         </div>
@@ -678,7 +680,7 @@ export function QuestionCard({
                     remarkPlugins={[remarkMath, remarkGfm]}
                     rehypePlugins={[rehypeRaw, rehypeKatex]}
                   >
-                    {formatTableOptionText(opt.text_markdown)}
+                    {sanitizeKaTeX(formatTableOptionText(opt.text_markdown))}
                   </ReactMarkdown>
                 </MarkdownErrorBoundary>
               </span>

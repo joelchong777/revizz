@@ -14,6 +14,7 @@ import { cambridgeTableComponents } from '@/components/ui/RichMarkdown';
 import { MissedQuestionItem } from '../hooks/useQuizGame';
 import { playFanfare, playPop } from '../lib/audio';
 import { cn } from '@/lib/utils';
+import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
 import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 
 interface RoundSummaryProps {
@@ -247,7 +248,7 @@ export function RoundSummary({
                               rehypePlugins={[rehypeRaw, rehypeKatex]}
                               components={cambridgeTableComponents}
                             >
-                              {item.question.stem_markdown}
+                              {sanitizeKaTeX(item.question.stem_markdown)}
                             </ReactMarkdown>
                           </MarkdownErrorBoundary>
                         </div>
@@ -262,7 +263,7 @@ export function RoundSummary({
                                 p: ({ node, ...props }) => <span {...props} />,
                               }}
                             >
-                              {correctOption?.text_markdown || ''}
+                              {sanitizeKaTeX(correctOption?.text_markdown || '')}
                             </ReactMarkdown>
                           </MarkdownErrorBoundary>
                         </div>
