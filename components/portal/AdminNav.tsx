@@ -22,6 +22,7 @@ import {
   getPortalNavItems,
   PORTAL_NAV_CHANGE_EVENT,
 } from '@/lib/portal/menuConfig';
+import { cn } from '@/lib/utils';
 
 export interface AdminNavProps {
   role?: 'teacher' | 'content';
@@ -143,7 +144,7 @@ export default function AdminNav({
     >
       <div className="flex flex-col gap-4">
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-1">
+        <div className={cn("flex items-center px-1", compact ? (onClose ? 'justify-between' : 'justify-center') : 'justify-between')}>
           <div className="flex items-center gap-2.5">
             <Link
               href="/"
@@ -380,7 +381,7 @@ export default function AdminNav({
       {/* Footer: User Profile */}
       <div className="mt-auto flex flex-col gap-2.5 pt-3 border-t-2 border-[#201e1d]/15">
         {/* User Card */}
-        <div className="flex items-center gap-2.5 px-1 py-1">
+        <div className={`px-1 py-1 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center gap-2.5'}`}>
           <span
             className="w-8 h-8 shrink-0 rounded-xl border-2 border-[#201e1d] grid place-items-center text-xs font-black shadow-offset-2"
             style={{ backgroundColor: avatarBg }}

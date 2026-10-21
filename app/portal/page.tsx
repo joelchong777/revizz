@@ -771,10 +771,11 @@ function PortalContent() {
   };
 
   return (
-    <div className="lg:grid lg:grid-cols-[264px_minmax(0,1fr)] min-h-screen bg-[#f5ead8] text-[#201e1d] font-body">
+    <div className="lg:grid lg:grid-cols-[76px_minmax(0,1fr)] min-h-screen bg-[#f5ead8] text-[#201e1d] font-body">
       {/* Desktop Sidebar (sticky) */}
-      <div className="hidden lg:block lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto w-[264px] shrink-0">
+      <div className="hidden lg:block lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto w-[76px] shrink-0">
         <AdminNav
+          compact={true}
           role={role}
           active={activeNav}
           onSelect={handleSelectNav}
@@ -795,8 +796,9 @@ function PortalContent() {
             aria-label="Close navigation overlay"
           />
           {/* Drawer container */}
-          <div className="fixed inset-y-0 left-0 w-[264px] max-w-[85vw] h-full shadow-2xl z-50">
+          <div className="fixed inset-y-0 left-0 w-[76px] max-w-[85vw] h-full shadow-2xl z-50">
             <AdminNav
+              compact={true}
               role={role}
               active={activeNav}
               onSelect={handleSelectNav}

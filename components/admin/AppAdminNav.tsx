@@ -19,6 +19,7 @@ import {
   Users,
   ArrowRightLeft,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface AppAdminNavProps {
   active?: string;
@@ -86,7 +87,7 @@ export default function AppAdminNav({
     >
       <div className="flex flex-col gap-4">
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-1">
+        <div className={cn("flex items-center px-1", compact ? (isOpen ? 'justify-between' : 'justify-center') : 'justify-between')}>
           <div className="flex items-center gap-2.5">
             <Link
               href="/"
@@ -305,7 +306,7 @@ export default function AppAdminNav({
       </div>
 
       {/* Footer Profile & Security Pill */}
-      <div className="pt-3 border-t-2 border-[#201e1d]/15 flex items-center justify-between gap-2">
+      <div className={`pt-3 border-t-2 border-[#201e1d]/15 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center justify-between gap-2'}`}>
         <div
           onClick={onOpenProfileSwitcher}
           className={`flex items-center gap-2.5 min-w-0 ${onOpenProfileSwitcher ? 'cursor-pointer group' : ''}`}
@@ -344,16 +345,19 @@ export default function AppAdminNav({
           )}
         </div>
 
-        {!compact && onOpenProfileSwitcher && (
+        {onOpenProfileSwitcher && (
           <button
             type="button"
             onClick={onOpenProfileSwitcher}
             title="Switch profile & role"
             aria-label="Switch profile"
-            className="p-1.5 px-2 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+            className={compact
+              ? "w-8 h-8 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center justify-center shrink-0"
+              : "p-1.5 px-2 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+            }
           >
             <ArrowRightLeft className="w-3.5 h-3.5 text-[#c67139]" />
-            <span className="hidden sm:inline">Switch</span>
+            {!compact && <span className="hidden sm:inline">Switch</span>}
           </button>
         )}
       </div>

@@ -391,10 +391,10 @@ async function runVerifier() {
     const asideWidth = sidebarMetrics?.asideWidth || 0;
     recordAssertion({
       category: 'Sidebar Constraints',
-      name: 'Desktop sidebar container width is at least 264px',
-      passed: asideWidth >= 264,
+      name: 'Desktop sidebar container width is at least 76px',
+      passed: asideWidth >= 76,
       measured: `${asideWidth}px`,
-      expected: '>= 264px',
+      expected: '>= 76px',
     });
 
     // Check badge height constraints (prevent unexpected height explosions)
@@ -499,10 +499,10 @@ async function runVerifier() {
 
     recordAssertion({
       category: 'App Admin',
-      name: 'App Admin desktop sidebar width is at least 264px',
-      passed: adminAsideWidth >= 264,
+      name: 'App Admin desktop sidebar width is at least 76px',
+      passed: adminAsideWidth >= 76,
       measured: `${adminAsideWidth}px`,
-      expected: '>= 264px',
+      expected: '>= 76px',
     });
 
     // Interactive Tab Switch in Admin (switch to "Staged Papers")
