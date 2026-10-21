@@ -1209,8 +1209,10 @@ test('useQuizGame Question Skip: Correctly accounts for skipped question during 
   // Verify nextQuestion handles status === 'first-wrong'
   assertEqual(content.includes("if (status === 'first-wrong')"), true, 'nextQuestion checks status === "first-wrong"');
   assertEqual(content.includes("setWrongCount(prev => prev + 1)"), true, 'Increments wrongCount on skip');
-  assertEqual(content.includes("recordMissed(currentQ, 'wrong', currentQuestionIndex + 1)"), true, 'Records missed question on skip');
-  assertEqual(content.includes("saveAttempt(currentQ, 'wrong', 0, 0, false)"), true, 'Saves attempt as wrong on skip');
+  // Answer integrity: the skip is now recorded server-side as a 'give-up' event, then the missed question is queued.
+  assertEqual(/event:\s*'give-up'/.test(content), true, 'Skip is sent to the server as a give-up event');
+  assertEqual(content.includes("recordMissed(recorded, 'wrong', currentQuestionIndex + 1)"), true, 'Records missed question on skip');
+  assertEqual(content.includes('saveAttempt('), false, 'Client no longer writes attempts directly');
 });
 
 
@@ -2252,8 +2254,8 @@ async function runSuite13() {
 
     assertEqual(compiled.length, 3, 'Compiled 3 exam questions');
     for (const cq of compiled) {
-      assert(typeof cq.explanationMarkdown === 'string', `Question ${cq.id} has string explanationMarkdown`);
-      assert(Boolean(cq.explanationMarkdown && cq.explanationMarkdown.trim().length > 0), `Question ${cq.id} explanationMarkdown is non-empty`);
+      // Answer integrity: bundled fallback questions no longer carry explanations (server-only), so null is expected here.
+      assert(cq.explanationMarkdown === null || typeof cq.explanationMarkdown === 'string', `Question ${cq.id} explanationMarkdown is string or null`);
     }
 
     // Direct resolveQuestionExplanation verification
