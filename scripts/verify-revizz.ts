@@ -1789,7 +1789,7 @@ async function runSuite13() {
 
     // Verify mock setTimeout publishing was completely eliminated
     assertEqual(combinedContent.includes('setTimeout(() => setPublishMessage(null), 5000);'), false, 'Mock setTimeout publish eliminated');
-    assertEqual(auditorContent.includes("fetch('/api/ingest/publish'"), true, 'Wires handlePublish to real /api/ingest/publish');
+    assertEqual(auditorContent.includes("authFetch('/api/ingest/publish'"), true, 'Wires handlePublish to real /api/ingest/publish');
     assertEqual(queueContent.includes('accept=".json'), true, 'Contains direct JSON dropzone accepting .json');
     assertEqual(combinedContent.includes("'draft'"), false, 'StagingReview never outputs draft status for staged questions');
     assertEqual(auditorContent.includes('setPublishMessage(null);'), true, 'Auditor clears publishMessage appropriately');
@@ -4182,7 +4182,7 @@ async function runSuite21() {
       'app/api/admin/users/route.ts exports DELETE handler'
     );
     assert(
-      content.includes('getSupabaseClient') && content.includes('createClient'),
+      content.includes('getServiceClient') && content.includes('requireRole'),
       'app/api/admin/users/route.ts initializes Supabase client'
     );
     assert(
@@ -4199,7 +4199,7 @@ async function runSuite21() {
 
     const content = fs.readFileSync(hubPath, 'utf8');
     assert(
-      content.includes("fetch('/api/admin/users')"),
+      content.includes("authFetch('/api/admin/users')"),
       'UserManagementHub calls fetch to /api/admin/users'
     );
     assert(

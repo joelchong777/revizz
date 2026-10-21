@@ -1,22 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getServiceClient, requireRole } from '@/lib/apiAuth';
 import { StagingPaper, validateStagingPaper } from '@/types/ingestion';
-
-// Polyfill WebSocket in Node runtime if absent
-if (typeof (globalThis as any).WebSocket === 'undefined') {
-  (globalThis as any).WebSocket = class MockWebSocket {};
-}
-
-function getSupabaseClient(): SupabaseClient {
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dmvahcaxixvhgxidmkqs.supabase.co';
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtdmFoY2F4aXh2aGd4aWRta3FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTc4NzQsImV4cCI6MjEwNzAzMzg3NH0.qeqa5hQ84xnIOljKmu7SUhcko53qM1gO_dCmYvjnf-4';
-
-  return createClient(supabaseUrl, supabaseKey);
-}
 
 /**
  * Extract distractor explanation for an option from question explanation markdown.
@@ -72,6 +56,8 @@ export interface PublishReceipt {
  * { success: true, paper_id: string, subjects_count: number, topics_count: number, questions_count: number, options_count: number }
  */
 export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['admin']);
+  if (!auth.ok) return auth.response;
   let stage = 'request_parsing';
 
   try {
@@ -109,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     const paper: StagingPaper = validation.data;
-    const supabase = getSupabaseClient();
+    const supabase = getServiceClient();
 
     // Support partial publish options if specified (e.g. publishing selected question numbers)
     const selectedQuestionNumbers: number[] | undefined =

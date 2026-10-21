@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -83,7 +84,7 @@ export default function IngestionMarkSchemeModal({
     setFixSuccessMessage(null);
 
     try {
-      const res = await fetch("/api/ingest/verify-ms", {
+      const res = await authFetch("/api/ingest/verify-ms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paper }),
@@ -119,7 +120,7 @@ export default function IngestionMarkSchemeModal({
       formData.append("paper", JSON.stringify(paper));
       formData.append("ms_file", selectedFile);
 
-      const res = await fetch("/api/ingest/verify-ms", {
+      const res = await authFetch("/api/ingest/verify-ms", {
         method: "POST",
         body: formData,
       });
@@ -150,7 +151,7 @@ export default function IngestionMarkSchemeModal({
     setFixSuccessMessage(null);
 
     try {
-      const res = await fetch("/api/ingest/verify-ms", {
+      const res = await authFetch("/api/ingest/verify-ms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -211,7 +212,7 @@ export default function IngestionMarkSchemeModal({
         // Also trigger backend re-verification
         setTimeout(async () => {
           try {
-            const reRes = await fetch("/api/ingest/verify-ms", {
+            const reRes = await authFetch("/api/ingest/verify-ms", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

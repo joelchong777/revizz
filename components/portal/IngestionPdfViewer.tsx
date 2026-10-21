@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -392,7 +393,7 @@ export function IngestionPdfViewer({
           imageBase64: pageImageBase64 || undefined,
         };
 
-        const res = await fetch("/api/ingest/crop", {
+        const res = await authFetch("/api/ingest/crop", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

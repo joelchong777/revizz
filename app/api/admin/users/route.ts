@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getServiceClient, requireRole } from '@/lib/apiAuth';
 import { buildInviteLink, buildInviteMailto, sendInviteEmail } from '@/lib/email';
-
-// Polyfill WebSocket in Node runtime if absent
-if (typeof (globalThis as any).WebSocket === 'undefined') {
-  (globalThis as any).WebSocket = class MockWebSocket {};
-}
 
 export type UserRole = 'student' | 'teacher' | 'admin';
 export type UserStatus = 'active' | 'invited' | 'suspended';
@@ -33,25 +28,16 @@ export interface UserCounts {
   schoolAccounts: number;
 }
 
-function getSupabaseClient(): SupabaseClient {
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dmvahcaxixvhgxidmkqs.supabase.co';
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtdmFoY2F4aXh2aGd4aWRta3FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTc4NzQsImV4cCI6MjEwNzAzMzg3NH0.qeqa5hQ84xnIOljKmu7SUhcko53qM1gO_dCmYvjnf-4';
-
-  return createClient(supabaseUrl, supabaseKey);
-}
-
 /**
  * GET /api/admin/users
  * Fetches all registered user profiles and roster invitations,
  * de-duplicates by normalized email, computes counts, and returns merged directory.
  */
 export async function GET(req: NextRequest) {
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
-    const supabase = getSupabaseClient();
+    const supabase = getServiceClient();
 
     // 1. Fetch all rows from public.profiles
     const { data: profiles, error: profilesError } = await supabase
@@ -157,6 +143,8 @@ export async function GET(req: NextRequest) {
  * Creates a new user invitation record in public.roster_invites.
  */
 export async function POST(req: NextRequest) {
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     let body: any;
     try {
@@ -176,7 +164,7 @@ export async function POST(req: NextRequest) {
     const cleanCohort = (cohort || 'General').trim();
     const cleanName = (name || '').trim();
     const isSchool = is_school_account !== undefined ? Boolean(is_school_account) : true;
-    const supabase = getSupabaseClient();
+    const supabase = getServiceClient();
 
     // Check if password is provided in request body (manual user creation with credentials)
     if (password !== undefined && password !== null) {
@@ -397,6 +385,8 @@ export async function POST(req: NextRequest) {
  * Routes updates to either public.roster_invites (if invite) or public.profiles.
  */
 export async function PATCH(req: NextRequest) {
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     let body: any;
     try {
@@ -417,7 +407,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = getServiceClient();
 
     if (isInvite) {
       const updatePayload: Record<string, any> = {};
@@ -481,6 +471,8 @@ export async function PATCH(req: NextRequest) {
  * Deletes user profile or revokes roster invitation.
  */
 export async function DELETE(req: NextRequest) {
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     let id: string | null = null;
     let isInvite: boolean = false;
@@ -512,7 +504,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = getServiceClient();
 
     if (isInvite) {
       const { error } = await supabase

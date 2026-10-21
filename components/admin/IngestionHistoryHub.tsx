@@ -1,4 +1,5 @@
 'use client';
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -151,7 +152,7 @@ export default function IngestionHistoryHub({
     setError(null);
 
     try {
-      const res = await fetch('/api/ingest/staged-paper?include_archived=true', {
+      const res = await authFetch('/api/ingest/staged-paper?include_archived=true', {
         cache: 'no-store',
       });
       if (!res.ok) {
@@ -191,7 +192,7 @@ export default function IngestionHistoryHub({
     });
 
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
         cache: 'no-store',
       });
       if (!res.ok) {
@@ -240,7 +241,7 @@ export default function IngestionHistoryHub({
     }
     setDeletingPaperId(paperId);
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
         method: 'DELETE',
       });
       const data = await res.json();

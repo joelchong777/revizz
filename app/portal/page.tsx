@@ -104,7 +104,7 @@ function PortalContent() {
     const demoParam = searchParams?.get('demo');
     const modeParam = searchParams?.get('mode');
     const devParam = searchParams?.get('dev');
-    if (guestParam === 'true' || demoParam === 'true' || modeParam === 'guest') {
+    if (isDev && (guestParam === 'true' || demoParam === 'true' || modeParam === 'guest')) {
       setGuestMode(true);
     }
     if (isDev && devParam === 'true') {

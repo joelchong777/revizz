@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import { UserProfile } from '../types';
-import { checkAndClaimInvite } from './roster';
 
 export const PROVIDER_NOT_ENABLED_CODE = 'PROVIDER_NOT_ENABLED';
 
@@ -626,21 +625,14 @@ export const useAuth = () => {
           const email = session.user.email || '';
           const name = session.user.user_metadata?.full_name || '';
           
-          let isSchoolAccount = checkIsSchoolAccount(email);
+          const isSchoolAccount = checkIsSchoolAccount(email);
           const displayName = formatDisplayName(name, email);
 
-          // Check for roster invite and claim if available
-          let claimedInvite = null;
-          if (email) {
-            try {
-              claimedInvite = await checkAndClaimInvite(email, session.user.id);
-            } catch (inviteErr) {
-              console.warn('Error checking/claiming roster invite:', inviteErr);
-            }
-          }
-
-          if (claimedInvite) {
-            isSchoolAccount = true;
+          // Roster invites are claimed server-side; the browser never writes role.
+          try {
+            await supabase.rpc('claim_roster_invite');
+          } catch (inviteErr) {
+            console.warn('Error claiming roster invite:', inviteErr);
           }
 
           try {
@@ -659,32 +651,12 @@ export const useAuth = () => {
                 total_xp: 0,
                 current_streak: 0,
                 opt_in_leaderboard: false,
-                role: claimedInvite?.role || 'student',
+                role: 'student',
               };
               
               await supabase.from('profiles').insert(newProfile);
               if (mounted) setUserProfile(newProfile);
             } else {
-              const updates: Partial<UserProfile> = {};
-
-              // ensure school tag is up to date
-              if (isSchoolAccount && !existingProfile.is_school_account) {
-                updates.is_school_account = true;
-                existingProfile.is_school_account = true;
-              }
-
-              // If an invite exists and has role === 'teacher' or role === 'admin', ensure role is updated in profile
-              if (claimedInvite && (claimedInvite.role === 'teacher' || claimedInvite.role === 'admin')) {
-                if (existingProfile.role !== claimedInvite.role) {
-                  updates.role = claimedInvite.role;
-                  existingProfile.role = claimedInvite.role;
-                }
-              }
-
-              if (Object.keys(updates).length > 0) {
-                await supabase.from('profiles').update(updates).eq('id', session.user.id);
-              }
-
               if (mounted) setUserProfile(existingProfile as UserProfile);
             }
           } catch (profileError) {

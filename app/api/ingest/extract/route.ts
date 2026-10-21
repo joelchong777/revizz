@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireRole } from '@/lib/apiAuth';
 import { extractQuestionsChunked, normalizeGeminiModel } from '@/lib/ingestion/geminiExtractor';
 
 export const runtime = 'nodejs';
@@ -43,6 +44,8 @@ function cleanBase64String(str: string): string {
  * - If stream=false: Standard JSON response { success: true, total_questions: 40, questions: [...] }
  */
 export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     const apiKey =
       process.env.GEMINI_API_KEY ||

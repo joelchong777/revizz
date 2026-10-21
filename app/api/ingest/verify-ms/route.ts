@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireRole } from '@/lib/apiAuth';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -40,6 +41,8 @@ import type { StagingPaper } from '@/types/ingestion';
  *    - rawMsText?: string
  */
 export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['admin']);
+  if (!auth.ok) return auth.response;
   let tempFilePath: string | null = null;
 
   try {

@@ -1,3 +1,4 @@
+import { authFetch } from './authFetch';
 import type { Question, DiagramFilter } from '../hooks/useQuizGame';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
@@ -570,7 +571,7 @@ export async function deleteQuestionsFromDb(
 
   // 1. Attempt API route deletion via fetch
   try {
-    const response = await fetch('/api/questions/delete', {
+    const response = await authFetch('/api/questions/delete', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -677,7 +678,7 @@ export async function updateQuestionsInDb(
   // 1. Attempt API route update via fetch when in browser
   if (typeof window !== 'undefined') {
     try {
-      const response = await fetch('/api/questions/update', {
+      const response = await authFetch('/api/questions/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1004,7 +1005,7 @@ export async function fetchIngestedPapers(subjectCode?: string): Promise<Ingeste
   try {
     let res: Response | null = null;
     if (typeof window !== 'undefined') {
-      res = await fetch('/api/ingest/staged-paper');
+      res = await authFetch('/api/ingest/staged-paper');
     } else {
       const base =
         process.env.NEXT_PUBLIC_SITE_URL ||
@@ -1174,7 +1175,7 @@ export async function fetchPaperQuestions(paperIdOrCleanId: string): Promise<Que
     let res: Response | null = null;
     const endpoint = `/api/ingest/staged-paper?id=${encodeURIComponent(paperIdOrCleanId)}`;
     if (typeof window !== 'undefined') {
-      res = await fetch(endpoint);
+      res = await authFetch(endpoint);
     } else {
       const base =
         process.env.NEXT_PUBLIC_SITE_URL ||

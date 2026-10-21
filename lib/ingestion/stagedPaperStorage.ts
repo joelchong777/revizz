@@ -3,7 +3,8 @@ if (typeof (globalThis as any).WebSocket === 'undefined') {
   (globalThis as any).WebSocket = class MockWebSocket {};
 }
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/lib/apiAuth';
 import fs from 'fs';
 import path from 'path';
 import { StagingPaper, StagingQuestion, validateStagingPaper } from '@/types/ingestion';
@@ -18,14 +19,7 @@ export const PAPER_STATES_PATH = 'staged_metadata/paper_states.json';
 export const STAGED_PAPERS_DIR = 'staged_papers';
 
 export function getSupabaseClient(): SupabaseClient {
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dmvahcaxixvhgxidmkqs.supabase.co';
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtdmFoY2F4aXh2aGd4aWRta3FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTc4NzQsImV4cCI6MjEwNzAzMzg3NH0.qeqa5hQ84xnIOljKmu7SUhcko53qM1gO_dCmYvjnf-4';
-
-  return createClient(supabaseUrl, supabaseKey);
+  return getServiceClient();
 }
 
 export async function fetchPersistentPaperStates(): Promise<StagedPaperStates> {

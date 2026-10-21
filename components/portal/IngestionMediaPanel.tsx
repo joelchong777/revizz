@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
@@ -234,7 +235,7 @@ export function IngestionMediaPanel({
     setRecropFeedback(null);
 
     try {
-      const res = await fetch("/api/ingest/crop", {
+      const res = await authFetch("/api/ingest/crop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

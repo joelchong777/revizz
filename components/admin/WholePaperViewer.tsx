@@ -1,4 +1,5 @@
 'use client';
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
@@ -155,7 +156,7 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     setLoadingList(true);
     setListError(null);
     try {
-      const res = await fetch('/api/ingest/staged-paper');
+      const res = await authFetch('/api/ingest/staged-paper');
       if (!res.ok) {
         throw new Error(`Failed to list papers: HTTP ${res.status}`);
       }
@@ -200,7 +201,7 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     setLoadingPaper(true);
     setPaperError(null);
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`);
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`);
       if (!res.ok) {
         throw new Error(`Failed to load paper "${paperId}": HTTP ${res.status}`);
       }
@@ -248,7 +249,7 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     setDeleteError(null);
 
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(targetId)}`, {
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(targetId)}`, {
         method: 'DELETE',
       });
 

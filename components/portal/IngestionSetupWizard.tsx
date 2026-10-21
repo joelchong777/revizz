@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
@@ -237,7 +238,7 @@ export default function IngestionSetupWizard({
     setDirectPublishMessage("Publishing to Supabase...");
 
     try {
-      const res = await fetch("/api/ingest/publish", {
+      const res = await authFetch("/api/ingest/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paper: directParsedPaper }),

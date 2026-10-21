@@ -1,4 +1,5 @@
 "use client";
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -181,7 +182,7 @@ export default function IngestionHeader({
         const res = await onArchiveStagedPaper(paper.id);
         if (!res.success) throw new Error(res.error || "Failed to archive staged paper");
       } else {
-        const res = await fetch("/api/ingest/staged-paper", {
+        const res = await authFetch("/api/ingest/staged-paper", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "archive", id: paper.id }),
@@ -208,7 +209,7 @@ export default function IngestionHeader({
         const res = await onDeleteStagedPaper(paper.id);
         if (!res.success) throw new Error(res.error || 'Failed to delete staged paper');
       } else {
-        const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paper.id)}`, {
+        const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paper.id)}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: paper.id }),

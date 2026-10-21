@@ -1,4 +1,5 @@
 'use client';
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -244,7 +245,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
     // 1. Primary path: Fetch live directory from backend API /api/admin/users
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await authFetch('/api/admin/users');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.users)) {
@@ -442,7 +443,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
     // Persist to live backend API
     try {
-      await fetch('/api/admin/users', {
+      await authFetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -489,7 +490,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
     // Persist to live backend API
     try {
-      await fetch('/api/admin/users', {
+      await authFetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -535,7 +536,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
     // Persist to live backend API
     try {
-      await fetch('/api/admin/users', {
+      await authFetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -571,7 +572,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
     // Persist to live backend API
     try {
-      await fetch('/api/admin/users', {
+      await authFetch('/api/admin/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, isInvite }),
@@ -622,7 +623,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       let apiEmailDelivery: { sent: boolean; provider?: string | null; reason?: string } | undefined;
 
       try {
-        const res = await fetch('/api/admin/users', {
+        const res = await authFetch('/api/admin/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -862,7 +863,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     setCreateUserError(null);
 
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await authFetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

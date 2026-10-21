@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getServiceClient, requireRole } from '@/lib/apiAuth';
 import {
   DiagramBBox,
   isDiagramBBoxValid,
@@ -7,25 +7,6 @@ import {
   cropAndUploadImage,
   sanitizeDiagramFilename,
 } from '@/lib/ingestion/diagramCropper';
-
-// Polyfill WebSocket in Node runtime if absent
-if (typeof (globalThis as any).WebSocket === 'undefined') {
-  (globalThis as any).WebSocket = class MockWebSocket {};
-}
-
-function getSupabaseClient(): SupabaseClient | null {
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dmvahcaxixvhgxidmkqs.supabase.co';
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    return null;
-  }
-
-  return createClient(supabaseUrl, supabaseKey);
-}
 
 /**
  * POST /api/ingest/crop
@@ -48,6 +29,8 @@ function getSupabaseClient(): SupabaseClient | null {
  * }
  */
 export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     let body: any;
     try {
@@ -106,7 +89,7 @@ export async function POST(request: NextRequest) {
     const targetFilename = sanitizeDiagramFilename(`${cleanPaper}_q${qPad}.png`);
 
     // 4. Crop image and upload to Supabase Storage (with fallback)
-    const supabaseClient = getSupabaseClient();
+    const supabaseClient = getServiceClient();
     const result = await cropAndUploadImage({
       imageBase64,
       imageUrl,

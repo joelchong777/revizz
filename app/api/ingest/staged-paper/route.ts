@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCaller, requireRole } from '@/lib/apiAuth';
 import fs from 'fs';
 import path from 'path';
 import { validateStagingPaper, StagedPaperSummary, StagingPaper } from '@/types/ingestion';
@@ -420,6 +421,38 @@ async function deletePaperAndRelationsFromDatabase(
  *   If omitted or false: Lists all active papers and returns `{ success: true, papers: [...], stagedPapers: [...] }`.
  */
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const rawId = searchParams.get('id');
+  const includeArchived =
+    searchParams.get('include_archived') === 'true' ||
+    searchParams.get('include_archived') === '1';
+
+  if (includeArchived) {
+    const auth = await requireRole(request, ['admin']);
+    if (!auth.ok) return auth.response;
+    return handleGet(request, true);
+  }
+
+  const isAdminCaller = (await getCaller(request))?.role === 'admin';
+  if (isAdminCaller || !rawId) {
+    return handleGet(request, isAdminCaller);
+  }
+
+  // Non-admin ?id= is public only for published papers; every other outcome is the same 404.
+  const notFound = () =>
+    NextResponse.json({ success: false, error: 'Paper not found' }, { status: 404 });
+  try {
+    const res = await handleGet(request, false);
+    if (!res.ok) return notFound();
+    const body = await res.clone().json();
+    if (body?.success === true && body?.is_published === true) return res;
+    return notFound();
+  } catch {
+    return notFound();
+  }
+}
+
+async function handleGet(request: NextRequest, isAdminCaller: boolean) {
   try {
     const { searchParams } = new URL(request.url);
     const rawId = searchParams.get('id');
@@ -974,7 +1007,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort with live published papers first, followed by staged papers
-    const allStagedPapers: StagedPaperSummary[] = [...livePaperSummaries, ...stagedSummaries];
+    const allStagedPapers: StagedPaperSummary[] = [...livePaperSummaries, ...stagedSummaries].filter(
+      (p) => isAdminCaller || p.is_published === true
+    );
     const papers: string[] = allStagedPapers.map((p) => p.id);
 
     return NextResponse.json({
@@ -1004,6 +1039,8 @@ export async function GET(request: NextRequest) {
  *    { paper: StagingPaper, id?: string }
  */
 export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     let body: any;
     try {
@@ -1337,6 +1374,8 @@ export async function POST(request: NextRequest) {
  * Optional REST convenience endpoint delegating to delete action.
  */
 export async function DELETE(request: NextRequest) {
+  const auth = await requireRole(request, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     const { searchParams } = new URL(request.url);
     let rawId = searchParams.get('id');

@@ -1,4 +1,5 @@
 'use client';
+import { authFetch } from '../authFetch';
 
 import { useSyncExternalStore } from 'react';
 import {
@@ -543,7 +544,7 @@ const actions: IngestionActions = {
     });
 
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(targetId)}`);
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(targetId)}`);
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
         throw new Error(errJson.error || `Failed to fetch preset: HTTP ${res.status}`);
@@ -956,7 +957,7 @@ const actions: IngestionActions = {
     });
 
     try {
-      const res = await fetch('/api/ingest/publish', {
+      const res = await authFetch('/api/ingest/publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1004,7 +1005,7 @@ const actions: IngestionActions = {
 
   async archiveStagedPaper(paperId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const res = await fetch('/api/ingest/staged-paper', {
+      const res = await authFetch('/api/ingest/staged-paper', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1031,7 +1032,7 @@ const actions: IngestionActions = {
 
   async deleteStagedPaper(paperId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -1453,7 +1454,7 @@ const actions: IngestionActions = {
       formData.append('end_question', String(endQuestion));
       formData.append('model', model);
 
-      const res = await fetch('/api/ingest/extract', {
+      const res = await authFetch('/api/ingest/extract', {
         method: 'POST',
         body: formData,
         signal: activeAbortController.signal,

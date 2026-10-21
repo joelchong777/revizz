@@ -1,4 +1,5 @@
 'use client';
+import { authFetch } from '../../lib/authFetch';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
@@ -662,7 +663,7 @@ export default function AdminTools({
       }
 
       const payload = json && typeof json === 'object' && json.paper ? json : { paper: json };
-      const res = await fetch('/api/ingest/publish', {
+      const res = await authFetch('/api/ingest/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -1,4 +1,5 @@
 'use client';
+import { authFetch } from '../../../lib/authFetch';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
@@ -107,7 +108,7 @@ export default function StagedPapersQueue({
     setError(null);
 
     try {
-      const res = await fetch('/api/ingest/staged-paper');
+      const res = await authFetch('/api/ingest/staged-paper');
       if (!res.ok) {
         throw new Error(`Failed to load staged papers (HTTP ${res.status})`);
       }
@@ -144,7 +145,7 @@ export default function StagedPapersQueue({
   const handleDeletePaper = async (paperId: string) => {
     setIsDeletingId(paperId);
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: paperId }),
@@ -189,7 +190,7 @@ export default function StagedPapersQueue({
     setIsExportingId(paperId);
 
     try {
-      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`);
+      const res = await authFetch(`/api/ingest/staged-paper?id=${encodeURIComponent(paperId)}`);
       if (!res.ok) throw new Error('Could not fetch paper data for download.');
       const data = await res.json();
       const payload = data?.paper || data;
@@ -235,7 +236,7 @@ export default function StagedPapersQueue({
         throw new Error('File is not valid JSON.');
       }
 
-      const res = await fetch('/api/ingest/staged-paper', {
+      const res = await authFetch('/api/ingest/staged-paper', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paper: parsedJson, filename: file.name }),
