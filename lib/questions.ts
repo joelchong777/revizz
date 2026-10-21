@@ -2,6 +2,7 @@ import type { Question, DiagramFilter } from '../hooks/useQuizGame';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { resolveDiagramUrl } from './resolveDiagramUrl';
+import { hasDataTable } from './compilerFilters';
 export { resolveDiagramUrl };
 export type { Question, DiagramFilter };
 
@@ -511,10 +512,14 @@ export function isDiagramQuestion(q: Question): boolean {
   );
 }
 
+const GRAPH_REGEX =
+  /\b(graph|graphs|curve|curves|ppc|axis|axes|coordinate|coordinates|trend|trends|slope|slopes|demand and supply|demand|supply|equilibrium|disequilibrium|exchange rate|exchange rates|tariff|tariffs|wage rate|wage rates|inflation|tax|taxes|subsidy|subsidies|quota|quotas|production possibility|market for|shifts? in|movement along|price and quantity|price \(?p\)?|quantity \(?q\)?)\b/i;
+
 export function isGraphQuestion(q: Question): boolean {
   if (!isDiagramQuestion(q)) return false;
-  const text = `${q.stem_markdown || ''} ${q.diagram?.alt_description || ''} ${(q.tags || []).join(' ')}`.toLowerCase();
-  return /\b(graph|curve|curves|ppc|axis|axes|coordinate|trend|slope|demand and supply|demand curve|supply curve|equilibrium|exchange rate|tariff|wage rate|inflation)\b/i.test(text);
+  const diagMeta = (q as { diagram_metadata?: { description?: string; type?: string } }).diagram_metadata;
+  const text = `${q.stem_markdown || ''} ${q.diagram?.alt_description || ''} ${diagMeta?.description || ''} ${diagMeta?.type || ''} ${(q.tags || []).join(' ')}`.toLowerCase();
+  return GRAPH_REGEX.test(text);
 }
 
 export function filterQuestionsByDiagram(
@@ -525,17 +530,22 @@ export function filterQuestionsByDiagram(
     return questions;
   }
   if (filter === 'graph') {
-    const graphs = questions.filter(isGraphQuestion);
-    return graphs.length > 0 ? graphs : questions.filter(isDiagramQuestion);
+    return questions.filter(isGraphQuestion);
   }
   if (filter === 'diagram') {
-    const visualDiagrams = questions.filter((q) => isDiagramQuestion(q) && !isGraphQuestion(q));
-    return visualDiagrams.length > 0 ? visualDiagrams : questions.filter(isDiagramQuestion);
+    return questions.filter(
+      (q) => !isGraphQuestion(q) && (isDiagramQuestion(q) || hasDataTable(q.stem_markdown, q))
+    );
   }
   if (filter === 'diagrams') {
     return questions.filter(isDiagramQuestion);
   }
-  if (filter === 'text' || filter === 'no-diagrams') {
+  if (filter === 'text') {
+    return questions.filter(
+      (q) => !isGraphQuestion(q) && !isDiagramQuestion(q) && !hasDataTable(q.stem_markdown, q)
+    );
+  }
+  if (filter === 'no-diagrams') {
     return questions.filter((q) => !isDiagramQuestion(q));
   }
   return questions;

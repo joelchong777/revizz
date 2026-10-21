@@ -11,6 +11,7 @@ import {
   Check,
   Zap,
   Image as ImageIcon,
+  TrendingUp,
   Table,
   Calculator,
   RotateCcw,
@@ -38,7 +39,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // RichMarkdown provides internal MarkdownErrorBoundary defensive wrapper
 import { RichMarkdown } from '@/components/ui/RichMarkdown';
 import Select, { SelectOption } from '@/components/ui/select';
-import { useQuestions, useTopics, Question, resolveDiagramUrl } from '@/lib/questions';
+import { useQuestions, useTopics, Question, resolveDiagramUrl, isGraphQuestion } from '@/lib/questions';
 import { useAuth } from '@/lib/auth';
 import { CompilerDiagramPreview } from './CompilerDiagramPreview';
 import {
@@ -1036,7 +1037,15 @@ export default function TestCompilerHub() {
                       )}
                       {q.image_url && (
                         <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#f0c2a8] text-[11px] font-bold flex items-center gap-1">
-                          <ImageIcon className="w-3 h-3" aria-hidden="true" /> Diagram
+                          {isGraphQuestion(q) ? (
+                            <>
+                              <TrendingUp className="w-3 h-3" aria-hidden="true" /> Graph
+                            </>
+                          ) : (
+                            <>
+                              <ImageIcon className="w-3 h-3" aria-hidden="true" /> Diagram
+                            </>
+                          )}
                         </span>
                       )}
                       {hasDataTable(q.stem_markdown, q) && (

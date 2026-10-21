@@ -6,6 +6,7 @@ import {
   filterQuestionsByDiagram,
   Question,
 } from '../lib/questions';
+import { hasDataTable } from '../lib/compilerFilters';
 
 console.log('Testing diagram filter logic...');
 
@@ -97,21 +98,33 @@ const allFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'all');
 assert.strictEqual(allFilter.length, 30, 'All filter should return all 30 questions');
 
 const graphFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'graph');
-assert.ok(graphFilter.length > 0, 'Graph filter should return at least 1 question');
+assert.strictEqual(graphFilter.length, 5, 'Graph filter should return exactly 5 questions');
 for (const q of graphFilter) {
   assert.strictEqual(isGraphQuestion(q), true, `Question ${q.id} should be identified as a graph question`);
 }
 
 const diagramFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'diagram');
-assert.ok(diagramFilter.length > 0, 'Diagram filter should return at least 1 question');
+assert.strictEqual(diagramFilter.length, 8, 'Diagram filter should return exactly 8 questions');
 for (const q of diagramFilter) {
-  assert.strictEqual(isDiagramQuestion(q), true, `Question ${q.id} should be identified as a diagram question`);
+  assert.strictEqual(isGraphQuestion(q), false, `Question ${q.id} in diagram filter should not be a graph question`);
+  assert.ok(
+    isDiagramQuestion(q) || hasDataTable(q.stem_markdown, q),
+    `Question ${q.id} should be a diagram or data table question`
+  );
 }
 
 const textFilter = filterQuestionsByDiagram(CAMBRIDGE_QUESTIONS, 'text');
-assert.strictEqual(textFilter.length, 25, 'Text filter should return exactly 25 questions');
+assert.strictEqual(textFilter.length, 17, 'Text filter should return exactly 17 questions');
 for (const q of textFilter) {
-  assert.strictEqual(isDiagramQuestion(q), false, `Question ${q.id} should not be identified as a diagram question`);
+  assert.strictEqual(isGraphQuestion(q), false, `Question ${q.id} should not be a graph question`);
+  assert.strictEqual(isDiagramQuestion(q), false, `Question ${q.id} should not be a diagram question`);
+  assert.strictEqual(hasDataTable(q.stem_markdown, q), false, `Question ${q.id} should not have a data table`);
 }
+
+assert.strictEqual(
+  graphFilter.length + diagramFilter.length + textFilter.length,
+  allFilter.length,
+  'Sum of graph, diagram, and text questions must equal total questions'
+);
 
 console.log('All diagram filter verification tests passed successfully! ✓');
