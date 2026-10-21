@@ -1824,15 +1824,8 @@ export default function AdminTools({
             </div>
           )}
 
-          {/* Status Counter Tabs / Educator Banner */}
-          {isTeacherMode ? (
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-semibold text-[#3d472b]">
-              <span className="w-2 h-2 rounded-full bg-[#728157] shrink-0" />
-              <span>
-                Verified Curriculum Bank · Only Live Cambridge questions are shown. Click any question to preview and add classroom tags or teacher notes.
-              </span>
-            </div>
-          ) : (
+          {/* Status Counter Tabs (hidden in teacher mode) */}
+          {isTeacherMode ? null : (
             <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold">
               <button
                 type="button"
