@@ -14,10 +14,13 @@ import {
   Search,
   Sparkles,
   AlertCircle,
+  AlertTriangle,
   Layers,
   Check,
   ZoomIn,
   X,
+  Trash2,
+  Loader2,
   Table as TableIcon,
   ListOrdered,
   Image as ImageIcon,
@@ -50,6 +53,12 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
   const [paperSource, setPaperSource] = useState<'database' | 'staging' | string>('staging');
   const [loadingPaper, setLoadingPaper] = useState<boolean>(false);
   const [paperError, setPaperError] = useState<string | null>(null);
+
+  // Delete paper states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [successBanner, setSuccessBanner] = useState<{ message: string; deletedCount?: number } | null>(null);
 
   // View mode & filters
   const [viewMode, setViewMode] = useState<'continuous' | 'table'>('continuous');
@@ -270,6 +279,92 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     return `${seriesLabel} ${year || ''}`.trim();
   };
 
+  // Delete paper handler
+  const handleDeletePaper = async () => {
+    const targetId = publishedExamPaperId || selectedPaperId || paper?.id || '';
+    if (!targetId) return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const res = await fetch(`/api/ingest/staged-paper?id=${encodeURIComponent(targetId)}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Failed to delete paper (HTTP ${res.status})`);
+      }
+
+      // Clean localStorage for any relating question IDs: revizz_guest_review_pile, revizz_first_try_correct_ids
+      if (typeof window !== 'undefined') {
+        try {
+          const questionIdsToRemove = new Set<string>();
+          (paper?.questions || []).forEach((q: any) => {
+            if (q.cambridge_source_ref) questionIdsToRemove.add(q.cambridge_source_ref);
+            if (q.id) questionIdsToRemove.add(q.id);
+            if (q.question_number) {
+              questionIdsToRemove.add(`${targetId}_q${q.question_number}`);
+              questionIdsToRemove.add(`q${q.question_number}`);
+            }
+          });
+
+          // 1. Clean revizz_guest_review_pile
+          const storedPile = localStorage.getItem('revizz_guest_review_pile');
+          if (storedPile) {
+            try {
+              const parsed = JSON.parse(storedPile);
+              if (Array.isArray(parsed)) {
+                const filtered = parsed.filter((item: any) => {
+                  const id = typeof item === 'string' ? item : item?.questionId || item?.id;
+                  return !questionIdsToRemove.has(id);
+                });
+                localStorage.setItem('revizz_guest_review_pile', JSON.stringify(filtered));
+              }
+            } catch {
+              // ignore parse errors
+            }
+          }
+
+          // 2. Clean revizz_first_try_correct_ids
+          const storedFirstTry = localStorage.getItem('revizz_first_try_correct_ids');
+          if (storedFirstTry) {
+            try {
+              const parsed = JSON.parse(storedFirstTry);
+              if (Array.isArray(parsed)) {
+                const filtered = parsed.filter((id: string) => !questionIdsToRemove.has(id));
+                localStorage.setItem('revizz_first_try_correct_ids', JSON.stringify(filtered));
+              }
+            } catch {
+              // ignore parse errors
+            }
+          }
+        } catch (lsErr) {
+          console.warn('[WholePaperViewer] Error clearing localStorage:', lsErr);
+        }
+      }
+
+      const deletedCount = data.deletedQuestionsCount ?? data.deletedCount ?? paper?.questions?.length ?? 0;
+      setSuccessBanner({
+        message: `Paper "${targetId}" and all relating questions and logs were permanently deleted.`,
+        deletedCount,
+      });
+
+      setIsDeleteDialogOpen(false);
+      setPaper(null);
+      setSelectedPaperId('');
+
+      // Refresh paper list to pick next available paper
+      await fetchPapersList();
+    } catch (err: any) {
+      console.error('[WholePaperViewer] Error deleting paper:', err);
+      setDeleteError(err?.message || 'Failed to delete paper');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="w-full space-y-5 font-body text-[#201e1d]">
       {/* ── Print-only Header (Visible during window.print()) ── */}
@@ -291,6 +386,36 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
           </div>
         </div>
       </div>
+
+      {/* ── Dismissible Success Banner ── */}
+      {successBanner && (
+        <div
+          data-testid="delete-success-banner"
+          className="p-4 rounded-2xl bg-[#ecfdf5] border-2 border-[#065f46] text-[#065f46] shadow-[3px_3px_0_#065f46] flex items-center justify-between gap-3 print:hidden animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-xl bg-[#a7f3d0] border border-[#065f46] text-[#065f46] shrink-0">
+              <Check className="w-4 h-4 stroke-[3]" />
+            </div>
+            <div>
+              <p className="font-heading font-black text-sm">{successBanner.message}</p>
+              {typeof successBanner.deletedCount === 'number' && successBanner.deletedCount > 0 && (
+                <p className="text-xs font-mono font-medium opacity-90">
+                  {successBanner.deletedCount} question{successBanner.deletedCount === 1 ? '' : 's'} removed.
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessBanner(null)}
+            className="p-1 rounded-lg border border-[#065f46] hover:bg-[#a7f3d0] transition-colors cursor-pointer shrink-0"
+            aria-label="Dismiss banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* ── Control Deck: Paper Selector & Actions ── */}
       <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_#201e1d] space-y-4 print:hidden">
@@ -353,6 +478,21 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Paper</span>
+            </button>
+
+            <button
+              type="button"
+              data-testid="delete-paper-button"
+              onClick={() => {
+                setDeleteError(null);
+                setIsDeleteDialogOpen(true);
+              }}
+              disabled={!paper || loadingPaper || isDeleting}
+              className="px-3.5 py-2 rounded-xl bg-[#fee2e2] hover:bg-[#fecaca] text-[#991b1b] border-2 border-[#201e1d] font-heading font-black text-xs shadow-[2px_2px_0_#201e1d] hover:shadow-[1px_1px_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              title="Delete paper, relating questions, and logs"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-[#991b1b]" />
+              <span>Delete Paper</span>
             </button>
           </div>
         </div>
@@ -1092,6 +1232,137 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
                 className="px-4 py-1.5 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] font-heading font-black text-xs text-[#201e1d] shadow-offset-1 hover:bg-[#ffc6a5] cursor-pointer"
               >
                 Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Confirmation Modal for Paper Deletion ── */}
+      {isDeleteDialogOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-paper-dialog-title"
+          data-testid="delete-paper-dialog"
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+          onClick={() => {
+            if (!isDeleting) setIsDeleteDialogOpen(false);
+          }}
+        >
+          <div
+            className="bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[6px_6px_0_#201e1d] rounded-2xl max-w-md w-full p-6 text-[#201e1d] space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header: Danger badge + Title */}
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-[#fee2e2] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] text-[#991b1b] shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5 flex-1">
+                <span className="inline-block px-2 py-0.5 rounded-md bg-[#fee2e2] border border-[#991b1b]/40 text-[10px] font-mono font-bold uppercase tracking-wider text-[#991b1b]">
+                  Permanent Deletion
+                </span>
+                <h3 id="delete-paper-dialog-title" className="text-lg font-heading font-black text-[#201e1d]">
+                  Delete Whole Paper?
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isDeleting) setIsDeleteDialogOpen(false);
+                }}
+                disabled={isDeleting}
+                className="p-1 rounded-xl bg-white border border-[#201e1d] hover:bg-[#ffe1d0] transition-colors cursor-pointer disabled:opacity-50"
+                aria-label="Close dialog"
+              >
+                <X className="w-4 h-4 text-[#201e1d]" />
+              </button>
+            </div>
+
+            {/* Error banner if deletion failed */}
+            {deleteError && (
+              <div className="p-3 rounded-xl bg-[#fee2e2] border-2 border-[#991b1b] text-[#991b1b] text-xs font-semibold flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            {/* Summary Box */}
+            <div className="p-3.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] text-xs space-y-1.5 font-mono">
+              <div className="flex justify-between items-center text-[#645c50]">
+                <span>Paper ID:</span>
+                <span className="font-bold text-[#201e1d] truncate max-w-[200px]" title={publishedExamPaperId || selectedPaperId || paper?.id || ''}>
+                  {publishedExamPaperId || selectedPaperId || paper?.id || 'Unknown'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-[#645c50]">
+                <span>Subject:</span>
+                <span className="font-bold text-[#201e1d]">
+                  {paper?.subject?.code} {paper?.subject?.name || ''}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-[#645c50]">
+                <span>Series / Year:</span>
+                <span className="font-bold text-[#201e1d]">
+                  {formatSeriesText(paper?.paper?.series, paper?.paper?.year)} {paper?.paper?.paper_code ? `(P${paper.paper.paper_code})` : ''}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-[#645c50]">
+                <span>Total Questions:</span>
+                <span className="font-bold text-[#991b1b] bg-[#fee2e2] px-1.5 py-0.5 rounded border border-[#991b1b]/30">
+                  {totalQuestions} questions
+                </span>
+              </div>
+            </div>
+
+            {/* What will be permanently deleted */}
+            <div className="space-y-1.5 text-xs text-[#403c39]">
+              <p className="font-bold text-[#201e1d]">The following records will be permanently removed:</p>
+              <ul className="space-y-1 text-[11px] list-disc list-inside text-[#645c50] pl-1">
+                <li>Paper definition and syllabus metadata</li>
+                <li>All relating questions &amp; options</li>
+                <li>All student attempt logs (<code className="bg-[#eee7db] px-1 rounded font-mono">user_attempts</code>)</li>
+                <li>All student mistake review logs (<code className="bg-[#eee7db] px-1 rounded font-mono">review_pile</code>)</li>
+                <li>Staged files and storage records</li>
+              </ul>
+            </div>
+
+            {/* Warning Box */}
+            <div className="p-3 rounded-xl bg-[#fff7ed] border border-[#ea580c]/40 text-[#9a3412] text-xs font-bold flex items-center gap-2">
+              <span className="text-base">⚠️</span>
+              <span>This action is permanent and cannot be undone.</span>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                data-testid="cancel-delete-button"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-heading font-bold text-xs text-[#201e1d] shadow-[2px_2px_0_#201e1d] hover:bg-[#e4dcce] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-delete-button"
+                onClick={handleDeletePaper}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl bg-[#ef4444] hover:bg-[#dc2626] text-white border-2 border-[#201e1d] font-heading font-black text-xs shadow-[2px_2px_0_#201e1d] hover:shadow-[1px_1px_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting Paper...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Yes, Delete Paper &amp; Logs</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

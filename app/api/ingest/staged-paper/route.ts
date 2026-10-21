@@ -8,6 +8,7 @@ import {
   getSupabaseClient,
   fetchLiveSupabasePapers,
   fetchLiveSupabasePaperDetail,
+  generateCleanPaperId,
   STORAGE_BUCKET,
   PAPER_STATES_PATH,
   STAGED_PAPERS_DIR,
@@ -15,6 +16,8 @@ import {
   getStagingLocations,
   getFallbackStagingPaper,
 } from '@/lib/ingestion/stagedPaperStorage';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function checkPaperExists(
   cleanId: string,
@@ -154,6 +157,258 @@ async function fetchPublishedPapersMap(): Promise<Map<string, PublishedPaperRow>
   return map;
 }
 
+interface DeletePaperDbResult {
+  deletedPaper: boolean;
+  deletedQuestionsCount: number;
+  deletedAttemptsCount: number;
+  deletedReviewCount: number;
+}
+
+/**
+ * Checks if a paper exists in the Supabase `papers` table by UUID or matching cleanId.
+ */
+async function checkPaperExistsInDb(cleanId: string, rawId?: string): Promise<boolean> {
+  try {
+    const supabase = getSupabaseClient();
+    const isUuid = (id?: string | null) => Boolean(id && UUID_REGEX.test(id.trim()));
+
+    if (isUuid(rawId)) {
+      const { data, error } = await supabase
+        .from('papers')
+        .select('id')
+        .eq('id', rawId!.trim())
+        .maybeSingle();
+      if (!error && data) return true;
+    }
+
+    if (isUuid(cleanId)) {
+      const { data, error } = await supabase
+        .from('papers')
+        .select('id')
+        .eq('id', cleanId.trim())
+        .maybeSingle();
+      if (!error && data) return true;
+    }
+
+    const { data: papersData, error } = await supabase
+      .from('papers')
+      .select('id, series, paper_code, year, subjects(code)');
+
+    if (error || !Array.isArray(papersData)) {
+      return false;
+    }
+
+    const targetClean = cleanId.toLowerCase().trim();
+    const targetRaw = (rawId || '').toLowerCase().trim();
+
+    return papersData.some((p) => {
+      if (p.id.toLowerCase() === targetClean || (targetRaw && p.id.toLowerCase() === targetRaw)) {
+        return true;
+      }
+      const subj = Array.isArray(p.subjects) ? p.subjects[0] : p.subjects;
+      const candId = generateCleanPaperId(subj?.code, p.series, p.year, p.paper_code);
+      return candId.toLowerCase() === targetClean || (targetRaw && candId.toLowerCase() === targetRaw);
+    });
+  } catch (err: any) {
+    console.warn('[Staged Paper Route] checkPaperExistsInDb warning:', err?.message);
+    return false;
+  }
+}
+
+/**
+ * Deletes a published paper and all cascading relations from the database:
+ * - user_attempts (referencing questions)
+ * - review_pile (referencing questions)
+ * - question_options (referencing questions)
+ * - questions (referencing paper_id or matching cambridge_source_ref)
+ * - papers (the paper row itself)
+ */
+async function deletePaperAndRelationsFromDatabase(
+  cleanId: string,
+  rawId?: string
+): Promise<DeletePaperDbResult> {
+  const result: DeletePaperDbResult = {
+    deletedPaper: false,
+    deletedQuestionsCount: 0,
+    deletedAttemptsCount: 0,
+    deletedReviewCount: 0,
+  };
+
+  try {
+    const supabase = getSupabaseClient();
+    const isUuid = (id?: string | null) => Boolean(id && UUID_REGEX.test(id.trim()));
+
+    // 1. Identify paper in Supabase papers table
+    let paperRow: {
+      id: string;
+      series?: string;
+      paper_code?: string;
+      year?: number;
+      subjects?: { id?: string; code?: string } | Array<{ id?: string; code?: string }> | null;
+    } | null = null;
+
+    if (isUuid(rawId)) {
+      const { data, error } = await supabase
+        .from('papers')
+        .select('id, series, paper_code, year, subjects(code)')
+        .eq('id', rawId!.trim())
+        .maybeSingle();
+      if (!error && data) {
+        paperRow = data;
+      }
+    }
+
+    if (!paperRow && isUuid(cleanId)) {
+      const { data, error } = await supabase
+        .from('papers')
+        .select('id, series, paper_code, year, subjects(code)')
+        .eq('id', cleanId.trim())
+        .maybeSingle();
+      if (!error && data) {
+        paperRow = data;
+      }
+    }
+
+    if (!paperRow) {
+      const { data: papersData, error } = await supabase
+        .from('papers')
+        .select('id, series, paper_code, year, subjects(code)');
+
+      if (!error && Array.isArray(papersData)) {
+        const targetClean = cleanId.toLowerCase().trim();
+        const targetRaw = (rawId || '').toLowerCase().trim();
+
+        for (const p of papersData) {
+          if (p.id.toLowerCase() === targetClean || (targetRaw && p.id.toLowerCase() === targetRaw)) {
+            paperRow = p;
+            break;
+          }
+          const subj = Array.isArray(p.subjects) ? p.subjects[0] : p.subjects;
+          const candId = generateCleanPaperId(subj?.code, p.series, p.year, p.paper_code);
+          if (candId.toLowerCase() === targetClean || (targetRaw && candId.toLowerCase() === targetRaw)) {
+            paperRow = p;
+            break;
+          }
+        }
+      }
+    }
+
+    // Determine subjectCode and paperCode for cambridge_source_ref lookup
+    const subjObj = paperRow ? (Array.isArray(paperRow.subjects) ? paperRow.subjects[0] : paperRow.subjects) : null;
+    const fallbackMeta = parseMetadataFromFilename(cleanId);
+    const subjectCode = subjObj?.code || fallbackMeta.subjectCode;
+    const paperCode = (paperRow?.paper_code || fallbackMeta.paperCode || '').replace(/^paper\s*/i, '');
+
+    // 2. Find all relating questions in questions table
+    const questionIdSet = new Set<string>();
+
+    if (paperRow?.id) {
+      const { data: qByPaper, error: qPaperErr } = await supabase
+        .from('questions')
+        .select('id')
+        .eq('paper_id', paperRow.id);
+      if (!qPaperErr && Array.isArray(qByPaper)) {
+        for (const q of qByPaper) {
+          if (q?.id) questionIdSet.add(q.id);
+        }
+      }
+    }
+
+    if (subjectCode && paperCode) {
+      const pattern = `%${subjectCode}/${paperCode}%`;
+      const { data: qByRef, error: qRefErr } = await supabase
+        .from('questions')
+        .select('id')
+        .ilike('cambridge_source_ref', pattern);
+      if (!qRefErr && Array.isArray(qByRef)) {
+        for (const q of qByRef) {
+          if (q?.id) questionIdSet.add(q.id);
+        }
+      }
+    }
+
+    const qIds = Array.from(questionIdSet);
+
+    // 3. Delete from relating tables if questions found
+    if (qIds.length > 0) {
+      const chunkSize = 200;
+      for (let i = 0; i < qIds.length; i += chunkSize) {
+        const chunk = qIds.slice(i, i + chunkSize);
+
+        // Delete from user_attempts where question_id in qIds (count deleted)
+        const { data: delAttempts, error: attErr } = await supabase
+          .from('user_attempts')
+          .delete()
+          .in('question_id', chunk)
+          .select('id');
+        if (!attErr && Array.isArray(delAttempts)) {
+          result.deletedAttemptsCount += delAttempts.length;
+        }
+
+        // Delete from review_pile where question_id in qIds (count deleted)
+        const { data: delReview, error: revErr } = await supabase
+          .from('review_pile')
+          .delete()
+          .in('question_id', chunk)
+          .select('id');
+        if (!revErr && Array.isArray(delReview)) {
+          result.deletedReviewCount += delReview.length;
+        }
+
+        // Delete from question_options where question_id in qIds
+        const { error: optErr } = await supabase
+          .from('question_options')
+          .delete()
+          .in('question_id', chunk);
+        if (optErr) {
+          console.warn('[Staged Paper Route] Error deleting question_options:', optErr.message);
+        }
+
+        // Delete from questions where id in qIds (count deleted)
+        const { data: delQuestions, error: qErr } = await supabase
+          .from('questions')
+          .delete()
+          .in('id', chunk)
+          .select('id');
+        if (!qErr && Array.isArray(delQuestions)) {
+          result.deletedQuestionsCount += delQuestions.length;
+        }
+      }
+    }
+
+    // Also delete any remaining questions where paper_id = paperRow.id
+    if (paperRow?.id) {
+      const { data: remainingQ, error: remQErr } = await supabase
+        .from('questions')
+        .delete()
+        .eq('paper_id', paperRow.id)
+        .select('id');
+      if (!remQErr && Array.isArray(remainingQ)) {
+        result.deletedQuestionsCount += remainingQ.length;
+      }
+    }
+
+    // 4. If paperRow found, delete from papers table where id = paperRow.id
+    if (paperRow?.id) {
+      const { data: delPaper, error: paperErr } = await supabase
+        .from('papers')
+        .delete()
+        .eq('id', paperRow.id)
+        .select('id');
+
+      if (!paperErr) {
+        result.deletedPaper = true;
+      } else {
+        console.warn('[Staged Paper Route] Error deleting paper row:', paperErr.message);
+      }
+    }
+  } catch (err: any) {
+    console.error('[Staged Paper Route] Error during database paper deletion:', err?.message);
+  }
+
+  return result;
+}
+
 /**
  * GET /api/ingest/staged-paper
  * 
@@ -199,9 +454,16 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      if (deletedSet.has(cleanId) || (rawId && deletedSet.has(rawId))) {
+        return NextResponse.json(
+          { success: false, error: `Staged paper "${cleanId}" not found in staging directory.` },
+          { status: 404 }
+        );
+      }
+
       // Check if matching a live paper in Supabase (by UUID or clean ID e.g. 0455_w24_11)
       const liveDbPaper = await fetchLiveSupabasePaperDetail(rawId);
-      if (liveDbPaper) {
+      if (liveDbPaper && !deletedSet.has(liveDbPaper.publishedExamPaperId)) {
         return NextResponse.json({
           success: true,
           paper: liveDbPaper.paper,
@@ -444,7 +706,9 @@ export async function GET(request: NextRequest) {
 
     // Query live published papers from Supabase papers table & question counts
     const livePapersData = await fetchLiveSupabasePapers();
-    const livePaperSummaries: StagedPaperSummary[] = livePapersData.map((lp) => ({
+    const livePaperSummaries: StagedPaperSummary[] = livePapersData
+      .filter((lp) => !deletedSet.has(lp.cleanId))
+      .map((lp) => ({
       id: lp.cleanId,
       filename: `${lp.cleanId}.json`,
       subject: lp.subject,
@@ -897,7 +1161,9 @@ export async function POST(request: NextRequest) {
       }
 
       if (action === 'delete') {
-        if (paperStates.deleted.includes(cleanId) || !existence.exists) {
+        const dbExistence = await checkPaperExistsInDb(cleanId, rawId);
+
+        if (paperStates.deleted.includes(cleanId) || (!existence.exists && !dbExistence)) {
           return NextResponse.json(
             {
               success: false,
@@ -931,16 +1197,25 @@ export async function POST(request: NextRequest) {
           console.warn('[Staged Paper Route] Storage remove error:', storageErr?.message);
         }
 
+        const dbResult = await deletePaperAndRelationsFromDatabase(cleanId, rawId);
+
         if (!paperStates.deleted.includes(cleanId)) {
           paperStates.deleted.push(cleanId);
         }
-        paperStates.archived = paperStates.archived.filter((id) => id !== cleanId);
+        if (rawId && !paperStates.deleted.includes(rawId)) {
+          paperStates.deleted.push(rawId);
+        }
+        paperStates.archived = paperStates.archived.filter((id) => id !== cleanId && id !== rawId);
         await savePersistentPaperStates(paperStates);
 
         return NextResponse.json({
           success: true,
           action: 'delete',
           id: cleanId,
+          deleted_from_database: dbResult.deletedPaper,
+          deleted_questions_count: dbResult.deletedQuestionsCount,
+          deleted_attempts_count: dbResult.deletedAttemptsCount,
+          deleted_review_count: dbResult.deletedReviewCount,
         });
       }
 
@@ -1100,8 +1375,9 @@ export async function DELETE(request: NextRequest) {
     const locations = getStagingLocations();
     const paperStates = await fetchPersistentPaperStates();
     const existence = await checkPaperExists(cleanId, locations);
+    const dbExistence = await checkPaperExistsInDb(cleanId, rawId);
 
-    if (paperStates.deleted.includes(cleanId) || !existence.exists) {
+    if (paperStates.deleted.includes(cleanId) || (!existence.exists && !dbExistence)) {
       return NextResponse.json(
         { success: false, error: `Paper "${cleanId}.json" not found in staging or archive directory.` },
         { status: 404 }
@@ -1130,16 +1406,25 @@ export async function DELETE(request: NextRequest) {
       console.warn('[Staged Paper Route] Storage remove error:', storageErr?.message);
     }
 
+    const dbResult = await deletePaperAndRelationsFromDatabase(cleanId, rawId);
+
     if (!paperStates.deleted.includes(cleanId)) {
       paperStates.deleted.push(cleanId);
     }
-    paperStates.archived = paperStates.archived.filter((id) => id !== cleanId);
+    if (rawId && !paperStates.deleted.includes(rawId)) {
+      paperStates.deleted.push(rawId);
+    }
+    paperStates.archived = paperStates.archived.filter((id) => id !== cleanId && id !== rawId);
     await savePersistentPaperStates(paperStates);
 
     return NextResponse.json({
       success: true,
       action: 'delete',
       id: cleanId,
+      deleted_from_database: dbResult.deletedPaper,
+      deleted_questions_count: dbResult.deletedQuestionsCount,
+      deleted_attempts_count: dbResult.deletedAttemptsCount,
+      deleted_review_count: dbResult.deletedReviewCount,
     });
   } catch (err: any) {
     return NextResponse.json(

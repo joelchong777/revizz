@@ -34,6 +34,7 @@ import { GET, POST, DELETE } from '../app/api/ingest/staged-paper/route';
 import {
   fetchPersistentPaperStates,
   savePersistentPaperStates,
+  getSupabaseClient,
 } from '../lib/ingestion/stagedPaperStorage';
 
 // Test counters and reporting
@@ -442,6 +443,107 @@ async function runVerification() {
     assert(
       orphanSingleRes.status === 404,
       `Single GET on orphan disk file "${activePaperId}" returns HTTP 404 because it is in deletedSet`
+    );
+
+    // -------------------------------------------------------------
+    // CASE 6: Delete Published Database Paper and Relations
+    // -------------------------------------------------------------
+    console.log('\n--- Case 6: Delete Published Database Paper and Relations ---');
+
+    const supabase = getSupabaseClient();
+    const { data: subjRows } = await supabase.from('subjects').select('id, code').limit(1);
+    const testSubj = subjRows?.[0];
+    const testSubjCode = testSubj?.code || '0455';
+    const dbTestPaperCode = '88';
+    const dbTestSeries = 'y';
+    const dbTestYear = 2098;
+    const dbTestCleanId = `${testSubjCode}_${dbTestSeries}98_${dbTestPaperCode}`;
+    allTestIds.push(dbTestCleanId);
+
+    // 6.1 Insert dummy paper and dummy question into Supabase
+    let dbTestPaperId: string | null = null;
+    let dbTestQId: string | null = null;
+    if (testSubj) {
+      const { data: newP } = await supabase
+        .from('papers')
+        .insert({
+          subject_id: testSubj.id,
+          series: dbTestSeries,
+          paper_code: dbTestPaperCode,
+          year: dbTestYear,
+        })
+        .select('id');
+      dbTestPaperId = newP?.[0]?.id || null;
+
+      if (dbTestPaperId) {
+        allTestIds.push(dbTestPaperId);
+        const { data: newQ } = await supabase
+          .from('questions')
+          .insert({
+            paper_id: dbTestPaperId,
+            subject_id: testSubj.id,
+            question_number: 1,
+            stem_markdown: 'QA database test question',
+            cambridge_source_ref: `${testSubjCode}/${dbTestPaperCode}/Y/98 Q1`,
+          })
+          .select('id');
+        dbTestQId = newQ?.[0]?.id || null;
+
+        if (dbTestQId) {
+          await supabase.from('question_options').insert({
+            question_id: dbTestQId,
+            label: 'A',
+            content_markdown: 'Test option',
+            is_correct: true,
+          });
+        }
+      }
+    }
+
+    assert(Boolean(dbTestPaperId), `Created dummy published paper in DB: ${dbTestCleanId}`);
+    assert(Boolean(dbTestQId), `Created dummy question & options linked to paper ${dbTestCleanId}`);
+
+    // Verify paper appears in GET list as live paper before deletion
+    const dbPreCheckReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper');
+    const dbPreCheckRes = await GET(dbPreCheckReq);
+    const dbPreCheckData = await dbPreCheckRes.json();
+    assert(
+      dbPreCheckData.stagedPapers.some((p: any) => p.id === dbTestCleanId && p.source === 'database'),
+      `DB paper "${dbTestCleanId}" is present in GET listing as published live paper`
+    );
+
+    // 6.2 Delete DB paper via DELETE handler
+    const dbDeleteReq = new NextRequest(`http://localhost:3000/api/ingest/staged-paper?id=${dbTestCleanId}`, {
+      method: 'DELETE',
+    });
+    const dbDeleteRes = await DELETE(dbDeleteReq);
+    assert(dbDeleteRes.status === 200, `DELETE ?id="${dbTestCleanId}" returns HTTP 200`);
+
+    const dbDeleteData = await dbDeleteRes.json();
+    assert(dbDeleteData.success === true, 'DELETE DB paper response body has { success: true }');
+    assert(dbDeleteData.deleted_from_database === true, 'Response body has deleted_from_database === true');
+    assert(dbDeleteData.deleted_questions_count >= 1, `Response body has deleted_questions_count >= 1 (got ${dbDeleteData.deleted_questions_count})`);
+
+    // 6.3 Verify paper and questions are actually removed from Supabase tables
+    const { data: verifyP } = await supabase.from('papers').select('id').eq('id', dbTestPaperId!).maybeSingle();
+    assert(!verifyP, `Paper row ${dbTestPaperId} is permanently deleted from Supabase 'papers' table`);
+
+    const { data: verifyQ } = await supabase.from('questions').select('id').eq('id', dbTestQId!).maybeSingle();
+    assert(!verifyQ, `Question row ${dbTestQId} is permanently deleted from Supabase 'questions' table`);
+
+    // 6.4 Verify persistent states and GET exclusions
+    const statesAfterDbDelete = await fetchPersistentPaperStates();
+    assert(
+      statesAfterDbDelete.deleted.includes(dbTestCleanId),
+      `Persistent paper states records "${dbTestCleanId}" in deleted array`
+    );
+
+    const dbPostCheckReq = new NextRequest('http://localhost:3000/api/ingest/staged-paper');
+    const dbPostCheckRes = await GET(dbPostCheckReq);
+    const dbPostCheckData = await dbPostCheckRes.json();
+    assert(
+      !dbPostCheckData.papers.includes(dbTestCleanId),
+      `GET listing excludes deleted DB paper "${dbTestCleanId}" from papers array`
     );
 
   } catch (err: any) {
