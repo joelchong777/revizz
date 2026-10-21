@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { Check } from 'lucide-react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Check, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { IngestedPaperSummary } from '@/lib/questions';
 import { playPop } from '@/lib/audio';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,8 @@ export function PaperPickerModal({
 }: PaperPickerModalProps) {
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
   const [selectedPaperCode, setSelectedPaperCode] = useState<string>('all');
+  const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
+  const filterPopupRef = useRef<HTMLDivElement>(null);
 
   const availableYears = useMemo(() => {
     const years = Array.from(
@@ -61,12 +63,25 @@ export function PaperPickerModal({
   }, [papers, selectedYear, selectedPaperCode]);
 
   const isFiltering = selectedYear !== 'all' || selectedPaperCode !== 'all';
+  const activeFilterCount = (selectedYear !== 'all' ? 1 : 0) + (selectedPaperCode !== 'all' ? 1 : 0);
+
+  const filterSummary = useMemo(() => {
+    if (!isFiltering) return 'Filter Papers by Year & Paper Number';
+    const parts: string[] = [];
+    if (selectedYear !== 'all') parts.push(`Year ${selectedYear}`);
+    if (selectedPaperCode !== 'all') parts.push(`Paper ${selectedPaperCode}`);
+    return parts.join(' · ');
+  }, [isFiltering, selectedYear, selectedPaperCode]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (isFilterPopupOpen) {
+          setIsFilterPopupOpen(false);
+          return;
+        }
         onClose();
       }
     };
@@ -75,7 +90,25 @@ export function PaperPickerModal({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isFilterPopupOpen]);
+
+  useEffect(() => {
+    if (!isFilterPopupOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filterPopupRef.current &&
+        !filterPopupRef.current.contains(event.target as Node)
+      ) {
+        setIsFilterPopupOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFilterPopupOpen]);
 
   if (!isOpen) return null;
 
@@ -153,100 +186,178 @@ export function PaperPickerModal({
               </button>
             )}
           </div>
+
+          {!loading && papers.length > 0 && (
+            <div className="relative w-full" ref={filterPopupRef}>
+              <button
+                type="button"
+                data-testid="paper-filters-button"
+                aria-expanded={isFilterPopupOpen}
+                onClick={() => {
+                  playPop();
+                  setIsFilterPopupOpen((prev) => !prev);
+                }}
+                className={cn(
+                  'w-full py-2.5 px-3.5 rounded-2xl border-2 border-text text-xs sm:text-sm font-bold flex items-center justify-between cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none',
+                  isFilterPopupOpen || isFiltering
+                    ? 'bg-accent text-neutral-100 shadow-offset-2'
+                    : 'bg-neutral-100 hover:bg-neutral-200 text-text shadow-offset-2'
+                )}
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <SlidersHorizontal className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{filterSummary}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {isFiltering && (
+                    <span className="w-5 h-5 rounded-full bg-neutral-100 text-text border border-text text-[10px] font-black flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                  <ChevronDown
+                    className={cn(
+                      'w-4 h-4 transition-transform duration-200',
+                      isFilterPopupOpen && 'rotate-180'
+                    )}
+                  />
+                </div>
+              </button>
+
+              {isFilterPopupOpen && (
+                <div
+                  role="dialog"
+                  aria-label="Filter Papers"
+                  data-testid="paper-filter-popup"
+                  className="absolute left-0 right-0 top-full mt-2 z-30 w-full p-4 rounded-2xl bg-[#f9f4ed] border-2 border-text shadow-offset-4 flex flex-col gap-3.5"
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-heading text-sm text-text">Filter Papers</span>
+                    {isFiltering && (
+                      <button
+                        type="button"
+                        data-testid="paper-popup-reset-filters"
+                        onClick={() => {
+                          playPop();
+                          setSelectedYear('all');
+                          setSelectedPaperCode('all');
+                        }}
+                        className="text-xs font-bold text-accent hover:underline cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Year */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-heading font-black text-neutral-700">
+                      Year
+                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap max-h-28 overflow-y-auto pr-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedYear !== 'all') {
+                            playPop();
+                            setSelectedYear('all');
+                          }
+                        }}
+                        className={cn(
+                          'px-2.5 py-1 transition-all cursor-pointer',
+                          selectedYear === 'all'
+                            ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                            : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                        )}
+                      >
+                        All
+                      </button>
+                      {availableYears.map((year) => (
+                        <button
+                          key={year}
+                          type="button"
+                          onClick={() => {
+                            if (selectedYear !== year) {
+                              playPop();
+                              setSelectedYear(year);
+                            }
+                          }}
+                          className={cn(
+                            'px-2.5 py-1 transition-all cursor-pointer',
+                            selectedYear === year
+                              ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                              : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                          )}
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Paper Variant */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-heading font-black text-neutral-700">
+                      Paper Variant
+                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap max-h-28 overflow-y-auto pr-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedPaperCode !== 'all') {
+                            playPop();
+                          }
+                          setSelectedPaperCode('all');
+                        }}
+                        className={cn(
+                          'px-2.5 py-1 transition-all cursor-pointer',
+                          selectedPaperCode === 'all'
+                            ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                            : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                        )}
+                      >
+                        All
+                      </button>
+                      {availablePaperCodes.map((code) => (
+                        <button
+                          key={code}
+                          type="button"
+                          onClick={() => {
+                            if (selectedPaperCode !== code) {
+                              playPop();
+                              setSelectedPaperCode(code);
+                            }
+                          }}
+                          className={cn(
+                            'px-2.5 py-1 transition-all cursor-pointer',
+                            selectedPaperCode === code
+                              ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                              : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                          )}
+                        >
+                          Paper {code}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Done Button */}
+                  <button
+                    type="button"
+                    data-testid="paper-popup-done"
+                    onClick={() => {
+                      playPop();
+                      setIsFilterPopupOpen(false);
+                    }}
+                    className="w-full py-2 rounded-xl bg-accent text-neutral-100 font-heading text-sm border-2 border-text shadow-offset-2 hover:bg-accent-600 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer flex items-center justify-center transition-all"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Filter Controls */}
-        {!loading && papers.length > 0 && (
-          <div className="flex flex-col gap-2 p-2.5 rounded-2xl bg-neutral-100/70 border border-text/15">
-            {/* Year Filters */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-heading font-black text-neutral-700 mr-1 shrink-0">
-                Year:
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedYear !== 'all') {
-                    playPop();
-                    setSelectedYear('all');
-                  }
-                }}
-                className={cn(
-                  'px-2.5 py-1 transition-all cursor-pointer',
-                  selectedYear === 'all'
-                    ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
-                    : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
-                )}
-              >
-                All
-              </button>
-              {availableYears.map((year) => (
-                <button
-                  key={year}
-                  type="button"
-                  onClick={() => {
-                    if (selectedYear !== year) {
-                      playPop();
-                      setSelectedYear(year);
-                    }
-                  }}
-                  className={cn(
-                    'px-2.5 py-1 transition-all cursor-pointer',
-                    selectedYear === year
-                      ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
-                      : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
-                  )}
-                >
-                  {year}
-                </button>
-              ))}
-            </div>
-
-            {/* Paper Code Filters */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-heading font-black text-neutral-700 mr-1 shrink-0">
-                Paper:
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedPaperCode !== 'all') {
-                    playPop();
-                    setSelectedPaperCode('all');
-                  }
-                }}
-                className={cn(
-                  'px-2.5 py-1 transition-all cursor-pointer',
-                  selectedPaperCode === 'all'
-                    ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
-                    : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
-                )}
-              >
-                All
-              </button>
-              {availablePaperCodes.map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => {
-                    if (selectedPaperCode !== code) {
-                      playPop();
-                      setSelectedPaperCode(code);
-                    }
-                  }}
-                  className={cn(
-                    'px-2.5 py-1 transition-all cursor-pointer',
-                    selectedPaperCode === code
-                      ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
-                      : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
-                  )}
-                >
-                  Paper {code}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Content */}
         {loading ? (
