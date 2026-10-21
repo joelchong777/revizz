@@ -63,24 +63,8 @@ export function AuthModal({
 
   // 1-Click Google Authentication
   const handleGoogleAuth = async () => {
-    try {
-      setLoadingGoogle(true);
-      resetFormFeedback();
-      await signInWithGoogle();
-      if (onSuccess) onSuccess();
-      onClose();
-    } catch (err: any) {
-      console.warn('Google sign-in attempt:', err);
-      if (isProviderNotEnabledError(err) || err?.code === 'PROVIDER_NOT_ENABLED') {
-        setErrorMessage(
-          'Google Sign-In is not currently enabled in the Supabase Dashboard. You can sign in or register with Email / Password below!'
-        );
-      } else {
-        setErrorMessage(err?.message || 'Unable to sign in with Google. Please try again or use Email.');
-      }
-    } finally {
-      setLoadingGoogle(false);
-    }
+    resetFormFeedback();
+    setErrorMessage('Unavailable, log in with email');
   };
 
   // Sign In with Email & Password
