@@ -1033,9 +1033,9 @@ export default function TestCompilerHub() {
   const isTopicFiltered = selectedTopicIds.length > 0 && !selectedTopicIds.includes('all');
 
   return (
-    <div className="flex flex-col text-[#201e1d] font-body flex-1 min-h-0 lg:h-full lg:overflow-hidden">
+    <div className="flex flex-col text-[#201e1d] font-body flex-1 min-h-0 lg:overflow-hidden">
       {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-start lg:h-full lg:overflow-hidden p-1 pr-2">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 flex-1 min-h-0 lg:h-full lg:overflow-hidden p-1 pr-2">
         {/* LEFT COLUMN: Question Feed */}
         <div className="flex flex-col min-w-0 lg:h-full lg:overflow-hidden p-0.5">
           {/* Question Cards Container */}
@@ -1223,9 +1223,9 @@ export default function TestCompilerHub() {
         </div>
 
         {/* RIGHT COLUMN: Fixed Sidebar */}
-        <div className="flex flex-col gap-3 min-w-0 lg:h-full lg:overflow-y-auto shrink-0 pt-0.5 pl-0.5 pr-2.5 pb-6">
+        <div className="flex flex-col gap-3 min-w-0 lg:h-full lg:overflow-y-auto shrink-0 pt-0.5 pl-0.5 pr-2.5 pb-12">
           {/* Search Bar on top of filters */}
-          <div className="relative w-full">
+          <div className="relative w-full shrink-0">
             <label htmlFor="compiler-search-input" className="sr-only">
               Search question text, options, paper code
             </label>
@@ -1256,7 +1256,7 @@ export default function TestCompilerHub() {
           </div>
 
           {/* Card 1: FILTERS */}
-          <div className="p-3.5 rounded-3xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] flex flex-col gap-3">
+          <div className="p-3.5 rounded-3xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] flex flex-col gap-3 shrink-0">
             {/* Header: Question Filters */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 shrink-0">
@@ -1596,7 +1596,7 @@ export default function TestCompilerHub() {
           <aside
             id="test-assembly-drawer"
             aria-label="Test Compiler"
-            className="rounded-3xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] flex flex-col overflow-hidden"
+            className="rounded-3xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] flex flex-col shrink-0 overflow-hidden"
           >
             {/* Top Meta Area */}
             <div className="p-4 pb-3 flex flex-col gap-3">

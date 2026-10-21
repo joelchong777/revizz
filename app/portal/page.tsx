@@ -906,8 +906,8 @@ function PortalContent() {
             </div>
           )}
           {guestMode && !userProfile && (
-            <div className="space-y-4 mb-6">
-              <div className="p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
+            <div className={activeNav === 'compiler' ? 'mb-2.5 shrink-0' : 'space-y-4 mb-6'}>
+              <div className={`rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d] ${activeNav === 'compiler' ? 'p-2 px-3.5' : 'p-3 px-4'}`}>
                 <div className="flex items-center gap-2">
                   <span className="text-base">🎓</span>
                   <span>Guest Educator Mode · Full interactive preview of teaching and curriculum tools</span>
