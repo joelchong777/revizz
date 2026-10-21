@@ -1,41 +1,102 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-  BookOpen,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  FileText,
-  Filter,
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  Image as ImageIcon,
+  Loader2,
   Printer,
   RefreshCw,
   Search,
-  Sparkles,
-  AlertCircle,
-  AlertTriangle,
-  Layers,
-  Check,
-  ZoomIn,
-  X,
-  Trash2,
-  Loader2,
+  ChevronDown,
+  SlidersHorizontal,
   Table as TableIcon,
-  ListOrdered,
-  Image as ImageIcon,
-  Tag,
-  ArrowRight,
-  ExternalLink,
+  LayoutList,
+  Trash2,
+  X,
 } from 'lucide-react';
-import { RichMarkdown } from '@/components/ui/RichMarkdown';
 
-import type { StagingPaper, StagedPaperSummary, StagingQuestion } from '@/types/ingestion';
-import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
-import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
+import type { StagingPaper, StagedPaperSummary } from '@/types/ingestion';
+import {
+  filterPaperQuestions,
+  formatSeriesText,
+  getAnswerKeyBreakdown,
+  hasDiagram,
+  isTypingTarget,
+  stepQuestion,
+  type DiagramFilter,
+} from '@/lib/paperViewer';
+import { PaperQuestionCard } from '@/components/admin/paper-viewer/PaperQuestionCard';
+import { PaperTableView } from '@/components/admin/paper-viewer/PaperTableView';
 
 export interface WholePaperViewerProps {
   initialPaperId?: string;
+}
+
+const PANEL = 'bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] print:hidden';
+const LABEL = 'text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50]';
+
+function ToggleRow({
+  label,
+  pressed,
+  onClick,
+}: {
+  label: string;
+  pressed: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onClick}
+      className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] transition-colors cursor-pointer"
+    >
+      <span>{label}</span>
+      <span
+        className={`w-8 h-[18px] rounded-full border-2 border-[#201e1d] relative transition-colors ${
+          pressed ? 'bg-[#728157]' : 'bg-[#eee7db]'
+        }`}
+        aria-hidden="true"
+      >
+        <span
+          className={`absolute top-[1px] w-3 h-3 rounded-full bg-[#201e1d] transition-all ${
+            pressed ? 'left-[15px]' : 'left-[1px]'
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { value: T; label: React.ReactNode }[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex p-0.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] text-xs font-bold gap-0.5">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={`flex-1 px-2 py-1 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1 whitespace-nowrap ${
+            value === o.value ? 'bg-white border border-[#201e1d] text-[#201e1d]' : 'text-[#645c50] hover:text-[#201e1d]'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export default function WholePaperViewer({ initialPaperId }: WholePaperViewerProps) {
@@ -63,8 +124,10 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
   // View mode & filters
   const [viewMode, setViewMode] = useState<'continuous' | 'table'>('continuous');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [diagramFilter, setDiagramFilter] = useState<'all' | 'with_diagrams' | 'without_diagrams'>('all');
+  const [diagramFilter, setDiagramFilter] = useState<DiagramFilter>('all');
   const [topicFilter, setTopicFilter] = useState<string>('all');
+  const [showAnswers, setShowAnswers] = useState<boolean>(true);
+  const [panelOpen, setPanelOpen] = useState<boolean>(false); // phone/tablet collapsible
 
   // Explanations expansion state
   const [expandedExplanations, setExpandedExplanations] = useState<Record<number, boolean>>({});
@@ -76,6 +139,15 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     questionNumber: number;
     alt?: string;
   } | null>(null);
+
+  // Active question tracking, feed scroll
+  const [activeQ, setActiveQ] = useState<number | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [scrollFadeState, setScrollFadeState] = useState<'top' | 'middle' | 'bottom' | 'none'>('top');
+  const feedRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  const lockActiveUntilRef = useRef<number>(0);
+  const pendingScrollRef = useRef<number | null>(null);
 
   // 1. Fetch available papers list on mount
   const fetchPapersList = useCallback(async (preferredId?: string) => {
@@ -166,119 +238,6 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     }
   }, [selectedPaperId, loadPaper]);
 
-  // Metric derivations
-  const questionsList = useMemo(() => paper?.questions || [], [paper]);
-  const totalQuestions = questionsList.length;
-
-  const diagramsCount = useMemo(() => {
-    return questionsList.filter((q) => Boolean(q.diagram?.has_diagram || q.diagram?.image_url)).length;
-  }, [questionsList]);
-
-  const answerKeyBreakdown = useMemo(() => {
-    const counts = { A: 0, B: 0, C: 0, D: 0 };
-    questionsList.forEach((q) => {
-      const correct = q.options?.find((o) => o.is_correct);
-      if (correct?.label && counts[correct.label] !== undefined) {
-        counts[correct.label]++;
-      }
-    });
-    return counts;
-  }, [questionsList]);
-
-  const selectedSummary = useMemo(() => {
-    return stagedPapers.find((p) => p.id === selectedPaperId);
-  }, [stagedPapers, selectedPaperId]);
-
-  const topicsList = useMemo(() => {
-    const set = new Set<string>();
-    questionsList.forEach((q) => {
-      if (q.topic_name) {
-        set.add(q.topic_name.trim());
-      }
-    });
-    return Array.from(set).sort();
-  }, [questionsList]);
-
-  // Filtering questions
-  const filteredQuestions = useMemo(() => {
-    return questionsList.filter((q) => {
-      // 1. Diagram filter
-      const hasDiag = Boolean(q.diagram?.has_diagram || q.diagram?.image_url);
-      if (diagramFilter === 'with_diagrams' && !hasDiag) return false;
-      if (diagramFilter === 'without_diagrams' && hasDiag) return false;
-
-      // 2. Topic filter
-      if (topicFilter !== 'all' && q.topic_name !== topicFilter) return false;
-
-      // 3. Search query filter
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        const numMatch = `q${q.question_number}`.includes(query) || `${q.question_number}` === query;
-        const stemMatch = (q.stem_markdown || '').toLowerCase().includes(query);
-        const refMatch = (q.cambridge_source_ref || '').toLowerCase().includes(query);
-        const topicMatch = (q.topic_name || '').toLowerCase().includes(query);
-        const optionMatch = (q.options || []).some((opt) =>
-          (opt.content_markdown || '').toLowerCase().includes(query)
-        );
-        const expMatch = (q.explanation_markdown || '').toLowerCase().includes(query);
-
-        if (!numMatch && !stemMatch && !refMatch && !topicMatch && !optionMatch && !expMatch) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [questionsList, diagramFilter, topicFilter, searchQuery]);
-
-  // Explanation toggles
-  const toggleExplanation = (questionNumber: number) => {
-    setExpandedExplanations((prev) => ({
-      ...prev,
-      [questionNumber]: !prev[questionNumber],
-    }));
-  };
-
-  const handleToggleAllExplanations = () => {
-    const nextState = !allExpanded;
-    setAllExpanded(nextState);
-    const updated: Record<number, boolean> = {};
-    questionsList.forEach((q) => {
-      updated[q.question_number] = nextState;
-    });
-    setExpandedExplanations(updated);
-  };
-
-  // Smooth scroll jump to question card
-  const scrollToQuestion = (questionNumber: number) => {
-    if (viewMode !== 'continuous') {
-      setViewMode('continuous');
-      // Wait one tick for layout switch
-      setTimeout(() => {
-        const el = document.getElementById(`question-q${questionNumber}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 50);
-    } else {
-      const el = document.getElementById(`question-q${questionNumber}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  };
-
-  // Series formatting helper
-  const formatSeriesText = (series?: string, year?: number) => {
-    if (!series && !year) return 'Cambridge IGCSE Exam Paper';
-    const s = (series || '').toLowerCase();
-    let seriesLabel = series || '';
-    if (s === 's' || s.includes('may') || s.includes('june')) seriesLabel = 'May/June';
-    else if (s === 'm' || s.includes('feb') || s.includes('march')) seriesLabel = 'Feb/March';
-    else if (s === 'w' || s.includes('oct') || s.includes('nov')) seriesLabel = 'Oct/Nov';
-    return `${seriesLabel} ${year || ''}`.trim();
-  };
-
   // Delete paper handler
   const handleDeletePaper = async () => {
     const targetId = publishedExamPaperId || selectedPaperId || paper?.id || '';
@@ -365,8 +324,231 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
     }
   };
 
+  // Metric derivations
+  const questionsList = useMemo(() => paper?.questions || [], [paper]);
+  const totalQuestions = questionsList.length;
+  const diagramsCount = useMemo(() => questionsList.filter(hasDiagram).length, [questionsList]);
+  const answerKeyBreakdown = useMemo(() => getAnswerKeyBreakdown(questionsList), [questionsList]);
+
+  const selectedSummary = useMemo(() => {
+    return stagedPapers.find((p) => p.id === selectedPaperId);
+  }, [stagedPapers, selectedPaperId]);
+
+  const topicsList = useMemo(() => {
+    const set = new Set<string>();
+    questionsList.forEach((q) => {
+      if (q.topic_name) set.add(q.topic_name.trim());
+    });
+    return Array.from(set).sort();
+  }, [questionsList]);
+
+  const filteredQuestions = useMemo(
+    () => filterPaperQuestions(questionsList, { search: searchQuery, diagram: diagramFilter, topic: topicFilter }),
+    [questionsList, diagramFilter, topicFilter, searchQuery]
+  );
+  const filteredNumbers = useMemo(() => filteredQuestions.map((q) => q.question_number), [filteredQuestions]);
+  const visibleSet = useMemo(() => new Set(filteredNumbers), [filteredNumbers]);
+
+  // Explanation toggles
+  const toggleExplanation = useCallback((questionNumber: number) => {
+    setExpandedExplanations((prev) => ({
+      ...prev,
+      [questionNumber]: !prev[questionNumber],
+    }));
+  }, []);
+
+  const handleToggleAllExplanations = () => {
+    const nextState = !allExpanded;
+    setAllExpanded(nextState);
+    const updated: Record<number, boolean> = {};
+    questionsList.forEach((q) => {
+      updated[q.question_number] = nextState;
+    });
+    setExpandedExplanations(updated);
+  };
+
+  const handleZoom = useCallback(
+    (d: { url: string; questionNumber: number; alt?: string }) => setZoomedDiagram(d),
+    []
+  );
+
+  // Scroll a question card into view (works in the nested feed and on the window)
+  const scrollToQuestion = useCallback(
+    (questionNumber: number) => {
+      lockActiveUntilRef.current = Date.now() + 800;
+      setActiveQ(questionNumber);
+      pendingScrollRef.current = questionNumber;
+      if (viewMode !== 'continuous') setViewMode('continuous');
+      if (!visibleSet.has(questionNumber)) {
+        setSearchQuery('');
+        setDiagramFilter('all');
+        setTopicFilter('all');
+      }
+      // Try immediately; the effect below retries after a layout change
+      const el = document.getElementById(`question-q${questionNumber}`);
+      if (el && viewMode === 'continuous' && visibleSet.has(questionNumber)) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        pendingScrollRef.current = null;
+      }
+    },
+    [viewMode, visibleSet]
+  );
+
+  useEffect(() => {
+    const n = pendingScrollRef.current;
+    if (n === null || viewMode !== 'continuous') return;
+    const id = window.requestAnimationFrame(() => {
+      const el = document.getElementById(`question-q${n}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        pendingScrollRef.current = null;
+      }
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [viewMode, filteredQuestions, paper]);
+
+  // Reset active question when paper changes
+  useEffect(() => {
+    setActiveQ(null);
+  }, [selectedPaperId]);
+
+  // Breakpoint tracking (feed is the scroll root on lg+, the viewport below)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // Active question via IntersectionObserver (top-most card in the upper band)
+  useEffect(() => {
+    if (viewMode !== 'continuous' || !paper || loadingPaper || filteredNumbers.length === 0) return;
+    if (typeof IntersectionObserver === 'undefined') return;
+    const visible = new Map<number, boolean>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((en) => {
+          const n = Number((en.target as HTMLElement).dataset.q);
+          visible.set(n, en.isIntersecting);
+        });
+        if (Date.now() < lockActiveUntilRef.current) return;
+        const first = filteredNumbers.find((n) => visible.get(n));
+        if (first !== undefined) setActiveQ(first);
+      },
+      {
+        root: isDesktop ? feedRef.current : null,
+        rootMargin: isDesktop ? '0px 0px -60% 0px' : '-64px 0px -60% 0px',
+        threshold: 0,
+      }
+    );
+    filteredNumbers.forEach((n) => {
+      const el = document.getElementById(`question-q${n}`);
+      if (el) io.observe(el);
+    });
+    return () => io.disconnect();
+  }, [viewMode, paper, loadingPaper, filteredNumbers, isDesktop]);
+
+  // Soft-edge scroll mask (compiler style)
+  const updateFade = useCallback((el: HTMLElement) => {
+    const isAtTop = el.scrollTop <= 4;
+    const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
+    if (isAtTop && isAtBottom) setScrollFadeState('none');
+    else if (isAtTop) setScrollFadeState('top');
+    else if (isAtBottom) setScrollFadeState('bottom');
+    else setScrollFadeState('middle');
+  }, []);
+
+  const handleFeedScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => updateFade(e.currentTarget), [updateFade]);
+
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => {
+      if (feedRef.current) updateFade(feedRef.current);
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [filteredQuestions, viewMode, paper, loadingPaper, expandedExplanations, updateFade]);
+
+  const feedMask = useMemo(() => {
+    if (scrollFadeState === 'none') return 'none';
+    if (scrollFadeState === 'top') return 'linear-gradient(to bottom, black calc(100% - 36px), transparent 100%)';
+    if (scrollFadeState === 'bottom') return 'linear-gradient(to bottom, transparent 0%, black 24px)';
+    return 'linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 36px), transparent 100%)';
+  }, [scrollFadeState]);
+
+  // Keyboard workflow
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === 'Escape') {
+        if (zoomedDiagram) {
+          setZoomedDiagram(null);
+          return;
+        }
+        if (isDeleteDialogOpen) {
+          if (!isDeleting) setIsDeleteDialogOpen(false);
+          return;
+        }
+        const inSearch = e.target === searchRef.current;
+        if (inSearch || !isTypingTarget(e.target)) {
+          if (searchQuery) setSearchQuery('');
+          if (inSearch) searchRef.current?.blur();
+        }
+        return;
+      }
+
+      if (zoomedDiagram || isDeleteDialogOpen) return;
+      if (isTypingTarget(e.target)) return;
+
+      const key = e.key.toLowerCase();
+      if (key === 'j' || key === 'k') {
+        if (viewMode !== 'continuous') return;
+        const next = stepQuestion(filteredNumbers, activeQ, key === 'j' ? 1 : -1);
+        if (next !== null) {
+          e.preventDefault();
+          scrollToQuestion(next);
+        }
+      } else if (key === 'e') {
+        if (viewMode !== 'continuous' || activeQ === null) return;
+        e.preventDefault();
+        toggleExplanation(activeQ);
+      } else if (e.key === '/') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      } else if (key === 't') {
+        e.preventDefault();
+        setViewMode((m) => (m === 'table' ? 'continuous' : 'table'));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [
+    zoomedDiagram,
+    isDeleteDialogOpen,
+    isDeleting,
+    searchQuery,
+    viewMode,
+    filteredNumbers,
+    activeQ,
+    scrollToQuestion,
+    toggleExplanation,
+  ]);
+
+
+  // Status for the selected paper
+  const isLive = selectedSummary
+    ? Boolean(selectedSummary.is_published || selectedSummary.lifecycle_state === 'published' || selectedSummary.source === 'database')
+    : Boolean(isPublished || paperSource === 'database');
+  const isArchivedNow = selectedSummary ? Boolean(selectedSummary.is_archived) : isArchived;
+  const collapse = panelOpen ? 'block' : 'hidden lg:block';
+
+  const handleRefresh = () => {
+    if (selectedPaperId) loadPaper(selectedPaperId);
+    else fetchPapersList();
+  };
+
   return (
-    <div className="w-full space-y-5 font-body text-[#201e1d]">
+    <div className="w-full flex flex-col flex-1 min-h-0 font-body text-[#201e1d] lg:h-full lg:overflow-hidden print:h-auto print:overflow-visible">
       {/* ── Print-only Header (Visible during window.print()) ── */}
       <div className="hidden print:block p-4 mb-6 border-b-2 border-black text-black">
         <div className="text-center space-y-1">
@@ -387,800 +569,397 @@ export default function WholePaperViewer({ initialPaperId }: WholePaperViewerPro
         </div>
       </div>
 
-      {/* ── Dismissible Success Banner ── */}
-      {successBanner && (
-        <div
-          data-testid="delete-success-banner"
-          className="p-4 rounded-2xl bg-[#ecfdf5] border-2 border-[#065f46] text-[#065f46] shadow-[3px_3px_0_#065f46] flex items-center justify-between gap-3 print:hidden animate-in fade-in slide-in-from-top-2 duration-200"
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-[minmax(0,1fr)] gap-4 lg:gap-6 flex-1 min-h-0 lg:h-full lg:overflow-hidden print:block print:overflow-visible">
+        {/* ── SIDEBAR (first on phones, right on desktop) ── */}
+        <aside
+          aria-label="Paper controls"
+          className="min-w-0 flex flex-col gap-3 lg:order-2 lg:overflow-y-auto lg:min-h-0 p-0.5 lg:pr-2 lg:pb-6 print:hidden"
         >
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-xl bg-[#a7f3d0] border border-[#065f46] text-[#065f46] shrink-0">
-              <Check className="w-4 h-4 stroke-[3]" />
-            </div>
-            <div>
-              <p className="font-heading font-black text-sm">{successBanner.message}</p>
-              {typeof successBanner.deletedCount === 'number' && successBanner.deletedCount > 0 && (
-                <p className="text-xs font-mono font-medium opacity-90">
-                  {successBanner.deletedCount} question{successBanner.deletedCount === 1 ? '' : 's'} removed.
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSuccessBanner(null)}
-            className="p-1 rounded-lg border border-[#065f46] hover:bg-[#a7f3d0] transition-colors cursor-pointer shrink-0"
-            aria-label="Dismiss banner"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* ── Control Deck: Paper Selector & Actions ── */}
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_#201e1d] space-y-4 print:hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Title & Badge */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#8c491a] shadow-xs">
-                CAMBRIDGE INGESTION ARCHIVE
-              </span>
-              {paperSource === 'database' || isPublished ? (
-                <span className="px-2.5 py-0.5 rounded-full bg-[#d7f5ba] border border-[#201e1d] text-xs font-mono font-black text-[#1c3809] flex items-center gap-1.5 shadow-xs">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-800" />
-                  Live Database Paper (Supabase PostgreSQL)
-                </span>
-              ) : isArchived ? (
-                <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] border border-[#201e1d]/30 text-xs font-mono font-bold text-[#645c50]">
-                  Archived
-                </span>
-              ) : (
-                <span className="px-2.5 py-0.5 rounded-full bg-[#fff2eb] border border-[#201e1d]/40 text-xs font-mono font-bold text-[#b91c1c]">
-                  Staged (Review)
-                </span>
-              )}
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#201e1d] font-heading tracking-tight flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-[#201e1d]" />
-              Whole Paper Viewer
-            </h1>
-            <p className="text-xs sm:text-sm font-medium text-[#645c50]">
-              Continuous exam paper reading experience with mathematical typography, diagrams, and distractor derivations.
-            </p>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedPaperId) {
-                  loadPaper(selectedPaperId);
-                } else {
-                  fetchPapersList();
-                }
-              }}
-              disabled={loadingPaper || loadingList}
-              className="px-3.5 py-2 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] font-heading font-black text-xs text-[#201e1d] shadow-[2px_2px_0_#201e1d] hover:bg-[#ffe1d0] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              title="Refresh current paper"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loadingPaper ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-              disabled={!paper || loadingPaper}
-              className="px-3.5 py-2 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] font-heading font-black text-xs text-[#272e1b] shadow-[2px_2px_0_#201e1d] hover:bg-[#b8c99d] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              title="Print clean A4 Cambridge exam paper"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Paper</span>
-            </button>
-
-            <button
-              type="button"
-              data-testid="delete-paper-button"
-              onClick={() => {
-                setDeleteError(null);
-                setIsDeleteDialogOpen(true);
-              }}
-              disabled={!paper || loadingPaper || isDeleting}
-              className="px-3.5 py-2 rounded-xl bg-[#fee2e2] hover:bg-[#fecaca] text-[#991b1b] border-2 border-[#201e1d] font-heading font-black text-xs shadow-[2px_2px_0_#201e1d] hover:shadow-[1px_1px_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              title="Delete paper, relating questions, and logs"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-[#991b1b]" />
-              <span>Delete Paper</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Paper Selector Dropdown & Quick Details */}
-        <div className="pt-2 border-t-2 border-[#201e1d]/15 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex-1 max-w-xl">
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50]">
-                Select Cambridge Paper:
+          {/* 1. Paper panel */}
+          <section className={`${PANEL} rounded-2xl p-3.5 space-y-2.5`}>
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="paper-select" className={LABEL}>
+                Paper
               </label>
-              {selectedSummary && (
+              {selectedPaperId && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black border flex items-center gap-1 shadow-xs ${
-                    selectedSummary.is_published || selectedSummary.lifecycle_state === 'published' || selectedSummary.source === 'database'
-                      ? 'bg-[#d7f5ba] text-[#1c3809] border-[#201e1d]'
-                      : selectedSummary.is_archived
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black border flex items-center gap-1 ${
+                    isLive
+                      ? 'bg-[#f0fae1] text-[#3d472b] border-[#728157]'
+                      : isArchivedNow
                       ? 'bg-[#eee7db] text-[#645c50] border-[#201e1d]/40'
-                      : 'bg-[#fff0db] text-[#9a4200] border-[#201e1d]'
+                      : 'bg-[#fff0db] text-[#9a4200] border-[#c67139]'
                   }`}
                 >
-                  {selectedSummary.is_published || selectedSummary.lifecycle_state === 'published' || selectedSummary.source === 'database' ? (
-                    <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                      LIVE IN DB
-                    </>
-                  ) : selectedSummary.is_archived ? (
-                    'ARCHIVED'
-                  ) : (
-                    <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      STAGED
-                    </>
-                  )}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isLive ? 'bg-[#728157]' : isArchivedNow ? 'bg-[#82796a]' : 'bg-amber-500'
+                    }`}
+                  />
+                  {isLive ? 'Live' : isArchivedNow ? 'Archived' : 'Staged'}
                 </span>
               )}
             </div>
-            <div className="relative">
-              <select
-                value={selectedPaperId}
-                onChange={(e) => setSelectedPaperId(e.target.value)}
-                disabled={loadingList || stagedPapers.length === 0}
-                className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-heading font-bold text-[#201e1d] shadow-[2px_2px_0_#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] appearance-none pr-9 cursor-pointer"
-              >
-                {stagedPapers.length === 0 ? (
-                  <option value="">No papers found</option>
-                ) : (
-                  stagedPapers.map((p) => {
-                    const isLive = Boolean(p.is_published || p.lifecycle_state === 'published' || p.source === 'database');
-                    const statusPrefix = isLive ? '🟢 [LIVE IN DB]' : p.is_archived ? '📦 [ARCHIVED]' : '🟡 [STAGED]';
-                    const subjectCode = p.subject?.code || '0455';
-                    const subjectName = p.subject?.name ? ` ${p.subject.name}` : '';
-                    const seriesText = formatSeriesText(p.paper?.series, p.paper?.year);
-                    const paperCode = p.paper?.paper_code ? ` · Paper ${p.paper.paper_code}` : '';
-                    const qCount = p.questionsCount !== undefined ? ` · ${p.questionsCount} Qs` : '';
-
-                    return (
-                      <option key={p.id} value={p.id}>
-                        {statusPrefix} {p.id} — {subjectCode}{subjectName} · {seriesText}{paperCode}{qCount}
-                      </option>
-                    );
-                  })
-                )}
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#201e1d] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* View mode toggle switch */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-1 md:pt-0">
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50]">
-              View Mode:
-            </span>
-            <div className="inline-flex p-1 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] shadow-offset-1">
-              <button
-                type="button"
-                onClick={() => setViewMode('continuous')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-heading font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'continuous'
-                    ? 'bg-[#ffe1d0] border border-[#201e1d] text-[#201e1d] shadow-xs'
-                    : 'text-[#645c50] hover:text-[#201e1d]'
-                }`}
-              >
-                <ListOrdered className="w-3.5 h-3.5" />
-                <span>Continuous Paper</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-heading font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'table'
-                    ? 'bg-[#ffe1d0] border border-[#201e1d] text-[#201e1d] shadow-xs'
-                    : 'text-[#645c50] hover:text-[#201e1d]'
-                }`}
-              >
-                <TableIcon className="w-3.5 h-3.5" />
-                <span>Mark Scheme Table</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Paper Metadata & Metrics Strip */}
-        {paper && (
-          <div className="pt-3 border-t-2 border-[#201e1d]/15 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
-            {/* Subject */}
-            <div className="p-2.5 rounded-xl bg-white border border-[#201e1d] shadow-xs">
-              <span className="text-[10px] font-mono uppercase text-[#645c50] block font-bold">
-                Subject
-              </span>
-              <span className="text-xs font-heading font-black text-[#201e1d] truncate block">
-                {paper.subject?.code} {paper.subject?.name || 'Economics'}
-              </span>
-            </div>
-
-            {/* Series & Paper */}
-            <div className="p-2.5 rounded-xl bg-white border border-[#201e1d] shadow-xs">
-              <span className="text-[10px] font-mono uppercase text-[#645c50] block font-bold">
-                Series & Paper
-              </span>
-              <span className="text-xs font-heading font-black text-[#201e1d] truncate block">
-                {formatSeriesText(paper.paper?.series, paper.paper?.year)} · P
-                {paper.paper?.paper_code || '12'}
-              </span>
-            </div>
-
-            {/* Total Questions */}
-            <div className="p-2.5 rounded-xl bg-white border border-[#201e1d] shadow-xs">
-              <span className="text-[10px] font-mono uppercase text-[#645c50] block font-bold">
-                Total Questions
-              </span>
-              <span className="text-xs font-heading font-black text-[#201e1d] flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5 text-[#8c491a]" />
-                {totalQuestions} Questions
-              </span>
-            </div>
-
-            {/* Diagrams Count */}
-            <div className="p-2.5 rounded-xl bg-white border border-[#201e1d] shadow-xs">
-              <span className="text-[10px] font-mono uppercase text-[#645c50] block font-bold">
-                Diagrams
-              </span>
-              <span className="text-xs font-heading font-black text-[#201e1d] flex items-center gap-1">
-                <ImageIcon className="w-3.5 h-3.5 text-blue-700" />
-                {diagramsCount} with Diagrams
-              </span>
-            </div>
-
-            {/* Answer Key Distribution */}
-            <div className="col-span-2 p-2.5 rounded-xl bg-white border border-[#201e1d] shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase text-[#645c50] font-bold">
-                  Answer Key Distribution
-                </span>
-                <span className="text-[10px] font-mono font-bold text-[#8c491a]">
-                  Sum: {totalQuestions}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-1">
-                {(['A', 'B', 'C', 'D'] as const).map((keyLetter) => (
-                  <span
-                    key={keyLetter}
-                    className="flex-1 px-1.5 py-0.5 rounded-lg bg-[#f0fae1] border border-[#8fa073] text-[11px] font-mono font-bold text-[#3d472b] text-center"
-                    title={`Option ${keyLetter} is correct in ${answerKeyBreakdown[keyLetter]} questions`}
-                  >
-                    <span className="font-heading font-black text-[#201e1d]">{keyLetter}:</span>{' '}
-                    {answerKeyBreakdown[keyLetter]}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Interactive Question Jump Bar ── */}
-      {paper && questionsList.length > 0 && (
-        <div className="bg-[#ebddc5] border-2 border-[#201e1d] rounded-2xl p-3 shadow-[2px_2px_0_#201e1d] space-y-2 print:hidden sticky top-2 z-20">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="font-heading font-black text-[#201e1d] flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-[#8c491a]" />
-              Question Navigation Bar (Q1 – Q{totalQuestions})
-            </span>
-            <span className="text-[11px] font-mono text-[#645c50]">
-              Click pill to jump smoothly
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            {questionsList.map((q) => {
-              const correctOpt = q.options?.find((o) => o.is_correct);
-              const keyLetter = correctOpt?.label || '?';
-              const hasDiag = Boolean(q.diagram?.has_diagram || q.diagram?.image_url);
-
-              return (
-                <button
-                  key={q.question_number}
-                  type="button"
-                  onClick={() => scrollToQuestion(q.question_number)}
-                  className="shrink-0 px-2.5 py-1.5 rounded-xl bg-white border border-[#201e1d] font-mono text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#ffe1d0] active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer"
-                  title={`Jump to Q${q.question_number} (Correct: ${keyLetter}${hasDiag ? ', with diagram' : ''})`}
-                >
-                  <span className="font-heading font-black">Q{q.question_number}</span>
-                  <span className="text-[10px] px-1 py-0.2 rounded bg-[#ccdbb2] border border-[#201e1d]/40 font-bold text-[#272e1b]">
-                    {keyLetter}
-                  </span>
-                  {hasDiag && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Filter Bar ── */}
-      {paper && (
-        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 shadow-offset-2 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 print:hidden">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-[#645c50] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search stem text, options, citations, formulas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-medium text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0]"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#645c50] hover:text-[#201e1d]"
-                title="Clear search"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Filter Toggles & Topic dropdown */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Diagram filter pills */}
-            <div className="inline-flex p-0.5 rounded-xl bg-[#eee7db] border border-[#201e1d] text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setDiagramFilter('all')}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                  diagramFilter === 'all'
-                    ? 'bg-white border border-[#201e1d] text-[#201e1d] shadow-xs'
-                    : 'text-[#645c50] hover:text-[#201e1d]'
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setDiagramFilter('with_diagrams')}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                  diagramFilter === 'with_diagrams'
-                    ? 'bg-white border border-[#201e1d] text-[#201e1d] shadow-xs'
-                    : 'text-[#645c50] hover:text-[#201e1d]'
-                }`}
-              >
-                <ImageIcon className="w-3 h-3" />
-                With Diagrams ({diagramsCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setDiagramFilter('without_diagrams')}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                  diagramFilter === 'without_diagrams'
-                    ? 'bg-white border border-[#201e1d] text-[#201e1d] shadow-xs'
-                    : 'text-[#645c50] hover:text-[#201e1d]'
-                }`}
-              >
-                No Diagrams
-              </button>
-            </div>
-
-            {/* Topic Filter */}
-            {topicsList.length > 0 && (
-              <select
-                value={topicFilter}
-                onChange={(e) => setTopicFilter(e.target.value)}
-                className="bg-white border-2 border-[#201e1d] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] cursor-pointer"
-              >
-                <option value="all">All Topics ({topicsList.length})</option>
-                {topicsList.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {/* Toggle all derivations button (only continuous view) */}
-            {viewMode === 'continuous' && (
-              <button
-                type="button"
-                onClick={handleToggleAllExplanations}
-                className="px-3 py-1.5 rounded-xl bg-white border border-[#201e1d] text-xs font-bold text-[#474238] hover:bg-[#ffe1d0] transition-colors shadow-xs cursor-pointer"
-              >
-                {allExpanded ? 'Collapse All Derivations' : 'Expand All Derivations'}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Status Messages & Loading / Error States ── */}
-      {loadingPaper && (
-        <div className="py-16 text-center space-y-3 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-offset-2">
-          <div className="w-8 h-8 rounded-full border-4 border-[#201e1d] border-t-transparent animate-spin mx-auto" />
-          <div className="font-heading font-black text-sm text-[#201e1d]">
-            Loading Staged Paper & Questions...
-          </div>
-          <p className="text-xs text-[#645c50]">
-            Sanitizing LaTeX expressions, resolving diagram paths, and parsing answer keys.
-          </p>
-        </div>
-      )}
-
-      {paperError && !loadingPaper && (
-        <div className="p-6 rounded-2xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#7f1d1d] space-y-2 shadow-offset-2">
-          <div className="font-heading font-black text-base flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-[#b91c1c]" />
-            Error Loading Staged Paper
-          </div>
-          <p className="text-xs font-medium">{paperError}</p>
-          <button
-            type="button"
-            onClick={() => selectedPaperId && loadPaper(selectedPaperId)}
-            className="px-3 py-1.5 rounded-lg bg-white border border-[#b91c1c] text-xs font-bold text-[#b91c1c] hover:bg-neutral-50 shadow-xs cursor-pointer mt-2"
-          >
-            Retry Loading
-          </button>
-        </div>
-      )}
-
-      {/* ── Content View 1: Continuous Exam Paper ── */}
-      {!loadingPaper && !paperError && paper && viewMode === 'continuous' && (
-        <div className="space-y-6">
-          {filteredQuestions.length === 0 ? (
-            <div className="py-16 text-center space-y-2 bg-white border-2 border-dashed border-[#c0b6a5] rounded-2xl">
-              <div className="text-3xl">🔍</div>
-              <div className="font-heading font-black text-base text-[#201e1d]">
-                No Questions Match Current Filters
-              </div>
-              <p className="text-xs text-[#645c50]">
-                Try adjusting your search query, topic filter, or diagram toggle.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setDiagramFilter('all');
-                  setTopicFilter('all');
-                }}
-                className="px-3.5 py-1.5 rounded-xl bg-[#ffe1d0] border border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#ffc6a5] cursor-pointer mt-2"
-              >
-                Reset All Filters
-              </button>
-            </div>
-          ) : (
-            filteredQuestions.map((q) => {
-              const sanitizedStem = sanitizeKaTeX(q.stem_markdown || '');
-              const isExplanationOpen = Boolean(expandedExplanations[q.question_number]);
-              const hasDiag = Boolean(q.diagram?.has_diagram || q.diagram?.image_url);
-              const diagramUrl = resolveDiagramUrl(q.diagram?.image_url) || q.diagram?.image_url;
-
-              return (
-                <article
-                  key={q.question_number}
-                  id={`question-q${q.question_number}`}
-                  className="bg-white border-2 border-[#201e1d] rounded-2xl p-5 sm:p-6 shadow-[3px_3px_0_#201e1d] space-y-4 print:shadow-none print:border-black print:rounded-none print:break-inside-avoid print:p-4"
-                >
-                  {/* Question Header Bar */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#201e1d]/15">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-3 py-1 rounded-full bg-[#201e1d] text-[#f9f4ed] font-heading font-black text-xs shadow-xs">
-                        Q{q.question_number}
-                      </span>
-
-                      {q.cambridge_source_ref && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-[#474238] font-mono text-[11px] font-bold">
-                          {q.cambridge_source_ref}
-                        </span>
-                      )}
-
-                      {q.topic_name && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#f0fae1] border border-[#8fa073] text-[#3d472b] text-[11px] font-bold flex items-center gap-1">
-                          <Tag className="w-3 h-3 text-[#56633f]" />
-                          {q.topic_name}
-                        </span>
-                      )}
-
-                      {hasDiag && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d]/30 text-[#8c491a] text-[11px] font-bold flex items-center gap-1 print:hidden">
-                          <ImageIcon className="w-3 h-3" />
-                          Diagram
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Page number badge if available */}
-                    {q.page_number && (
-                      <span className="text-[11px] font-mono text-[#645c50] font-bold">
-                        Page {q.page_number}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Question Stem Text */}
-                  <div className="prose prose-sm sm:prose-base max-w-none text-[#201e1d] font-medium leading-relaxed">
-                    <RichMarkdown
-                      content={sanitizedStem || '_No question stem content provided._'}
-                      variant="neobrutalist"
-                    />
-                  </div>
-
-                  {/* Question Diagram / Graphic */}
-                  {hasDiag && (
-                    <div className="p-3 sm:p-4 rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] flex flex-col items-center justify-center gap-2 print:border-black print:bg-white">
-                      {diagramUrl ? (
-                        <div className="relative group flex flex-col items-center">
-                          <img
-                            src={diagramUrl}
-                            alt={
-                              q.diagram?.alt_description ||
-                              `Cambridge Exam Diagram for Question ${q.question_number}`
-                            }
-                            className="max-h-72 w-auto object-contain rounded-lg border border-[#201e1d]/20 bg-white p-1 cursor-zoom-in hover:shadow-md transition-shadow"
-                            onClick={() =>
-                              setZoomedDiagram({
-                                url: diagramUrl,
-                                questionNumber: q.question_number,
-                                alt: q.diagram?.alt_description,
-                              })
-                            }
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setZoomedDiagram({
-                                url: diagramUrl,
-                                questionNumber: q.question_number,
-                                alt: q.diagram?.alt_description,
-                              })
-                            }
-                            className="mt-2.5 px-3 py-1 rounded-lg bg-white border border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#ffe1d0] flex items-center gap-1.5 transition-colors cursor-pointer print:hidden"
-                          >
-                            <ZoomIn className="w-3.5 h-3.5" />
-                            <span>Click to Zoom Diagram</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="py-4 text-center text-xs text-[#645c50] font-bold flex flex-col items-center gap-1">
-                          <ImageIcon className="w-6 h-6 text-[#82796a]" />
-                          <span>Diagram referenced in official Cambridge Question Paper</span>
-                          {q.diagram?.bounding_box && (
-                            <span className="font-mono text-[10px] text-[#82796a]">
-                              Page {q.diagram.bounding_box.page_number} coordinates [
-                              {q.diagram.bounding_box.xmin}, {q.diagram.bounding_box.ymin},{' '}
-                              {q.diagram.bounding_box.xmax}, {q.diagram.bounding_box.ymax}]
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {q.diagram?.alt_description && (
-                        <p className="text-[11px] text-[#645c50] italic text-center max-w-lg mt-1">
-                          {q.diagram.alt_description}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 4 MCQ Options */}
-                  <div className="space-y-2 pt-1">
-                    <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] px-0.5">
-                      Options & Key:
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                      {(q.options || []).map((opt) => {
-                        const isCorrect = Boolean(opt.is_correct);
-                        const sanitizedOpt = sanitizeKaTeX(opt.content_markdown || '');
-
-                        return (
-                          <div
-                            key={opt.label}
-                            className={`p-3 sm:p-3.5 rounded-xl border-2 transition-all flex items-start gap-3 ${
-                              isCorrect
-                                ? 'bg-[#f0fae1] border-[#728157] text-[#201e1d] shadow-[2px_2px_0_#728157]'
-                                : 'bg-white border-[#201e1d]/25 hover:border-[#201e1d] text-[#201e1d]'
-                            }`}
-                          >
-                            {/* Option letter pill */}
-                            <span
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-heading font-black text-xs shrink-0 mt-0.5 ${
-                                isCorrect
-                                  ? 'bg-[#728157] text-[#f9f4ed]'
-                                  : 'bg-[#eee7db] text-[#201e1d] border border-[#201e1d]/20'
-                              }`}
-                            >
-                              {opt.label}
-                            </span>
-
-                            {/* Option markdown */}
-                            <div className="flex-1 min-w-0 prose prose-sm max-w-none text-xs sm:text-sm font-medium leading-relaxed">
-                              <RichMarkdown
-                                content={sanitizedOpt || '_Empty option_'}
-                                variant="plain"
-                              />
-                            </div>
-
-                            {/* Correct indicator badge */}
-                            {isCorrect && (
-                              <span className="shrink-0 px-2.5 py-1 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[11px] font-heading font-black text-[#272e1b] flex items-center gap-1 shadow-xs">
-                                <Check className="w-3.5 h-3.5 text-emerald-800" />
-                                <span>Correct Key</span>
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Expandable Mark Scheme & Distractor Derivation */}
-                  <div className="pt-2">
-                    <div className="rounded-xl border-2 border-[#201e1d] bg-[#f9f4ed] overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => toggleExplanation(q.question_number)}
-                        className="w-full px-4 py-2.5 bg-[#eee7db] hover:bg-[#e4dac9] transition-colors flex items-center justify-between text-xs font-heading font-black text-[#201e1d] cursor-pointer print:hidden"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-[#8c491a]" />
-                          <span>Mark Scheme Derivation & Distractor Analysis</span>
-                        </div>
-                        {isExplanationOpen ? (
-                          <ChevronUp className="w-4 h-4 text-[#201e1d]" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-[#201e1d]" />
-                        )}
-                      </button>
-
-                      {/* Content (Visible if expanded or during printing) */}
-                      <div
-                        className={`p-4 bg-white border-t-2 border-[#201e1d] space-y-3 ${
-                          isExplanationOpen ? 'block' : 'hidden print:block'
-                        }`}
-                      >
-                        {/* Distractor analysis record if present */}
-                        {q.distractor_analysis && Object.keys(q.distractor_analysis).length > 0 && (
-                          <div className="space-y-2 pb-3 border-b border-[#201e1d]/15">
-                            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#645c50] block">
-                              Option-by-Option Distractor Breakdown:
-                            </span>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              {Object.entries(q.distractor_analysis).map(([optKey, text]) => {
-                                const isCorrect = q.options?.find(
-                                  (o) => o.label === optKey && o.is_correct
-                                );
-                                return (
-                                  <div
-                                    key={optKey}
-                                    className={`p-2.5 rounded-xl border text-xs leading-relaxed ${
-                                      isCorrect
-                                        ? 'bg-[#f0fae1] border-[#8fa073] text-[#272e1b]'
-                                        : 'bg-[#fff9f2] border-[#e2d5c3] text-[#474238]'
-                                    }`}
-                                  >
-                                    <span className="font-heading font-black text-[#201e1d] mr-1.5">
-                                      Option {optKey} {isCorrect ? '(Correct)' : '(Incorrect)'}:
-                                    </span>
-                                    <span>{text}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Full explanation markdown */}
-                        <div className="prose prose-sm max-w-none text-[#201e1d] leading-relaxed">
-                          <RichMarkdown
-                            content={sanitizeKaTeX(
-                              q.explanation_markdown || '_No official explanation provided._'
-                            )}
-                            variant="neobrutalist"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })
-          )}
-        </div>
-      )}
-
-      {/* ── Content View 2: Mark Scheme Table View ── */}
-      {!loadingPaper && !paperError && paper && viewMode === 'table' && (
-        <div className="bg-white border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_#201e1d] overflow-hidden">
-          <div className="p-4 bg-[#ebddc5] border-b-2 border-[#201e1d] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TableIcon className="w-5 h-5 text-[#201e1d]" />
-              <h3 className="font-heading font-black text-sm text-[#201e1d]">
-                Cambridge Official Mark Scheme Table
-              </h3>
+              <div className="relative flex-1 min-w-0">
+                <select
+                  id="paper-select"
+                  value={selectedPaperId}
+                  onChange={(e) => setSelectedPaperId(e.target.value)}
+                  disabled={loadingList || stagedPapers.length === 0}
+                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-2 text-xs font-heading font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] appearance-none cursor-pointer truncate"
+                >
+                  {stagedPapers.length === 0 ? (
+                    <option value="">{loadingList ? 'Loading papers...' : 'No papers found'}</option>
+                  ) : (
+                    stagedPapers.map((p) => {
+                      const series = formatSeriesText(p.paper?.series, p.paper?.year);
+                      const code = p.paper?.paper_code ? ` · P${p.paper.paper_code}` : '';
+                      const qs = p.questionsCount !== undefined ? ` · ${p.questionsCount} Qs` : '';
+                      return (
+                        <option key={p.id} value={p.id}>
+                          {p.id} · {series}
+                          {code}
+                          {qs}
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+                <ChevronDown className="w-4 h-4 text-[#201e1d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <button
+                type="button"
+                onClick={handleRefresh}
+                disabled={loadingPaper || loadingList}
+                className="p-2 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#ffe1d0] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50"
+                title="Refresh current paper"
+                aria-label="Refresh current paper"
+              >
+                <RefreshCw className={`w-4 h-4 ${loadingPaper ? 'animate-spin' : ''}`} />
+              </button>
             </div>
-            <span className="text-xs font-mono font-bold text-[#645c50]">
-              Showing {filteredQuestions.length} of {totalQuestions} questions
-            </span>
-          </div>
+            {paper && (
+              <p className="text-xs font-bold text-[#645c50] truncate">
+                {paper.subject?.code} {paper.subject?.name || 'Economics'} ·{' '}
+                {formatSeriesText(paper.paper?.series, paper.paper?.year)}
+              </p>
+            )}
+          </section>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-[#f5ead8] border-b-2 border-[#201e1d] font-heading font-black text-[#201e1d]">
-                  <th className="p-3 w-16 text-center">Q#</th>
-                  <th className="p-3 w-20 text-center">Key</th>
-                  <th className="p-3">Syllabus Topic</th>
-                  <th className="p-3">Cambridge Citation</th>
-                  <th className="p-3 w-24 text-center">Diagram</th>
-                  <th className="p-3">Mark Scheme Summary</th>
-                  <th className="p-3 w-24 text-right print:hidden">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#201e1d]/15">
-                {filteredQuestions.map((q) => {
-                  const correctOpt = q.options?.find((o) => o.is_correct);
-                  const keyLetter = correctOpt?.label || '-';
-                  const hasDiag = Boolean(q.diagram?.has_diagram || q.diagram?.image_url);
-                  const cleanExpSnippet = (q.explanation_markdown || '')
-                    .replace(/[#*`$\\]/g, ' ')
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                    .slice(0, 110);
+          {/* 2. Search + filters */}
+          <section className={`${PANEL} rounded-2xl p-3.5 space-y-2.5`}>
+            <div className="relative">
+              <Search className="w-4 h-4 text-[#645c50] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                ref={searchRef}
+                type="text"
+                aria-label="Search questions"
+                placeholder="Search stems, options, refs..."
+                value={searchQuery}
+                disabled={!paper}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-medium text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] disabled:opacity-50"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#645c50] hover:text-[#201e1d] cursor-pointer"
+                  title="Clear search"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-                  return (
-                    <tr key={q.question_number} className="hover:bg-[#fff9f2] transition-colors">
-                      <td className="p-3 text-center font-heading font-black text-sm text-[#201e1d]">
-                        Q{q.question_number}
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="inline-flex w-7 h-7 rounded-lg bg-[#ccdbb2] border border-[#201e1d] font-heading font-black text-xs text-[#272e1b] items-center justify-center shadow-xs">
-                          {keyLetter}
-                        </span>
-                      </td>
-                      <td className="p-3 font-bold text-[#201e1d] max-w-xs">
-                        {q.topic_name || 'General'}
-                      </td>
-                      <td className="p-3 font-mono text-[11px] text-[#645c50] max-w-xs truncate">
-                        {q.cambridge_source_ref || `0455 Q${q.question_number}`}
-                      </td>
-                      <td className="p-3 text-center">
-                        {hasDiag ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d]/30 text-[10px] font-bold text-[#8c491a]">
-                            <ImageIcon className="w-3 h-3" />
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-[#a19786] font-mono">None</span>
-                        )}
-                      </td>
-                      <td className="p-3 text-xs text-[#474238] max-w-md">
-                        <span className="line-clamp-2">{cleanExpSnippet || 'Derivation available'}</span>
-                      </td>
-                      <td className="p-3 text-right print:hidden">
+            <button
+              type="button"
+              onClick={() => setPanelOpen((o) => !o)}
+              aria-expanded={panelOpen}
+              className="lg:hidden w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                Filters, stats &amp; navigator
+              </span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${panelOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <div className={`${collapse} space-y-2.5`}>
+              <Segmented<DiagramFilter>
+                value={diagramFilter}
+                onChange={setDiagramFilter}
+                options={[
+                  { value: 'all', label: 'All' },
+                  { value: 'with_diagrams', label: `With diagrams (${diagramsCount})` },
+                  { value: 'without_diagrams', label: 'None' },
+                ]}
+              />
+              {topicsList.length > 0 && (
+                <select
+                  value={topicFilter}
+                  onChange={(e) => setTopicFilter(e.target.value)}
+                  aria-label="Filter by topic"
+                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] cursor-pointer"
+                >
+                  <option value="all">All topics ({topicsList.length})</option>
+                  {topicsList.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <ToggleRow label="Show answers" pressed={showAnswers} onClick={() => setShowAnswers((v) => !v)} />
+              <ToggleRow label="Expand explanations" pressed={allExpanded} onClick={handleToggleAllExplanations} />
+            </div>
+          </section>
+
+          {paper && (
+            <>
+              {/* 3. Stats */}
+              <section className={`${PANEL} ${collapse} rounded-2xl p-3.5 space-y-2.5`}>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="text-center p-2 rounded-xl bg-white border-2 border-[#201e1d]">
+                    <div className="font-heading font-black text-xl leading-none">{totalQuestions}</div>
+                    <div className={`${LABEL} mt-1`}>Questions</div>
+                  </div>
+                  <div className="text-center p-2 rounded-xl bg-white border-2 border-[#201e1d]">
+                    <div className="font-heading font-black text-xl leading-none">{diagramsCount}</div>
+                    <div className={`${LABEL} mt-1`}>Diagrams</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5" aria-label="Answer key distribution">
+                  {(['A', 'B', 'C', 'D'] as const).map((k) => (
+                    <div
+                      key={k}
+                      className="text-center py-1 rounded-lg bg-[#f0fae1] border border-[#8fa073] text-[11px] font-mono font-bold text-[#3d472b]"
+                      title={`Option ${k} is correct in ${answerKeyBreakdown[k]} questions`}
+                    >
+                      <span className="font-heading font-black text-[#201e1d]">{k}</span>{' '}
+                      {showAnswers ? answerKeyBreakdown[k] : '•'}
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 4. Question navigator */}
+              {questionsList.length > 0 && (
+                <nav aria-label="Question navigator" className={`${PANEL} ${collapse} rounded-2xl p-3.5 space-y-2`}>
+                  <div className="flex items-center justify-between">
+                    <span className={LABEL}>Navigator</span>
+                    <span className="text-[10px] font-mono text-[#645c50]">
+                      {filteredQuestions.length}/{totalQuestions} shown
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {questionsList.map((q) => {
+                      const key = q.options?.find((o) => o.is_correct)?.label || '?';
+                      const diag = hasDiagram(q);
+                      const active = activeQ === q.question_number;
+                      const dim = !visibleSet.has(q.question_number);
+                      return (
                         <button
+                          key={q.question_number}
                           type="button"
                           onClick={() => scrollToQuestion(q.question_number)}
-                          className="px-2.5 py-1 rounded-lg bg-[#ffe1d0] border border-[#201e1d] font-heading font-bold text-[11px] text-[#201e1d] hover:bg-[#ffc6a5] transition-colors shadow-xs active:translate-y-0.5 cursor-pointer whitespace-nowrap"
+                          aria-current={active ? 'true' : undefined}
+                          aria-label={`Question ${q.question_number}${showAnswers ? `, answer ${key}` : ''}${
+                            diag ? ', has diagram' : ''
+                          }${dim ? ', hidden by filters' : ''}`}
+                          className={`relative py-1 rounded-lg border-2 font-mono text-[11px] font-bold leading-tight transition-colors cursor-pointer flex flex-col items-center ${
+                            active
+                              ? 'bg-[#c67139] border-[#c67139] text-white'
+                              : 'bg-white border-[#201e1d] text-[#201e1d] hover:bg-[#ffe1d0]'
+                          } ${dim ? 'opacity-35' : ''}`}
                         >
-                          View Card
+                          <span>{q.question_number}</span>
+                          {showAnswers && (
+                            <span className={`text-[10px] ${active ? 'text-white/90' : 'text-[#645c50]'}`}>{key}</span>
+                          )}
+                          {diag && (
+                            <span
+                              className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${
+                                active ? 'bg-white' : 'bg-[#c67139]'
+                              }`}
+                            />
+                          )}
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      );
+                    })}
+                  </div>
+                </nav>
+              )}
+
+              {/* 5. View and actions */}
+              <section className={`${PANEL} ${collapse} rounded-2xl p-3.5 space-y-2.5`}>
+                <Segmented<'continuous' | 'table'>
+                  value={viewMode}
+                  onChange={setViewMode}
+                  options={[
+                    { value: 'continuous', label: <><LayoutList className="w-3.5 h-3.5" />Cards</> },
+                    { value: 'table', label: <><TableIcon className="w-3.5 h-3.5" />Mark scheme</> },
+                  ]}
+                />
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  disabled={!paper || loadingPaper}
+                  className="w-full px-3 py-2 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] font-heading font-black text-xs text-[#272e1b] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b8c99d] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  title="Print clean A4 Cambridge exam paper"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Print paper
+                </button>
+                <div className="pt-2.5 mt-1 border-t-2 border-dashed border-[#201e1d]/20">
+                  <button
+                    type="button"
+                    data-testid="delete-paper-button"
+                    onClick={() => {
+                      setDeleteError(null);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                    disabled={!paper || loadingPaper || isDeleting}
+                    className="w-full px-3 py-2 rounded-xl bg-[#fee2e2] hover:bg-[#fecaca] text-[#991b1b] border-2 border-[#991b1b] font-heading font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    title="Delete paper, relating questions, and logs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete paper
+                  </button>
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* 6. Hotkey legend */}
+          <p className="px-1 text-[10px] font-mono text-[#645c50] leading-relaxed hidden lg:block">
+            J/K next/prev · E explanation · / search · T table · Esc clear
+          </p>
+        </aside>
+
+        {/* ── LEFT FEED ── */}
+        <div className="flex flex-col min-w-0 lg:order-1 lg:min-h-0 lg:overflow-hidden gap-3 print:block print:overflow-visible">
+        {successBanner && (
+          <div
+            data-testid="delete-success-banner"
+            className="shrink-0 p-4 rounded-2xl bg-[#ecfdf5] border-2 border-[#065f46] text-[#065f46] shadow-[3px_3px_0_#065f46] flex items-center justify-between gap-3 print:hidden animate-in fade-in slide-in-from-top-2 duration-200"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-xl bg-[#a7f3d0] border border-[#065f46] text-[#065f46] shrink-0">
+                <Check className="w-4 h-4 stroke-[3]" />
+              </div>
+              <div>
+                <p className="font-heading font-black text-sm">{successBanner.message}</p>
+                {typeof successBanner.deletedCount === 'number' && successBanner.deletedCount > 0 && (
+                  <p className="text-xs font-mono font-medium opacity-90">
+                    {successBanner.deletedCount} question{successBanner.deletedCount === 1 ? '' : 's'} removed.
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSuccessBanner(null)}
+              className="p-1 rounded-lg border border-[#065f46] hover:bg-[#a7f3d0] transition-colors cursor-pointer shrink-0"
+              aria-label="Dismiss banner"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+          <div
+            ref={feedRef}
+            onScroll={handleFeedScroll}
+            role={viewMode === 'continuous' ? 'feed' : 'region'}
+            aria-label={viewMode === 'continuous' ? 'Questions' : 'Mark scheme table'}
+            aria-busy={loadingPaper}
+            style={{ ['--feed-mask' as string]: feedMask } as React.CSSProperties}
+            className="flex-1 min-h-0 lg:overflow-y-auto lg:[mask-image:var(--feed-mask)] lg:[-webkit-mask-image:var(--feed-mask)] pt-1 pb-20 px-1 lg:pr-2.5 flex flex-col gap-3 print:overflow-visible print:pb-0 print:h-auto"
+          >
+            {loadingPaper && (
+              <div className="py-16 text-center space-y-3 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-3xl shadow-[3px_3px_0_0_#201e1d]">
+                <div className="w-8 h-8 rounded-full border-4 border-[#201e1d] border-t-transparent animate-spin mx-auto" />
+                <div className="font-heading font-black text-sm text-[#201e1d]">Loading staged paper &amp; questions...</div>
+              </div>
+            )}
+
+            {listError && !loadingPaper && !paper && (
+              <div className="p-5 rounded-3xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#7f1d1d] text-xs font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {listError}
+              </div>
+            )}
+
+            {paperError && !loadingPaper && (
+              <div className="p-5 rounded-3xl bg-[#fee2e2] border-2 border-[#b91c1c] text-[#7f1d1d] space-y-2 shadow-[3px_3px_0_0_#b91c1c]">
+                <div className="font-heading font-black text-base flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-[#b91c1c]" />
+                  Error loading staged paper
+                </div>
+                <p className="text-xs font-medium">{paperError}</p>
+                <button
+                  type="button"
+                  onClick={() => selectedPaperId && loadPaper(selectedPaperId)}
+                  className="px-3 py-1.5 rounded-lg bg-white border-2 border-[#b91c1c] text-xs font-bold text-[#b91c1c] hover:bg-neutral-50 cursor-pointer mt-1"
+                >
+                  Retry loading
+                </button>
+              </div>
+            )}
+
+            {!loadingPaper && !paperError && !paper && !listError && !loadingList && (
+              <div className="py-16 px-4 bg-[#f9f4ed] rounded-3xl border-2 border-dashed border-[#dcd3c4] text-center">
+                <div className="font-heading font-black text-lg text-[#201e1d]">No paper selected</div>
+                <div className="text-sm text-[#645c50]">Pick a paper from the sidebar to review it.</div>
+              </div>
+            )}
+
+            {!loadingPaper && !paperError && paper && viewMode === 'continuous' &&
+              (filteredQuestions.length === 0 ? (
+                <div className="py-16 px-4 bg-[#f9f4ed] rounded-3xl border-2 border-dashed border-[#dcd3c4] text-center flex flex-col items-center gap-2.5">
+                  <div className="font-heading font-black text-xl text-[#201e1d]">No questions match</div>
+                  <div className="text-sm text-[#645c50]">Try a different search or clear a filter.</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setDiagramFilter('all');
+                      setTopicFilter('all');
+                    }}
+                    className="mt-2 px-4 py-2 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 transition-all shadow-[2px_2px_0_0_#201e1d] cursor-pointer"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              ) : (
+                filteredQuestions.map((q, i) => (
+                  <PaperQuestionCard
+                    key={q.question_number}
+                    q={q}
+                    index={i}
+                    total={filteredQuestions.length}
+                    isActive={activeQ === q.question_number}
+                    showAnswers={showAnswers}
+                    isExplanationOpen={Boolean(expandedExplanations[q.question_number])}
+                    onToggleExplanation={toggleExplanation}
+                    onZoom={handleZoom}
+                  />
+                ))
+              ))}
+
+            {!loadingPaper && !paperError && paper && viewMode === 'table' && (
+              <PaperTableView
+                questions={filteredQuestions}
+                totalQuestions={totalQuestions}
+                showAnswers={showAnswers}
+                onView={scrollToQuestion}
+              />
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* ── Diagram Enlarge Zoom Modal ── */}
       {zoomedDiagram && (

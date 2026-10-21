@@ -4484,12 +4484,152 @@ async function runSuite23() {
   });
 }
 
+async function runSuite24() {
+  const fs = require('fs');
+  const path = require('path');
+  const pv = () => require('../lib/paperViewer');
+  const opt = (label: string, text: string, ok = false) => ({ label, content_markdown: text, is_correct: ok });
+  const mk = (n: number, extra: any = {}) => ({
+    question_number: n,
+    stem_markdown: `Stem ${n} alpha`,
+    topic_name: 'Topic A',
+    options: [opt('A', 'aa', n % 2 === 0), opt('B', 'bb', n % 2 === 1), opt('C', 'cc'), opt('D', 'dd')],
+    ...extra,
+  });
+  const nums = (qs: any[]) => qs.map((q) => q.question_number).join(',');
+
+  test('PaperViewer helpers: hasDiagram and diagram filter', () => {
+    const { hasDiagram, filterPaperQuestions } = pv();
+    assertEqual(hasDiagram(mk(1)), false, 'no diagram');
+    assertEqual(hasDiagram(mk(1, { diagram: { has_diagram: true } })), true, 'has_diagram');
+    assertEqual(hasDiagram(mk(1, { diagram: { image_url: 'x.png' } })), true, 'image_url');
+    const qs = [mk(1), mk(2, { diagram: { has_diagram: true } })];
+    const f = (diagram: string) => nums(filterPaperQuestions(qs, { search: '', diagram, topic: 'all' }));
+    assertEqual(f('all'), '1,2', 'all');
+    assertEqual(f('with_diagrams'), '2', 'with');
+    assertEqual(f('without_diagrams'), '1', 'without');
+    assertEqual(nums(filterPaperQuestions([], { search: 'x', diagram: 'all', topic: 'all' })), '', 'empty list');
+  });
+
+  test('PaperViewer helpers: search matches q12 vs 12, options, stem, ref, topic, explanation', () => {
+    const { filterPaperQuestions } = pv();
+    const qs = [
+      mk(1),
+      mk(12, { cambridge_source_ref: 'CIE-REF-77' }),
+      mk(3, { options: [opt('A', 'Unique Needle', true), opt('B', 'b'), opt('C', 'c'), opt('D', 'd')] }),
+      mk(4, { topic_name: 'Kinematics', explanation_markdown: 'because Zebra' }),
+    ];
+    const s = (search: string) => nums(filterPaperQuestions(qs, { search, diagram: 'all', topic: 'all' }));
+    assertEqual(s('q12'), '12', 'q12');
+    assertEqual(s('12'), '12', 'bare 12');
+    assertEqual(s('  Q12 '), '12', 'trim + case');
+    assertEqual(s('unique needle'), '3', 'option text');
+    assertEqual(s('cie-ref'), '12', 'source ref');
+    assertEqual(s('kinemat'), '4', 'topic');
+    assertEqual(s('zebra'), '4', 'explanation');
+    assertEqual(s('stem 1 alpha'), '1', 'stem');
+    assertEqual(s('nomatchxyz'), '', 'no match');
+    assertEqual(s('   '), '1,12,3,4', 'blank search = all');
+  });
+
+  test('PaperViewer helpers: topic filter combined with diagram filter', () => {
+    const { filterPaperQuestions } = pv();
+    const qs = [
+      mk(1, { diagram: { has_diagram: true } }),
+      mk(2, { topic_name: 'Topic B', diagram: { has_diagram: true } }),
+      mk(3, { topic_name: 'Topic B' }),
+      mk(4),
+    ];
+    const f = (diagram: string, topic: string) => nums(filterPaperQuestions(qs, { search: '', diagram, topic }));
+    assertEqual(f('all', 'Topic B'), '2,3', 'topic only');
+    assertEqual(f('with_diagrams', 'Topic B'), '2', 'topic+with');
+    assertEqual(f('without_diagrams', 'Topic B'), '3', 'topic+without');
+    assertEqual(f('with_diagrams', 'Topic A'), '1', 'A+with');
+    assertEqual(f('all', 'topic b'), '', 'topic is exact match');
+    assertEqual(f('all', 'all'), '1,2,3,4', 'all topics');
+  });
+
+  test('PaperViewer helpers: getAnswerKeyBreakdown counts correct labels', () => {
+    const { getAnswerKeyBreakdown } = pv();
+    const r = getAnswerKeyBreakdown([mk(1), mk(2), mk(3), mk(5)]);
+    assertEqual(JSON.stringify([r.A, r.B, r.C, r.D]), JSON.stringify([1, 3, 0, 0]), 'breakdown');
+    const e = getAnswerKeyBreakdown([]);
+    assertEqual(JSON.stringify([e.A, e.B, e.C, e.D]), JSON.stringify([0, 0, 0, 0]), 'empty');
+  });
+
+  test('PaperViewer helpers: formatSeriesText', () => {
+    const { formatSeriesText: f } = pv();
+    assertEqual(f(), 'Cambridge IGCSE Exam Paper', 'neither');
+    assertEqual(f('s', 2024), 'May/June 2024', 's');
+    assertEqual(f('june', 2023), 'May/June 2023', 'june');
+    assertEqual(f('m', 2022), 'Feb/March 2022', 'm');
+    assertEqual(f('w', 2021), 'Oct/Nov 2021', 'w');
+    assertEqual(f('nov', 2021), 'Oct/Nov 2021', 'nov');
+    assertEqual(f('zzz', 2020), 'zzz 2020', 'unknown series passes through');
+    assertEqual(f('s'), 'May/June', 'series without year trimmed');
+  });
+
+  test('PaperViewer helpers: stepQuestion clamps and never wraps', () => {
+    const { stepQuestion: st } = pv();
+    const n = [3, 1, 2];
+    assertEqual(st([], null, 1), null, 'empty next');
+    assertEqual(st([], 5, -1), null, 'empty prev');
+    assertEqual(st(n, null, 1), 3, 'null next = first');
+    assertEqual(st(n, null, -1), 2, 'null prev = last');
+    assertEqual(st(n, 99, 1), 3, 'absent next = first');
+    assertEqual(st(n, 99, -1), 2, 'absent prev = last');
+    assertEqual(st(n, 3, 1), 1, 'given order next');
+    assertEqual(st(n, 1, -1), 3, 'given order prev');
+    assertEqual(st(n, 2, 1), 2, 'clamp end');
+    assertEqual(st(n, 3, -1), 3, 'clamp start');
+    assertEqual(st([7], 7, 1), 7, 'single');
+  });
+
+  test('PaperViewer helpers: isTypingTarget is safe in Node (no DOM)', () => {
+    const { isTypingTarget: t } = pv();
+    assertEqual(t(null), false, 'null');
+    assertEqual(t({ tagName: 'INPUT' } as any), true, 'INPUT');
+    assertEqual(t({ tagName: 'TEXTAREA' } as any), true, 'TEXTAREA');
+    assertEqual(t({ tagName: 'SELECT' } as any), true, 'SELECT');
+    assertEqual(t({ tagName: 'DIV', isContentEditable: true } as any), true, 'contentEditable');
+    assertEqual(t({ tagName: 'DIV' } as any), false, 'DIV');
+  });
+
+  test('PaperViewer source: imports helpers, grid, hotkeys, aria, testids', () => {
+    const dir = path.resolve(process.cwd(), 'components/admin');
+    const files = [path.join(dir, 'WholePaperViewer.tsx')];
+    const sub = path.join(dir, 'paper-viewer');
+    if (fs.existsSync(sub)) {
+      for (const f of fs.readdirSync(sub)) if (f.endsWith('.tsx')) files.push(path.join(sub, f));
+    }
+    const all = files.map((f: string) => fs.readFileSync(f, 'utf8')).join('\n');
+    const main = fs.readFileSync(files[0], 'utf8');
+    assert(/from ['"]@\/lib\/paperViewer['"]/.test(all), "imports from '@/lib/paperViewer'");
+    assert(all.includes('lg:grid-cols-[minmax(0,1fr)_380px]'), 'two-column grid class');
+    assert(/addEventListener\(\s*['"]keydown['"]/.test(all), 'keydown listener');
+    assert(all.includes('isTypingTarget('), 'keydown guards with isTypingTarget');
+    assert(all.includes('aria-pressed'), 'aria-pressed present');
+    assert(all.includes('aria-current'), 'aria-current present');
+    for (const id of ['delete-success-banner', 'delete-paper-button', 'delete-paper-dialog', 'cancel-delete-button', 'confirm-delete-button']) {
+      assert(main.includes(`data-testid="${id}"`), `WholePaperViewer keeps data-testid ${id}`);
+    }
+  });
+
+  test('PaperViewer source: admin page locks height for papers tab with print escape', () => {
+    const page = fs.readFileSync(path.resolve(process.cwd(), 'app/admin/page.tsx'), 'utf8');
+    assert(page.includes('lg:h-screen lg:overflow-hidden'), 'lg:h-screen lg:overflow-hidden');
+    assert(page.includes('print:h-auto'), 'print:h-auto escape');
+    assert(page.includes("'papers'") || page.includes('"papers"'), "references 'papers' tab");
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
   await runSuite21();
   await runSuite22();
   await runSuite23();
+  await runSuite24();
 
   // Summary Output
   const duration = ((Date.now() - startMs) / 1000).toFixed(2);

@@ -462,7 +462,7 @@ function AdminContent() {
       )}
 
       {/* Main Content Area */}
-      <div className="min-w-0 flex flex-col min-h-screen">
+      <div className={`min-w-0 flex flex-col ${activeTab === "papers" ? "min-h-screen lg:h-screen lg:overflow-hidden print:h-auto print:overflow-visible" : "min-h-screen"}`}>
         {/* Mobile Sticky Top Header */}
         <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-2 border-[#201e1d] px-4 py-2.5 flex items-center justify-between gap-2 shadow-sm">
           <div className="flex items-center gap-2 min-w-0">
@@ -520,7 +520,9 @@ function AdminContent() {
         {/* Scrollable Main Area */}
         <main
           className={
-            activeTab === "ingestion" || activeTab === "papers"
+            activeTab === "papers"
+              ? "p-3 sm:p-4 lg:p-6 max-w-[1800px] mx-auto w-full flex-1 flex flex-col min-h-0 lg:overflow-hidden print:h-auto print:overflow-visible"
+              : activeTab === "ingestion"
               ? "p-3 sm:p-4 lg:p-6 max-w-[1800px] mx-auto w-full flex-1"
               : "p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1"
           }
