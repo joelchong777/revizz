@@ -75,3 +75,54 @@ export interface UserProfile {
   opt_in_leaderboard: boolean;
   role?: 'student' | 'teacher' | 'admin';
 }
+
+// Answer-integrity contract for /api/quiz/*: answers never ship with questions; the server grades and reveals.
+export interface AnswerReveal {
+  questionId: string;
+  correctLabel: OptionLabel;
+  correctOptionId: string | null; // DB option id when known
+  explanationMarkdown: string | null;
+  distractorByLabel: Partial<Record<OptionLabel, string>>;
+}
+
+// POST /api/quiz/answer (bearer optional; guests get scoring: null)
+export interface QuizAnswerRequest {
+  questionId: string;
+  optionLabel?: OptionLabel; // required when event is 'answer'
+  event: 'answer' | 'timeout' | 'give-up';
+  attempt: 1 | 2; // trusted for guests only; signed-in attempts come from answer_events
+  timeSpentMs?: number;
+}
+
+export interface QuizScoring {
+  xpAwarded: number;
+  streak: number;
+  totalXp: number;
+  counted: boolean; // false when the 24h per-question XP cooldown applied
+}
+
+export interface QuizAnswerResponse {
+  success: true;
+  correct: boolean | null; // null for timeout / give-up
+  attempt: 1 | 2;
+  final: boolean; // reveal is non-null exactly when final
+  reveal: AnswerReveal | null;
+  scoring: QuizScoring | null;
+}
+
+// POST /api/quiz/reveal (signed-in): only questions this user has finished
+export interface QuizRevealRequest { questionIds: string[] }
+export interface QuizRevealResponse { success: true; reveals: AnswerReveal[] }
+
+// POST /api/quiz/grade (homework, no auth, no writes, max 60)
+export interface QuizGradeRequest { answers: { questionId: string; optionLabel: OptionLabel | null }[] }
+export interface QuizGradeResponse {
+  success: true;
+  score: number;
+  total: number;
+  results: { questionId: string; correct: boolean; reveal: AnswerReveal }[];
+}
+
+// POST /api/quiz/answer-keys (teacher/admin only, max 500)
+export interface AnswerKeysRequest { questionIds: string[] }
+export interface AnswerKeysResponse { success: true; keys: AnswerReveal[] }
