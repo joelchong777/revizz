@@ -109,7 +109,7 @@ export default function AdminNav({
 
   const navItemClass = (tabKey: string) => {
     const isActive = active === tabKey;
-    return `w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-150 text-[13px] select-none cursor-pointer group text-left ${
+    return `w-full flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all duration-150 text-[12px] select-none cursor-pointer group text-left ${
       isActive
         ? 'bg-[#ffe1d0] text-[#201e1d] font-bold border-[1.5px] border-[#201e1d] shadow-offset-2'
         : 'bg-transparent text-[#474238] font-medium border-[1.5px] border-transparent hover:bg-[#f5ead8] hover:text-[#201e1d] hover:border-[#201e1d]/15 active:translate-y-0.5'
@@ -120,21 +120,21 @@ export default function AdminNav({
     const isActive = active === tabKey;
     return (
       <span
-        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+        className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
           isActive
             ? 'bg-[#201e1d] text-[#f9f4ed]'
             : 'bg-[#f5ead8] text-[#645c50] group-hover:bg-[#ffe1d0] group-hover:text-[#201e1d]'
         }`}
       >
-        <Icon className="w-4 h-4" />
+        <Icon className="w-3.5 h-3.5" />
       </span>
     );
   };
 
   return (
     <aside
-      className={`h-full flex flex-col justify-between p-3.5 box-border bg-[#ebddc5] border-r-2 border-[#201e1d] font-body text-[#201e1d] z-30 transition-all ${
-        compact ? 'w-[76px]' : 'w-[264px] shrink-0'
+      className={`h-full flex flex-col justify-between p-2.5 box-border bg-[#ebddc5] border-r-2 border-[#201e1d] font-body text-[#201e1d] z-30 transition-all ${
+        compact ? 'w-[76px]' : 'w-[180px] shrink-0'
       }`}
       style={{
         background: 'var(--color-surface, #ebddc5)',
@@ -145,10 +145,10 @@ export default function AdminNav({
       <div className="flex flex-col gap-4">
         {/* Brand Header */}
         <div className={cn("flex items-center px-1", compact ? (onClose ? 'justify-between' : 'justify-center') : 'justify-between')}>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="w-9 h-9 shrink-0 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform shadow-offset-2"
+              className="w-8 h-8 shrink-0 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform shadow-offset-2"
               title="Return to Student Home"
             >
               <span className="font-heading font-black text-sm text-[#201e1d]">R</span>
@@ -157,10 +157,10 @@ export default function AdminNav({
             {!compact && (
               <div className="flex flex-col leading-tight">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-heading font-black tracking-tight text-lg text-[#201e1d]">
+                  <span className="font-heading font-black tracking-tight text-base text-[#201e1d]">
                     REVIZZ
                   </span>
-                  <span className="px-1.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] text-[9px] font-black uppercase tracking-wider border border-[#201e1d]/20">
+                  <span className="px-1 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] text-[8px] font-black uppercase tracking-wider border border-[#201e1d]/20">
                     EDUCATOR
                   </span>
                 </div>
@@ -185,17 +185,17 @@ export default function AdminNav({
           {isAdmin && (
             <Link
               href="/admin"
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#ccdbb2] border-[1.5px] border-[#201e1d] shadow-offset-2 text-[#201e1d] font-bold text-xs hover:bg-[#b8c99d] transition-all active:translate-x-[1px] active:translate-y-[1px] group cursor-pointer ${
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#ccdbb2] border-[1.5px] border-[#201e1d] shadow-offset-2 text-[#201e1d] font-bold text-[12px] hover:bg-[#b8c99d] transition-all active:translate-x-[1px] active:translate-y-[1px] group cursor-pointer ${
                 compact ? 'justify-center px-1' : ''
               }`}
               title="Switch to App Administration Dashboard"
             >
-              <span className="w-7 h-7 rounded-lg bg-[#201e1d] text-[#f9f4ed] flex items-center justify-center shrink-0 group-hover:rotate-6 transition-transform">
+              <span className="w-6.5 h-6.5 rounded-lg bg-[#201e1d] text-[#f9f4ed] flex items-center justify-center shrink-0 group-hover:rotate-6 transition-transform">
                 <span className="text-xs leading-none">🛠️</span>
               </span>
               {!compact && (
                 <>
-                  <span className="flex-1 min-w-0 truncate font-bold text-[13px] text-[#201e1d]">Switch to App Admin</span>
+                  <span className="flex-1 min-w-0 truncate font-bold text-[12px] text-[#201e1d]">Switch to App Admin</span>
                   <span className="text-xs shrink-0">🛠️</span>
                 </>
               )}
@@ -205,17 +205,17 @@ export default function AdminNav({
           {/* Return to Student Home Link */}
           <Link
             href="/"
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#f5ead8] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-xs font-bold text-[#474238] hover:text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#f5ead8] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-[12px] font-bold text-[#474238] hover:text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
               compact ? 'justify-center px-1' : ''
             }`}
             title="Return to Student Home"
           >
-            <span className="w-7 h-7 rounded-lg bg-[#ebddc5] text-[#474238] flex items-center justify-center shrink-0 border border-[#201e1d]/20 group-hover:bg-[#201e1d] group-hover:text-[#f9f4ed] transition-colors">
-              <Home className="w-4 h-4" />
+            <span className="w-6.5 h-6.5 rounded-lg bg-[#ebddc5] text-[#474238] flex items-center justify-center shrink-0 border border-[#201e1d]/20 group-hover:bg-[#201e1d] group-hover:text-[#f9f4ed] transition-colors">
+              <Home className="w-3.5 h-3.5" />
             </span>
             {!compact && (
               <>
-                <span className="flex-1 min-w-0 truncate font-bold text-[13px]">Student Home</span>
+                <span className="flex-1 min-w-0 truncate font-bold text-[12px]">Student Home</span>
                 <span className="text-xs shrink-0">🏠</span>
               </>
             )}
@@ -381,17 +381,17 @@ export default function AdminNav({
       {/* Footer: User Profile */}
       <div className="mt-auto flex flex-col gap-2.5 pt-3 border-t-2 border-[#201e1d]/15">
         {/* User Card */}
-        <div className={`px-1 py-1 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center gap-2.5'}`}>
+        <div className={`px-1 py-1 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center gap-2'}`}>
           <span
-            className="w-8 h-8 shrink-0 rounded-xl border-2 border-[#201e1d] grid place-items-center text-xs font-black shadow-offset-2"
+            className="w-7 h-7 shrink-0 rounded-xl border-2 border-[#201e1d] grid place-items-center text-xs font-black shadow-offset-2"
             style={{ backgroundColor: avatarBg }}
           >
             {initials}
           </span>
           {!compact && (
             <div className="flex flex-col leading-tight min-w-0 flex-1">
-              <span className="font-bold text-[13px] text-[#201e1d] truncate">{userName}</span>
-              <span className="text-[10px] font-bold text-[#645c50] truncate">{userRole}</span>
+              <span className="font-bold text-[11px] text-[#201e1d] truncate">{userName}</span>
+              <span className="text-[9px] font-bold text-[#645c50] truncate">{userRole}</span>
             </div>
           )}
           {onOpenProfileSwitcher && (
@@ -401,7 +401,7 @@ export default function AdminNav({
               title="Switch Profile"
               className={compact
                 ? "w-8 h-8 rounded-xl border-2 border-[#201e1d] bg-[#ffe1d0] hover:bg-[#ffd2b8] flex items-center justify-center text-[#201e1d] transition-all cursor-pointer shadow-offset-1 shrink-0 active:translate-y-0.5"
-                : "px-2 py-1 rounded-lg border-2 border-[#201e1d] bg-[#ffe1d0] hover:bg-[#ffd2b8] flex items-center gap-1 text-[11px] font-black text-[#201e1d] transition-all cursor-pointer shadow-offset-1 shrink-0 active:translate-y-0.5"
+                : "px-1.5 py-1 rounded-lg border-2 border-[#201e1d] bg-[#ffe1d0] hover:bg-[#ffd2b8] flex items-center gap-1 text-[10px] font-black text-[#201e1d] transition-all cursor-pointer shadow-offset-1 shrink-0 active:translate-y-0.5"
               }
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />

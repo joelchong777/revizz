@@ -57,7 +57,7 @@ export default function AppAdminNav({
 
   const navItemClass = (tabKey: string) => {
     const isActive = active === tabKey;
-    return `w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-150 text-[13px] select-none cursor-pointer group text-left ${
+    return `w-full flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all duration-150 text-[12px] select-none cursor-pointer group text-left ${
       isActive
         ? 'bg-[#ffe1d0] text-[#201e1d] font-bold border-[1.5px] border-[#201e1d] shadow-offset-2'
         : 'bg-transparent text-[#474238] font-medium border-[1.5px] border-transparent hover:bg-[#f5ead8] hover:text-[#201e1d] hover:border-[#201e1d]/15 active:translate-y-0.5'
@@ -68,21 +68,21 @@ export default function AppAdminNav({
     const isActive = active === tabKey;
     return (
       <span
-        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+        className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
           isActive
             ? 'bg-[#201e1d] text-[#f9f4ed]'
             : 'bg-[#f5ead8] text-[#645c50] group-hover:bg-[#ffe1d0] group-hover:text-[#201e1d]'
         }`}
       >
-        <Icon className="w-4 h-4" />
+        <Icon className="w-3.5 h-3.5" />
       </span>
     );
   };
 
   return (
     <aside
-      className={`h-full flex flex-col justify-between p-3.5 box-border bg-[#ebddc5] border-r-2 border-[#201e1d] font-body text-[#201e1d] z-30 transition-all ${
-        compact ? 'w-[76px]' : 'w-[264px]'
+      className={`h-full flex flex-col justify-between p-2.5 box-border bg-[#ebddc5] border-r-2 border-[#201e1d] font-body text-[#201e1d] z-30 transition-all ${
+        compact ? 'w-[76px]' : 'w-[180px] shrink-0'
       }`}
     >
       <div className="flex flex-col gap-4">
@@ -91,7 +91,7 @@ export default function AppAdminNav({
           <div className="flex items-center gap-2.5">
             <Link
               href="/"
-              className="w-9 h-9 shrink-0 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform shadow-offset-2"
+              className="w-8 h-8 shrink-0 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center -rotate-6 hover:rotate-0 transition-transform shadow-offset-2"
               title="Student Home"
             >
               <span className="font-heading font-black text-sm text-[#201e1d]">R</span>
@@ -99,7 +99,7 @@ export default function AppAdminNav({
             {!compact && (
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-heading font-black text-lg tracking-tight leading-none text-[#201e1d]">
+                  <span className="font-heading font-black text-base tracking-tight leading-none text-[#201e1d]">
                     REVIZZ
                   </span>
                 </div>
@@ -125,17 +125,17 @@ export default function AppAdminNav({
         <div className="flex flex-col gap-1.5 pt-0.5">
           <Link
             href="/portal"
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#ffe1d0] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all text-xs font-bold text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#ffe1d0] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all text-[12px] font-bold text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
               compact ? 'justify-center px-1' : ''
             }`}
             title="Open Teacher Classroom Portal"
           >
-            <span className="w-7 h-7 rounded-lg bg-[#201e1d] text-[#f9f4ed] flex items-center justify-center shrink-0 group-hover:rotate-6 transition-transform">
-              <GraduationCap className="w-4 h-4" />
+            <span className="w-6.5 h-6.5 rounded-lg bg-[#201e1d] text-[#f9f4ed] flex items-center justify-center shrink-0 group-hover:rotate-6 transition-transform">
+              <GraduationCap className="w-3.5 h-3.5" />
             </span>
             {!compact && (
               <>
-                <span className="flex-1 min-w-0 truncate font-bold text-[13px] text-[#201e1d]">Teacher Portal</span>
+                <span className="flex-1 min-w-0 truncate font-bold text-[12px] text-[#201e1d]">Teacher Portal</span>
                 <span className="text-xs shrink-0">🎓</span>
               </>
             )}
@@ -143,17 +143,17 @@ export default function AppAdminNav({
 
           <Link
             href="/"
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#f5ead8] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-xs font-bold text-[#474238] hover:text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
+            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#f5ead8] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-[12px] font-bold text-[#474238] hover:text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
               compact ? 'justify-center px-1' : ''
             }`}
             title="Return to Student Practice"
           >
-            <span className="w-7 h-7 rounded-lg bg-[#ebddc5] text-[#474238] flex items-center justify-center shrink-0 border border-[#201e1d]/20 group-hover:bg-[#201e1d] group-hover:text-[#f9f4ed] transition-colors">
-              <Home className="w-4 h-4" />
+            <span className="w-6.5 h-6.5 rounded-lg bg-[#ebddc5] text-[#474238] flex items-center justify-center shrink-0 border border-[#201e1d]/20 group-hover:bg-[#201e1d] group-hover:text-[#f9f4ed] transition-colors">
+              <Home className="w-3.5 h-3.5" />
             </span>
             {!compact && (
               <>
-                <span className="flex-1 min-w-0 truncate font-bold text-[13px]">Student Home</span>
+                <span className="flex-1 min-w-0 truncate font-bold text-[12px]">Student Home</span>
                 <span className="text-xs shrink-0">🏠</span>
               </>
             )}
@@ -309,7 +309,7 @@ export default function AppAdminNav({
       <div className={`pt-3 border-t-2 border-[#201e1d]/15 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center justify-between gap-2'}`}>
         <div
           onClick={onOpenProfileSwitcher}
-          className={`flex items-center gap-2.5 min-w-0 ${onOpenProfileSwitcher ? 'cursor-pointer group' : ''}`}
+          className={`flex items-center gap-2 min-w-0 ${onOpenProfileSwitcher ? 'cursor-pointer group' : ''}`}
           title={onOpenProfileSwitcher ? 'Switch Profile & Role' : undefined}
           role={onOpenProfileSwitcher ? 'button' : undefined}
           tabIndex={onOpenProfileSwitcher ? 0 : undefined}
@@ -321,7 +321,7 @@ export default function AppAdminNav({
               : undefined
           }
         >
-          <div className="w-8 h-8 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2 group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2 group-hover:scale-105 transition-transform">
             {(() => {
               const trimmed = (userDisplayName || '').trim();
               if (!trimmed) return 'AD';
@@ -334,11 +334,11 @@ export default function AppAdminNav({
           </div>
           {!compact && (
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-black text-[#201e1d] truncate group-hover:text-[#c67139] transition-colors">
+              <span className="text-[11px] font-bold text-[#201e1d] truncate group-hover:text-[#c67139] transition-colors">
                 {userDisplayName}
               </span>
-              <span className="text-[10px] font-bold text-[#645c50] flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-700" />
+              <span className="text-[9px] font-bold text-[#645c50] truncate flex items-center gap-1">
+                <ShieldCheck className="w-2.5 h-2.5 text-emerald-700 shrink-0" />
                 Super Admin
               </span>
             </div>
@@ -353,11 +353,11 @@ export default function AppAdminNav({
             aria-label="Switch profile"
             className={compact
               ? "w-8 h-8 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center justify-center shrink-0"
-              : "p-1.5 px-2 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+              : "px-1.5 py-1 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold shrink-0"
             }
           >
-            <ArrowRightLeft className="w-3.5 h-3.5 text-[#c67139]" />
-            {!compact && <span className="hidden sm:inline">Switch</span>}
+            <ArrowRightLeft className="w-3 h-3 text-[#c67139] shrink-0" />
+            {!compact && <span>Switch</span>}
           </button>
         )}
       </div>

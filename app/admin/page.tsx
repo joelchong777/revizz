@@ -420,11 +420,10 @@ function AdminContent() {
 
   // Case 3: Admin is authenticated (or in guest / dev preview)
   return (
-    <div className="lg:grid lg:grid-cols-[76px_minmax(0,1fr)] min-h-screen bg-[#f5ead8] text-[#201e1d] font-body">
+    <div className="lg:grid lg:grid-cols-[180px_minmax(0,1fr)] min-h-screen bg-[#f5ead8] text-[#201e1d] font-body">
       {/* Desktop Sidebar (sticky) */}
-      <div className="hidden lg:block lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto w-[76px] shrink-0">
+      <div className="hidden lg:block lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto w-[180px] shrink-0">
         <AppAdminNav
-          compact={true}
           active={activeTab}
           onSelectTab={handleSelectTab}
           userDisplayName={userProfile?.display_name || (guestMode ? 'Demo App Admin' : 'Administrator')}
@@ -442,9 +441,8 @@ function AdminContent() {
             onClick={() => setMobileNavOpen(false)}
             aria-label="Close navigation overlay"
           />
-          <div className="fixed inset-y-0 left-0 w-[76px] max-w-[85vw] h-full shadow-2xl z-50">
+          <div className="fixed inset-y-0 left-0 w-[180px] max-w-[85vw] h-full shadow-2xl z-50">
             <AppAdminNav
-              compact={true}
               active={activeTab}
               onSelectTab={handleSelectTab}
               isOpen={true}
