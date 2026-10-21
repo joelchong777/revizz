@@ -409,7 +409,7 @@ export function StartFlow({
           Subject
         </h2>
         {subjects.length === 0 ? (
-          <div className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3.5 px-4 text-center">
+          <div className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-4 text-center">
             <span className="text-xs font-bold text-neutral-600">No subjects available</span>
           </div>
         ) : (
@@ -424,7 +424,7 @@ export function StartFlow({
               aria-haspopup="listbox"
               aria-expanded={isDropdownOpen}
               aria-label="Select subject"
-              className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+              className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-2xl leading-none flex-shrink-0">
@@ -451,7 +451,7 @@ export function StartFlow({
             {isDropdownOpen && (
               <div
                 role="listbox"
-                className="absolute top-full left-0 right-0 mt-2 z-30 bg-neutral-100 border-2 border-text rounded-2xl shadow-offset-4 overflow-hidden py-1.5 animate-in fade-in-50 zoom-in-95 duration-150"
+                className="absolute top-full left-0 right-0 mt-2 z-30 bg-neutral-100 border-2 border-text rounded-2xl shadow-offset-4 overflow-hidden py-2 animate-in fade-in-50 zoom-in-95 duration-150"
               >
                 {subjects.map((s) => {
                   const isSelected = s.code === currentSubject.code;
@@ -463,7 +463,7 @@ export function StartFlow({
                       aria-selected={isSelected}
                       onClick={() => handleSubjectSelect(s.code)}
                       className={cn(
-                        'w-full px-4 py-2.5 flex items-center justify-between text-left transition-colors cursor-pointer',
+                        'w-full px-4 py-3 flex items-center justify-between text-left transition-colors cursor-pointer',
                         isSelected
                           ? 'bg-accent-2-300 font-bold'
                           : 'hover:bg-neutral-200/60'
@@ -495,26 +495,26 @@ export function StartFlow({
       </div>
 
       {/* 2. Mode Selection */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
           Mode
         </h2>
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-3">
           {/* Mode 1: Standard Exam Round */}
           <button
             type="button"
             onClick={() => handleModeSelect('standard')}
             className={cn(
-              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3 p-4 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
               selectedMode === 'standard'
-                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
-                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                ? 'bg-accent-2-200 shadow-none translate-x-[2px] translate-y-[2px]'
+                : 'bg-white/80 shadow-offset-3 hover:bg-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
             )}
           >
             <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
               🎲
             </span>
-            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <span className="flex flex-col gap-1 flex-1 min-w-0">
               <span className="font-heading text-[17px] text-text leading-tight">
                 Standard exam round
               </span>
@@ -534,16 +534,16 @@ export function StartFlow({
             type="button"
             onClick={() => handleModeSelect('topic')}
             className={cn(
-              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3 p-4 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
               selectedMode === 'topic'
-                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
-                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                ? 'bg-accent-2-200 shadow-none translate-x-[2px] translate-y-[2px]'
+                : 'bg-white/80 shadow-offset-3 hover:bg-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
             )}
           >
             <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
               📚
             </span>
-            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <span className="flex flex-col gap-1 flex-1 min-w-0">
               <span className="font-heading text-[17px] text-text leading-tight">
                 Topic practice
               </span>
@@ -567,16 +567,16 @@ export function StartFlow({
             type="button"
             onClick={() => handleModeSelect('paper')}
             className={cn(
-              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
+              'flex items-center gap-3 p-4 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
               selectedMode === 'paper'
-                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
-                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                ? 'bg-accent-2-200 shadow-none translate-x-[2px] translate-y-[2px]'
+                : 'bg-white/80 shadow-offset-3 hover:bg-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
             )}
           >
             <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
               📑
             </span>
-            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <span className="flex flex-col gap-1 flex-1 min-w-0">
               <span className="font-heading text-[17px] text-text leading-tight">
                 Whole past paper
               </span>
@@ -604,12 +604,12 @@ export function StartFlow({
                 : undefined
             }
             className={cn(
-              'flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition-all',
+              'flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-all',
               isDemo
-                ? 'opacity-70 bg-neutral-100/60 border-neutral-300 text-neutral-500 cursor-not-allowed'
+                ? 'opacity-70 bg-neutral-100/60 border-dashed border-neutral-300 text-neutral-500 cursor-not-allowed'
                 : selectedMode === 'review'
-                ? 'bg-accent-2-200 border-text shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5 cursor-pointer'
-                : 'bg-white/80 border-text shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer'
+                ? 'bg-accent-2-200 border-text shadow-none translate-x-[2px] translate-y-[2px] cursor-pointer'
+                : 'bg-white/80 border-text shadow-offset-3 hover:bg-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer'
             )}
           >
             <span
@@ -622,7 +622,7 @@ export function StartFlow({
             >
               {isDemo ? '🔒' : '🧠'}
             </span>
-            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <span className="flex flex-col gap-1 flex-1 min-w-0">
               <span
                 className={cn(
                   'font-heading text-[17px] leading-tight',
@@ -641,16 +641,17 @@ export function StartFlow({
                   ? 'Requires a logged-in account to save your mistake pile'
                   : 'Spaced repetition of questions you missed'}
               </span>
-            </span>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {isDemo ? (
-                <span className="bg-neutral-200 text-neutral-600 px-2.5 py-0.5 rounded-full text-xs font-bold border border-neutral-300 whitespace-nowrap">
+              {isDemo && (
+                <span className="self-start mt-1 bg-neutral-200 text-neutral-600 px-2.5 py-0.5 rounded-full text-xs font-bold border-2 border-dashed border-neutral-400 whitespace-nowrap">
                   🔒 Log In to Save
                 </span>
-              ) : (
+              )}
+            </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {isDemo ? null : (
                 <>
                   {reviewCount > 0 && (
-                    <span className="bg-accent text-neutral-100 px-2 py-0.5 rounded-full text-xs font-bold border-2 border-text">
+                    <span className="bg-accent text-neutral-100 px-2.5 py-0.5 rounded-full text-xs font-bold border-2 border-text">
                       {reviewCount}
                     </span>
                   )}
@@ -685,9 +686,9 @@ export function StartFlow({
               playPop();
               setIsTopicModalOpen(true);
             }}
-            className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer select-none"
+            className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer select-none"
           >
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 mr-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
               <span className="text-xl flex-shrink-0">📚</span>
               <span className="font-heading text-sm sm:text-base text-text truncate">
                 {selectedTopicIds.length === 0 || selectedTopicIds.length === subjectTopics.length
@@ -698,7 +699,7 @@ export function StartFlow({
                 {selectedQuestionsCount} Qs
               </span>
             </div>
-            <span className="px-2.5 py-1 rounded-xl bg-accent-2-300 border border-text text-xs font-bold text-text flex items-center gap-1 flex-shrink-0 hover:brightness-95">
+            <span className="px-3 py-1 rounded-full bg-accent-2-300 border-2 border-text text-xs font-bold text-text flex items-center gap-1 flex-shrink-0 hover:brightness-95">
               Edit Topics ✎
             </span>
           </button>
@@ -726,9 +727,9 @@ export function StartFlow({
               playPop();
               setIsPaperModalOpen(true);
             }}
-            className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer select-none"
+            className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer select-none"
           >
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 mr-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
               <span className="text-xl flex-shrink-0">📑</span>
               <span className="font-heading text-sm sm:text-base text-text truncate">
                 {selectedPaper
@@ -743,7 +744,7 @@ export function StartFlow({
                 </span>
               )}
             </div>
-            <span className="px-2.5 py-1 rounded-xl bg-accent-2-300 border border-text text-xs font-bold text-text flex items-center gap-1 flex-shrink-0 hover:brightness-95">
+            <span className="px-3 py-1 rounded-full bg-accent-2-300 border-2 border-text text-xs font-bold text-text flex items-center gap-1 flex-shrink-0 hover:brightness-95">
               Change Paper ✎
             </span>
           </button>
@@ -751,7 +752,7 @@ export function StartFlow({
       )}
 
       {/* 3. Unified "Mission Rules" Deck */}
-      <div className="flex flex-col gap-3.5 p-4 rounded-3xl bg-neutral-100/90 border-2 border-text shadow-offset-3">
+      <div className="flex flex-col gap-5 p-4 rounded-2xl bg-neutral-100/90 border-2 border-text shadow-offset-4">
         {/* Round Length */}
         <div className="flex flex-col gap-2">
           <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
@@ -759,13 +760,13 @@ export function StartFlow({
           </h2>
           {selectedMode === 'paper' ? (
             <div className="flex items-center gap-2">
-              <div className="px-3.5 py-1.5 rounded-full border-2 border-text bg-accent text-neutral-100 font-bold text-xs sm:text-sm shadow-offset-2 flex items-center gap-1.5 select-none">
+              <div className="px-3 py-1 rounded-full border-2 border-text bg-accent text-neutral-100 font-bold text-xs sm:text-sm shadow-offset-2 flex items-center gap-2 select-none">
                 <span>📑</span>
                 <span>Full Paper ({selectedPaper?.questionsCount || 30} Qs)</span>
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {[
                 { val: 3 as const, label: '3 Qs' },
                 { val: 5 as const, label: '5 Qs' },
@@ -779,10 +780,10 @@ export function StartFlow({
                     type="button"
                     onClick={() => handleLengthSelect(item.val)}
                     className={cn(
-                      'px-3.5 py-1.5 rounded-full border-2 border-text font-bold text-xs sm:text-sm cursor-pointer transition-all select-none',
+                      'w-full px-1 py-1 rounded-full border-2 border-text font-bold text-xs sm:text-sm whitespace-nowrap text-center cursor-pointer transition-all duration-100 select-none',
                       isSelected
-                        ? 'bg-accent text-neutral-100 shadow-offset-2'
-                        : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                        ? 'bg-accent text-neutral-100 shadow-none translate-x-[2px] translate-y-[2px]'
+                        : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
                     )}
                   >
                     {item.label}
@@ -798,7 +799,7 @@ export function StartFlow({
           <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
             Questions
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {[
               { val: 'all' as const, icon: '🔀', label: 'All' },
               { val: 'graph' as const, icon: '📈', label: 'Graph' },
@@ -817,10 +818,10 @@ export function StartFlow({
                   data-testid={`diagram-filter-${opt.val}`}
                   onClick={() => handleDiagramFilterSelect(opt.val)}
                   className={cn(
-                    'px-3.5 py-1.5 rounded-full border-2 border-text font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer transition-all select-none',
+                    'w-full px-1 py-1 rounded-full border-2 border-text font-bold text-[11px] sm:text-sm flex items-center justify-center gap-1 whitespace-nowrap cursor-pointer transition-all duration-100 select-none',
                     isSelected
-                      ? 'bg-accent text-neutral-100 shadow-offset-2'
-                      : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                      ? 'bg-accent text-neutral-100 shadow-none translate-x-[2px] translate-y-[2px]'
+                      : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
                   )}
                 >
                   <span>{opt.icon}</span>
@@ -841,10 +842,10 @@ export function StartFlow({
               type="button"
               onClick={() => handleTimerSelect(false)}
               className={cn(
-                'p-2.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all flex items-center gap-2.5 select-none',
+                'p-3 rounded-2xl border-2 border-text text-left cursor-pointer transition-all flex items-center gap-3 select-none',
                 !isTimed
-                  ? 'bg-accent-300 text-text shadow-offset-2'
-                  : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                  ? 'bg-accent-300 text-text shadow-none translate-x-[2px] translate-y-[2px]'
+                  : 'bg-white/80 text-text hover:bg-white shadow-offset-3 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
               )}
             >
               <span className="text-xl">☕</span>
@@ -857,10 +858,10 @@ export function StartFlow({
               type="button"
               onClick={() => handleTimerSelect(true)}
               className={cn(
-                'p-2.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all flex items-center gap-2.5 select-none',
+                'p-3 rounded-2xl border-2 border-text text-left cursor-pointer transition-all flex items-center gap-3 select-none',
                 isTimed
-                  ? 'bg-accent-300 text-text shadow-offset-2'
-                  : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                  ? 'bg-accent-300 text-text shadow-none translate-x-[2px] translate-y-[2px]'
+                  : 'bg-white/80 text-text hover:bg-white shadow-offset-3 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
               )}
             >
               <span className="text-xl">⚡</span>
@@ -880,9 +881,9 @@ export function StartFlow({
           playPop();
           setIsMasteryOpen(true);
         }}
-        className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border-2 border-text shadow-offset-3 cursor-pointer text-left transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none hover:brightness-[0.98]"
+        className="flex items-center gap-3 p-4 rounded-2xl bg-surface border-2 border-text shadow-offset-3 cursor-pointer text-left transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:brightness-[0.98]"
       >
-        <span className="flex flex-col gap-1.5 flex-1 min-w-0">
+        <span className="flex flex-col gap-2 flex-1 min-w-0">
           <span className="font-heading text-[17px] text-text leading-tight truncate">
             Topic mastery · {currentSubject.name}
           </span>
@@ -891,14 +892,14 @@ export function StartFlow({
               No topics available
             </span>
           ) : (
-            <span className="flex gap-1.5 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-accent-2-300 border-[1.5px] border-text font-bold text-xs text-text">
+            <span className="flex gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-full bg-accent-2-300 border-2 border-text font-bold text-xs text-text">
                 👑 {tierCounts.master} Master
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-accent-300 border-[1.5px] border-text font-bold text-xs text-text">
+              <span className="px-2.5 py-0.5 rounded-full bg-accent-300 border-2 border-text font-bold text-xs text-text">
                 ⚡ {tierCounts.proficient} Proficient
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-neutral-200 border-[1.5px] border-text font-bold text-xs text-text">
+              <span className="px-2.5 py-0.5 rounded-full bg-neutral-200 border-2 border-text font-bold text-xs text-text">
                 🌱 {tierCounts.novice} Novice
               </span>
             </span>
@@ -924,7 +925,7 @@ export function StartFlow({
       <button
         type="button"
         onClick={handleStart}
-        className="w-full py-4 px-6 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-xl sm:text-2xl tracking-wide flex items-center justify-center gap-2 transition-all active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer select-none"
+        className="w-full py-4 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-xl sm:text-2xl tracking-wide flex items-center justify-center gap-2 transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer select-none"
       >
         {selectedMode === 'paper'
           ? `START PAPER · ${selectedPaper?.questionsCount || 30} Qs 📝`
@@ -936,7 +937,7 @@ export function StartFlow({
       <AdSlotBanner
         slotId="start_flow_banner"
         subjectCode={currentSubject.code}
-        className="mt-1"
+        className="mt-0"
       />
 
       {/* Multi-Topic Selection Popup Modal */}
@@ -953,7 +954,7 @@ export function StartFlow({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[480px] max-h-[85vh] overflow-y-auto p-5 sm:p-6 pb-6 rounded-3xl bg-bg border-2 border-text shadow-offset-6 flex flex-col gap-4 animate-in fade-in-50 zoom-in-95 duration-200 select-none"
+            className="w-full max-w-[480px] max-h-[85vh] overflow-y-auto p-5 pb-6 rounded-3xl bg-bg border-2 border-text shadow-offset-6 flex flex-col gap-4 animate-in fade-in-50 zoom-in-95 duration-200 select-none"
           >
             {/* Header */}
             <div className="flex flex-col gap-2">
@@ -974,7 +975,7 @@ export function StartFlow({
                     }
                     setIsTopicModalOpen(false);
                   }}
-                  className="w-8 h-8 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text hover:bg-neutral-200"
+                  className="w-8 h-8 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-text hover:bg-neutral-200"
                   aria-label="Close topic selector"
                 >
                   <svg
@@ -997,7 +998,7 @@ export function StartFlow({
                 <span className="text-xs font-semibold text-neutral-700">
                   {selectedTopicIds.length === 0 ? subjectTopics.length : selectedTopicIds.length} of {subjectTopics.length} topics selected · {selectedQuestionsCount} Qs
                 </span>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     type="button"
                     data-testid="topic-select-all"
@@ -1005,7 +1006,7 @@ export function StartFlow({
                       playPop();
                       setSelectedTopicIds(subjectTopics.map((t) => t.id));
                     }}
-                    className="px-2.5 py-1 rounded-xl border border-text/40 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-text cursor-pointer active:scale-95 transition-transform"
+                    className="px-3 py-1 rounded-full border-2 border-text bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-text shadow-offset-2 cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                   >
                     Select All
                   </button>
@@ -1016,7 +1017,7 @@ export function StartFlow({
                       playPop();
                       setSelectedTopicIds([]);
                     }}
-                    className="px-2.5 py-1 rounded-xl border border-text/40 bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-neutral-600 cursor-pointer active:scale-95 transition-transform"
+                    className="px-3 py-1 rounded-full border-2 border-text bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-neutral-600 shadow-offset-2 cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                   >
                     Clear
                   </button>
@@ -1047,7 +1048,7 @@ export function StartFlow({
                       'w-full p-3 rounded-2xl border-2 text-left cursor-pointer transition-all flex items-center justify-between gap-3 select-none',
                       isSelected
                         ? 'bg-accent-2-300 border-text shadow-none translate-x-[2px] translate-y-[2px]'
-                        : 'bg-white/80 border-text shadow-offset-2 hover:bg-white'
+                        : 'bg-white/80 border-text shadow-offset-3 hover:bg-white'
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1081,7 +1082,7 @@ export function StartFlow({
             </div>
 
             {/* Footer */}
-            <div className="pt-2 border-t border-text/10 flex flex-col gap-1.5">
+            <div className="pt-2 border-t border-text/10 flex flex-col gap-2">
               <button
                 type="button"
                 data-testid="topic-modal-done"
@@ -1092,7 +1093,7 @@ export function StartFlow({
                   }
                   setIsTopicModalOpen(false);
                 }}
-                className="w-full py-3.5 rounded-2xl bg-accent text-neutral-100 font-heading text-lg border-2 border-text shadow-offset-3 hover:bg-accent-600 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer flex items-center justify-center gap-2 transition-all"
+                className="w-full py-3 rounded-2xl bg-accent text-neutral-100 font-heading text-lg border-2 border-text shadow-offset-4 hover:bg-accent-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer flex items-center justify-center gap-2 transition-all"
               >
                 Done · {selectedTopicIds.length === 0 ? subjectTopics.length : selectedTopicIds.length} Topics ({selectedTopicIds.length === 0 ? effectiveQuestions.length : selectedQuestionsCount} Qs)
               </button>
@@ -1114,16 +1115,16 @@ export function StartFlow({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[480px] max-h-[86vh] overflow-y-auto p-5 sm:p-6 pb-8 rounded-t-[32px] bg-bg border-2 border-b-0 border-text flex flex-col gap-3.5 animate-in slide-in-from-bottom duration-300"
+            className="w-full max-w-[480px] max-h-[86vh] overflow-y-auto p-5 pb-8 rounded-t-3xl bg-bg border-2 border-b-0 border-text flex flex-col gap-4 animate-in slide-in-from-bottom duration-300"
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <h3 className="font-heading text-2xl text-text m-0 flex-1">
                 Topic mastery
               </h3>
               <button
                 type="button"
                 onClick={() => setIsMasteryOpen(false)}
-                className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text"
+                className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-text"
               >
                 <svg
                   width="16"

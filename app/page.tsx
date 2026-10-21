@@ -346,13 +346,13 @@ export default function HomePage() {
   if (authLoading && !userProfile) {
     return (
       <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
-        <div className="w-full max-w-[460px] bg-neutral-100 border-4 border-text shadow-[6px_6px_0_#201e1d] rounded-3xl sm:rounded-[32px] p-8 text-center space-y-4 animate-pulse">
+        <div className="w-full max-w-[480px] bg-neutral-100 border-4 border-text shadow-offset-6 rounded-3xl p-8 text-center flex flex-col gap-4 animate-pulse">
           <div className="w-12 h-12 mx-auto rounded-full bg-accent-200 border-2 border-text shadow-offset-2 flex items-center justify-center text-xl">
             ✨
           </div>
           <div className="h-6 w-48 mx-auto bg-neutral-200 rounded-lg border border-text/20" />
           <div className="h-4 w-64 mx-auto bg-neutral-200 rounded-lg border border-text/10" />
-          <div className="pt-4 space-y-3">
+          <div className="pt-4 flex flex-col gap-3">
             <div className="h-14 w-full bg-neutral-200 rounded-2xl border-2 border-text/30" />
             <div className="h-14 w-full bg-neutral-200 rounded-2xl border-2 border-text/30" />
           </div>
@@ -378,7 +378,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
-        <div className="bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[6px_6px_0_#201e1d] rounded-[24px] p-8 text-center space-y-3">
+        <div className="bg-[#f9f4ed] border-4 border-[#201e1d] shadow-offset-6 rounded-3xl p-8 text-center flex flex-col gap-3">
           <div className="text-3xl animate-bounce">⏳</div>
           <p className="font-heading text-lg font-black text-[#201e1d]">
             Loading question bank...
@@ -391,8 +391,8 @@ export default function HomePage() {
   if (questions.length === 0) {
     return (
       <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
-        <div className="w-full max-w-md bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[6px_6px_0_#201e1d] rounded-[28px] p-8 sm:p-10 text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] shadow-[3px_3px_0_#201e1d] flex items-center justify-center text-3xl">
+        <div className="w-full max-w-[480px] bg-[#f9f4ed] border-4 border-[#201e1d] shadow-offset-6 rounded-3xl p-8 text-center flex flex-col items-center gap-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] shadow-offset-3 flex items-center justify-center text-3xl">
             📭
           </div>
           <h1 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d]">
@@ -422,14 +422,15 @@ export default function HomePage() {
 
   if (game.gameState === 'playing' && game.currentQuestion) {
     return (
-      <main className="min-h-screen pt-2 sm:pt-6">
-        <AdSlotBanner
-          slotId="between_questions_interstitial"
-          subjectCode={game.config?.subject}
-          isTimedMode={game.config?.isTimed || false}
-          questionIndex={game.currentQuestionIndex}
-          className="max-w-2xl mx-auto px-4 mb-3"
-        />
+      <main className="min-h-screen pt-4">
+        <div className="w-full max-w-[480px] mx-auto px-4 mb-4 empty:hidden">
+          <AdSlotBanner
+            slotId="between_questions_interstitial"
+            subjectCode={game.config?.subject}
+            isTimedMode={game.config?.isTimed || false}
+            questionIndex={game.currentQuestionIndex}
+          />
+        </div>
         <QuestionCard
           question={game.currentQuestion}
           questionNumber={game.currentQuestionIndex + 1}

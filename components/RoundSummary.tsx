@@ -114,12 +114,12 @@ export function RoundSummary({
       initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-      className="w-full max-w-[480px] mx-auto py-8 sm:py-10 px-4 sm:px-6 pb-16 flex flex-col gap-6 sm:gap-7 select-none"
+      className="w-full max-w-[480px] mx-auto py-6 px-4 pb-16 flex flex-col gap-5 select-none"
     >
       {/* 1. Score Crest & Header Hero */}
       <div className="flex items-center gap-4">
         {/* Proportional Score Badge */}
-        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-accent-300 border-[3px] border-text shadow-offset-4 flex flex-col items-center justify-center -rotate-3 flex-none">
+        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-accent-300 border-2 border-text shadow-offset-4 flex flex-col items-center justify-center -rotate-3 flex-none">
           <span className="font-heading text-3xl sm:text-4xl text-text leading-none">
             {correctFirstTryCount}/{totalAnswered}
           </span>
@@ -140,16 +140,16 @@ export function RoundSummary({
       </div>
 
       {/* 2. Visual Stat Cards (2x2 Grid with icons) */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
+      <div className="grid grid-cols-2 gap-3">
         {stats.map((s, idx) => (
           <div
             key={idx}
             className={cn(
-              'flex flex-col gap-1 p-3.5 sm:p-4 rounded-2xl border-2 border-text shadow-offset-3',
+              'flex flex-col gap-1 p-4 rounded-2xl border-2 border-text shadow-offset-4',
               s.bg
             )}
           >
-            <span className="text-xs font-bold tracking-wider uppercase text-neutral-800 flex items-center gap-1.5">
+            <span className="text-xs font-bold tracking-wider uppercase text-neutral-800 flex items-center gap-2">
               <span>{s.icon}</span> {s.label}
             </span>
             <span className="font-heading text-2xl sm:text-3xl leading-tight text-text truncate">
@@ -160,10 +160,10 @@ export function RoundSummary({
       </div>
 
       {/* 3. Clean Sweep Banner vs Missed Questions */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {missedQuestions.length === 0 ? (
           /* Celebratory Gold Trophy Card */
-          <div className="rounded-3xl bg-accent-2-200 border-2 border-text shadow-offset-3 p-5 sm:p-6 text-center flex flex-col items-center gap-2">
+          <div className="rounded-3xl bg-accent-2-200 border-2 border-text shadow-offset-4 p-5 text-center flex flex-col items-center gap-2">
             <span className="text-4xl sm:text-5xl" role="img" aria-label="Trophy">
               🏆
             </span>
@@ -209,7 +209,7 @@ export function RoundSummary({
                     <button
                       type="button"
                       onClick={() => toggleMissed(idx)}
-                      className="w-full flex items-center gap-2.5 p-3 px-3.5 bg-transparent border-0 cursor-pointer text-left transition-colors hover:bg-neutral-200/50"
+                      className="w-full flex items-center gap-3 p-4 bg-transparent border-0 cursor-pointer text-left transition-colors hover:bg-neutral-200/50"
                     >
                       <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                         <span className="text-[11px] font-bold text-neutral-700">
@@ -242,7 +242,7 @@ export function RoundSummary({
 
                     {/* Expanded Content */}
                     {isOpen && (
-                      <div className="flex flex-col gap-2 p-3.5 sm:p-4 border-t-2 border-neutral-300">
+                      <div className="flex flex-col gap-2 p-4 border-t-2 border-neutral-300">
                         <div className="text-sm font-semibold text-text break-words my-1 bg-white p-3 rounded-xl border border-neutral-300 overflow-x-auto">
                           <MarkdownErrorBoundary fallbackText={item.question.stem_markdown}>
                             <ReactMarkdown
@@ -255,7 +255,7 @@ export function RoundSummary({
                           </MarkdownErrorBoundary>
                         </div>
 
-                        <div className="self-start px-3 py-1.5 rounded-xl bg-accent-2-300 border-[1.5px] border-text font-bold text-xs sm:text-sm text-text flex items-center gap-1.5 flex-wrap">
+                        <div className="self-start px-3 py-1 rounded-xl bg-accent-2-300 border-2 border-text font-bold text-xs sm:text-sm text-text flex items-center gap-1.5 flex-wrap">
                           <span>Answer {correctLetter} ·</span>
                           <MarkdownErrorBoundary fallbackText={correctOption?.text_markdown || ''}>
                             <ReactMarkdown
@@ -270,7 +270,7 @@ export function RoundSummary({
                           </MarkdownErrorBoundary>
                         </div>
 
-                        <div className="flex flex-col gap-1.5 mt-1">
+                        <div className="flex flex-col gap-2 mt-1">
                           {steps.map((st, stepIdx) => (
                             <span
                               key={stepIdx}
@@ -292,11 +292,11 @@ export function RoundSummary({
 
       <AdSlotBanner
         slotId="round_summary_card"
-        className="my-1"
+        className="my-0"
       />
 
       {/* 4. Action Buttons Hierarchy */}
-      <div className="flex flex-col gap-3 pt-2">
+      <div className="flex flex-col gap-3">
         {missedQuestions.length > 0 ? (
           <>
             {/* Primary Hero CTA */}
@@ -306,20 +306,20 @@ export function RoundSummary({
                 playPop();
                 onReviewMissed();
               }}
-              className="w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer text-center"
+              className="w-full py-3 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer text-center"
             >
               Review missed questions 🧠
             </button>
 
             {/* Secondary Grid */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => {
                   playPop();
                   onPlayAgain();
                 }}
-                className="py-3 px-4 rounded-2xl bg-accent-2-300 hover:bg-accent-2-400 text-text border-2 border-text shadow-offset-3 font-heading text-base cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none select-none text-center"
+                className="py-3 px-4 rounded-2xl bg-accent-2-300 hover:bg-accent-2-400 text-text border-2 border-text shadow-offset-3 font-heading text-base cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none select-none text-center"
               >
                 Play Again 🔄
               </button>
@@ -329,7 +329,7 @@ export function RoundSummary({
                   playPop();
                   onHome();
                 }}
-                className="py-3 px-4 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-text border-2 border-text shadow-offset-3 font-heading text-base cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none select-none text-center"
+                className="py-3 px-4 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-text border-2 border-text shadow-offset-3 font-heading text-base cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none select-none text-center"
               >
                 Home 🏠
               </button>
@@ -344,7 +344,7 @@ export function RoundSummary({
                 playPop();
                 onPlayAgain();
               }}
-              className="w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer text-center"
+              className="w-full py-3 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer text-center"
             >
               Play Again 🔄
             </button>
@@ -356,7 +356,7 @@ export function RoundSummary({
                 playPop();
                 onHome();
               }}
-              className="w-full py-3 px-4 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-text border-2 border-text shadow-offset-3 font-heading text-base cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none select-none text-center"
+              className="w-full py-3 px-4 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-text border-2 border-text shadow-offset-3 font-heading text-base cursor-pointer transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none select-none text-center"
             >
               Home 🏠
             </button>

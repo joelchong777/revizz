@@ -1111,13 +1111,13 @@ test('Student sanitize: QuestionCard and RoundSummary run sanitizeKaTeX and keep
   }
 });
 
-test('QuestionCard Layout: Citation pill is rendered first in the pills container', () => {
+test('QuestionCard Layout: Citation caption is rendered before the subject/topic tags', () => {
   const fs = require('fs');
   const path = require('path');
   const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
   const content = fs.readFileSync(cardPath, 'utf8');
 
-  const pillContainerIndex = content.indexOf('<div className="flex flex-wrap gap-1.5">');
+  const pillContainerIndex = content.indexOf('{/* Meta: source caption');
   assertEqual(pillContainerIndex !== -1, true, 'Pills container found in QuestionCard');
 
   const citationIndex = content.indexOf("question.citation || 'Cambridge IGCSE'", pillContainerIndex);
@@ -1127,11 +1127,11 @@ test('QuestionCard Layout: Citation pill is rendered first in the pills containe
   assertEqual(citationIndex !== -1, true, 'Citation pill found in pills container');
   assertEqual(subjectIndex !== -1, true, 'Subject pill found in pills container');
   assertEqual(topicIndex !== -1, true, 'Topic pill found in pills container');
-  assertEqual(citationIndex < subjectIndex, true, 'Citation pill is rendered before subject pill');
-  assertEqual(citationIndex < topicIndex, true, 'Citation pill is rendered before topic pill');
+  assertEqual(citationIndex < subjectIndex, true, 'Citation caption is rendered before subject tag');
+  assertEqual(citationIndex < topicIndex, true, 'Citation caption is rendered before topic tag');
 });
 
-test('QuestionCard CTA: First-try correct popup CTA is positioned between question card and options list', () => {
+test('QuestionCard CTA: First-try correct banner and Next CTA are positioned below the options list', () => {
   const fs = require('fs');
   const path = require('path');
   const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
@@ -1150,8 +1150,9 @@ test('QuestionCard CTA: First-try correct popup CTA is positioned between questi
   assertEqual(firstTryCtaIndex !== -1, true, 'First-try CTA popup found');
   assertEqual(optionsIndex !== -1, true, 'Options list found');
 
-  assertEqual(stemIndex < firstTryCtaIndex, true, 'First-try CTA is rendered after question card stem');
-  assertEqual(firstTryCtaIndex < optionsIndex, true, 'First-try CTA is rendered before options list');
+  assertEqual(stemIndex < optionsIndex, true, 'Options are rendered after question card stem');
+  assertEqual(optionsIndex < firstTryCtaIndex, true, 'First-try banner is rendered below the options list (options never jump)');
+  assertEqual(content.indexOf('sticky bottom-4') > firstTryCtaIndex, true, 'Next CTA is sticky and rendered below the feedback');
 
   // Verify motion and button styling invariants
   assertEqual(content.includes("transition={{ type: 'spring', stiffness: 450, damping: 25 }}"), true, 'CTA adheres to spring physics invariants');
@@ -1175,25 +1176,24 @@ test('QuestionCard Correct Feedback: Celebratory banner and selected correct opt
   assertEqual(content.includes('isCorrectPick'), true, 'Distinguishes user-picked correct option from revealed correct option');
 });
 
-test('QuestionCard Retry Skip: Renders retry-next-button above retry alert prompt when isRetry', () => {
+test('QuestionCard Retry Skip: Renders retry-next-button below retry alert prompt when isRetry', () => {
   const fs = require('fs');
   const path = require('path');
   const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
   const content = fs.readFileSync(cardPath, 'utf8');
 
-  assertEqual(content.includes('data-testid="retry-next-button"'), true, 'QuestionCard contains retry-next-button');
+  assertEqual(content.includes("'retry-next-button'"), true, 'QuestionCard contains retry-next-button');
   assertEqual(content.includes('onClick={onNext}'), true, 'Next button wires onClick to onNext');
 
   // Verify it appears inside {isRetry && ( ... )}
   const isRetryIndex = content.indexOf('{isRetry && (');
   assertEqual(isRetryIndex !== -1, true, 'QuestionCard checks isRetry');
 
-  const retryButtonIndex = content.indexOf('data-testid="retry-next-button"', isRetryIndex);
-  assertEqual(retryButtonIndex !== -1, true, 'Retry next button is inside isRetry block');
-
-  const retryCardIndex = content.indexOf('1 retry left · 50% XP', retryButtonIndex);
-  assertEqual(retryCardIndex !== -1, true, 'Retry prompt card exists after next button');
-  assertEqual(retryButtonIndex < retryCardIndex, true, 'Next button is rendered ABOVE retry prompt card');
+  const retryCardIndex = content.indexOf('1 retry left · 50% XP', isRetryIndex);
+  assertEqual(retryCardIndex !== -1, true, 'Retry prompt card exists in isRetry block');
+  const retryButtonIndex = content.indexOf("'retry-next-button'", retryCardIndex);
+  assertEqual(retryButtonIndex !== -1, true, 'Retry next button is wired when isRetry');
+  assertEqual(retryButtonIndex > retryCardIndex, true, 'Next button is rendered BELOW retry prompt card (sticky footer)');
 
   // Verify styling and labels
   assertEqual(content.includes('bg-accent hover:bg-accent-600'), true, 'Retry button has tactile neobrutalist accent styling');

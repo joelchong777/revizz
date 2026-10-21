@@ -293,20 +293,20 @@ export function QuestionCard({
     });
 
   return (
-    <div className="w-full max-w-[480px] mx-auto py-3 px-4 pb-12 flex flex-col gap-3.5 select-none">
+    <div className="w-full max-w-[480px] mx-auto py-4 px-4 pb-12 flex flex-col gap-5 select-none">
       {/* Screen reader live region */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {liveAnnouncement}
       </div>
 
       {/* Top Bar: Circular Quit Button + Progress Bar + Question Counter */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onFinish}
           data-no-hotkey="true"
           title="Quit round"
-          className="w-9 h-9 flex-none rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text"
+          className="w-9 h-9 flex-none rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-text"
         >
           <svg
             width="16"
@@ -329,7 +329,7 @@ export function QuestionCard({
           />
         </div>
 
-        <span className="font-bold text-xs sm:text-sm text-text tabular-nums whitespace-nowrap">
+        <span className="font-bold text-sm text-text tabular-nums whitespace-nowrap">
           {isEndless
             ? `Q${questionNumber} · ∞`
             : `${questionNumber} / ${totalQuestions}`}
@@ -349,7 +349,7 @@ export function QuestionCard({
           title={isBookmarked ? 'Remove bookmark' : 'Bookmark question'}
           aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark question'}
           className={cn(
-            'w-9 h-9 flex-none rounded-full border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-text text-sm sm:text-base',
+            'w-9 h-9 flex-none rounded-full border-2 border-text shadow-offset-2 flex items-center justify-center cursor-pointer transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none text-text text-sm sm:text-base',
             isBookmarked ? 'bg-accent-300' : 'bg-neutral-100'
           )}
         >
@@ -362,7 +362,7 @@ export function QuestionCard({
         {isTimed ? (
           <div
             className={cn(
-              'px-3 py-1 rounded-full border-2 border-text shadow-offset-2 flex items-center gap-1.5 font-bold text-xs tabular-nums text-text',
+              'px-3 py-1 rounded-full border-2 border-text shadow-offset-2 flex items-center gap-2 font-bold text-xs tabular-nums text-text',
               urgent ? 'bg-accent-200 animate-pulse' : 'bg-neutral-100'
             )}
           >
@@ -396,7 +396,7 @@ export function QuestionCard({
 
         <span
           className={cn(
-            'ml-auto px-3 py-1 rounded-full border-2 border-text shadow-offset-2 font-bold text-xs sm:text-[13px] text-text whitespace-nowrap',
+            'ml-auto px-3 py-1 rounded-full border-2 border-text shadow-offset-2 font-bold text-xs text-text whitespace-nowrap',
             streakBg
           )}
         >
@@ -406,19 +406,21 @@ export function QuestionCard({
 
       {/* Third Row: Question Card */}
       <div className="rounded-3xl bg-white border-2 border-text p-4 sm:p-5 shadow-offset-4 flex flex-col gap-3">
-        {/* Permanent Citation Badges: Zero Layout Shift */}
-        <div className="flex flex-wrap gap-1.5">
-          <span className="px-2.5 py-0.5 rounded-full bg-text text-neutral-100 text-[11px] font-bold tracking-[0.02em]">
+        {/* Meta: source caption + subject/topic tags (zero layout shift) */}
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 leading-snug">
             {question.citation || 'Cambridge IGCSE'}
           </span>
-          {subject && (
-            <span className="px-2.5 py-0.5 rounded-full bg-accent-300 text-text border-[1.5px] border-text text-[11px] font-bold">
-              {subject}
+          <div className="flex flex-wrap gap-2">
+            {subject && (
+              <span className="px-2.5 py-0.5 rounded-full bg-accent-300 text-text border-2 border-text text-[11px] font-bold">
+                {subject}
+              </span>
+            )}
+            <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-2 border-text text-[11px] font-bold">
+              {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
             </span>
-          )}
-          <span className="px-2.5 py-0.5 rounded-full bg-accent-2-200 text-accent-2-900 border-[1.5px] border-text text-[11px] font-bold">
-            {question.topic || question.topic_id?.replace('topic_', 'Topic ') || 'Syllabus Topic'}
-          </span>
+          </div>
         </div>
 
         <div className="text-[17px] leading-relaxed font-semibold text-text break-words overflow-hidden min-h-[48px]">
@@ -435,7 +437,7 @@ export function QuestionCard({
 
         {/* Diagram asset */}
         {diagramUrl && (
-          <div className="relative my-2 rounded-2xl border-2 border-text bg-white p-3 shadow-offset-2 flex flex-col items-center group">
+          <div className="relative my-2 rounded-2xl border-2 border-text bg-white p-3 flex flex-col items-center group">
             {imageError ? (
               <div className="flex flex-col items-center justify-center py-6 px-4 text-center gap-2">
                 <span className="text-2xl" role="img" aria-label="Warning">
@@ -474,7 +476,7 @@ export function QuestionCard({
                     <button
                       type="button"
                       onClick={() => setIsZoomOpen(true)}
-                      className="px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 border-2 border-text shadow-offset-2 text-xs font-bold text-text flex items-center gap-1 transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none select-none"
+                      className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-neutral-200 border-2 border-text shadow-offset-2 text-xs font-bold text-text flex items-center gap-1 transition-all cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none select-none"
                       aria-label="Enlarge diagram"
                     >
                       <span>🔍</span> Zoom
@@ -487,148 +489,8 @@ export function QuestionCard({
         )}
       </div>
 
-      {/* Fourth Row: Retry Alert on First Wrong Attempt */}
-      {isRetry && (
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          className="flex flex-col gap-2.5 w-full"
-        >
-          <button
-            type="button"
-            data-testid="retry-next-button"
-            onClick={onNext}
-            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
-          >
-            <span>{questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}</span>
-            <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
-          </button>
-          <div className="flex items-center gap-2.5 p-3 px-3.5 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-3">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-text flex-shrink-0"
-            >
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-            </svg>
-            <div className="flex flex-col leading-[1.2]">
-              <span className="font-heading text-base text-text">
-                1 retry left · 50% XP
-              </span>
-              <span className="text-xs font-semibold text-text">
-                Streak reset. Pick another option or skip to next question.
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Next Question CTA Popup on First-Try Correct (between question and options) */}
-      {isFirstTryCorrect && (
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-          className="flex flex-col gap-2.5 w-full"
-        >
-          {/* Top Celebratory Correct Banner Card */}
-          <div
-            data-testid="correct-answer-banner"
-            className="flex items-center justify-between gap-3 p-3.5 px-4 rounded-2xl bg-accent-2-300 border-2 border-text shadow-offset-3"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black shadow-offset-2 flex-shrink-0">
-                🎉
-              </span>
-              <div className="flex flex-col leading-tight min-w-0">
-                <span className="font-heading text-lg sm:text-xl text-text leading-tight">
-                  Correct! Spot on 🎉
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
-                  {isRevealed ? `Option ${correctLetter} · ` : ''}First-try mastery
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {currentStreak > 0 && (
-                <span className="px-2.5 py-1 rounded-full bg-accent-300 border-2 border-text font-heading text-xs sm:text-sm text-text shadow-offset-2">
-                  🔥 {currentStreak}
-                </span>
-              )}
-              <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2">
-                +{gainedXP} XP
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onNext}
-            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
-          >
-            <span>
-              {questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}
-            </span>
-            <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
-          </button>
-        </motion.div>
-      )}
-
-      {/* Celebratory Banner on Retry Correct */}
-      {isRetryCorrect && (
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-          className="flex flex-col gap-2.5 w-full"
-          data-testid="retry-correct-banner"
-        >
-          <div className="flex items-center justify-between gap-3 p-3.5 px-4 rounded-2xl bg-accent-2-200 border-2 border-text shadow-offset-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black shadow-offset-2 flex-shrink-0">
-                👍
-              </span>
-              <div className="flex flex-col leading-tight min-w-0">
-                <span className="font-heading text-lg sm:text-xl text-text leading-tight">
-                  Correct on retry! 👍
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
-                  {isRevealed ? `Option ${correctLetter} · ` : ''}Added to Review Pile
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2">
-                +{gainedXP} XP
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onNext}
-            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-[19px] cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
-          >
-            <span>
-              {questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}
-            </span>
-            <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
-          </button>
-        </motion.div>
-      )}
-
       {/* Fifth Row: Options List (Tactile Rounded-2xl Cards) */}
-      <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Answer options">
+      <div className="flex flex-col gap-3" role="radiogroup" aria-label="Answer options">
         {question.options.map((opt, i) => {
           const isCorrect = isRevealed && opt.id === question.correct_option_id;
           const isPicked = selectedOptionId === opt.id;
@@ -644,19 +506,19 @@ export function QuestionCard({
 
           if (showCheck) {
             if (isCorrectPick) {
-              cardStyles = 'bg-accent-2-300 ring-4 ring-accent-2-500/40 shadow-offset-4 font-black text-text cursor-default';
+              cardStyles = 'bg-accent-2-300 ring-4 ring-accent-2-500/40 shadow-none translate-x-[2px] translate-y-[2px] font-black text-text cursor-default';
             } else {
-              cardStyles = 'bg-accent-2-300 shadow-offset-3 font-black text-text cursor-default';
+              cardStyles = 'bg-accent-2-300 shadow-none translate-x-[2px] translate-y-[2px] font-black text-text cursor-default';
             }
             chipBg = 'bg-accent-2-600 text-neutral-100';
           } else if (showX) {
-            cardStyles = 'bg-accent-200 shadow-none opacity-70 cursor-default';
+            cardStyles = 'bg-accent-200 shadow-none border-dashed opacity-70 cursor-default';
             chipBg = 'bg-accent-600 text-neutral-100';
           } else if (isRetry && isFirstWrongPick) {
-            cardStyles = 'bg-accent-200 shadow-none opacity-80 cursor-not-allowed';
+            cardStyles = 'bg-accent-200 shadow-none border-dashed opacity-80 cursor-not-allowed';
             chipBg = 'bg-accent-600 text-neutral-100';
           } else if (isResolved) {
-            cardStyles = 'bg-neutral-100 shadow-none opacity-50 cursor-default';
+            cardStyles = 'bg-neutral-100 shadow-none border-dashed opacity-50 cursor-default';
             chipBg = 'bg-neutral-200 text-text/70';
           }
 
@@ -670,7 +532,7 @@ export function QuestionCard({
               disabled={isDisabled}
               onClick={() => onAnswer(opt.id)}
               className={cn(
-                'w-full rounded-2xl border-2 border-text p-3 sm:p-3.5 text-left font-bold flex items-start gap-3 transition-all',
+                'w-full rounded-2xl border-2 border-text p-4 text-left font-bold flex items-start gap-3 transition-all',
                 cardStyles
               )}
             >
@@ -697,13 +559,13 @@ export function QuestionCard({
               </span>
 
               {/* Status Stamp / Hotkey Tag */}
-              <div className="flex-none flex items-center gap-1.5 pt-0.5">
+              <div className="flex-none flex items-center gap-2 pt-0.5">
                 {showCheck ? (
                   <motion.div
                     initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 22 }}
-                    className="flex items-center gap-1.5"
+                    className="flex items-center gap-2"
                   >
                     {isCorrectPick ? (
                       <span
@@ -758,19 +620,115 @@ export function QuestionCard({
         })}
       </div>
 
-      {/* Sixth Row: Feedback Panel on Answer / Timeout */}
+      {/* Feedback below the options so they never jump */}
+      {isRetry && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+          className="flex items-center gap-3 p-4 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-4"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-text flex-shrink-0"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <div className="flex flex-col gap-1 leading-tight">
+            <span className="font-heading text-base text-text">
+              1 retry left · 50% XP
+            </span>
+            <span className="text-xs font-semibold text-text">
+              Streak reset. Pick another option or skip to next question.
+            </span>
+          </div>
+        </motion.div>
+      )}
+
+      {isFirstTryCorrect && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+          data-testid="correct-answer-banner"
+          className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-accent-2-300 border-2 border-text shadow-offset-4"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black flex-shrink-0">
+              🎉
+            </span>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="font-heading text-lg sm:text-xl text-text leading-tight">
+                Correct! Spot on 🎉
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
+                {isRevealed ? `Option ${correctLetter} · ` : ''}First-try mastery
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {currentStreak > 0 && (
+              <span className="px-3 py-1 rounded-full bg-accent-300 border-2 border-text font-heading text-xs sm:text-sm text-text shadow-offset-2">
+                🔥 {currentStreak}
+              </span>
+            )}
+            <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2">
+              +{gainedXP} XP
+            </span>
+          </div>
+        </motion.div>
+      )}
+
+      {isRetryCorrect && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+          data-testid="retry-correct-banner"
+          className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-accent-2-200 border-2 border-text shadow-offset-4"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black flex-shrink-0">
+              👍
+            </span>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="font-heading text-lg sm:text-xl text-text leading-tight">
+                Correct on retry! 👍
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
+                {isRevealed ? `Option ${correctLetter} · ` : ''}Added to Review Pile
+              </span>
+            </div>
+          </div>
+
+          <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2 flex-shrink-0">
+            +{gainedXP} XP
+          </span>
+        </motion.div>
+      )}
+
+      {/* Feedback Panel on Answer / Timeout */}
       {isResolved && (
         <motion.div
           initial={shouldReduceMotion ? { opacity: 0 } : { y: 16, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 350, damping: 25 }}
           className={cn(
-            'flex flex-col gap-3.5 p-4 sm:p-5 rounded-3xl border-2 border-text shadow-offset-4',
+            'flex flex-col gap-3 p-4 sm:p-5 rounded-3xl border-2 border-text shadow-offset-4',
             fbBg
           )}
         >
           {/* Feedback Header */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <span className="text-3xl leading-none">{fbEmoji}</span>
             <div className="flex flex-col leading-[1.15] flex-1 min-w-0">
               <span className="font-heading text-[21px] text-text truncate">
@@ -787,12 +745,12 @@ export function QuestionCard({
 
           {/* Step by Step Explanation: Why Option X is Correct */}
           {isRevealed && (
-          <div className="p-3.5 rounded-2xl bg-accent-2-100 border-2 border-text flex flex-col gap-1.5">
+          <div className="p-4 rounded-2xl bg-accent-2-100 border-2 border-text flex flex-col gap-2">
             <h6 className="font-bold text-xs uppercase tracking-wider text-accent-2-900 m-0">
               Why Option {correctLetter} is Correct
             </h6>
             {explanationSteps.map((step, idx) => (
-              <div key={idx} className="flex gap-2.5 items-start">
+              <div key={idx} className="flex gap-2 items-start">
                 <span className="w-5 h-5 flex-none rounded-full bg-accent-2-300 border-[1.5px] border-text flex items-center justify-center text-xs font-bold text-text">
                   {idx + 1}
                 </span>
@@ -806,12 +764,12 @@ export function QuestionCard({
 
           {/* Distractor Breakdown: Distractor Traps */}
           {distractorBreakdown.length > 0 && (
-            <div className="p-3.5 rounded-2xl bg-accent-100 border-2 border-text flex flex-col gap-1.5">
+            <div className="p-4 rounded-2xl bg-accent-100 border-2 border-text flex flex-col gap-2">
               <h6 className="font-bold text-xs uppercase tracking-wider text-accent-900 m-0">
                 Distractor Traps
               </h6>
               {distractorBreakdown.map((item, idx) => (
-                <div key={idx} className="flex gap-2.5 items-start">
+                <div key={idx} className="flex gap-2 items-start">
                   <span className="w-5 h-5 flex-none rounded-full bg-accent-200 border-[1.5px] border-text flex items-center justify-center text-xs font-heading text-text">
                     {item.letter}
                   </span>
@@ -822,19 +780,22 @@ export function QuestionCard({
               ))}
             </div>
           )}
+        </motion.div>
+      )}
 
-          {/* Single High-Impact Next CTA Button */}
+      {/* Single Next CTA: sticky so it is reachable without scrolling */}
+      {(isRetry || isResolved) && (
+        <div className="sticky bottom-4 z-10 pb-[env(safe-area-inset-bottom)]">
           <button
             type="button"
+            data-testid={isRetry ? 'retry-next-button' : undefined}
             onClick={onNext}
-            className="group w-full py-3.5 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl cursor-pointer transition-all active:translate-x-1 active:translate-y-1 active:shadow-none select-none text-center flex items-center justify-center gap-2"
+            className="group w-full py-3 px-5 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-lg sm:text-xl cursor-pointer transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none select-none text-center flex items-center justify-center gap-2"
           >
-            <span>
-              {questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}
-            </span>
+            <span>{questionNumber >= totalQuestions && !isEndless ? 'See results' : 'Next question'}</span>
             <span className="text-2xl font-black leading-none transition-transform group-hover:translate-x-1">→</span>
           </button>
-        </motion.div>
+        </div>
       )}
 
       {/* Endless round end button */}
@@ -853,7 +814,7 @@ export function QuestionCard({
         subjectCode={subject}
         isTimedMode={isTimed}
         questionIndex={questionNumber - 1}
-        className="mt-2"
+        className="mt-0"
       />
 
       {/* Diagram Zoom Lightbox Modal */}
@@ -867,7 +828,7 @@ export function QuestionCard({
               aria-label="Diagram Inspector"
             >
               <div
-                className="max-w-4xl max-h-[90vh] w-full bg-white rounded-3xl border-4 border-text shadow-[0_16px_0_0_rgba(32,30,29,1)] flex flex-col overflow-hidden"
+                className="max-w-4xl max-h-[90vh] w-full bg-white rounded-3xl border-4 border-text shadow-offset-6 flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
@@ -880,7 +841,7 @@ export function QuestionCard({
                   <button
                     type="button"
                     onClick={() => setIsZoomOpen(false)}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-text bg-accent text-neutral-100 flex items-center justify-center font-bold text-base hover:bg-accent-600 active:translate-y-0.5 flex-shrink-0 cursor-pointer shadow-offset-2"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-text bg-accent text-neutral-100 flex items-center justify-center font-bold text-base hover:bg-accent-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex-shrink-0 cursor-pointer shadow-offset-2"
                     aria-label="Close modal"
                   >
                     ✕

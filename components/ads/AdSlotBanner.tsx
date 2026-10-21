@@ -703,7 +703,7 @@ export function AdSlotBanner({
         className
       )}
     >
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={cn(
@@ -728,8 +728,8 @@ export function AdSlotBanner({
         )}
       </div>
 
-      <div className="flex flex-col items-start justify-between gap-3.5 sm:flex-row sm:items-center">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 flex-1 min-w-0">
+      <div className="flex min-w-0 flex-col items-start justify-between gap-3.5 sm:flex-row sm:items-center">
+        <div className="flex w-full min-w-0 flex-col sm:flex-row items-start sm:items-center gap-3.5 flex-1">
           {hasImage && (
             <img
               src={campaign.imageUrl}
@@ -738,10 +738,10 @@ export function AdSlotBanner({
             />
           )}
           <div className="space-y-0.5 flex-1 min-w-0">
-            <h4 className="truncate text-sm font-black tracking-tight text-[#201e1d] sm:text-base">
+            <h4 className="break-words text-sm font-black tracking-tight text-[#201e1d] sm:text-base">
               {campaign.headline}
             </h4>
-            <p className="line-clamp-2 text-xs text-slate-700">
+            <p className="line-clamp-2 break-words text-xs text-slate-700">
               {campaign.bodyCopy}
             </p>
           </div>

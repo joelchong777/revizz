@@ -191,11 +191,11 @@ export function Header({
 
       <header
         className={cn(
-          'sticky top-0 z-20 bg-bg border-b-2 border-text select-none transition-all py-2 px-3 sm:px-4',
+          'sticky top-0 z-20 bg-bg border-b-2 border-text select-none transition-all py-2 md:rounded-t-[20px]',
           className
         )}
       >
-        <div className="max-w-[540px] mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
+        <div className="max-w-[480px] mx-auto px-4 flex items-center justify-between gap-2">
           {/* Left: REVIZZ Brand Wordmark + Star Badge */}
           <Link
             href="/"
@@ -221,13 +221,13 @@ export function Header({
           </Link>
 
           {/* Right: Controls (Mute on left, User icon on right) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Sound Toggle (Mute) Button */}
             <button
               type="button"
               onClick={handleToggleSound}
               title={soundOn ? 'Mute sound effects' : 'Enable sound effects'}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all text-text flex-shrink-0"
+              className="w-9 h-9 rounded-full bg-neutral-100 border-2 border-text shadow-offset-2 flex items-center justify-center hover:bg-neutral-200 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all text-text flex-shrink-0"
             >
               {soundOn ? (
                 <svg
@@ -280,7 +280,7 @@ export function Header({
                   ? `Signed in as ${userName} (${userBadge}) • View Profile & Leaderboard`
                   : 'Sign in to save progress'
               }
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-accent-2-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-xs sm:text-sm text-text hover:bg-accent-2-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer transition-all flex-shrink-0"
+              className="w-9 h-9 rounded-full bg-accent-2-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-sm text-text hover:bg-accent-2-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex-shrink-0"
             >
               {userInitials}
             </button>
