@@ -528,7 +528,7 @@ def extract_questions_from_qp(
             diag_bbox_dict = None
             clip_rect = None
 
-            if (drawings and not is_table_opts and not (all_table_borders and not diag_text_indicated)) or diag_text_indicated:
+            if drawings or diag_text_indicated:
                 if drawings:
                     has_diag = True
                     rects = [d["rect"] for d in drawings]
@@ -583,9 +583,10 @@ def extract_questions_from_qp(
                     before_tbl = [l["text"] for l in prompt_lines if l["y0"] < tbl_top_y]
                     after_tbl = [l["text"] for l in prompt_lines if l["y0"] >= tbl_bot_y - 5]
                     stem_text_parts.extend(before_tbl)
-                    tbl_md = format_embedded_markdown_table(tbl_lines, drawings)
-                    if tbl_md:
-                        stem_text_parts.append(tbl_md)
+                    if not has_diag:
+                        tbl_md = format_embedded_markdown_table(tbl_lines, drawings)
+                        if tbl_md:
+                            stem_text_parts.append(tbl_md)
                     stem_text_parts.extend(after_tbl)
                 else:
                     for l in q_lines:
@@ -684,7 +685,7 @@ def extract_questions_from_qp(
                         if hdr:
                             col_headers.append(hdr)
 
-                if len(col_headers) >= 2:
+                if len(col_headers) >= 2 and not has_diag:
                     table_md = "\n\n| | " + " | ".join(col_headers) + " |\n"
                     table_md += "| :---: | " + " | ".join([":---:"] * len(col_headers)) + " |\n"
                     for lbl in ["A", "B", "C", "D"]:
@@ -720,9 +721,10 @@ def extract_questions_from_qp(
                     before_tbl = [l["text"] for l in prompt_lines if l["y0"] < tbl_top_y]
                     after_tbl = [l["text"] for l in prompt_lines if l["y0"] >= tbl_bot_y - 5]
                     stem_text_parts.extend(before_tbl)
-                    tbl_md = format_embedded_markdown_table(tbl_lines, drawings)
-                    if tbl_md:
-                        stem_text_parts.append(tbl_md)
+                    if not has_diag:
+                        tbl_md = format_embedded_markdown_table(tbl_lines, drawings)
+                        if tbl_md:
+                            stem_text_parts.append(tbl_md)
                     stem_text_parts.extend(after_tbl)
                 else:
                     for l in prompt_lines:

@@ -1,6 +1,6 @@
 # Revizz Codebase Atlas & Line Coordinates
 
-> **Automated Symbol Atlas**: Indexing 170 files, 96,152 lines, and 851 symbols across core modules. Generated in 470ms.
+> **Automated Symbol Atlas**: Indexing 170 files, 96,200 lines, and 852 symbols across core modules. Generated in 445ms.
 
 Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact `[L<start>-L<end>]` coordinates.
 
@@ -35,8 +35,8 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`components/AuthModal.tsx`** (406 lines): `AuthModalProps [L15-L22]`, `AuthModal [L24-L403]`
 - **`components/Header.tsx`** (312 lines): `Header [L19-L309]`
 - **`components/LeaderboardModal.tsx`** (361 lines): `LeaderboardModal [L20-L360]`
-- **`components/QuestionCard.tsx`** (907 lines): `QuestionCard [L36-L904]`
-- **`components/RoundSummary.tsx`** (388 lines): `RoundSummary [L31-L385]`
+- **`components/QuestionCard.tsx`** (887 lines): `QuestionCard [L37-L884]`
+- **`components/RoundSummary.tsx`** (368 lines): `RoundSummary [L32-L365]`
 - **`components/SoundToggle.tsx`** (64 lines): `SoundToggle [L12-L61]`
 - **`components/StartFlow.tsx`** (990 lines): `StartFlow [L23-L987]`
 - **`components/StudentAuthGate.tsx`** (212 lines): `StudentAuthGate [L14-L209]`
@@ -88,7 +88,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`components/profile/StudentSettingsPanel.tsx`** (717 lines): `StudentSettingsPanelProps [L31-L39]`, `StudentSettingsPanel [L59-L716]`
 - **`components/profile/StudentStatsPanel.tsx`** (569 lines): `StudentStatsPanelProps [L7-L13]`, `StudentStatsPanel [L15-L568]`
 - **`components/ui/MarkdownErrorBoundary.tsx`** (59 lines): `MarkdownErrorBoundary [L22-L56]`
-- **`components/ui/RichMarkdown.tsx`** (103 lines): `neobrutalistTableComponents [L13-L34]`, `printableTableComponents [L36-L57]`, `RichMarkdownProps [L59-L64]`, `RichMarkdown [L66-L100]`
+- **`components/ui/RichMarkdown.tsx`** (128 lines): `cambridgeTableComponents [L13-L34]`, `neobrutalistTableComponents [L36-L57]`, `printableTableComponents [L59-L80]`, `RichMarkdownProps [L82-L87]`, `RichMarkdown [L89-L125]`
 - **`components/ui/badge.tsx`** (47 lines): `Badge [L40-L44]`
 - **`components/ui/dialog.tsx`** (131 lines): `DialogFooter [L81-L92]`, `Dialog [L119-L130]`, `DialogPortal [L119-L130]`, `DialogOverlay [L119-L130]`, `DialogClose [L119-L130]`
 - **`components/ui/select.tsx`** (274 lines): `SelectOption [L5-L9]`, `SelectProps [L11-L29]`, `Select [L31-L270]`, `NeobrutalistDropdown [L272-L272]`

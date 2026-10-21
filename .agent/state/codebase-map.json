@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-20T17:54:48.056Z",
+  "generatedAt": "2026-10-21T04:40:58.005Z",
   "stats": {
     "totalFiles": 170,
-    "totalLines": 96152,
-    "totalSymbols": 851,
-    "scanDurationMs": 470
+    "totalLines": 96200,
+    "totalSymbols": 852,
+    "scanDurationMs": 445
   },
   "sections": {
     "app": [
@@ -571,30 +571,30 @@
       },
       {
         "path": "components/QuestionCard.tsx",
-        "lineCount": 907,
+        "lineCount": 887,
         "purpose": "Tactile 3D neobrutalist question card with markdown and KaTeX math",
         "category": "components",
         "symbols": [
           {
             "name": "QuestionCard",
             "kind": "component",
-            "startLine": 36,
-            "endLine": 904,
+            "startLine": 37,
+            "endLine": 884,
             "exported": true
           }
         ]
       },
       {
         "path": "components/RoundSummary.tsx",
-        "lineCount": 388,
+        "lineCount": 368,
         "purpose": "End-of-round quiz recap showing XP awarded, accuracy, and review pile",
         "category": "components",
         "symbols": [
           {
             "name": "RoundSummary",
             "kind": "component",
-            "startLine": 31,
-            "endLine": 385,
+            "startLine": 32,
+            "endLine": 365,
             "exported": true
           }
         ]
@@ -1989,36 +1989,43 @@
       },
       {
         "path": "components/ui/RichMarkdown.tsx",
-        "lineCount": 103,
+        "lineCount": 128,
         "purpose": "Neobrutalist UI design primitive: RichMarkdown",
         "category": "components",
         "symbols": [
           {
-            "name": "neobrutalistTableComponents",
+            "name": "cambridgeTableComponents",
             "kind": "const",
             "startLine": 13,
             "endLine": 34,
             "exported": true
           },
           {
-            "name": "printableTableComponents",
+            "name": "neobrutalistTableComponents",
             "kind": "const",
             "startLine": 36,
             "endLine": 57,
             "exported": true
           },
           {
+            "name": "printableTableComponents",
+            "kind": "const",
+            "startLine": 59,
+            "endLine": 80,
+            "exported": true
+          },
+          {
             "name": "RichMarkdownProps",
             "kind": "interface",
-            "startLine": 59,
-            "endLine": 64,
+            "startLine": 82,
+            "endLine": 87,
             "exported": true
           },
           {
             "name": "RichMarkdown",
             "kind": "component",
-            "startLine": 66,
-            "endLine": 100,
+            "startLine": 89,
+            "endLine": 125,
             "exported": true
           }
         ]
@@ -6781,7 +6788,7 @@
       },
       {
         "path": "scripts/verify-quiz-tables.ts",
-        "lineCount": 346,
+        "lineCount": 409,
         "purpose": "Standalone Verification Script for Quiz Table Rendering.",
         "category": "scripts",
         "symbols": [
@@ -6796,7 +6803,7 @@
             "name": "verifyQuizTables",
             "kind": "function",
             "startLine": 33,
-            "endLine": 340,
+            "endLine": 403,
             "exported": false
           }
         ]
@@ -7895,30 +7902,30 @@
     },
     {
       "path": "components/QuestionCard.tsx",
-      "lineCount": 907,
+      "lineCount": 887,
       "purpose": "Tactile 3D neobrutalist question card with markdown and KaTeX math",
       "category": "components",
       "symbols": [
         {
           "name": "QuestionCard",
           "kind": "component",
-          "startLine": 36,
-          "endLine": 904,
+          "startLine": 37,
+          "endLine": 884,
           "exported": true
         }
       ]
     },
     {
       "path": "components/RoundSummary.tsx",
-      "lineCount": 388,
+      "lineCount": 368,
       "purpose": "End-of-round quiz recap showing XP awarded, accuracy, and review pile",
       "category": "components",
       "symbols": [
         {
           "name": "RoundSummary",
           "kind": "component",
-          "startLine": 31,
-          "endLine": 385,
+          "startLine": 32,
+          "endLine": 365,
           "exported": true
         }
       ]
@@ -9313,36 +9320,43 @@
     },
     {
       "path": "components/ui/RichMarkdown.tsx",
-      "lineCount": 103,
+      "lineCount": 128,
       "purpose": "Neobrutalist UI design primitive: RichMarkdown",
       "category": "components",
       "symbols": [
         {
-          "name": "neobrutalistTableComponents",
+          "name": "cambridgeTableComponents",
           "kind": "const",
           "startLine": 13,
           "endLine": 34,
           "exported": true
         },
         {
-          "name": "printableTableComponents",
+          "name": "neobrutalistTableComponents",
           "kind": "const",
           "startLine": 36,
           "endLine": 57,
           "exported": true
         },
         {
+          "name": "printableTableComponents",
+          "kind": "const",
+          "startLine": 59,
+          "endLine": 80,
+          "exported": true
+        },
+        {
           "name": "RichMarkdownProps",
           "kind": "interface",
-          "startLine": 59,
-          "endLine": 64,
+          "startLine": 82,
+          "endLine": 87,
           "exported": true
         },
         {
           "name": "RichMarkdown",
           "kind": "component",
-          "startLine": 66,
-          "endLine": 100,
+          "startLine": 89,
+          "endLine": 125,
           "exported": true
         }
       ]
@@ -14101,7 +14115,7 @@
     },
     {
       "path": "scripts/verify-quiz-tables.ts",
-      "lineCount": 346,
+      "lineCount": 409,
       "purpose": "Standalone Verification Script for Quiz Table Rendering.",
       "category": "scripts",
       "symbols": [
@@ -14116,7 +14130,7 @@
           "name": "verifyQuizTables",
           "kind": "function",
           "startLine": 33,
-          "endLine": 340,
+          "endLine": 403,
           "exported": false
         }
       ]
