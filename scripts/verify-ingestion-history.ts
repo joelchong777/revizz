@@ -114,7 +114,7 @@ if (fs.existsSync(hubPath)) {
   // 1f. Check loadPreset in Ingestion Studio integration
   check(
     'Provides quick action to load paper preset in Ingestion Studio',
-    () => hubContent.includes('loadPreset') && hubContent.includes("onSelectTab?.('ingestion')")
+    () => hubContent.includes('loadPreset') && /onSelectTab\??\.?\(\s*'ingestion'\s*\)/.test(hubContent)
   );
 
   // 1g. Check Edit in CMS integration
@@ -124,11 +124,16 @@ if (fs.existsSync(hubPath)) {
   );
 }
 
-// 1h. Embedded mode props on the history hub
+// 1h. Cleaned-up History tab contract
 if (fs.existsSync(hubPath)) {
   const hc = fs.readFileSync(hubPath, 'utf8');
-  check('IngestionHistoryHub accepts embedded and onOpenInStudio props', () => hc.includes('embedded') && hc.includes('onOpenInStudio'));
-  check('IngestionHistoryHub embedded mode renders a compact h2', () => hc.includes('<h2') );
+  check('IngestionHistoryHub has no embedded prop', () => !/\bembedded\b/.test(hc));
+  check('IngestionHistoryHub has no onNewIngest prop or "New Ingest in Studio" button', () => !hc.includes('onNewIngest') && !hc.includes('New Ingest in Studio'));
+  check('IngestionHistoryHub keeps onOpenInStudio and has an h2 "Ingestion history" header', () => hc.includes('onOpenInStudio') && hc.includes('<h2') && hc.includes('Ingestion history'));
+  check('IngestionHistoryHub has a Refresh button', () => hc.includes('Refresh'));
+  check('Manifest is paginated: Show 10 more button and a visible-count state', () => hc.includes('Show 10 more') && /useState\(\s*10\s*\)|useState<number>\(\s*10\s*\)|PAGE_SIZE/.test(hc));
+  check('Diagram images use loading="lazy"', () => hc.includes('loading="lazy"'));
+  check('Delete, Edit in CMS and sort are kept', () => hc.includes('handleDeletePaper') && hc.includes('Edit in CMS') && hc.includes('sortBy'));
 }
 
 // 2. AppAdminNav: Ingestion History button removed
@@ -172,8 +177,8 @@ if (fs.existsSync(studioPath)) {
     () => sc.includes('role="tablist"') && sc.includes('data-testid={`studio-tab-${t.id}`}') && /id:\s*"new"/.test(sc) && /id:\s*"history"/.test(sc));
   check('IngestionHub accepts initialView/onViewChange/onOpenEditor props',
     () => sc.includes('initialView') && sc.includes('onViewChange') && sc.includes('onOpenEditor'));
-  check('IngestionHub renders embedded IngestionHistoryHub with onOpenInStudio',
-    () => sc.includes('<IngestionHistoryHub') && sc.includes('embedded') && sc.includes('onOpenInStudio'));
+  check('IngestionHub loads IngestionHistoryHub via next/dynamic with ssr:false and passes onOpenInStudio',
+    () => sc.includes('next/dynamic') && /ssr:\s*false/.test(sc) && sc.includes('<IngestionHistoryHub') && sc.includes('onOpenInStudio') && !/^import IngestionHistoryHub/m.test(sc));
   check('IngestionHub tabs support arrow-key navigation',
     () => sc.includes('ArrowRight') && sc.includes('ArrowLeft'));
   check('IngestionHub tabs use role="tab" with aria-selected',
