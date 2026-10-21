@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   Search,
   X,
@@ -33,7 +33,8 @@ import {
   Upload,
   Edit3,
   FolderOpen,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 // RichMarkdown provides internal MarkdownErrorBoundary defensive wrapper
@@ -72,7 +73,8 @@ import {
   filterAndSortQuestions,
   countActiveFilters,
   parseCitationTagPills,
-  stripCambridgeIgcse
+  stripCambridgeIgcse,
+  extractSeriesOrYear
 } from '@/lib/compilerFilters';
 import { TestPaperConfig, OnlineQuizAssignment, TopicDistributionItem } from '@/types/testCompiler';
 
@@ -114,7 +116,41 @@ export default function TestCompilerHub() {
   const [withMathOnly, setWithMathOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('paper');
   const [cardDensity, setCardDensity] = useState<'expanded' | 'compact'>('expanded');
+  const [showAnswers, setShowAnswers] = useState(true);
   const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
+
+  const [scrollFadeState, setScrollFadeState] = useState<'top' | 'middle' | 'bottom' | 'none'>('top');
+  const handleQuestionsScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const isAtTop = el.scrollTop <= 4;
+    const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
+    if (isAtTop && isAtBottom) {
+      setScrollFadeState('none');
+    } else if (isAtTop) {
+      setScrollFadeState('top');
+    } else if (isAtBottom) {
+      setScrollFadeState('bottom');
+    } else {
+      setScrollFadeState('middle');
+    }
+  }, []);
+
+  const scrollMaskStyle = useMemo(() => {
+    let mask = '';
+    if (scrollFadeState === 'none') {
+      mask = 'none';
+    } else if (scrollFadeState === 'top') {
+      mask = 'linear-gradient(to bottom, black calc(100% - 36px), transparent 100%)';
+    } else if (scrollFadeState === 'bottom') {
+      mask = 'linear-gradient(to bottom, transparent 0%, black 24px)';
+    } else {
+      mask = 'linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 36px), transparent 100%)';
+    }
+    return {
+      WebkitMaskImage: mask,
+      maskImage: mask,
+    };
+  }, [scrollFadeState]);
 
   // Close topic dropdown on outside click or Escape key
   useEffect(() => {
@@ -468,6 +504,75 @@ export default function TestCompilerHub() {
     ).length;
     return `${selectedTopicIds.length} Topics Selected (${filteredCount} Qs)`;
   }, [selectedTopicIds, questions, topics]);
+
+  const baseFilteredQuestions = useMemo(() => {
+    return filterAndSortQuestions(questions, {
+      search,
+      topicId: selectedTopicId,
+      topicIds: selectedTopicIds,
+      series: selectedSeries,
+      selection: 'all',
+      selectedQuestionIds,
+      withDiagramsOnly,
+      withTablesOnly,
+      withMathOnly,
+      sortBy,
+    });
+  }, [
+    questions,
+    search,
+    selectedTopicId,
+    selectedTopicIds,
+    selectedSeries,
+    selectedQuestionIds,
+    withDiagramsOnly,
+    withTablesOnly,
+    withMathOnly,
+    sortBy,
+  ]);
+
+  const unselectedFiltered = useMemo(() => {
+    return filteredQuestions.filter((q) => !selectedQuestionIds.includes(q.id));
+  }, [filteredQuestions, selectedQuestionIds]);
+  const unselectedFilteredCount = unselectedFiltered.length;
+
+  const handleAddAllFiltered = () => {
+    const idsToAdd = unselectedFiltered.map((q) => q.id);
+    if (idsToAdd.length > 0) {
+      setSelectedQuestionIds((prev) => [...prev, ...idsToAdd]);
+      setLastSavedSnapshot(null);
+    }
+  };
+
+  const hasFilters = useMemo(() => {
+    return (
+      search.trim() !== '' ||
+      (!selectedTopicIds.includes('all') && selectedTopicIds.length > 0) ||
+      selectedSeries !== 'all' ||
+      selectionFilter !== 'all' ||
+      withDiagramsOnly ||
+      withTablesOnly ||
+      withMathOnly
+    );
+  }, [
+    search,
+    selectedTopicIds,
+    selectedSeries,
+    selectionFilter,
+    withDiagramsOnly,
+    withTablesOnly,
+    withMathOnly,
+  ]);
+
+  const saveStatusText = useMemo(() => {
+    if (lastSavedSnapshot) {
+      return `Draft saved ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    }
+    if (selectedQuestionIds.length > 0) {
+      return 'Unsaved changes';
+    }
+    return '';
+  }, [lastSavedSnapshot, selectedQuestionIds.length]);
 
   const allFilteredSelected = useMemo(() => {
     if (filteredQuestions.length === 0) return false;
@@ -928,207 +1033,172 @@ export default function TestCompilerHub() {
   const isTopicFiltered = selectedTopicIds.length > 0 && !selectedTopicIds.includes('all');
 
   return (
-    <div className="flex flex-col gap-6 text-[#201e1d] font-body pb-12">
+    <div className="flex flex-col text-[#201e1d] font-body flex-1 min-h-0 lg:h-full lg:overflow-hidden">
       {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
-        {/* LEFT COLUMN: Question Bank Canvas */}
-        <div className="flex flex-col gap-3 min-w-0">
-          {/* Sleek, Compact Sticky Header Bar */}
-          <div className="sticky top-0 z-10 px-4 py-2.5 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex items-center justify-between gap-3 flex-wrap backdrop-blur-sm">
-            {/* Search Input (moved from Question Filters) */}
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <label htmlFor="compiler-search-input" className="sr-only">
-                Search stems, question IDs, citations, and option texts
-              </label>
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none" aria-hidden="true" />
-              <input
-                id="compiler-search-input"
-                type="text"
-                placeholder="Search stems, citations, IDs, options..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search questions by stem, citations, IDs, or option text"
-                className="w-full py-1.5 pl-8 pr-7 rounded-xl bg-white border border-[#dcd3c4] text-xs font-medium text-[#201e1d] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 hover:border-[#201e1d] placeholder:text-[#a19786] transition-all"
-              />
-              {search && (
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-start lg:h-full lg:overflow-hidden p-1 pr-2">
+        {/* LEFT COLUMN: Question Feed */}
+        <div className="flex flex-col min-w-0 lg:h-full lg:overflow-hidden p-0.5">
+          {/* Question Cards Container */}
+          <div
+            onScroll={handleQuestionsScroll}
+            style={scrollMaskStyle}
+            className="flex-1 min-h-0 overflow-y-auto pt-1 pb-20 px-1 pr-2.5 flex flex-col gap-3"
+          >
+            {filteredQuestions.length === 0 ? (
+              <div className="py-16 px-4 bg-[#f9f4ed] rounded-3xl border-2 border-dashed border-[#dcd3c4] text-center flex flex-col items-center justify-center gap-2.5">
+                <div className="font-heading font-black text-xl text-[#201e1d]">No questions match</div>
+                <div className="text-sm text-[#645c50]">Try a different search or clear a filter.</div>
                 <button
                   type="button"
-                  onClick={() => setSearch('')}
-                  aria-label="Clear search query"
-                  title="Clear search query"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 cursor-pointer"
+                  onClick={handleResetAllFilters}
+                  className="mt-2 px-4 py-2 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 transition-all shadow-[2px_2px_0_0_#201e1d] cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" aria-hidden="true" />
+                  Clear all filters
                 </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              filteredQuestions.map((q) => {
+                const isSelected = selectedQuestionIds.includes(q.id);
+                const orderIndex = selectedQuestionIds.indexOf(q.id);
+                const pills = parseCitationTagPills(q.citation, q.id);
+                const paperPill = pills.find((p) => p.kind === 'paper')?.label;
+                const questionPill = pills.find((p) => p.kind === 'question')?.label;
+                const seriesPill =
+                  pills.find((p) => p.kind === 'series')?.label || extractSeriesOrYear(q.citation, q.id);
+                const paperQText =
+                  paperPill && questionPill
+                    ? `${paperPill} · ${questionPill}`
+                    : paperPill
+                    ? paperPill
+                    : questionPill
+                    ? `${subjectCode} · ${questionPill}`
+                    : stripCambridgeIgcse(q.citation || q.id);
 
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Card Density Toggle */}
-              <button
-                type="button"
-                onClick={() => setCardDensity((prev) => (prev === 'expanded' ? 'compact' : 'expanded'))}
-                aria-label={`Switch to ${cardDensity === 'expanded' ? 'Compact' : 'Expanded'} card density`}
-                title={`Card Density: ${cardDensity}`}
-                className="px-2.5 py-1 rounded-xl bg-white border border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-              >
-                <LayoutGrid className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
-                <span>{cardDensity === 'expanded' ? 'Compact' : 'Expanded'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSelectAllFiltered}
-                aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                className="text-xs font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 rounded-md transition-all active:translate-y-0.5 cursor-pointer ml-1"
-              >
-                {allFilteredSelected ? 'Deselect All' : 'Select All Filtered'}
-              </button>
-            </div>
-          </div>
-
-          {/* Scrollable Question Cards Container */}
-          <div className="h-[calc(100vh-140px)] min-h-[520px] overflow-y-auto pr-2 flex flex-col gap-4">
-            {filteredQuestions.map((q) => {
-              const isSelected = selectedQuestionIds.includes(q.id);
-              return (
-                <div
-                  key={q.id}
-                  role="checkbox"
-                  aria-checked={isSelected}
-                  tabIndex={0}
-                  aria-label={`Question ${stripCambridgeIgcse(q.citation || q.id)}: ${q.topic}. ${isSelected ? 'Selected' : 'Not selected'}`}
-                  className={`p-5 rounded-3xl border-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 active:translate-y-0.5 ${
-                    isSelected
-                      ? 'border-[#728157] bg-[#f0fae1] shadow-[4px_4px_0_0_#728157]'
-                      : 'border-[#dcd3c4] bg-[#f9f4ed] shadow-sm hover:border-[#a19786]'
-                  }`}
-                  onClick={() => handleToggleQuestion(q.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === ' ' || e.key === 'Enter') {
-                      e.preventDefault();
-                      handleToggleQuestion(q.id);
-                    }
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {parseCitationTagPills(q.citation, q.id).map((pill, pIdx) => {
-                        let pillClass = 'px-2.5 py-0.5 rounded-full bg-[#eee7db] text-[#474238] border border-[#c8beae] font-mono text-[11px] font-bold';
-                        if (pill.kind === 'subject') {
-                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#e3eed4] text-[#273818] border border-[#94a878] text-[11px] font-bold';
-                        } else if (pill.kind === 'paper') {
-                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#9c4100] border border-[#e09f77] font-mono text-[11px] font-bold';
-                        } else if (pill.kind === 'series') {
-                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#dff0f7] text-[#18526b] border border-[#8ec3d8] text-[11px] font-bold';
-                        } else if (pill.kind === 'question') {
-                          pillClass = 'px-2.5 py-0.5 rounded-full bg-[#fef0c7] text-[#854d0e] border border-[#e8c468] font-mono text-[11px] font-bold';
-                        }
-                        return (
-                          <span key={`${pill.kind}-${pIdx}`} className={pillClass}>
-                            {pill.label}
-                          </span>
-                        );
-                      })}
-                      {q.topic && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#ede8f5] text-[#4a3875] border border-[#bfb2d9] text-[11px] font-bold">
-                          {q.topic}
-                        </span>
-                      )}
-                      {q.image_url && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] border border-[#f0c2a8] text-[11px] font-bold flex items-center gap-1">
-                          {isGraphQuestion(q) ? (
-                            <>
-                              <TrendingUp className="w-3 h-3" aria-hidden="true" /> Graph
-                            </>
-                          ) : (
-                            <>
-                              <ImageIcon className="w-3 h-3" aria-hidden="true" /> Diagram
-                            </>
-                          )}
-                        </span>
-                      )}
-                      {hasDataTable(q.stem_markdown, q) && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#e1f0fa] text-[#2c6e91] border border-[#aed2e6] text-[11px] font-bold flex items-center gap-1">
-                          <Table className="w-3 h-3" aria-hidden="true" /> Table
-                        </span>
-                      )}
-                      {isMathOrCalculation(q.stem_markdown) && (
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#ede8f5] text-[#5e4b8b] border border-[#cdc2e8] text-[11px] font-bold flex items-center gap-1">
-                          <Calculator className="w-3 h-3" aria-hidden="true" /> Math
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      aria-hidden="true"
-                      className={`w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition-colors ${
-                        isSelected
-                          ? 'border-[#728157] bg-[#728157] text-white'
-                          : 'border-[#c0b6a5] bg-white text-transparent'
-                      }`}
-                    >
-                      <Check className="w-4 h-4" />
-                    </div>
-                  </div>
-
-                  <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed mb-3">
-                    <RichMarkdown content={q.stem_markdown || ''} variant="cambridge" />
-                  </div>
-
-                  {q.image_url && (
-                    <div className="mb-3">
-                      <CompilerDiagramPreview
-                        imageUrl={q.image_url}
-                        citation={stripCambridgeIgcse(q.citation || q.id)}
-                        altText={q.citation ? `Diagram for ${stripCambridgeIgcse(q.citation)}` : 'Question diagram'}
-                      />
-                    </div>
-                  )}
-
-                  {/* Options Rendering: Compact vs Expanded */}
-                  {cardDensity === 'compact' ? (
-                    <div className="pt-2 border-t border-[#dcd3c4]/70">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedCardIds((prev) =>
-                            prev.includes(q.id) ? prev.filter((id) => id !== q.id) : [...prev, q.id]
-                          );
-                        }}
-                        aria-expanded={expandedCardIds.includes(q.id)}
-                        aria-label={`${expandedCardIds.includes(q.id) ? 'Hide' : 'Preview'} options for question ${stripCambridgeIgcse(q.citation || q.id)}`}
-                        className="text-xs font-bold text-[#c67139] hover:underline flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#c67139] rounded py-0.5"
+                return (
+                  <article
+                    key={q.id}
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    tabIndex={0}
+                    aria-label={`Question ${paperQText}: ${q.topic}. ${
+                      isSelected ? 'Selected' : 'Not selected'
+                    }`}
+                    onClick={() => handleToggleQuestion(q.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        handleToggleQuestion(q.id);
+                      }
+                    }}
+                    className={`p-5 rounded-3xl transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 grid grid-cols-[32px_minmax(0,1fr)] gap-4 items-start ${
+                      isSelected
+                        ? 'bg-[#fff2eb] border-2 border-[#c67139] shadow-[4px_4px_0_0_#c67139] hover:-translate-y-0.5'
+                        : 'bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d] hover:shadow-[4px_4px_0_0_#201e1d] hover:-translate-y-0.5'
+                    }`}
+                  >
+                    {/* 32px Circular Badge */}
+                    <div className="pt-0.5">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-heading text-xs font-bold transition-all ${
+                          isSelected
+                            ? 'bg-[#c67139] border-2 border-[#c67139] text-white'
+                            : 'border-2 border-[#c0b6a5] bg-transparent text-transparent'
+                        }`}
                       >
-                        {expandedCardIds.includes(q.id) ? (
-                          <>
-                            <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Hide Options</span>
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Preview Options (4)</span>
-                          </>
+                        {isSelected ? orderIndex + 1 : ''}
+                      </div>
+                    </div>
+
+                    {/* Content Column */}
+                    <div className="flex flex-col gap-2.5 min-w-0">
+                      {/* Meta Row */}
+                      <div className="flex items-center gap-2 flex-wrap text-xs text-[#645c50]">
+                        <span className="font-bold text-[#201e1d] whitespace-nowrap">
+                          {paperQText}
+                        </span>
+                        {seriesPill && seriesPill !== 'Other Series' && (
+                          <span className="whitespace-nowrap">{seriesPill}</span>
                         )}
-                      </button>
-                      {expandedCardIds.includes(q.id) && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2.5" onClick={(e) => e.stopPropagation()}>
+                        {q.topic && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#f0fae1] text-[#272e1b] border border-[#aebf92] text-[11px] font-semibold whitespace-nowrap">
+                            {q.topic}
+                          </span>
+                        )}
+                        {q.image_url && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#fff2eb] text-[#8c491a] border border-[#ffc6a5] text-[11px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                            {isGraphQuestion(q) ? (
+                              <>
+                                <TrendingUp className="w-3 h-3" aria-hidden="true" /> Graph
+                              </>
+                            ) : (
+                              <>
+                                <ImageIcon className="w-3 h-3" aria-hidden="true" /> Diagram
+                              </>
+                            )}
+                          </span>
+                        )}
+                        {hasDataTable(q.stem_markdown, q) && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-[#474238] border border-[#dcd3c4] text-[11px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                            <Table className="w-3 h-3" aria-hidden="true" /> Table
+                          </span>
+                        )}
+                        {isMathOrCalculation(q.stem_markdown) && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#eee7db] text-[#474238] border border-[#dcd3c4] text-[11px] font-semibold flex items-center gap-1 whitespace-nowrap">
+                            <Calculator className="w-3 h-3" aria-hidden="true" /> Calculation
+                          </span>
+                        )}
+                        <span
+                          className={`ml-auto font-bold text-xs whitespace-nowrap ${
+                            isSelected ? 'text-[#8c491a]' : 'text-[#645c50]'
+                          }`}
+                        >
+                          {isSelected ? 'Added · tap to remove' : '+ Add'}
+                        </span>
+                      </div>
+
+                      {/* Stem */}
+                      <div className="prose prose-sm max-w-none text-[#201e1d] font-medium leading-relaxed">
+                        <RichMarkdown content={q.stem_markdown || ''} variant="cambridge" />
+                      </div>
+
+                      {/* Diagram Preview */}
+                      {q.image_url && (
+                        <div className="my-1" onClick={(e) => e.stopPropagation()}>
+                          <CompilerDiagramPreview
+                            imageUrl={q.image_url}
+                            citation={stripCambridgeIgcse(q.citation || q.id)}
+                            altText={
+                              q.citation
+                                ? `Diagram for ${stripCambridgeIgcse(q.citation)}`
+                                : 'Question diagram'
+                            }
+                          />
+                        </div>
+                      )}
+
+                      {/* Options (A, B, C, D) */}
+                      {cardDensity === 'expanded' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                           {q.options.map((opt, i) => {
-                            const isTable = hasDataTable(q.stem_markdown, q) || opt.text_markdown.includes('|');
-                            const displayOptText = isTable ? formatTableOptionText(opt.text_markdown) : opt.text_markdown;
-                            const labelSep = isTable ? ' -' : '.';
+                            const isTable =
+                              hasDataTable(q.stem_markdown, q) || opt.text_markdown.includes('|');
+                            const displayOptText = isTable
+                              ? formatTableOptionText(opt.text_markdown)
+                              : opt.text_markdown;
+                            const isCorrect = showAnswers && opt.id === q.correct_option_id;
+
                             return (
                               <div
                                 key={opt.id}
-                                className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
-                                  opt.id === q.correct_option_id
-                                    ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
-                                    : 'bg-white border border-[#dcd3c4] text-[#474238]'
+                                className={`px-3 py-2 rounded-xl text-xs flex gap-2 transition-colors ${
+                                  isCorrect
+                                    ? 'bg-[#e1eecc] border-2 border-[#8fa073] font-bold text-[#272e1b]'
+                                    : 'bg-white border border-[#dcd3c4] text-[#201e1d]'
                                 }`}
                               >
-                                <span className="font-bold opacity-70 shrink-0">{String.fromCharCode(65 + i)}{labelSep}</span>
+                                <span className="font-bold opacity-60 shrink-0">
+                                  {String.fromCharCode(65 + i)}.
+                                </span>
                                 <div className="flex-1">
                                   <RichMarkdown content={displayOptText} variant="plain" />
                                 </div>
@@ -1138,764 +1208,639 @@ export default function TestCompilerHub() {
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {q.options.map((opt, i) => {
-                        const isTable = hasDataTable(q.stem_markdown, q) || opt.text_markdown.includes('|');
-                        const displayOptText = isTable ? formatTableOptionText(opt.text_markdown) : opt.text_markdown;
-                        const labelSep = isTable ? ' -' : '.';
-                        return (
-                          <div
-                            key={opt.id}
-                            className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
-                              opt.id === q.correct_option_id
-                                ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
-                                : 'bg-white border border-[#dcd3c4] text-[#474238]'
-                            }`}
-                          >
-                            <span className="font-bold opacity-70 shrink-0">{String.fromCharCode(65 + i)}{labelSep}</span>
-                            <div className="flex-1">
-                              <RichMarkdown content={displayOptText} variant="plain" />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {questions.length === 0 ? (
-              <div className="text-center py-16 px-4 bg-[#f9f4ed] rounded-3xl border-2 border-dashed border-[#dcd3c4] text-[#645c50] flex flex-col items-center justify-center gap-3">
-                <div className="text-3xl">📝</div>
-                <span className="font-heading font-black text-base text-[#201e1d]">Question Bank is empty</span>
-                <span className="font-medium text-xs max-w-sm">
-                  Question Bank is empty. Ingest exam papers in App Admin to assemble tests.
-                </span>
+                  </article>
+                );
+              })
+            )}
+            {filteredQuestions.length > 0 && (
+              <div className="py-6 text-center text-xs font-bold text-[#82796a] flex items-center justify-center gap-2 select-none">
+                <span className="w-8 h-0.5 rounded-full bg-[#dcd3c4]" />
+                <span>End of {filteredQuestions.length} questions</span>
+                <span className="w-8 h-0.5 rounded-full bg-[#dcd3c4]" />
               </div>
-            ) : filteredQuestions.length === 0 ? (
-              <div className="text-center py-16 px-4 bg-[#f9f4ed] rounded-3xl border-2 border-dashed border-[#dcd3c4] text-[#645c50] flex flex-col items-center justify-center gap-3">
-                <span className="font-bold text-sm">No questions match your filters.</span>
-                {activeFilterCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleResetAllFilters}
-                    className="px-4 py-2 rounded-full bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-sm hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
-                    <span>Clear All Filters</span>
-                  </button>
-                )}
-              </div>
-            ) : null}
+            )}
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Controls & Test Assembly Drawer */}
-        <div className="flex flex-col gap-3.5 lg:sticky lg:top-4 min-w-0">
-          {/* Panel 1: Compact Question Filters & Tools (shrink-0) */}
-          <div className="p-3 rounded-2xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_rgba(32,30,29,0.15)] flex flex-col gap-2.5 shrink-0">
-            {/* Header: Title, Found Badge, Reset Button, Select All Quick Toggle, Collapse Toggle */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Filter className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
-                  <span className="font-heading font-black text-sm text-[#201e1d]">Question Filters</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-[#eee7db] text-[10px] font-bold text-[#645c50] shrink-0">
-                  {filteredQuestions.length}/{questions.length}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {activeFilterCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleResetAllFilters}
-                    aria-label={`Reset ${activeFilterCount} active filters`}
-                    title="Reset all active filters"
-                    className="px-2 py-0.5 rounded-full bg-white border border-[#c67139] text-[#c67139] text-[10px] font-bold hover:bg-[#ffe1d0] flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] active:translate-y-0.5 transition-all shadow-xs"
-                  >
-                    <RotateCcw className="w-2.5 h-2.5" aria-hidden="true" />
-                    <span>Reset ({activeFilterCount})</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleSelectAllFiltered}
-                  aria-label={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                  title={allFilteredSelected ? 'Deselect all filtered questions' : 'Select all filtered questions'}
-                  className="text-[11px] font-bold text-[#c67139] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] rounded px-1 transition-all active:translate-y-0.5 cursor-pointer"
-                >
-                  {allFilteredSelected ? 'Deselect All' : 'Select All'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                  aria-expanded={isFiltersExpanded}
-                  aria-label={isFiltersExpanded ? 'Collapse filters' : 'Expand filters'}
-                  title={isFiltersExpanded ? 'Collapse filters' : 'Expand filters'}
-                  className="p-1 rounded-lg text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] active:translate-y-0.5 transition-all cursor-pointer"
-                >
-                  {isFiltersExpanded ? (
-                    <ChevronUp className="w-4 h-4" aria-hidden="true" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Collapsed Active Filter Summary Strip */}
-            {!isFiltersExpanded && activeFilterCount > 0 && (
-              <div className="flex items-center gap-1.5 pt-1.5 border-t border-[#dcd3c4] overflow-x-auto text-[10px] text-[#645c50]">
-                <span className="font-bold text-[#c67139] shrink-0">Active:</span>
-                <div className="flex items-center gap-1 flex-nowrap shrink-0">
-                  {search && (
-                    <span className="px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium max-w-[90px] truncate" title={`Search: ${search}`}>
-                      &ldquo;{search}&rdquo;
-                    </span>
-                  )}
-                  {selectedTopicIds.length > 0 && !selectedTopicIds.includes('all') &&
-                    selectedTopicIds.map((tid) => {
-                      const topic = topics.find((t) => t.id === tid);
-                      const label = topic
-                        ? topic.orderIndex != null
-                          ? `Ch ${topic.orderIndex}`
-                          : topic.name
-                        : tid;
-                      const fullName = topic?.name || tid;
-                      return (
-                        <span
-                          key={tid}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium max-w-[110px] truncate"
-                          title={fullName}
-                        >
-                          <span className="truncate">{label}</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedTopicIds((prev) => {
-                                const next = prev.filter((id) => id !== tid);
-                                return next.length === 0 ? ['all'] : next;
-                              });
-                            }}
-                            className="hover:text-[#c67139] p-0.5 cursor-pointer"
-                            aria-label={`Remove topic filter ${fullName}`}
-                          >
-                            <X className="w-2.5 h-2.5" aria-hidden="true" />
-                          </button>
-                        </span>
-                      );
-                    })}
-                  {selectedSeries !== 'all' && (
-                    <span className="px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium">
-                      {selectedSeries}
-                    </span>
-                  )}
-                  {selectionFilter !== 'all' && (
-                    <span className="px-1.5 py-0.5 rounded bg-[#eee7db] text-[#201e1d] font-medium capitalize">
-                      {selectionFilter}
-                    </span>
-                  )}
-                  {withDiagramsOnly && (
-                    <span className="px-1.5 py-0.5 rounded bg-[#ffe1d0] text-[#c67139] font-medium">
-                      Diagrams
-                    </span>
-                  )}
-                  {withTablesOnly && (
-                    <span className="px-1.5 py-0.5 rounded bg-[#e1f0fa] text-[#2c6e91] font-medium">
-                      Tables
-                    </span>
-                  )}
-                  {withMathOnly && (
-                    <span className="px-1.5 py-0.5 rounded bg-[#ede8f5] text-[#5e4b8b] font-medium">
-                      Math
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Collapsible Body */}
-            {isFiltersExpanded && (
-              <div className="flex flex-col gap-2.5 pt-1 border-t border-[#dcd3c4]">
-                {/* Dropdowns Grid */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="col-span-2 relative" ref={topicDropdownRef}>
-                    <label htmlFor="compiler-topic-filter" className="sr-only">
-                      Topic
-                    </label>
-                    <button
-                      id="compiler-topic-filter"
-                      data-testid="compiler-topic-filter-trigger"
-                      type="button"
-                      onClick={() => setIsTopicDropdownOpen((prev) => !prev)}
-                      aria-haspopup="listbox"
-                      aria-expanded={isTopicDropdownOpen}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs font-bold focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 transition-all cursor-pointer text-left ${
-                        isTopicFiltered
-                          ? 'bg-[#faeee5] border-[#c67139] text-[#c67139]'
-                          : 'bg-white border-[#dcd3c4] text-[#201e1d] hover:border-[#201e1d]'
-                      }`}
-                    >
-                      <span className="truncate mr-2">{triggerLabel}</span>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 shrink-0 transition-transform ${
-                          isTopicFiltered ? 'text-[#c67139]' : 'text-[#645c50]'
-                        } ${isTopicDropdownOpen ? 'rotate-180' : ''}`}
-                        aria-hidden="true"
-                      />
-                    </button>
-
-                    {/* Removable chips in expanded view when filtered */}
-                    {selectedTopicIds.length > 0 && !selectedTopicIds.includes('all') && (
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {selectedTopicIds.map((tid) => {
-                          const topic = topics.find((t) => t.id === tid);
-                          const label = topic
-                            ? topic.orderIndex != null
-                              ? `Ch ${topic.orderIndex}`
-                              : topic.name
-                            : tid;
-                          const fullName = topic?.name || tid;
-                          return (
-                            <span
-                              key={tid}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#faeee5] border border-[#c67139]/30 text-[10px] font-bold text-[#c67139] max-w-[150px] truncate"
-                              title={fullName}
-                            >
-                              <span className="truncate">{label}</span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedTopicIds((prev) => {
-                                    const next = prev.filter((id) => id !== tid);
-                                    return next.length === 0 ? ['all'] : next;
-                                  });
-                                }}
-                                className="hover:text-[#201e1d] p-0.5 cursor-pointer"
-                                aria-label={`Remove topic filter ${fullName}`}
-                              >
-                                <X className="w-2.5 h-2.5" aria-hidden="true" />
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Popover Menu */}
-                    {isTopicDropdownOpen && (
-                      <div
-                        data-testid="compiler-topic-filter-menu"
-                        role="listbox"
-                        aria-multiselectable="true"
-                        className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-[#201e1d] rounded-2xl shadow-offset-3 p-2 max-h-[320px] overflow-y-auto"
-                      >
-                        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#eee7db] px-1">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedTopicIds(['all'])}
-                            className="text-[11px] font-bold text-[#c67139] hover:underline cursor-pointer"
-                          >
-                            All Topics
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedTopicIds([])}
-                            className="text-[11px] font-medium text-[#82796a] hover:text-[#201e1d] hover:underline cursor-pointer"
-                          >
-                            Clear
-                          </button>
-                        </div>
-
-                        <div className="flex flex-col gap-1">
-                          {topics.map((t) => {
-                            const isChecked =
-                              !selectedTopicIds.includes('all') && selectedTopicIds.includes(t.id);
-                            const qCount = questions.filter((q) => q.topic_id === t.id).length;
-                            return (
-                              <button
-                                key={t.id}
-                                type="button"
-                                role="option"
-                                aria-selected={isChecked}
-                                onClick={() => handleToggleTopic(t.id)}
-                                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-left transition-colors cursor-pointer ${
-                                  isChecked ? 'bg-[#faeee5]' : 'hover:bg-[#f4ece1]'
-                                }`}
-                              >
-                                <div
-                                  className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                                    isChecked
-                                      ? 'bg-[#c67139] border-[#c67139] text-white'
-                                      : 'border-[#dcd3c4] bg-white'
-                                  }`}
-                                >
-                                  {isChecked && (
-                                    <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />
-                                  )}
-                                </div>
-                                {t.orderIndex != null && (
-                                  <span className="px-1.5 py-0.5 rounded-md bg-[#eee7db] text-[10px] font-bold text-[#645c50] shrink-0">
-                                    Ch {t.orderIndex}
-                                  </span>
-                                )}
-                                <span
-                                  className="text-xs font-semibold text-[#201e1d] truncate flex-1"
-                                  title={t.name}
-                                >
-                                  {t.name}
-                                </span>
-                                <span className="text-[10px] font-medium text-[#82796a] shrink-0 px-1.5 py-0.5 rounded-full bg-[#eee7db]">
-                                  {qCount} Qs
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="compiler-series-filter" className="sr-only">
-                      Exam Series / Year
-                    </label>
-                    <Select
-                      id="compiler-series-filter"
-                      aria-label="Filter by exam series or year"
-                      value={selectedSeries}
-                      onChange={(val) => setSelectedSeries(val)}
-                      options={seriesOptions}
-                      variant="button"
-                      isActive={selectedSeries !== 'all'}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="compiler-sort-control" className="sr-only">
-                      Sort By
-                    </label>
-                    <Select
-                      id="compiler-sort-control"
-                      aria-label="Sort questions"
-                      value={sortBy}
-                      onChange={(val) => setSortBy(val as SortOption)}
-                      options={sortOptions}
-                      variant="button"
-                      align="right"
-                      isActive={sortBy !== 'paper'}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Selection Status Segmented Pill */}
-                <div
-                  className="grid grid-cols-3 p-0.5 rounded-xl bg-[#eee7db] text-[11px] font-bold"
-                  role="radiogroup"
-                  aria-label="Selection status filter"
-                >
-                  {(
-                    [
-                      { id: 'all', label: 'All', count: questions.length },
-                      { id: 'selected', label: 'Selected', count: selectedQuestionIds.length },
-                      {
-                        id: 'unselected',
-                        label: 'Unselected',
-                        count: Math.max(0, questions.length - selectedQuestionIds.length),
-                      },
-                    ] as const
-                  ).map((opt) => {
-                    const isActive = selectionFilter === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={isActive}
-                        aria-label={`Filter by ${opt.label} (${opt.count} questions)`}
-                        onClick={() => setSelectionFilter(opt.id)}
-                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
-                          isActive
-                            ? 'bg-white text-[#201e1d] shadow-[0_1px_2px_rgba(0,0,0,0.1)] border border-[#dcd3c4]'
-                            : 'text-[#645c50] hover:text-[#201e1d]'
-                        }`}
-                      >
-                        <span className="truncate">{opt.label}</span>
-                        <span
-                          className={`text-[10px] font-mono px-1 rounded-full ${
-                            isActive ? 'bg-[#ffe1d0] text-[#c67139]' : 'bg-[#e2d9cb] text-[#645c50]'
-                          }`}
-                        >
-                          {opt.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Content Type Chips - Uniform 3-Column Grid */}
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={withDiagramsOnly}
-                    aria-label="Filter questions with diagrams only"
-                    title="Toggle diagrams only filter"
-                    onClick={() => setWithDiagramsOnly(!withDiagramsOnly)}
-                    className={`justify-center py-1 px-2 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
-                      withDiagramsOnly
-                        ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
-                        : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-                    }`}
-                  >
-                    <ImageIcon className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Diagrams</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={withTablesOnly}
-                    aria-label="Filter questions with data tables only"
-                    title="Toggle data tables only filter"
-                    onClick={() => setWithTablesOnly(!withTablesOnly)}
-                    className={`justify-center py-1 px-2 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
-                      withTablesOnly
-                        ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
-                        : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-                    }`}
-                  >
-                    <Table className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Tables</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={withMathOnly}
-                    aria-label="Filter questions with calculations or math formulas only"
-                    title="Toggle calculations / math filter"
-                    onClick={() => setWithMathOnly(!withMathOnly)}
-                    className={`justify-center py-1 px-2 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] cursor-pointer ${
-                      withMathOnly
-                        ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] shadow-sm'
-                        : 'bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
-                    }`}
-                  >
-                    <Calculator className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Math</span>
-                  </button>
-                </div>
-
-                {/* Single-Row 4-Column Quick Utility Bar */}
-                <div className="grid grid-cols-4 gap-1.5 pt-1.5 border-t border-[#dcd3c4]/70">
-                  <button
-                    type="button"
-                    onClick={() => setIsAutoModalOpen(true)}
-                    title="Auto-generate question preset"
-                    aria-label="Auto-generate question preset"
-                    className="justify-center py-1 px-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs truncate"
-                  >
-                    <Zap className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Preset</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleOpenDrafts}
-                    title="View and load saved test drafts"
-                    aria-label="View and load saved test drafts"
-                    className="justify-center py-1 px-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center gap-1 transition-all cursor-pointer shadow-xs truncate"
-                  >
-                    <FolderOpen className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Drafts{drafts.length > 0 ? ` (${drafts.length})` : ''}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOnlineAssignments(listOnlineAssignments());
-                      setIsAssignModalOpen(true);
-                    }}
-                    title="Manage online quiz assignments"
-                    aria-label="Manage online quiz assignments"
-                    className="justify-center py-1 px-1 rounded-xl bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] flex items-center gap-1 transition-all cursor-pointer shadow-xs truncate"
-                  >
-                    <Send className="w-3 h-3 shrink-0 text-[#556b2f]" aria-hidden="true" />
-                    <span className="truncate">Assign{onlineAssignments.length > 0 ? ` (${onlineAssignments.length})` : ''}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleClearSelection}
-                    title="Clear all selected questions"
-                    aria-label="Clear all selected questions"
-                    disabled={selectedQuestionIds.length === 0}
-                    className="justify-center py-1 px-1 rounded-xl bg-white border border-[#dcd3c4] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] flex items-center gap-1 transition-all cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0 truncate"
-                  >
-                    <X className="w-3 h-3 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Clear</span>
-                  </button>
-                </div>
-              </div>
+        {/* RIGHT COLUMN: Fixed Sidebar */}
+        <div className="flex flex-col gap-3 min-w-0 lg:h-full lg:overflow-y-auto shrink-0 pt-0.5 pl-0.5 pr-2.5 pb-6">
+          {/* Search Bar on top of filters */}
+          <div className="relative w-full">
+            <label htmlFor="compiler-search-input" className="sr-only">
+              Search question text, options, paper code
+            </label>
+            <Search
+              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none"
+              aria-hidden="true"
+            />
+            <input
+              id="compiler-search-input"
+              type="text"
+              placeholder="Search questions, options, paper code…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search question text, options, paper code"
+              className="w-full py-2 pl-9 pr-8 rounded-2xl bg-white border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] text-xs font-medium text-[#201e1d] placeholder:text-[#a19786] focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139]/20 transition-all"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Clear search query"
+                title="Clear search query"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] p-1 rounded-md cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
             )}
           </div>
 
-          {/* Panel 2: Dedicated Test Assembly Drawer (compact, shrink-0) */}
-          <aside
-            id="test-assembly-drawer"
-            aria-label="Test Assembly Drawer"
-            className="shrink-0 flex flex-col p-4 rounded-3xl bg-[#f9f4ed] border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] gap-2.5"
-          >
-            {/* Summary Header */}
-            <div className="shrink-0 flex items-center justify-between border-b-[1.5px] border-[#dcd3c4] pb-3">
-              <div>
-                <h2 className="font-heading text-lg font-black text-[#201e1d]">Test Assembly</h2>
-                <div className="flex gap-2 text-xs font-bold text-[#645c50] mt-0.5">
-                  <span>{selectedQuestionIds.length} Questions</span>
-                  <span>•</span>
-                  <span>{selectedQuestionIds.length} Marks</span>
-                  <span>•</span>
-                  <span>~{estimatedTime} mins</span>
-                </div>
+          {/* Card 1: FILTERS */}
+          <div className="p-3.5 rounded-3xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] flex flex-col gap-3">
+            {/* Header: Question Filters */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Filter className="w-3.5 h-3.5 text-[#201e1d]" aria-hidden="true" />
+                <span className="font-heading font-black text-xs uppercase tracking-wider text-[#645c50]">
+                  Question Filters
+                </span>
               </div>
-              <div className="flex items-center gap-2">
+            </div>
+
+            {/* Status Segmented Control & Clear Button */}
+            <div className="flex items-center gap-2">
+              <div
+                className="flex-1 grid grid-cols-3 p-1 rounded-2xl bg-[#eee7db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d]"
+                role="radiogroup"
+                aria-label="Filter by question selection status"
+              >
+                {[
+                  { id: 'all', label: 'All', count: baseFilteredQuestions.length },
+                  {
+                    id: 'selected',
+                    label: 'Added',
+                    count: baseFilteredQuestions.filter((q) => selectedQuestionIds.includes(q.id)).length,
+                  },
+                  {
+                    id: 'unselected',
+                    label: 'Not yet',
+                    count: baseFilteredQuestions.filter((q) => !selectedQuestionIds.includes(q.id)).length,
+                  },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selectionFilter === opt.id}
+                    onClick={() => setSelectionFilter(opt.id as SelectionFilter)}
+                    className={`py-1.5 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                      selectionFilter === opt.id
+                        ? 'bg-[#c67139] text-white shadow-xs'
+                        : 'text-[#645c50] hover:text-[#201e1d]'
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    <span
+                      className={`text-[11px] ${
+                        selectionFilter === opt.id ? 'text-white/90' : 'text-[#82796a]'
+                      }`}
+                    >
+                      ({opt.count})
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {hasFilters && (
                 <button
                   type="button"
-                  onClick={handleOpenDrafts}
-                  title="Open Saved Drafts Manager"
-                  aria-label={`Open Saved Drafts (${drafts.length})`}
-                  className="px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-black text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 shadow-[2px_2px_0_0_#201e1d] flex items-center gap-1.5 transition-all cursor-pointer"
+                  onClick={handleResetAllFilters}
+                  title="Clear all filters"
+                  aria-label="Clear all filters"
+                  className="p-2 rounded-xl bg-white border-2 border-[#201e1d] hover:border-[#c67139] text-[#201e1d] hover:text-[#c67139] transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d] active:translate-y-0.5 shrink-0"
                 >
-                  <FolderOpen className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Drafts ({drafts.length})</span>
+                  <X className="w-4 h-4" />
                 </button>
-                <div
-                  title={`${selectedQuestionIds.length} questions selected`}
-                  className="w-10 h-10 rounded-2xl bg-[#ffe1d0] border-2 border-[#201e1d] flex items-center justify-center font-black text-[#201e1d] shadow-offset-2 text-sm shrink-0"
-                >
-                  {selectedQuestionIds.length}
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Always-Visible Draft Identity & Title Strip */}
-            <div className="shrink-0 flex flex-col gap-2 border-b-[1.5px] border-[#dcd3c4] py-3">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="assessment-title-input" className="text-[11px] font-black uppercase tracking-wider text-[#645c50] flex items-center gap-1">
-                    <FileText className="w-3 h-3 text-[#201e1d]" aria-hidden="true" />
-                    <span>Assessment Title</span>
+            {/* Dropdowns */}
+            <div className="flex flex-col gap-2">
+              {/* Subject Catalog Select */}
+              <div>
+                <label htmlFor="compiler-subject-select" className="sr-only">
+                  Subject Catalog
+                </label>
+                <Select
+                  id="compiler-subject-select"
+                  aria-label="Select Subject"
+                  value={subjectCode}
+                  onChange={(val) => setSubjectCode(val)}
+                  options={SUBJECT_CATALOG.map((s) => ({ value: s.code, label: `${s.code} · ${s.name}` }))}
+                  variant="button"
+                  className="w-full"
+                />
+              </div>
+
+              {/* Topic & Series Dropdowns Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Topic Select with Rich Multiselect Popover */}
+                <div className="relative" ref={topicDropdownRef}>
+                  <label htmlFor="compiler-topic-filter" className="sr-only">
+                    Topic
                   </label>
-                  {activeDraftId ? (
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${
-                          hasUnsavedChanges
-                            ? 'bg-[#ffe1d0] text-[#c67139] border-[#c67139]'
-                            : 'bg-[#e4ede1] text-[#3d472b] border-[#8fa073]'
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? 'bg-[#c67139] animate-pulse' : 'bg-[#556b2f]'}`} />
-                        {hasUnsavedChanges ? 'Unsaved edits' : 'Saved'}
-                      </span>
-                      {hasUnsavedChanges && (
+                  <button
+                    id="compiler-topic-filter"
+                    data-testid="compiler-topic-filter-trigger"
+                    type="button"
+                    onClick={() => setIsTopicDropdownOpen((prev) => !prev)}
+                    aria-haspopup="listbox"
+                    aria-expanded={isTopicDropdownOpen}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs font-bold focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-1 transition-all cursor-pointer text-left ${
+                      isTopicFiltered
+                        ? 'bg-[#faeee5] border-[#c67139] text-[#c67139]'
+                        : 'bg-white border-[#dcd3c4] text-[#201e1d] hover:border-[#201e1d]'
+                    }`}
+                  >
+                    <span className="truncate mr-2">{triggerLabel}</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 shrink-0 transition-transform ${
+                        isTopicFiltered ? 'text-[#c67139]' : 'text-[#645c50]'
+                      } ${isTopicDropdownOpen ? 'rotate-180' : ''}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+
+                  {/* Popover Menu */}
+                  {isTopicDropdownOpen && (
+                    <div
+                      data-testid="compiler-topic-filter-menu"
+                      role="listbox"
+                      aria-multiselectable="true"
+                      className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-[#201e1d] rounded-2xl shadow-offset-3 p-2 max-h-[320px] overflow-y-auto"
+                    >
+                      <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#eee7db] px-1">
                         <button
                           type="button"
-                          onClick={handleQuickUpdateDraft}
-                          title="Quick save changes to active draft"
-                          aria-label="Quick update draft"
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d] border border-[#201e1d] active:translate-y-0.5 transition-all cursor-pointer shadow-[1px_1px_0_0_#201e1d]"
+                          onClick={() => setSelectedTopicIds(['all'])}
+                          className="text-[11px] font-bold text-[#c67139] hover:underline cursor-pointer"
                         >
-                          Quick Update
+                          All Topics
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={handleStartNewDraft}
-                        title="Start a fresh blank paper"
-                        aria-label="New draft"
-                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-white text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] border border-[#dcd3c4] active:translate-y-0.5 transition-all cursor-pointer"
-                      >
-                        New Draft
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTopicIds([])}
+                          className="text-[11px] font-medium text-[#82796a] hover:text-[#201e1d] hover:underline cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        {topics.map((t) => {
+                          const isChecked =
+                            !selectedTopicIds.includes('all') && selectedTopicIds.includes(t.id);
+                          const qCount = questions.filter((q) => q.topic_id === t.id).length;
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              role="option"
+                              aria-selected={isChecked}
+                              onClick={() => handleToggleTopic(t.id)}
+                              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-left transition-colors cursor-pointer ${
+                                isChecked ? 'bg-[#faeee5]' : 'hover:bg-[#f4ece1]'
+                              }`}
+                            >
+                              <div
+                                className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                                  isChecked
+                                    ? 'bg-[#c67139] border-[#c67139] text-white'
+                                    : 'border-[#dcd3c4] bg-white'
+                                }`}
+                              >
+                                {isChecked && (
+                                  <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />
+                                )}
+                              </div>
+                              {t.orderIndex != null && (
+                                <span className="px-1.5 py-0.5 rounded-md bg-[#eee7db] text-[10px] font-bold text-[#645c50] shrink-0">
+                                  Ch {t.orderIndex}
+                                </span>
+                              )}
+                              <span
+                                className="text-xs font-semibold text-[#201e1d] truncate flex-1"
+                                title={t.name}
+                              >
+                                {t.name}
+                              </span>
+                              <span className="text-[10px] font-medium text-[#82796a] shrink-0 px-1.5 py-0.5 rounded-full bg-[#eee7db]">
+                                {qCount} Qs
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  ) : (
-                    <span className="text-[10px] font-bold text-[#8c8273]">Unsaved new paper</span>
                   )}
                 </div>
-                <div className="relative flex items-center">
-                  <input
-                    id="assessment-title-input"
-                    type="text"
-                    value={testTitle}
-                    onChange={(e) => setTestTitle(e.target.value)}
-                    placeholder={`${subjectCode} ${subjectName} Assessment...`}
-                    aria-label="Assessment or draft title"
-                    className="w-full px-3 py-2 pr-8 text-xs font-bold rounded-xl border-2 border-[#201e1d] bg-white text-[#201e1d] placeholder-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d] shadow-[2px_2px_0_0_rgba(32,30,29,0.1)] transition-all"
+
+                {/* Series Select */}
+                <div>
+                  <label htmlFor="compiler-series-filter" className="sr-only">
+                    Exam Series / Year
+                  </label>
+                  <Select
+                    id="compiler-series-filter"
+                    aria-label="Filter by exam series or year"
+                    value={selectedSeries}
+                    onChange={(val) => setSelectedSeries(val)}
+                    options={seriesOptions}
+                    variant="button"
+                    isActive={selectedSeries !== 'all'}
+                    className="w-full"
                   />
-                  {testTitle.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTestTitle('')}
-                      title="Clear title"
-                      aria-label="Clear title"
-                      className="absolute right-2 text-[#8c8273] hover:text-[#201e1d] p-0.5 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
-                  )}
                 </div>
               </div>
+
+              {/* Removable Topic Chips when filtered */}
+              {selectedTopicIds.length > 0 && !selectedTopicIds.includes('all') && (
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {selectedTopicIds.map((tid) => {
+                    const topic = topics.find((t) => t.id === tid);
+                    const label = topic
+                      ? topic.orderIndex != null
+                        ? `Ch ${topic.orderIndex}`
+                        : topic.name
+                      : tid;
+                    const fullName = topic?.name || tid;
+                    return (
+                      <span
+                        key={tid}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#faeee5] border border-[#c67139]/30 text-[10px] font-bold text-[#c67139] max-w-[150px] truncate"
+                        title={fullName}
+                      >
+                        <span className="truncate">{label}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTopicIds((prev) => {
+                              const next = prev.filter((id) => id !== tid);
+                              return next.length === 0 ? ['all'] : next;
+                            });
+                          }}
+                          className="hover:text-[#201e1d] p-0.5 cursor-pointer"
+                          aria-label={`Remove topic filter ${fullName}`}
+                        >
+                          <X className="w-2.5 h-2.5" aria-hidden="true" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
+            {/* Feature Filter Chips */}
+            <div className="grid grid-cols-3 gap-1.5">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={withDiagramsOnly}
+                onClick={() => setWithDiagramsOnly(!withDiagramsOnly)}
+                className={`py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  withDiagramsOnly
+                    ? 'bg-[#728157] text-white'
+                    : 'bg-white text-[#474238] hover:bg-[#eee7db]'
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">Diagrams</span>
+              </button>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={withTablesOnly}
+                onClick={() => setWithTablesOnly(!withTablesOnly)}
+                className={`py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  withTablesOnly
+                    ? 'bg-[#728157] text-white'
+                    : 'bg-white text-[#474238] hover:bg-[#eee7db]'
+                }`}
+              >
+                <Table className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">Tables</span>
+              </button>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={withMathOnly}
+                onClick={() => setWithMathOnly(!withMathOnly)}
+                className={`py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  withMathOnly
+                    ? 'bg-[#728157] text-white'
+                    : 'bg-white text-[#474238] hover:bg-[#eee7db]'
+                }`}
+              >
+                <Calculator className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">Calculations</span>
+              </button>
+            </div>
 
-            {/* Topic Distribution Breakdown Strip */}
-            {selectedQuestions.length > 0 && topicDistribution.length > 0 && (
-              <div className="shrink-0 p-2.5 rounded-2xl bg-[#eee7db]/80 border border-[#dcd3c4] flex flex-col gap-1.5 my-0.5">
-                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-[#645c50]">
-                  <span>Topic Coverage Breakdown</span>
-                  <span>{topicDistribution.length} Topics</span>
+            {/* Utility Buttons: Preset, Drafts, Assign, Settings */}
+            <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-[#dcd3c4]">
+              <button
+                type="button"
+                onClick={() => setIsAutoModalOpen(true)}
+                title="Auto-generate question preset"
+                aria-label="Auto-generate question preset"
+                className="py-1.5 px-1 rounded-xl bg-[#f0fae1] border-2 border-[#201e1d] text-[11px] font-bold text-[#272e1b] hover:bg-[#e1eecc] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-[2px_2px_0_0_#201e1d] truncate"
+              >
+                <Zap className="w-3 h-3 text-[#56633f] shrink-0" aria-hidden="true" />
+                <span className="truncate">Preset</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenDrafts}
+                title="View and load saved test drafts"
+                aria-label="View and load saved test drafts"
+                className="py-1.5 px-1 rounded-xl bg-white border-2 border-[#201e1d] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-[2px_2px_0_0_#201e1d] truncate"
+              >
+                <FolderOpen className="w-3 h-3 shrink-0" aria-hidden="true" />
+                <span className="truncate">Drafts{drafts.length > 0 ? ` (${drafts.length})` : ''}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAssignModalOpen(true)}
+                title="Manage online quiz assignments"
+                aria-label="Manage online quiz assignments"
+                className="py-1.5 px-1 rounded-xl bg-[#f0fae1] border-2 border-[#201e1d] text-[11px] font-bold text-[#272e1b] hover:bg-[#e1eecc] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-[2px_2px_0_0_#201e1d] truncate"
+              >
+                <Send className="w-3 h-3 text-[#56633f] shrink-0" aria-hidden="true" />
+                <span className="truncate">Assign</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsLayoutModalOpen(true)}
+                title="Layout & Exam Settings"
+                aria-label="Layout & Exam Settings"
+                className="py-1.5 px-1 rounded-xl bg-white border-2 border-[#201e1d] text-[11px] font-bold text-[#474238] hover:bg-[#eee7db] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-[2px_2px_0_0_#201e1d] truncate"
+              >
+                <Settings2 className="w-3 h-3 text-[#201e1d] shrink-0" aria-hidden="true" />
+                <span className="truncate">Settings</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: YOUR TEST */}
+          <aside
+            id="test-assembly-drawer"
+            aria-label="Test Compiler"
+            className="rounded-3xl bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_0_#201e1d] flex flex-col overflow-hidden"
+          >
+            {/* Top Meta Area */}
+            <div className="p-4 pb-3 flex flex-col gap-3">
+              {/* Subtitle & Save status */}
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-bold tracking-wider uppercase text-[#8c491a]">
+                  Test compiler
                 </div>
-                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto no-scrollbar">
-                  {topicDistribution.map((item) => (
-                    <span
-                      key={item.topic}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-[#dcd3c4] text-[10px] font-bold text-[#201e1d]"
-                    >
-                      <span className="truncate max-w-[130px]">{item.topic}:</span>
-                      <span className="text-[#c67139]">{item.count}</span>
-                      <span className="text-[#82796a] font-normal">({item.percentage}%)</span>
-                    </span>
-                  ))}
+                <div className="text-xs text-[#645c50] whitespace-nowrap">{saveStatusText}</div>
+              </div>
+
+              {/* Inline editable Test Title */}
+              <input
+                type="text"
+                value={testTitle}
+                onChange={(e) => {
+                  setTestTitle(e.target.value);
+                  setLastSavedSnapshot(null);
+                }}
+                placeholder="Enter Name Here..."
+                aria-label="Test title"
+                className="w-full px-3 py-2 rounded-xl font-heading text-[17px] text-[#201e1d] bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] focus:border-[#c67139] focus-visible:outline-none transition-all placeholder:text-[#a19786]"
+              />
+
+              {/* 2 Stat Tiles */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#eee7db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] rounded-xl px-2.5 py-1.5 flex items-center justify-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-[#645c50] shrink-0" aria-hidden="true" />
+                  <span className="text-base font-black text-[#201e1d] leading-none">
+                    {selectedQuestionIds.length}
+                  </span>
+                  <span className="text-[11px] text-[#645c50] font-bold">Questions</span>
+                </div>
+                <div className="bg-[#eee7db] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] rounded-xl px-2.5 py-1.5 flex items-center justify-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#645c50] shrink-0" aria-hidden="true" />
+                  <span className="text-base font-black text-[#201e1d] leading-none">
+                    {Math.round(selectedQuestionIds.length * 1.5)}
+                  </span>
+                  <span className="text-[11px] text-[#645c50] font-bold">Minutes</span>
                 </div>
               </div>
-            )}
+
+              {/* Topic Coverage */}
+              {selectedQuestionIds.length > 0 && topicDistribution.length > 0 && (
+                <div className="flex flex-col gap-1.5 pt-1">
+                  <div className="flex h-2 rounded-full overflow-hidden gap-0.5 bg-[#dcd3c4]">
+                    {topicDistribution.map((item, idx) => {
+                      const colors = [
+                        '#c67139',
+                        '#728157',
+                        '#d67f48',
+                        '#8fa073',
+                        '#8c491a',
+                        '#56633f',
+                        '#f6a06b',
+                        '#aebf92',
+                      ];
+                      const color = colors[idx % colors.length];
+                      return (
+                        <div
+                          key={item.topic}
+                          style={{ flex: item.count, backgroundColor: color }}
+                          title={`${item.topic}: ${item.count} (${item.percentage}%)`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#201e1d]">
+                    {topicDistribution.map((item, idx) => {
+                      const colors = [
+                        '#c67139',
+                        '#728157',
+                        '#d67f48',
+                        '#8fa073',
+                        '#8c491a',
+                        '#56633f',
+                        '#f6a06b',
+                        '#aebf92',
+                      ];
+                      const color = colors[idx % colors.length];
+                      return (
+                        <span key={item.topic} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: color }}
+                          />
+                          <span className="font-medium truncate max-w-[130px]">{item.topic}</span>
+                          <span className="font-bold opacity-75">{item.count}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Show Selected Filter Button */}
+              <button
+                type="button"
+                onClick={() => setSelectionFilter((prev) => (prev === 'selected' ? 'all' : 'selected'))}
+                aria-pressed={selectionFilter === 'selected'}
+                aria-label={`Show selected questions (${selectedQuestionIds.length})`}
+                className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-y-0.5 ${
+                  selectionFilter === 'selected'
+                    ? 'bg-[#c67139] text-white'
+                    : 'bg-white text-[#201e1d] hover:bg-[#eee7db]'
+                }`}
+              >
+                <span>Show selected</span>
+                {selectedQuestionIds.length > 0 && (
+                  <span
+                    className={`text-[11px] px-1.5 py-0.5 rounded-full font-mono font-bold leading-none ${
+                      selectionFilter === 'selected'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#eee7db] text-[#645c50]'
+                    }`}
+                  >
+                    {selectedQuestionIds.length}
+                  </span>
+                )}
+              </button>
+            </div>
 
             {/* Action Footer */}
-            <div className="shrink-0 pt-2.5 border-t-[1.5px] border-[#dcd3c4] flex flex-col gap-2">
+            <div className="p-3.5 border-t border-[#dcd3c4] flex flex-col gap-2 bg-[#f9f4ed]">
+              {/* Published / Saved Banners */}
               {publishedBanner && (
-                <div className="p-2.5 rounded-xl bg-[#e3f4d7] border-2 border-[#728157] text-[#2b3a1a] text-xs font-bold flex items-center justify-between gap-2 shadow-sm animate-fade-in">
+                <div className="p-2.5 rounded-xl bg-[#e3f4d7] border-2 border-[#728157] text-[#2b3a1a] text-xs font-bold flex items-center justify-between gap-2 shadow-xs">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <Check className="w-4 h-4 text-[#556b2f] shrink-0" aria-hidden="true" />
                     <span className="truncate">
-                      Assigned to <span className="underline">{publishedBanner.cohortName}</span>! Code: <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#728157] text-[11px]">{publishedBanner.testCode}</span>
+                      Assigned to <span className="underline">{publishedBanner.cohortName}</span>! Code:{' '}
+                      <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#728157] text-[11px]">
+                        {publishedBanner.testCode}
+                      </span>
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setPublishedBanner(null)}
-                    aria-label="Dismiss assignment notification"
-                    className="p-1 hover:bg-[#cbe8b7] rounded text-[#2b3a1a] shrink-0 cursor-pointer"
+                    aria-label="Dismiss banner"
+                    className="text-[#556b2f] hover:text-[#2b3a1a] p-1 cursor-pointer"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               )}
 
               {lastSavedDraftBanner && (
-                <div className="bg-[#e4ede1] border-2 border-[#8fa073] p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-xs mb-2">
+                <div className="bg-[#e4ede1] border-2 border-[#8fa073] p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <Check className="w-4 h-4 text-[#556b2f] shrink-0" aria-hidden="true" />
                     <div className="text-xs font-bold text-[#2b3a1a] truncate">
-                      Draft {lastSavedDraftBanner.updated ? 'updated' : 'saved'}: <span className="font-black">{lastSavedDraftBanner.title}</span> ({lastSavedDraftBanner.questionCount} Qs)
+                      Draft {lastSavedDraftBanner.updated ? 'updated' : 'saved'}:{' '}
+                      <span className="font-black">{lastSavedDraftBanner.title}</span> (
+                      {lastSavedDraftBanner.questionCount} Qs)
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={handleOpenDrafts}
-                      className="text-[11px] font-black underline text-[#3d472b] hover:text-[#201e1d] px-1 py-0.5 cursor-pointer"
-                    >
-                      View Drafts ({drafts.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLastSavedDraftBanner(null)}
-                      aria-label="Dismiss saved draft notification"
-                      className="p-1 hover:bg-[#cbe8b7] rounded text-[#2b3a1a] cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLastSavedDraftBanner(null)}
+                    aria-label="Dismiss draft notification"
+                    className="p-1 text-[#56633f] hover:text-[#2b3a1a] cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
                 </div>
               )}
 
-              {saveSuccess && (
-                <div className="text-[11px] font-bold text-[#56633f] flex items-center justify-center gap-1 mb-1">
-                  <Check className="w-3 h-3" /> Draft saved
-                </div>
-              )}
-
-              {/* Row 1: Layout & Shuffle */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Row 1: Shuffle, Save draft, Clear, Settings2 */}
+              <div className="grid grid-cols-[auto_1fr_auto_auto] gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsLayoutModalOpen(true)}
-                  aria-label="Edit Layout & Settings"
-                  className="py-2 px-3 rounded-2xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Edit</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedQuestionIds((prev) => shuffleQuestionIds(prev))}
+                  onClick={() => {
+                    setSelectedQuestionIds((prev) => shuffleQuestionIds(prev));
+                    setLastSavedSnapshot(null);
+                  }}
                   disabled={selectedQuestions.length < 2}
+                  title="Shuffle order"
                   aria-label="Shuffle question order"
-                  title={selectedQuestions.length < 2 ? 'Add at least 2 questions to shuffle' : 'Shuffle question order'}
-                  className="py-2 px-3 rounded-2xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:shadow-[2px_2px_0_0_#201e1d]"
+                  className="p-2 rounded-xl bg-white border-2 border-[#201e1d] text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d]"
                 >
-                  <Shuffle className="w-3.5 h-3.5 text-[#c67139]" aria-hidden="true" />
-                  <span>Shuffle Order</span>
+                  <Shuffle className="w-4 h-4 text-[#c67139]" aria-hidden="true" />
                 </button>
-              </div>
-
-              {/* Row 2: Save, Assign, Print */}
-              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={handleOpenSaveDraftModal}
-                  title="Save test configuration as draft"
+                  disabled={selectedQuestions.length === 0}
+                  title="Save draft"
                   aria-label="Save current test configuration as draft"
-                  className="py-2.5 px-1 rounded-2xl bg-white border-2 border-[#201e1d] font-bold text-xs text-[#201e1d] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 transition-all cursor-pointer text-center"
+                  className="py-2 px-3 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d] text-center"
                 >
-                  Save Draft
+                  Save draft
                 </button>
+                <button
+                  type="button"
+                  onClick={handleClearSelection}
+                  disabled={selectedQuestions.length === 0}
+                  title="Clear selection"
+                  aria-label="Clear all selected questions"
+                  className="py-2 px-3 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d] text-center"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsLayoutModalOpen(true)}
+                  title="Layout & Exam Settings"
+                  aria-label="Edit Layout & Exam Settings"
+                  className="p-2 rounded-xl bg-white border-2 border-[#201e1d] text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d]"
+                >
+                  <Settings2 className="w-4 h-4 text-[#201e1d]" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Row 2: Assign online, Export PDF */}
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAssignModalOpen(true)}
                   disabled={selectedQuestions.length === 0}
-                  title={selectedQuestions.length === 0 ? 'Select questions to assign online' : 'Assign as online quiz or homework'}
+                  title="Assign online"
                   aria-label="Assign compiled questions as online quiz"
-                  className="py-2.5 px-1 rounded-2xl bg-[#f0fae1] border-2 border-[#201e1d] font-bold text-xs text-[#2b3a1a] shadow-[2px_2px_0_0_#201e1d] hover:bg-[#e1eecc] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#728157] focus-visible:ring-offset-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 flex items-center justify-center gap-1 text-center"
+                  className="py-2.5 px-3 rounded-xl bg-[#f0fae1] border-2 border-[#201e1d] text-xs font-bold text-[#272e1b] hover:bg-[#e1eecc] active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center gap-1.5"
                 >
-                  <Send className="w-3.5 h-3.5 text-[#556b2f]" aria-hidden="true" />
+                  <Send className="w-3.5 h-3.5 text-[#56633f]" aria-hidden="true" />
                   <span>Assign Online</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleGeneratePDF}
                   disabled={selectedQuestions.length === 0}
-                  title={selectedQuestions.length === 0 ? 'Select questions to generate PDF' : 'Generate printable PDF'}
-                  aria-label="Generate printable PDF of compiled test paper"
-                  className="py-2.5 px-1 rounded-2xl bg-[#c67139] border-2 border-[#201e1d] text-[#f9f4ed] font-black text-xs shadow-[2px_2px_0_0_#201e1d] hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c67139] focus-visible:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 flex items-center justify-center gap-1 text-center cursor-pointer"
+                  title="Export PDF"
+                  aria-label="Export printable PDF"
+                  className="py-2.5 px-3 rounded-xl bg-[#c67139] border-2 border-[#201e1d] text-xs font-bold text-white hover:bg-[#b2622d] active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer shadow-[2px_2px_0_0_#201e1d] flex items-center justify-center gap-1.5"
                 >
                   <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>PDF / Print</span>
+                  <span>Export PDF</span>
                 </button>
               </div>
             </div>
           </aside>
         </div>
       </div>
+
 
       {/* Layout & Exam Settings Modal */}
       {isLayoutModalOpen && (
@@ -1905,7 +1850,7 @@ export default function TestCompilerHub() {
           aria-labelledby="layout-settings-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in"
         >
-          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] w-full max-w-lg flex flex-col gap-4 max-h-[85vh]">
+          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_#201e1d] w-full max-w-lg flex flex-col gap-4 max-h-[85vh]">
             {/* Header */}
             <div className="flex items-center justify-between pb-1 border-b-[1.5px] border-[#dcd3c4]">
               <div className="flex items-center gap-3">
@@ -2095,7 +2040,7 @@ export default function TestCompilerHub() {
           aria-labelledby="auto-generate-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
         >
-          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_rgba(32,30,29,0.15)] w-full max-w-sm flex flex-col gap-5">
+          <div className="bg-[#f9f4ed] p-6 rounded-3xl border-4 border-[#201e1d] shadow-[8px_8px_0_0_#201e1d] w-full max-w-sm flex flex-col gap-5">
             <h3 id="auto-generate-modal-title" className="font-heading text-xl font-black text-[#201e1d]">Auto-Generate Config</h3>
             <div className="flex flex-col gap-3">
               <label htmlFor="auto-count-select" className="text-[11px] font-black uppercase tracking-wider text-[#201e1d]">

@@ -813,7 +813,7 @@ function PortalContent() {
       )}
 
       {/* Main Content Area */}
-      <div className="min-w-0 flex flex-col min-h-screen">
+      <div className={`min-w-0 flex flex-col ${activeNav === 'compiler' ? 'lg:h-screen lg:overflow-hidden' : 'min-h-screen'}`}>
         {/* Mobile Sticky Top Header */}
         <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-[1.5px] border-[#dcd3c4] px-4 py-2.5 flex items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
@@ -867,7 +867,13 @@ function PortalContent() {
         </header>
 
         {/* Scrollable Main Content Area */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
+        <main
+          className={`max-w-7xl mx-auto w-full flex-1 ${
+            activeNav === 'compiler'
+              ? 'p-4 sm:p-6 lg:px-8 lg:pt-4 lg:pb-3 flex flex-col min-h-0 lg:overflow-hidden'
+              : 'p-4 sm:p-6 lg:p-8'
+          }`}
+        >
           {/* Notification banner if navigating to ingestion on portal */}
           {(searchParams?.get('tab') === 'ingestion' || searchParams?.get('nav') === 'ingestion' || searchParams?.get('tab') === 'importer') && activeNav !== 'ingestion' && (
             <div className="mb-6 p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
