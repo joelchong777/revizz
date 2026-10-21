@@ -15,6 +15,7 @@ import {
   FileText,
   Home,
   ExternalLink,
+  ArrowRightLeft,
 } from 'lucide-react';
 import {
   PortalNavItem,
@@ -29,6 +30,7 @@ export interface AdminNavProps {
   onSelect?: (tab: string) => void;
   onSwitchRole?: (role: 'teacher' | 'content') => void;
   onToggleRole?: () => void;
+  onOpenProfileSwitcher?: () => void;
   compact?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
@@ -44,6 +46,7 @@ export default function AdminNav({
   onSelect,
   onSwitchRole,
   onToggleRole,
+  onOpenProfileSwitcher,
   compact = false,
   isOpen = false,
   onClose,
@@ -389,6 +392,20 @@ export default function AdminNav({
               <span className="font-bold text-[13px] text-[#201e1d] truncate">{userName}</span>
               <span className="text-[10px] font-bold text-[#645c50] truncate">{userRole}</span>
             </div>
+          )}
+          {onOpenProfileSwitcher && (
+            <button
+              type="button"
+              onClick={onOpenProfileSwitcher}
+              title="Switch Profile"
+              className={compact
+                ? "w-8 h-8 rounded-xl border-2 border-[#201e1d] bg-[#ffe1d0] hover:bg-[#ffd2b8] flex items-center justify-center text-[#201e1d] transition-all cursor-pointer shadow-offset-1 shrink-0 active:translate-y-0.5"
+                : "px-2 py-1 rounded-lg border-2 border-[#201e1d] bg-[#ffe1d0] hover:bg-[#ffd2b8] flex items-center gap-1 text-[11px] font-black text-[#201e1d] transition-all cursor-pointer shadow-offset-1 shrink-0 active:translate-y-0.5"
+              }
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5" />
+              {!compact && <span>Switch</span>}
+            </button>
           )}
         </div>
       </div>

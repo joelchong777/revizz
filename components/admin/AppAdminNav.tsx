@@ -17,6 +17,7 @@ import {
   Sliders,
   Megaphone,
   Users,
+  ArrowRightLeft,
 } from 'lucide-react';
 
 export interface AppAdminNavProps {
@@ -29,6 +30,7 @@ export interface AppAdminNavProps {
   flaggedCount?: number;
   questionCount?: number;
   questionsLoading?: boolean;
+  onOpenProfileSwitcher?: () => void;
 }
 
 export default function AppAdminNav({
@@ -41,6 +43,7 @@ export default function AppAdminNav({
   flaggedCount = 0,
   questionCount,
   questionsLoading = false,
+  onOpenProfileSwitcher,
 }: AppAdminNavProps) {
   const handleNavClick = (tabKey: string) => {
     if (onSelectTab) {
@@ -303,8 +306,21 @@ export default function AppAdminNav({
 
       {/* Footer Profile & Security Pill */}
       <div className="pt-3 border-t-2 border-[#201e1d]/15 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2">
+        <div
+          onClick={onOpenProfileSwitcher}
+          className={`flex items-center gap-2.5 min-w-0 ${onOpenProfileSwitcher ? 'cursor-pointer group' : ''}`}
+          title={onOpenProfileSwitcher ? 'Switch Profile & Role' : undefined}
+          role={onOpenProfileSwitcher ? 'button' : undefined}
+          tabIndex={onOpenProfileSwitcher ? 0 : undefined}
+          onKeyDown={
+            onOpenProfileSwitcher
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') onOpenProfileSwitcher();
+                }
+              : undefined
+          }
+        >
+          <div className="w-8 h-8 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2 group-hover:scale-105 transition-transform">
             {(() => {
               const trimmed = (userDisplayName || '').trim();
               if (!trimmed) return 'AD';
@@ -317,7 +333,7 @@ export default function AppAdminNav({
           </div>
           {!compact && (
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-black text-[#201e1d] truncate">
+              <span className="text-xs font-black text-[#201e1d] truncate group-hover:text-[#c67139] transition-colors">
                 {userDisplayName}
               </span>
               <span className="text-[10px] font-bold text-[#645c50] flex items-center gap-1">
@@ -327,6 +343,19 @@ export default function AppAdminNav({
             </div>
           )}
         </div>
+
+        {!compact && onOpenProfileSwitcher && (
+          <button
+            type="button"
+            onClick={onOpenProfileSwitcher}
+            title="Switch profile & role"
+            aria-label="Switch profile"
+            className="p-1.5 px-2 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+          >
+            <ArrowRightLeft className="w-3.5 h-3.5 text-[#c67139]" />
+            <span className="hidden sm:inline">Switch</span>
+          </button>
+        )}
       </div>
     </aside>
   );

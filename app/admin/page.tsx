@@ -4,10 +4,11 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, signInWithGoogle } from '@/lib/auth';
-import { Menu, ArrowRight, GraduationCap, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import { Menu, ArrowRight, GraduationCap, ChevronDown, ChevronUp, Copy, Check, ArrowRightLeft } from 'lucide-react';
 import AppAdminNav from '@/components/admin/AppAdminNav';
 import AppAdminHub from '@/components/admin/AppAdminHub';
 import { useQuestions } from '@/lib/questions';
+import { ProfileSwitcherModal } from '@/components/auth/ProfileSwitcherModal';
 
 const TAB_TITLES: Record<string, string> = {
   ingestion: 'Ingestion Studio',
@@ -40,6 +41,7 @@ function AdminContent() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [showOAuthGuide, setShowOAuthGuide] = useState(false);
   const [copiedCallback, setCopiedCallback] = useState(false);
+  const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false);
 
   // Dev & Guest overrides
   const isDev = process.env.NODE_ENV === 'development';
@@ -210,6 +212,15 @@ function AdminContent() {
               <span>Preview as Demo App Admin</span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => setIsProfileSwitcherOpen(true)}
+              className="w-full py-2.5 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <ArrowRightLeft className="w-4 h-4 text-[#c67139]" />
+              <span>Switch Profile / Log In</span>
+            </button>
+
             <Link
               href="/"
               className="block w-full py-2.5 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
@@ -218,6 +229,12 @@ function AdminContent() {
             </Link>
           </div>
         </div>
+
+        <ProfileSwitcherModal
+          isOpen={isProfileSwitcherOpen}
+          onClose={() => setIsProfileSwitcherOpen(false)}
+          currentRole={userProfile.role || 'student'}
+        />
       </div>
     );
   }
@@ -375,6 +392,15 @@ function AdminContent() {
               )}
             </button>
 
+            <button
+              type="button"
+              onClick={() => setIsProfileSwitcherOpen(true)}
+              className="w-full py-2.5 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <ArrowRightLeft className="w-4 h-4 text-[#c67139]" />
+              <span>Switch Profile / Log In</span>
+            </button>
+
             <Link
               href="/"
               className="block w-full py-2.5 bg-[#eee7db] text-[#474238] font-bold text-xs rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#dcd3c4] transition-all active:translate-y-0.5 text-center"
@@ -383,6 +409,11 @@ function AdminContent() {
             </Link>
           </div>
         </div>
+
+        <ProfileSwitcherModal
+          isOpen={isProfileSwitcherOpen}
+          onClose={() => setIsProfileSwitcherOpen(false)}
+        />
       </div>
     );
   }
@@ -398,6 +429,7 @@ function AdminContent() {
           userDisplayName={userProfile?.display_name || (guestMode ? 'Demo App Admin' : 'Administrator')}
           questionCount={questions.length}
           questionsLoading={questionsLoading}
+          onOpenProfileSwitcher={() => setIsProfileSwitcherOpen(true)}
         />
       </div>
 
@@ -418,6 +450,10 @@ function AdminContent() {
               userDisplayName={userProfile?.display_name || (guestMode ? 'Demo App Admin' : 'Administrator')}
               questionCount={questions.length}
               questionsLoading={questionsLoading}
+              onOpenProfileSwitcher={() => {
+                setMobileNavOpen(false);
+                setIsProfileSwitcherOpen(true);
+              }}
             />
           </div>
         </div>
@@ -426,7 +462,7 @@ function AdminContent() {
       {/* Main Content Area */}
       <div className="min-w-0 flex flex-col min-h-screen">
         {/* Mobile Sticky Top Header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-2 border-[#201e1d] px-4 py-2.5 flex items-center gap-2 shadow-sm">
+        <header className="lg:hidden sticky top-0 z-30 bg-[#ebddc5] border-b-2 border-[#201e1d] px-4 py-2.5 flex items-center justify-between gap-2 shadow-sm">
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
@@ -446,10 +482,19 @@ function AdminContent() {
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsProfileSwitcherOpen(true)}
+            className="p-1.5 px-2.5 rounded-xl bg-[#f9f4ed] hover:bg-[#ffe1d0] text-[#201e1d] border-2 border-[#201e1d] shadow-offset-1 text-xs font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+            title="Switch Profile & Role"
+          >
+            <ArrowRightLeft className="w-3.5 h-3.5 text-[#c67139]" />
+            <span>Switch</span>
+          </button>
         </header>
 
         {/* Desktop Sticky Top Command Bar */}
-        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-2 border-[#201e1d] px-8 py-3 items-center shadow-xs">
+        <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-2 border-[#201e1d] px-8 py-3 items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
             <span className="font-heading font-black text-lg text-[#201e1d]">
               App Admin Console
@@ -459,6 +504,15 @@ function AdminContent() {
               {TAB_TITLES[activeTab] || 'Ingestion Studio'}
             </span>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsProfileSwitcherOpen(true)}
+            className="py-1.5 px-3 rounded-xl bg-[#f9f4ed] hover:bg-[#ffe1d0] text-[#201e1d] border-2 border-[#201e1d] shadow-offset-2 hover:shadow-offset-1 active:translate-y-0.5 text-xs font-heading font-black flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
+            title="Switch active user profile or testing role"
+          >
+            <ArrowRightLeft className="w-3.5 h-3.5 text-[#c67139]" />
+            <span>Switch Profile</span>
+          </button>
         </header>
 
         {/* Scrollable Main Area */}
@@ -496,6 +550,17 @@ function AdminContent() {
           />
         </main>
       </div>
+
+      <ProfileSwitcherModal
+        isOpen={isProfileSwitcherOpen}
+        onClose={() => setIsProfileSwitcherOpen(false)}
+        currentRole="admin"
+        onProfileSwitched={(p) => {
+          if (p.role !== 'admin') {
+            // view updates
+          }
+        }}
+      />
     </div>
   );
 }
