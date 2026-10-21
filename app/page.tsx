@@ -6,7 +6,7 @@ import { QuestionCard } from '../components/QuestionCard';
 import { RoundSummary } from '../components/RoundSummary';
 import { StudentAuthGate } from '../components/StudentAuthGate';
 import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
-import { useAuth } from '@/lib/auth';
+import { useAuth, clearDemoStudentSession } from '@/lib/auth';
 import { useQuizGame, Question, QuizRoundConfig } from '../hooks/useQuizGame';
 import {
   fetchQuestionsFromDb,
@@ -41,7 +41,12 @@ export default function HomePage() {
         const searchParams = new URLSearchParams(window.location.search);
         const invite = searchParams.get('invite') || searchParams.get('inviteId') || undefined;
         const email = searchParams.get('email') || undefined;
-        if (invite) setInviteParam(invite);
+        if (invite) {
+          setInviteParam(invite);
+          if (localStorage.getItem('revizz_demo_student_session')) {
+            clearDemoStudentSession();
+          }
+        }
         if (email) setEmailParam(email);
       } catch (err) {
         console.warn('Failed to parse URL search params for invite:', err);
@@ -356,8 +361,8 @@ export default function HomePage() {
     );
   }
 
-  // 2. Student Auth Gate when unauthenticated
-  if (!userProfile) {
+  // 2. Student Auth Gate when unauthenticated (or when visiting an invite link in demo mode)
+  if (!userProfile || (inviteParam && isDemoSession)) {
     return (
       <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
         <StudentAuthGate
