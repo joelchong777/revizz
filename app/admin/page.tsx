@@ -13,7 +13,6 @@ import { ProfileSwitcherModal } from '@/components/auth/ProfileSwitcherModal';
 const TAB_TITLES: Record<string, string> = {
   ingestion: 'Ingestion Studio',
   papers: 'Ingested Paper Viewer',
-  diagnostics: 'Diagnostics Lab',
   bank: 'Question Bank',
   flagged: 'Flagged Reports',
   editor: 'Question Editor',
@@ -80,6 +79,15 @@ function AdminContent() {
           url.searchParams.set('sub', 'history');
           window.history.replaceState(null, '', url.toString());
         }
+      } else if (normalized === 'diagnostics') {
+        setActiveTab('ingestion');
+        setSubTab('diagnostics');
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('tab', 'ingestion');
+          url.searchParams.set('sub', 'diagnostics');
+          window.history.replaceState(null, '', url.toString());
+        }
       } else if (normalized === 'system') {
         setActiveTab('settings');
         setSubTab('system');
@@ -89,7 +97,7 @@ function AdminContent() {
       } else if (normalized === 'portal-menu') {
         setActiveTab('settings');
         setSubTab('portal-menu');
-      } else if (['ingestion', 'papers', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads', 'users'].includes(normalized)) {
+      } else if (['ingestion', 'papers', 'bank', 'flagged', 'editor', 'settings', 'ads', 'users'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }
@@ -104,6 +112,10 @@ function AdminContent() {
     if (tab === 'history' || tab === 'ingestion-history') {
       tab = 'ingestion';
       sub = 'history';
+    }
+    if (tab === 'diagnostics') {
+      tab = 'ingestion';
+      sub = 'diagnostics';
     }
     if (tab === 'system') {
       setActiveTab('settings');

@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import {
   FileText,
-  Sparkles,
   BookOpen,
   Flag,
   Activity,
@@ -192,18 +191,6 @@ export default function AppAdminNav({
                 {renderIcon(BookOpen, 'papers')}
                 {!compact && (
                   <span className="flex-1 min-w-0 truncate">Whole Papers</span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleNavClick('diagnostics')}
-                className={navItemClass('diagnostics')}
-                title="Ingestion Diagnostics"
-              >
-                {renderIcon(Sparkles, 'diagnostics')}
-                {!compact && (
-                  <span className="flex-1 min-w-0 truncate">Ingestion Diagnostics</span>
                 )}
               </button>
 

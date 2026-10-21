@@ -30,7 +30,14 @@ const IngestionHistoryHub = dynamic(() => import("@/components/admin/IngestionHi
   ),
 });
 
-export type StudioSetupView = "new" | "history";
+const IngestionDiagnosticsLab = dynamic(() => import("@/components/admin/IngestionDiagnosticsLab"), {
+  ssr: false,
+  loading: () => (
+    <div className="py-10 text-center text-xs font-mono font-bold text-[#645c50]">Loading diagnostics…</div>
+  ),
+});
+
+export type StudioSetupView = "new" | "history" | "diagnostics";
 
 export interface IngestionHubProps {
   initialView?: StudioSetupView;
@@ -41,6 +48,7 @@ export interface IngestionHubProps {
 const STUDIO_TABS: { id: StudioSetupView; label: string }[] = [
   { id: "new", label: "New paper" },
   { id: "history", label: "History" },
+  { id: "diagnostics", label: "Diagnostics" },
 ];
 
 export default function IngestionHub({
@@ -105,19 +113,22 @@ export default function IngestionHub({
   } = useIngestionStore();
 
   // Local switch to toggle setup wizard screen even when paper is active
-  const [isSetupOpen, setIsSetupOpen] = useState(initialView === "history");
+  const [isSetupOpen, setIsSetupOpen] = useState(initialView === "history" || initialView === "diagnostics");
   const [setupView, setSetupView] = useState<StudioSetupView>(initialView);
-  const tabRefs = useRef<Record<StudioSetupView, HTMLButtonElement | null>>({ new: null, history: null });
+  const tabRefs = useRef<Record<StudioSetupView, HTMLButtonElement | null>>({ new: null, history: null, diagnostics: null });
 
   // URL-driven view changes
   useEffect(() => {
     setSetupView(initialView);
-    if (initialView === "history") setIsSetupOpen(true);
+    if (initialView === "history" || initialView === "diagnostics") setIsSetupOpen(true);
   }, [initialView]);
 
-  // Warm the History chunk after first paint so switching tabs never shows the bare placeholder
+  // Warm the History and Diagnostics chunks after first paint so switching tabs never shows the bare placeholder
   useEffect(() => {
-    const t = setTimeout(() => void import("@/components/admin/IngestionHistoryHub"), 1500);
+    const t = setTimeout(() => {
+      void import("@/components/admin/IngestionHistoryHub");
+      void import("@/components/admin/IngestionDiagnosticsLab");
+    }, 1500);
     return () => clearTimeout(t);
   }, []);
 
@@ -597,6 +608,8 @@ export default function IngestionHub({
                   onViewChange?.("new");
                 }}
               />
+            ) : setupView === "diagnostics" ? (
+              <IngestionDiagnosticsLab headerStart={studioTabs} />
             ) : (
           /* Step 1: Cambridge Paper Setup & PDF Ingestion Wizard */
           <IngestionSetupWizard
