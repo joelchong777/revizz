@@ -9,12 +9,13 @@ import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
+import { AutoFitTable } from '@/components/ui/AutoFitTable';
 
 export const cambridgeTableComponents = {
   table: ({ node, ...props }: any) => (
-    <div className="my-3 overflow-x-auto flex justify-center sm:justify-start">
+    <AutoFitTable>
       <table className="w-fit max-w-full text-xs sm:text-sm border-collapse border border-neutral-900 bg-white" {...props} />
-    </div>
+    </AutoFitTable>
   ),
   thead: ({ node, ...props }: any) => (
     <thead className="bg-neutral-50/80 border-b border-neutral-900 font-semibold text-neutral-900" {...props} />
@@ -26,10 +27,13 @@ export const cambridgeTableComponents = {
     <tr className="hover:bg-neutral-50/50 transition-colors" {...props} />
   ),
   th: ({ node, ...props }: any) => (
-    <th className="px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-neutral-900 border-r border-neutral-900 last:border-r-0 text-center" {...props} />
+    <th className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-neutral-900 border-r border-neutral-900 last:border-r-0 text-center break-words" {...props} />
   ),
   td: ({ node, ...props }: any) => (
-    <td className="px-4 sm:px-6 py-2 text-xs sm:text-sm font-normal text-neutral-900 border-r border-neutral-900 last:border-r-0 text-center" {...props} />
+    <td className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-normal text-neutral-900 border-r border-neutral-900 last:border-r-0 text-center break-words" {...props} />
+  ),
+  img: ({ node, ...props }: any) => (
+    <img className="max-w-full h-auto object-contain mx-auto rounded-lg my-2" {...props} />
   ),
 };
 

@@ -104,6 +104,18 @@ async function verifyQuizTables() {
       `${qId}: table container has authentic Cambridge exam styling (border-neutral-900/border-black, w-fit)`
     );
     assert(
+      html.includes('overflow-hidden') && html.includes('w-fit'),
+      `${qId}: tables in QuestionCard contain overflow-hidden and w-fit`
+    );
+    assert(
+      html.includes('overflow-hidden') && html.includes('max-w-full'),
+      `${qId}: AutoFitTable renders overflow-hidden and max-w-full`
+    );
+    assert(
+      !html.includes('overflow-x-auto'),
+      `${qId}: question card stem container does NOT have overflow-x-auto`
+    );
+    assert(
       html.includes('divide-neutral-900'),
       `${qId}: tbody has divide-neutral-900 class`
     );
@@ -389,6 +401,18 @@ async function verifyQuizTables() {
   assert(q2PrintHtml.includes('<th') && q2PrintHtml.includes('</th>'), '0455/11 w24 Q2 (printable): contains <th>');
   assert(q2PrintHtml.includes('<td') && q2PrintHtml.includes('</td>'), '0455/11 w24 Q2 (printable): contains <td>');
   assert(!q2PrintHtml.includes('<p>|'), '0455/11 w24 Q2 (printable): does not contain raw pipe paragraph text');
+
+  // 4. AutoFitTable component verification
+  console.log('\nTesting AutoFitTable component rendering');
+  const autoFitModule = await import('../components/ui/AutoFitTable');
+  const AutoFitTable = autoFitModule.AutoFitTable;
+  const autoFitHtml = renderToStaticMarkup(
+    React.createElement(AutoFitTable, null, React.createElement('table', { className: 'w-fit' }, 'test'))
+  );
+  assert(autoFitHtml.includes('overflow-hidden'), 'AutoFitTable renders outer container with overflow-hidden');
+  assert(autoFitHtml.includes('max-w-full'), 'AutoFitTable renders inner container with max-w-full');
+  assert(autoFitHtml.includes('w-fit'), 'AutoFitTable renders children table with w-fit');
+  assert(!autoFitHtml.includes('overflow-x-auto'), 'AutoFitTable does NOT render overflow-x-auto');
 
   console.log('\n================================================================');
   console.log(`TOTAL: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
