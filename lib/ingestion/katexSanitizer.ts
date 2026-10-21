@@ -162,6 +162,14 @@ export function normalizeMathDelimiters(text: string): string {
 export function escapeCurrencyDollars(text: string): string {
   if (!text) return '';
 
+  // A `$` is escaped only when preceded by an odd number of backslashes
+  // (`\$` is escaped, `\\$` is an escaped backslash then a live `$`), like mapInlineMathSpans.
+  const isEscaped = (s: string, idx: number): boolean => {
+    let count = 0;
+    for (let k = idx - 1; k >= 0 && s[k] === '\\'; k--) count++;
+    return count % 2 === 1;
+  };
+
   // Step 1: Stash display math blocks ($$...$$) to avoid touching them
   const displayBlocks: string[] = [];
   const stashed = text.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
@@ -173,7 +181,7 @@ export function escapeCurrencyDollars(text: string): string {
   const lines = stashed.split('\n');
   const processedLines = lines.map((line) => {
     // If no unescaped dollar signs on this line, return line as is
-    if (!/(?<!\\)\$/.test(line)) {
+    if (!line.includes('$')) {
       return line;
     }
 
@@ -181,11 +189,11 @@ export function escapeCurrencyDollars(text: string): string {
     let i = 0;
 
     while (i < line.length) {
-      if (line[i] === '$' && (i === 0 || line[i - 1] !== '\\')) {
+      if (line[i] === '$' && !isEscaped(line, i)) {
         // Find the next unescaped dollar sign on this line
         let closingIdx = -1;
         for (let j = i + 1; j < line.length; j++) {
-          if (line[j] === '$' && line[j - 1] !== '\\') {
+          if (line[j] === '$' && !isEscaped(line, j)) {
             closingIdx = j;
             break;
           }
@@ -208,13 +216,27 @@ export function escapeCurrencyDollars(text: string): string {
         // Check if content looks like English text / currency rather than math
         const startsWithDigit = /^\s*\d/.test(candidateContent);
         const hasEnglishProse =
-          /\b(to|and|or|each|per|in|is|was|are|were|for|from|between|with|than|at|of)\b/i.test(
-            candidateContent
+          /(?<!\\)\b(to|and|or|each|per|in|is|was|are|were|for|from|between|with|than|at|of)\b/.test(
+            // words inside \text{...} are math labels, not prose
+            candidateContent.replace(/\\(?:text|mathrm|textbf|mbox)\{[^}]*\}/g, '')
           );
         const hasMathSyntax =
           /[\\^_{}=+\-<>*\/]|\\times|\\text|\\mathrm|\\pm|\\le|\\ge|\\ne|\\approx|\\alpha|\\beta|\\cdot|%/.test(
             candidateContent
           );
+
+        // A closed single token with no whitespace ($OR$, $5$, $0.09$, $2x$) is math,
+        // unless the closing $ is glued to a following word/number.
+        const isClosedToken =
+          candidateContent.length > 0 &&
+          !/\s/.test(candidateContent) &&
+          !(charAfterClosing !== undefined && /[A-Za-z0-9]/.test(charAfterClosing));
+
+        if (!isFollowedByDigit && isClosedToken) {
+          result += '$' + candidateContent + '$';
+          i = closingIdx + 1;
+          continue;
+        }
 
         if (isFollowedByDigit || hasEnglishProse || (startsWithDigit && !hasMathSyntax)) {
           // This $ is currency, not math. Escape it and continue.

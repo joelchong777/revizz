@@ -250,6 +250,59 @@ console.log('\nTest Suite 2: KaTeX Sanitizer & Typography Normalization');
   );
 }
 
+// 5b. escapeCurrencyDollars regression: $OR$, digit-leading formulas, \\$ parity
+{
+  console.log('  -- escapeCurrencyDollars regression (case, digit-leading formulas, backslash parity)');
+  const unchanged = [
+    '$OR$ then $x$',
+    'Produces $OR$ capital goods and $OS$ consumer goods ($OR < OP$).',
+    '$0.09$ rate',
+    'costs $5$ units',
+    '$2x$',
+    '$5$ and $10$',
+    '$-1.11$ to $-1.02$',
+    '$P_1$ rises to $P_2$',
+    '$Q$ or $P$',
+    '\\$5',
+    '$S_1 \\to S_2$',
+    '$P \\downarrow$',
+    '$x \\in A$',
+    '$5 \\text{ per unit}$',
+  ];
+  for (const s of unchanged) {
+    assert(escapeCurrencyDollars(s) === s, `escapeCurrencyDollars leaves unchanged: ${s}`);
+  }
+  const escaped: Array<[string, string]> = [
+    ['Price rises from $50 to $60', 'Price rises from \\$50 to \\$60'],
+    ['between $10 and $20', 'between \\$10 and \\$20'],
+    ['tax of $5 per unit', 'tax of \\$5 per unit'],
+    ['costs $5, then $x$', 'costs \\$5, then $x$'],
+    ['US$100 and $x = 5$', 'US\\$100 and $x = 5$'],
+    ['$50 when $D_1$ shifts to $D_2$', '\\$50 when $D_1$ shifts to $D_2$'],
+    ['$5,$10', '\\$5,\\$10'],
+    ['a \\\\$5 b', 'a \\\\\\$5 b'],
+  ];
+  for (const [input, expected] of escaped) {
+    assert(escapeCurrencyDollars(input) === expected, `escapeCurrencyDollars escapes: ${input}`);
+  }
+
+  const glued = sanitizeKaTeX('Between $5$ and $10$ units, $x$ rises to $y$');
+  assert(glued.includes(' and ') && glued.includes(' units, '), 'sanitizeKaTeX keeps " and " and " units, " spacing');
+  assert(!glued.includes('\\$'), 'sanitizeKaTeX of consecutive formulas has no \\$');
+
+  const stagingPath = path.join(process.cwd(), 'staging', '0455_s24_12.json');
+  if (fs.existsSync(stagingPath)) {
+    const sp = JSON.parse(fs.readFileSync(stagingPath, 'utf-8'));
+    for (const n of [3, 4, 5, 6, 9, 19, 30]) {
+      const q = sp.questions.find((x: { question_number: number }) => x.question_number === n);
+      assert(!!q, `0455_s24_12 Q${n} exists`);
+      if (q) {
+        assert(!sanitizeKaTeX(q.explanation_markdown).includes('\\$'), `0455_s24_12 Q${n} explanation has no \\$ after sanitizeKaTeX`);
+      }
+    }
+  }
+}
+
 // 6. Delimiter standardization tests
 {
   assert(
