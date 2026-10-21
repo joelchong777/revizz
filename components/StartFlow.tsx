@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { QuizRoundConfig, DiagramFilter } from '../hooks/useQuizGame';
 import { getReviewPileCount, subscribeMasteryChanges, getFirstTryCorrectIds } from '@/lib/mastery';
@@ -248,11 +248,15 @@ export function StartFlow({
     };
   }, [currentSubject.code]);
 
-  const subjectTopics = currentSubject.id
-    ? effectiveTopics.filter(
-        (t) => !(t as { subjectId?: string }).subjectId || (t as { subjectId?: string }).subjectId === currentSubject.id
-      )
-    : effectiveTopics;
+  // Memoized so the selection effect below doesn't re-run on every render
+  const subjectTopics = useMemo(() => {
+    const all = topics || [];
+    return currentSubject.id
+      ? all.filter(
+          (t) => !(t as { subjectId?: string }).subjectId || (t as { subjectId?: string }).subjectId === currentSubject.id
+        )
+      : all;
+  }, [topics, currentSubject.id]);
 
   useEffect(() => {
     if (subjectTopics.length === 0) return;
@@ -261,6 +265,8 @@ export function StartFlow({
         return subjectTopics.map((t) => t.id);
       }
       const valid = prev.filter((id) => subjectTopics.some((t) => t.id === id));
+      // Keep the same array when nothing changed, or every run re-renders (render loop)
+      if (valid.length === prev.length) return prev;
       return valid.length > 0 ? valid : subjectTopics.map((t) => t.id);
     });
   }, [subjectTopics]);
