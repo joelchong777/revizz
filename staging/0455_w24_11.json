@@ -107,31 +107,31 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "first factor: capital | second factor: land",
+          "content_markdown": "Capital | Land",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "first factor: enterprise | second factor: labour",
+          "content_markdown": "Enterprise | Labour",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "first factor: labour | second factor: capital",
+          "content_markdown": "Labour | Capital",
           "is_correct": false
         },
         {
           "label": "D",
-          "content_markdown": "first factor: land | second factor: enterprise",
+          "content_markdown": "Land | Enterprise",
           "is_correct": true
         }
       ],
-      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The basic economic problem**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"In which case is it possible to set the level of reward before production takes place for the first factor of production but not for the second factor?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (first factor: land | second factor: enterprise) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (first factor: capital | second factor: land)**: Incorrect. 'first factor: capital | second factor: land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (first factor: enterprise | second factor: labour)**: Incorrect. 'first factor: enterprise | second factor: labour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (first factor: labour | second factor: capital)**: Incorrect. 'first factor: labour | second factor: capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (first factor: land | second factor: enterprise)**: Correct. Accurately identifies that first factor: land | second factor: enterprise satisfies the economic condition required by the question.",
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The basic economic problem**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"In which case is it possible to set the level of reward before production takes place for the first factor of production but not for the second factor?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (Land | Enterprise) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (Capital | Land)**: Incorrect. 'Capital | Land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (Enterprise | Labour)**: Incorrect. 'Enterprise | Labour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (Labour | Capital)**: Incorrect. 'Labour | Capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (Land | Enterprise)**: Correct. Accurately identifies that Land | Enterprise satisfies the economic condition required by the question.",
       "distractor_analysis": {
-        "A": "Incorrect. 'first factor: capital | second factor: land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "B": "Incorrect. 'first factor: enterprise | second factor: labour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "C": "Incorrect. 'first factor: labour | second factor: capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "D": "Correct. Accurately identifies that first factor: land | second factor: enterprise satisfies the economic condition required by the question."
+        "A": "Incorrect. 'Capital | Land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'Enterprise | Labour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'Labour | Capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that Land | Enterprise satisfies the economic condition required by the question."
       },
       "status": "active"
     },
@@ -427,31 +427,31 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "for motorists: decrease | for bus passengers: decrease",
+          "content_markdown": "Decrease | Decrease",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "for motorists: decrease | for bus passengers: increase",
+          "content_markdown": "Decrease | Increase",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "for motorists: increase | for bus passengers: decrease",
+          "content_markdown": "Increase | Decrease",
           "is_correct": true
         },
         {
           "label": "D",
-          "content_markdown": "for motorists: increase | for bus passengers: increase",
+          "content_markdown": "Increase | Increase",
           "is_correct": false
         }
       ],
-      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"A government intends to subsidise bus fares and increase taxes on private motoring. How would this affect the private cost of transport?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (for motorists: increase | for bus passengers: decrease) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (for motorists: decrease | for bus passengers: decrease)**: Incorrect. 'for motorists: decrease | for bus passengers: decrease' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (for motorists: decrease | for bus passengers: increase)**: Incorrect. 'for motorists: decrease | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (for motorists: increase | for bus passengers: decrease)**: Correct. Accurately identifies that for motorists: increase | for bus passengers: decrease satisfies the economic condition required by the question.\n- **D (for motorists: increase | for bus passengers: increase)**: Incorrect. 'for motorists: increase | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"A government intends to subsidise bus fares and increase taxes on private motoring. How would this affect the private cost of transport?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (Increase | Decrease) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (Decrease | Decrease)**: Incorrect. 'Decrease | Decrease' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (Decrease | Increase)**: Incorrect. 'Decrease | Increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (Increase | Decrease)**: Correct. Accurately identifies that Increase | Decrease satisfies the economic condition required by the question.\n- **D (Increase | Increase)**: Incorrect. 'Increase | Increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
       "distractor_analysis": {
-        "A": "Incorrect. 'for motorists: decrease | for bus passengers: decrease' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "B": "Incorrect. 'for motorists: decrease | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "C": "Correct. Accurately identifies that for motorists: increase | for bus passengers: decrease satisfies the economic condition required by the question.",
-        "D": "Incorrect. 'for motorists: increase | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+        "A": "Incorrect. 'Decrease | Decrease' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'Decrease | Increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that Increase | Decrease satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'Increase | Increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
       },
       "status": "active"
     },
@@ -510,31 +510,31 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "national minimum wage (per year) $: 15 000 | demand for bus travel: increasing",
+          "content_markdown": "15 000 | Increasing",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged",
+          "content_markdown": "15 000 | Unchanged",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "national minimum wage (per year) $: 18 000 | demand for bus travel: increasing",
+          "content_markdown": "18 000 | Increasing",
           "is_correct": false
         },
         {
           "label": "D",
-          "content_markdown": "national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged",
+          "content_markdown": "18 000 | Unchanged",
           "is_correct": true
         }
       ],
-      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"Bus drivers receive a wage of \\$15 000 a year. The government introduces a national minimum wage. Under which circumstances will the largest number of bus drivers become unemployed as a result of the minimum wage?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (national minimum wage (per year) $: 15 000 | demand for bus travel: increasing)**: Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged)**: Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (national minimum wage (per year) $: 18 000 | demand for bus travel: increasing)**: Incorrect. 'national minimum wage (per year) $: 18 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged)**: Correct. Accurately identifies that national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged satisfies the economic condition required by the question.",
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"Bus drivers receive a wage of \\$15 000 a year. The government introduces a national minimum wage. Under which circumstances will the largest number of bus drivers become unemployed as a result of the minimum wage?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (18 000 | Unchanged) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (15 000 | Increasing)**: Incorrect. '15 000 | Increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (15 000 | Unchanged)**: Incorrect. '15 000 | Unchanged' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (18 000 | Increasing)**: Incorrect. '18 000 | Increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (18 000 | Unchanged)**: Correct. Accurately identifies that 18 000 | Unchanged satisfies the economic condition required by the question.",
       "distractor_analysis": {
-        "A": "Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "B": "Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "C": "Incorrect. 'national minimum wage (per year) $: 18 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "D": "Correct. Accurately identifies that national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged satisfies the economic condition required by the question."
+        "A": "Incorrect. '15 000 | Increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. '15 000 | Unchanged' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. '18 000 | Increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that 18 000 | Unchanged satisfies the economic condition required by the question."
       },
       "status": "active"
     },
@@ -1033,31 +1033,31 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "earnings (% change): +12.5 | consumer prices (% change): +9.5",
+          "content_markdown": "+12.5 | +9.5",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "earnings (% change): +4.0 | consumer prices (% change): +2.0",
+          "content_markdown": "+4.0 | +2.0",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "earnings (% change): +8.5 | consumer prices (% change): +5.0",
+          "content_markdown": "+8.5 | +5.0",
           "is_correct": true
         },
         {
           "label": "D",
-          "content_markdown": "earnings (% change): +4.0 | consumer prices (% change): +4.0",
+          "content_markdown": "+4.0 | +4.0",
           "is_correct": false
         }
       ],
-      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows the percentage changes in earnings and consumer prices for four countries in one year. Which country has experienced the greatest increase in real income during the year?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (earnings (% change): +8.5 | consumer prices (% change): +5.0) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (earnings (% change): +12.5 | consumer prices (% change): +9.5)**: Incorrect. 'earnings (% change): +12.5 | consumer prices (% change): +9.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (earnings (% change): +4.0 | consumer prices (% change): +2.0)**: Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (earnings (% change): +8.5 | consumer prices (% change): +5.0)**: Correct. Accurately identifies that earnings (% change): +8.5 | consumer prices (% change): +5.0 satisfies the economic condition required by the question.\n- **D (earnings (% change): +4.0 | consumer prices (% change): +4.0)**: Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +4.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows the percentage changes in earnings and consumer prices for four countries in one year. Which country has experienced the greatest increase in real income during the year?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (+8.5 | +5.0) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (+12.5 | +9.5)**: Incorrect. '+12.5 | +9.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (+4.0 | +2.0)**: Incorrect. '+4.0 | +2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (+8.5 | +5.0)**: Correct. Accurately identifies that +8.5 | +5.0 satisfies the economic condition required by the question.\n- **D (+4.0 | +4.0)**: Incorrect. '+4.0 | +4.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
       "distractor_analysis": {
-        "A": "Incorrect. 'earnings (% change): +12.5 | consumer prices (% change): +9.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "B": "Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "C": "Correct. Accurately identifies that earnings (% change): +8.5 | consumer prices (% change): +5.0 satisfies the economic condition required by the question.",
-        "D": "Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +4.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+        "A": "Incorrect. '+12.5 | +9.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. '+4.0 | +2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that +8.5 | +5.0 satisfies the economic condition required by the question.",
+        "D": "Incorrect. '+4.0 | +4.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
       },
       "status": "active"
     },

@@ -3,7 +3,7 @@ import { RichMarkdown } from '@/components/ui/RichMarkdown';
 import { TestPaperConfig, CompiledExamQuestion } from '@/types/testCompiler';
 import { Code128Barcode } from '@/lib/barcode';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
-import { stripCambridgeIgcse } from '@/lib/compilerFilters';
+import { stripCambridgeIgcse, formatTableOptionText } from '@/lib/compilerFilters';
 
 interface Props {
   config: TestPaperConfig;
@@ -209,18 +209,23 @@ export const PrintableExamLayout: React.FC<Props> = ({ config, questions, showMa
                 </div>
               )}
               <div className="grid grid-cols-1 gap-2 mt-2" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                {q.options.map((opt) => (
-                  <div
-                    key={opt.label}
-                    className="flex items-start gap-3 text-black"
-                    style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
-                  >
-                    <span className="font-bold shrink-0 w-4 text-black">{opt.label}</span>
-                    <div className="prose prose-sm max-w-none text-black">
-                      <RichMarkdown content={opt.textMarkdown} variant="plain" />
+                {q.options.map((opt) => {
+                  const isTable = Boolean(q.hasTable || opt.textMarkdown.includes('|'));
+                  return (
+                    <div
+                      key={opt.label}
+                      className="flex items-start gap-3 text-black"
+                      style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}
+                    >
+                      <span className="font-bold shrink-0 text-black">
+                        {opt.label}{isTable ? ' -' : ''}
+                      </span>
+                      <div className="prose prose-sm max-w-none text-black">
+                        <RichMarkdown content={formatTableOptionText(opt.textMarkdown)} variant="plain" />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -31,6 +31,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { CompilerDiagramPreview } from './compiler/CompilerDiagramPreview';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
+import { formatTableOptionText } from '@/lib/compilerFilters';
 import { 
   useQuestions, 
   useTopics, 
@@ -2288,8 +2289,8 @@ export default function AdminTools({
                                               )}
                                             </div>
                                             <div className="font-medium text-xs leading-relaxed">
-                                              <MarkdownErrorBoundary fallbackText={opt.text}>
-                                                <span>{opt.text}</span>
+                                              <MarkdownErrorBoundary fallbackText={formatTableOptionText(opt.text)}>
+                                                <span>{formatTableOptionText(opt.text)}</span>
                                               </MarkdownErrorBoundary>
                                             </div>
                                             {opt.distractorReasoning && (

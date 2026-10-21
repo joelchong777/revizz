@@ -260,22 +260,22 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "petrol: shift of the demand curve to the left | store’s goods: shift of the supply curve to the left",
+          "content_markdown": "Shift of the demand curve to the left | Shift of the supply curve to the left",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "petrol: shift of the demand curve to the right | store’s goods: shift of the demand curve to the left",
+          "content_markdown": "Shift of the demand curve to the right | Shift of the demand curve to the left",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "petrol: shift of the supply curve to the left | store’s goods: shift of the supply curve to the right",
+          "content_markdown": "Shift of the supply curve to the left | Shift of the supply curve to the right",
           "is_correct": false
         },
         {
           "label": "D",
-          "content_markdown": "petrol: shift of the supply curve to the right | store’s goods: shift of the demand curve to the right",
+          "content_markdown": "Shift of the supply curve to the right | Shift of the demand curve to the right",
           "is_correct": true
         }
       ],
@@ -426,22 +426,22 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "cleaners: fall | nurses: rise",
+          "content_markdown": "Fall | Rise",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "cleaners: no change | nurses: fall",
+          "content_markdown": "No change | Fall",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "cleaners: rise | nurses: fall",
+          "content_markdown": "Rise | Fall",
           "is_correct": false
         },
         {
           "label": "D",
-          "content_markdown": "cleaners: rise | nurses: no change",
+          "content_markdown": "Rise | No change",
           "is_correct": true
         }
       ],
@@ -504,22 +504,22 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "better communication: no | greater independence: no | lower average cost: yes",
+          "content_markdown": "No | No | Yes",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "better communication: no | greater independence: yes | lower average cost: no",
+          "content_markdown": "No | Yes | No",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "better communication: yes | greater independence: yes | lower average cost: no",
+          "content_markdown": "Yes | Yes | No",
           "is_correct": true
         },
         {
           "label": "D",
-          "content_markdown": "better communication: yes | greater independence: yes | lower average cost: yes",
+          "content_markdown": "Yes | Yes | Yes",
           "is_correct": false
         }
       ],
@@ -660,26 +660,26 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "price: higher | profit: higher",
+          "content_markdown": "Higher | Higher",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "price: higher | profit: lower",
+          "content_markdown": "Higher | Lower",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "price: lower | profit: higher",
+          "content_markdown": "Lower | Higher",
           "is_correct": false
         },
         {
           "label": "D",
-          "content_markdown": "price: lower | profit: lower",
+          "content_markdown": "Lower | Lower",
           "is_correct": true
         }
       ],
-      "explanation_markdown": "### Concept & Market Structure\nIn microeconomics, market structures differ fundamentally by the number of firms, barriers to entry, and pricing power:\n- **Monopoly**: A single seller dominates the market with high barriers to entry. Because it has substantial market power (is a price maker), it restricts output to charge a higher price and can sustain abnormal (supernormal) profits in the long run.\n- **Highly competitive market**: Many firms produce similar or identical goods with low or negligible barriers to entry. Because firms are price takers facing elastic demand, intense competition drives market prices down toward average cost ($P = MC$ or $P = AC$). In the long run, freedom of entry ensures that abnormal profits are competed away, leaving firms with only normal profit.\n\n### Step-by-Step Derivation\n1. **Price comparison**: Fierce competition among numerous rival suppliers forces firms to keep prices as low as possible to retain customers. In contrast, a monopoly restricts output to charge high prices. Hence, prices in a highly competitive market are **lower**.\n2. **Profit comparison**: Any supernormal profits in a competitive market attract new entrants, expanding market supply and eroding excess profits down to normal profits. A monopoly maintains supernormal profits due to high barriers to entry. Hence, profits in a highly competitive market are **lower**.\n3. Combining both characteristics: compared with a monopoly, a highly competitive market features **lower price** and **lower profit** (Option D).\n\n### Distractor Analysis\n- **A (price: higher | profit: higher)**: Inverts both characteristics. Higher prices and sustained supernormal profits are classic features of a monopoly exercising market power, not a competitive market.\n- **B (price: higher | profit: lower)**: Mistakenly asserts that competitive firms can charge higher prices despite strong competition and close substitutes.\n- **C (price: lower | profit: higher)**: Correctly identifies that competition reduces prices, but incorrectly asserts that competitive firms achieve higher profits than a monopoly protected by barriers to entry.\n- **D (price: lower | profit: lower) [Correct]**: Accurately identifies that competitive pressures force prices downward and eliminate supernormal profits, resulting in both lower prices and lower profits.",
+      "explanation_markdown": "### Concept & Market Structure\nIn microeconomics, market structures differ fundamentally by the number of firms, barriers to entry, and pricing power:\n- **Monopoly**: A single seller dominates the market with high barriers to entry. Because it has substantial market power (is a price maker), it restricts output to charge a higher price and can sustain abnormal (supernormal) profits in the long run.\n- **Highly competitive market**: Many firms produce similar or identical goods with low or negligible barriers to entry. Because firms are price takers facing elastic demand, intense competition drives market prices down toward average cost ($P = MC$ or $P = AC$). In the long run, freedom of entry ensures that abnormal profits are competed away, leaving firms with only normal profit.\n\n### Step-by-Step Derivation\n1. **Price comparison**: Fierce competition among numerous rival suppliers forces firms to keep prices as low as possible to retain customers. In contrast, a monopoly restricts output to charge high prices. Hence, prices in a highly competitive market are **lower**.\n2. **Profit comparison**: Any supernormal profits in a competitive market attract new entrants, expanding market supply and eroding excess profits down to normal profits. A monopoly maintains supernormal profits due to high barriers to entry. Hence, profits in a highly competitive market are **lower**.\n3. Combining both characteristics: compared with a monopoly, a highly competitive market features **lower price** and **lower profit** (Option D).\n\n### Distractor Analysis\n- **A (Higher | Higher)**: Inverts both characteristics. Higher prices and sustained supernormal profits are classic features of a monopoly exercising market power, not a competitive market.\n- **B (Higher | Lower)**: Mistakenly asserts that competitive firms can charge higher prices despite strong competition and close substitutes.\n- **C (Lower | Higher)**: Correctly identifies that competition reduces prices, but incorrectly asserts that competitive firms achieve higher profits than a monopoly protected by barriers to entry.\n- **D (Lower | Lower) [Correct]**: Accurately identifies that competitive pressures force prices downward and eliminate supernormal profits, resulting in both lower prices and lower profits.",
       "status": "active",
       "distractor_analysis": {
         "A": "Inverts both characteristics. Higher prices and sustained supernormal profits are classic features of a monopoly exercising market power, not a competitive market.",
@@ -738,32 +738,32 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "interest rate: increase | government spending: increase",
+          "content_markdown": "Increase | Increase",
           "is_correct": false
         },
         {
           "label": "B",
-          "content_markdown": "interest rate: increase | government spending: reduce",
+          "content_markdown": "Increase | Reduce",
           "is_correct": false
         },
         {
           "label": "C",
-          "content_markdown": "interest rate: reduce | government spending: increase",
+          "content_markdown": "Reduce | Increase",
           "is_correct": true
         },
         {
           "label": "D",
-          "content_markdown": "interest rate: reduce | government spending: reduce",
+          "content_markdown": "Reduce | Reduce",
           "is_correct": false
         }
       ],
-      "explanation_markdown": "### Concept & Deflationary Policy Response\n**Deflation** is a persistent fall in the general price level of goods and services throughout an economy. It is typically caused by insufficient aggregate demand ($AD = C + I + G + (X - M)$) and excess capacity.\nTo prevent or reverse deflation, the government and central bank implement **expansionary (reflationary) policies** to stimulate aggregate demand:\n- **Monetary policy**: **Reducing interest rates** lowers borrowing costs for households and businesses and reduces the incentive to save. This stimulates consumer spending on credit ($C$) and capital investment by firms ($I$).\n- **Fiscal policy**: **Increasing government spending** ($G$) directly injects purchasing power into the circular flow of income, creating jobs and boosting aggregate demand directly.\n\n### Step-by-Step Derivation\n1. Preventing deflation requires boosting aggregate demand ($AD$) to put upward pressure on prices and output.\n2. **Interest rate decision**: Cutting the base rate makes loans cheaper and saving less rewarding, increasing consumer spending ($C$) and business investment ($I$). Therefore, the central bank should **reduce** interest rates.\n3. **Government spending decision**: Higher public expenditure on infrastructure, public sector wages, and services directly increases the $G$ component of aggregate demand. Therefore, the government should **increase** spending.\n4. Both policies shift the aggregate demand curve to the right, raising real GDP and lifting price levels out of deflation.\n5. Therefore, the combination is **reduce interest rate** and **increase government spending** (Option C).\n\n### Distractor Analysis\n- **A (interest rate: increase | government spending: increase)**: Increasing interest rates is a contractionary monetary policy that dampens consumption and investment, conflicting with the objective of preventing deflation.\n- **B (interest rate: increase | government spending: reduce)**: Both actions represent contractionary (deflationary) policies: raising borrowing costs and cutting public spending depress aggregate demand, causing or worsening deflation.\n- **C (interest rate: reduce | government spending: increase) [Correct]**: Successfully pairs expansionary monetary policy (lowering interest rates to boost private spending) with expansionary fiscal policy (increasing government spending to inject demand directly).\n- **D (interest rate: reduce | government spending: reduce)**: Cutting government spending is contractionary fiscal policy, which pulls demand out of the economy and undermines the stimulus provided by lower interest rates.",
+      "explanation_markdown": "### Concept & Deflationary Policy Response\n**Deflation** is a persistent fall in the general price level of goods and services throughout an economy. It is typically caused by insufficient aggregate demand ($AD = C + I + G + (X - M)$) and excess capacity.\nTo prevent or reverse deflation, the government and central bank implement **expansionary (reflationary) policies** to stimulate aggregate demand:\n- **Monetary policy**: **Reducing interest rates** lowers borrowing costs for households and businesses and reduces the incentive to save. This stimulates consumer spending on credit ($C$) and capital investment by firms ($I$).\n- **Fiscal policy**: **Increasing government spending** ($G$) directly injects purchasing power into the circular flow of income, creating jobs and boosting aggregate demand directly.\n\n### Step-by-Step Derivation\n1. Preventing deflation requires boosting aggregate demand ($AD$) to put upward pressure on prices and output.\n2. **Interest rate decision**: Cutting the base rate makes loans cheaper and saving less rewarding, increasing consumer spending ($C$) and business investment ($I$). Therefore, the central bank should **reduce** interest rates.\n3. **Government spending decision**: Higher public expenditure on infrastructure, public sector wages, and services directly increases the $G$ component of aggregate demand. Therefore, the government should **increase** spending.\n4. Both policies shift the aggregate demand curve to the right, raising real GDP and lifting price levels out of deflation.\n5. Therefore, the combination is **reduce interest rate** and **increase government spending** (Option C).\n\n### Distractor Analysis\n- **A (Increase | Increase)**: Increasing interest rates is a contractionary monetary policy that dampens consumption and investment, conflicting with the objective of preventing deflation.\n- **B (Increase | Reduce)**: Both actions represent contractionary (deflationary) policies: raising borrowing costs and cutting public spending depress aggregate demand, causing or worsening deflation.\n- **C (Reduce | Increase) [Correct]**: Successfully pairs expansionary monetary policy (lowering interest rates to boost private spending) with expansionary fiscal policy (increasing government spending to inject demand directly).\n- **D (Reduce | Reduce)**: Cutting government spending is contractionary fiscal policy, which pulls demand out of the economy and undermines the stimulus provided by lower interest rates.",
       "status": "active",
       "distractor_analysis": {
         "A": "Increasing interest rates is a contractionary monetary policy that dampens consumption and investment, conflicting with the objective of preventing deflation.",
         "B": "Both actions represent contractionary (deflationary) policies: raising borrowing costs and cutting public spending depress aggregate demand, causing or worsening deflation.",
         "C": "Successfully pairs expansionary monetary policy (lowering interest rates to boost private spending) with expansionary fiscal policy (increasing government spending to inject demand directly).",
-        "D": "is a persistent fall in the general price level of goods and services throughout an economy. It is typically caused by insufficient aggregate demand ($AD = C + I + G + (X - M)$) and excess capacity.\nTo prevent or reverse deflation, the government and central bank implement **expansionary (reflationary) policies** to stimulate aggregate demand:\n- **Monetary policy**: **Reducing interest rates** lowers borrowing costs for households and businesses and reduces the incentive to save. This stimulates consumer spending on credit ($C$) and capital investment by firms ($I$).\n- **Fiscal policy**: **Increasing government spending** ($G$) directly injects purchasing power into the circular flow of income, creating jobs and boosting aggregate demand directly.\n\n### Step-by-Step Derivation\n1. Preventing deflation requires boosting aggregate demand ($AD$) to put upward pressure on prices and output.\n2. **Interest rate decision**: Cutting the base rate makes loans cheaper and saving less rewarding, increasing consumer spending ($C$) and business investment ($I$). Therefore, the central bank should **reduce** interest rates.\n3. **Government spending decision**: Higher public expenditure on infrastructure, public sector wages, and services directly increases the $G$ component of aggregate demand. Therefore, the government should **increase** spending.\n4. Both policies shift the aggregate demand curve to the right, raising real GDP and lifting price levels out of deflation.\n5. Therefore, the combination is **reduce interest rate** and **increase government spending** (Option C).\n\n### Distractor Analysis"
+        "D": "Cutting government spending is contractionary fiscal policy, which pulls demand out of the economy and undermines the stimulus provided by lower interest rates."
       }
     },
     {

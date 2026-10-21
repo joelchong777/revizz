@@ -694,14 +694,13 @@ def extract_questions_from_qp(
                     stem_text_parts.append(table_md)
 
                 for lbl in ["A", "B", "C", "D"]:
-                    if len(col_headers) >= 2:
-                        cell_parts = []
-                        for idx, l in enumerate(table_rows[lbl]):
-                            hdr = col_headers[idx] if idx < len(col_headers) else f"Column {idx+1}"
-                            cell_parts.append(f"{hdr}: {l['text']}")
-                        cell_text = " | ".join(cell_parts) if cell_parts else " | ".join(l["text"] for l in table_rows[lbl])
-                    else:
-                        cell_text = " | ".join(l["text"] for l in table_rows[lbl])
+                    cell_parts = []
+                    for l in table_rows[lbl]:
+                        txt = l["text"].strip()
+                        if txt and txt[0].islower():
+                            txt = txt[0].upper() + txt[1:]
+                        cell_parts.append(txt)
+                    cell_text = " | ".join(cell_parts)
                     options_list.append({
                         "label": lbl,
                         "content_markdown": escape_currency_dollars(cell_text),

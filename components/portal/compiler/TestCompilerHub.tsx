@@ -66,6 +66,7 @@ import {
   SelectionFilter,
   SortOption,
   hasDataTable,
+  formatTableOptionText,
   isMathOrCalculation,
   getAvailableSeries,
   filterAndSortQuestions,
@@ -1114,41 +1115,51 @@ export default function TestCompilerHub() {
                       </button>
                       {expandedCardIds.includes(q.id) && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2.5" onClick={(e) => e.stopPropagation()}>
-                          {q.options.map((opt, i) => (
-                            <div
-                              key={opt.id}
-                              className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
-                                opt.id === q.correct_option_id
-                                  ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
-                                  : 'bg-white border border-[#dcd3c4] text-[#474238]'
-                              }`}
-                            >
-                              <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
-                              <div className="flex-1">
-                                <RichMarkdown content={opt.text_markdown} variant="plain" />
+                          {q.options.map((opt, i) => {
+                            const isTable = hasDataTable(q.stem_markdown, q) || opt.text_markdown.includes('|');
+                            const displayOptText = isTable ? formatTableOptionText(opt.text_markdown) : opt.text_markdown;
+                            const labelSep = isTable ? ' -' : '.';
+                            return (
+                              <div
+                                key={opt.id}
+                                className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
+                                  opt.id === q.correct_option_id
+                                    ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
+                                    : 'bg-white border border-[#dcd3c4] text-[#474238]'
+                                }`}
+                              >
+                                <span className="font-bold opacity-70 shrink-0">{String.fromCharCode(65 + i)}{labelSep}</span>
+                                <div className="flex-1">
+                                  <RichMarkdown content={displayOptText} variant="plain" />
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {q.options.map((opt, i) => (
-                        <div
-                          key={opt.id}
-                          className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
-                            opt.id === q.correct_option_id
-                              ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
-                              : 'bg-white border border-[#dcd3c4] text-[#474238]'
-                          }`}
-                        >
-                          <span className="font-bold opacity-70 w-4">{String.fromCharCode(65 + i)}.</span>
-                          <div className="flex-1">
-                            <RichMarkdown content={opt.text_markdown} variant="plain" />
+                      {q.options.map((opt, i) => {
+                        const isTable = hasDataTable(q.stem_markdown, q) || opt.text_markdown.includes('|');
+                        const displayOptText = isTable ? formatTableOptionText(opt.text_markdown) : opt.text_markdown;
+                        const labelSep = isTable ? ' -' : '.';
+                        return (
+                          <div
+                            key={opt.id}
+                            className={`px-3 py-2 rounded-xl text-xs flex gap-2 ${
+                              opt.id === q.correct_option_id
+                                ? 'bg-[#ccdbb2] border border-[#8fa073] font-bold text-[#272e1b]'
+                                : 'bg-white border border-[#dcd3c4] text-[#474238]'
+                            }`}
+                          >
+                            <span className="font-bold opacity-70 shrink-0">{String.fromCharCode(65 + i)}{labelSep}</span>
+                            <div className="flex-1">
+                              <RichMarkdown content={displayOptText} variant="plain" />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

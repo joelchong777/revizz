@@ -10,6 +10,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 import { Question, resolveDiagramUrl } from '@/lib/questions';
+import { formatTableOptionText } from '../lib/compilerFilters';
 import { cn } from '@/lib/utils';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { cambridgeTableComponents } from '@/components/ui/RichMarkdown';
@@ -677,7 +678,7 @@ export function QuestionCard({
                     remarkPlugins={[remarkMath, remarkGfm]}
                     rehypePlugins={[rehypeRaw, rehypeKatex]}
                   >
-                    {opt.text_markdown}
+                    {formatTableOptionText(opt.text_markdown)}
                   </ReactMarkdown>
                 </MarkdownErrorBoundary>
               </span>

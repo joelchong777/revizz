@@ -65,6 +65,7 @@ import { CAMBRIDGE_QUESTIONS, Question } from '../lib/questions';
 import {
   extractSeriesOrYear,
   hasDataTable,
+  formatTableOptionText,
   isMathOrCalculation,
   getAvailableSeries,
   filterAndSortQuestions,
@@ -2655,6 +2656,48 @@ async function runSuite13() {
       hasDataTable(undefined, { options: [{ text: 'capital | land' }] }),
       true,
       'hasDataTable detects table from option text pipes'
+    );
+
+    // formatTableOptionText formatting and header stripping
+    assertEqual(
+      formatTableOptionText('first factor: capital | second factor: land'),
+      'Capital | Land',
+      'formatTableOptionText strips prefixes and capitalizes cells'
+    );
+    assertEqual(
+      formatTableOptionText('cleaners: fall | nurses: rise'),
+      'Fall | Rise',
+      'formatTableOptionText strips occupational column prefixes'
+    );
+    assertEqual(
+      formatTableOptionText('Shift of demand | Shift of supply'),
+      'Shift of demand | Shift of supply',
+      'formatTableOptionText preserves already clean table options'
+    );
+    assertEqual(
+      formatTableOptionText('There are high costs'),
+      'There are high costs',
+      'formatTableOptionText leaves non-table text unchanged'
+    );
+    assertEqual(
+      formatTableOptionText(''),
+      '',
+      'formatTableOptionText safely returns empty string'
+    );
+    assertEqual(
+      formatTableOptionText(null as any),
+      '',
+      'formatTableOptionText safely handles null'
+    );
+    assertEqual(
+      formatTableOptionText(undefined as any),
+      '',
+      'formatTableOptionText safely handles undefined'
+    );
+    assertEqual(
+      formatTableOptionText('col1: value1 | col2: value2').includes('col1:'),
+      false,
+      'formatTableOptionText ensures table options do not retain column header prefixes'
     );
 
     assertEqual(

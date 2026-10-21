@@ -34,6 +34,7 @@ export interface CompiledExamQuestion {
   citation?: string;
   topic?: string;
   explanationMarkdown?: string | null;
+  hasTable?: boolean;
 }
 
 export interface OnlineQuizAssignment {

@@ -1,6 +1,7 @@
 import { TestPaperConfig, CompiledExamQuestion, OnlineQuizAssignment, TopicDistributionItem } from '../types/testCompiler';
 import { Question, CAMBRIDGE_QUESTIONS } from './questions';
 import { resolveDiagramUrl } from './resolveDiagramUrl';
+import { hasDataTable } from './compilerFilters';
 
 export const DRAFT_KEY_PREFIX = 'revizz_test_draft_';
 export const PRINT_SNAPSHOT_PREFIX = 'revizz_print_snapshot_';
@@ -501,6 +502,7 @@ export function buildCompiledQuestions(
         citation: q.citation,
         topic: q.topic,
         explanationMarkdown: resolveQuestionExplanation(q),
+        hasTable: hasDataTable(q.stem_markdown, q),
       });
     }
   }

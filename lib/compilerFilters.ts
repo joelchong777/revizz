@@ -255,6 +255,29 @@ export function hasDataTable(stem?: string, question?: any): boolean {
 }
 
 /**
+ * Normalizes table-style option text (e.g. "first factor: capital | second factor: land" -> "Capital | Land").
+ * Strips prefix headers before colons, capitalizes initial alphabetic characters, and standardizes pipe spacing.
+ */
+export function formatTableOptionText(text: string): string {
+  if (!text || typeof text !== 'string') return text || '';
+  if (!text.includes('|') && !text.includes(':')) return text;
+
+  const parts = text.split('|').map((part) => {
+    let clean = part.trim();
+    if (clean.includes(':')) {
+      const colonIdx = clean.indexOf(':');
+      clean = clean.slice(colonIdx + 1).trim();
+    }
+    if (clean.length > 0) {
+      clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+    }
+    return clean;
+  });
+
+  return parts.join(' | ');
+}
+
+/**
  * Checks if question stem contains formulas, KaTeX `$`, or numerical calculation data.
  */
 export function isMathOrCalculation(stem?: string): boolean {

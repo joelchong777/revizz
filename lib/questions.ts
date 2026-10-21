@@ -2,8 +2,8 @@ import type { Question, DiagramFilter } from '../hooks/useQuizGame';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { resolveDiagramUrl } from './resolveDiagramUrl';
-import { hasDataTable } from './compilerFilters';
-export { resolveDiagramUrl };
+import { hasDataTable, formatTableOptionText } from './compilerFilters';
+export { resolveDiagramUrl, formatTableOptionText };
 export type { Question, DiagramFilter };
 
 export interface SyllabusTopic {
@@ -122,10 +122,10 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
     id: '0455-s24-12-q06',
     stem_markdown: "Supermarkets sell petrol (gas) outside their stores. They reduce the price of petrol below other suppliers to attract more customers to buy goods in the store when they buy more petrol.\n\nIf this were successful, how might it be shown on demand and supply diagrams?\n\n| | demand and supply diagram for petrol | demand and supply diagram for the store’s goods |\n| :---: | :--- | :--- |\n| **A** | shift of the demand curve to the left | shift of the supply curve to the left |\n| **B** | shift of the demand curve to the right | shift of the demand curve to the left |\n| **C** | shift of the supply curve to the left | shift of the supply curve to the right |\n| **D** | shift of the supply curve to the right | shift of the demand curve to the right |",
     options: [
-      { id: '0455-s24-12-q06-opt-a', text_markdown: "petrol: shift of the demand curve to the left | store’s goods: shift of the supply curve to the left" },
-      { id: '0455-s24-12-q06-opt-b', text_markdown: "petrol: shift of the demand curve to the right | store’s goods: shift of the demand curve to the left" },
-      { id: '0455-s24-12-q06-opt-c', text_markdown: "petrol: shift of the supply curve to the left | store’s goods: shift of the supply curve to the right" },
-      { id: '0455-s24-12-q06-opt-d', text_markdown: "petrol: shift of the supply curve to the right | store’s goods: shift of the demand curve to the right" }
+      { id: '0455-s24-12-q06-opt-a', text_markdown: "Shift of the demand curve to the left | Shift of the supply curve to the left" },
+      { id: '0455-s24-12-q06-opt-b', text_markdown: "Shift of the demand curve to the right | Shift of the demand curve to the left" },
+      { id: '0455-s24-12-q06-opt-c', text_markdown: "Shift of the supply curve to the left | Shift of the supply curve to the right" },
+      { id: '0455-s24-12-q06-opt-d', text_markdown: "Shift of the supply curve to the right | Shift of the demand curve to the right" }
     ],
     correct_option_id: '0455-s24-12-q06-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q6",
@@ -178,10 +178,10 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
     id: '0455-s24-12-q10',
     stem_markdown: "The diagrams show the wage rates of cleaners ($OW_c$) and nurses ($OW_n$).\n\nWhat is the result if a national minimum wage of $OM$ is introduced?\n\n| | wage rates of cleaners | wage rates of nurses |\n| :---: | :---: | :---: |\n| **A** | fall | rise |\n| **B** | no change | fall |\n| **C** | rise | fall |\n| **D** | rise | no change |",
     options: [
-      { id: '0455-s24-12-q10-opt-a', text_markdown: "cleaners: fall | nurses: rise" },
-      { id: '0455-s24-12-q10-opt-b', text_markdown: "cleaners: no change | nurses: fall" },
-      { id: '0455-s24-12-q10-opt-c', text_markdown: "cleaners: rise | nurses: fall" },
-      { id: '0455-s24-12-q10-opt-d', text_markdown: "cleaners: rise | nurses: no change" }
+      { id: '0455-s24-12-q10-opt-a', text_markdown: "Fall | Rise" },
+      { id: '0455-s24-12-q10-opt-b', text_markdown: "No change | Fall" },
+      { id: '0455-s24-12-q10-opt-c', text_markdown: "Rise | Fall" },
+      { id: '0455-s24-12-q10-opt-d', text_markdown: "Rise | No change" }
     ],
     correct_option_id: '0455-s24-12-q10-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q10",
@@ -208,10 +208,10 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
     id: '0455-s24-12-q12',
     stem_markdown: "Which combination shows the advantages of a small firm over a larger firm?\n\n| | better communication | greater independence | lower average cost |\n| :---: | :---: | :---: | :---: |\n| **A** | no | no | yes |\n| **B** | no | yes | no |\n| **C** | yes | yes | no |\n| **D** | yes | yes | yes |",
     options: [
-      { id: '0455-s24-12-q12-opt-a', text_markdown: "better communication: no | greater independence: no | lower average cost: yes" },
-      { id: '0455-s24-12-q12-opt-b', text_markdown: "better communication: no | greater independence: yes | lower average cost: no" },
-      { id: '0455-s24-12-q12-opt-c', text_markdown: "better communication: yes | greater independence: yes | lower average cost: no" },
-      { id: '0455-s24-12-q12-opt-d', text_markdown: "better communication: yes | greater independence: yes | lower average cost: yes" }
+      { id: '0455-s24-12-q12-opt-a', text_markdown: "No | No | Yes" },
+      { id: '0455-s24-12-q12-opt-b', text_markdown: "No | Yes | No" },
+      { id: '0455-s24-12-q12-opt-c', text_markdown: "Yes | Yes | No" },
+      { id: '0455-s24-12-q12-opt-d', text_markdown: "Yes | Yes | Yes" }
     ],
     correct_option_id: '0455-s24-12-q12-opt-c',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q12",
@@ -264,10 +264,10 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
     id: '0455-s24-12-q16',
     stem_markdown: "What are the features of a highly competitive market when compared with a monopoly market?",
     options: [
-      { id: '0455-s24-12-q16-opt-a', text_markdown: "price: higher | profit: higher" },
-      { id: '0455-s24-12-q16-opt-b', text_markdown: "price: higher | profit: lower" },
-      { id: '0455-s24-12-q16-opt-c', text_markdown: "price: lower | profit: higher" },
-      { id: '0455-s24-12-q16-opt-d', text_markdown: "price: lower | profit: lower" }
+      { id: '0455-s24-12-q16-opt-a', text_markdown: "Higher | Higher" },
+      { id: '0455-s24-12-q16-opt-b', text_markdown: "Higher | Lower" },
+      { id: '0455-s24-12-q16-opt-c', text_markdown: "Lower | Higher" },
+      { id: '0455-s24-12-q16-opt-d', text_markdown: "Lower | Lower" }
     ],
     correct_option_id: '0455-s24-12-q16-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q16",
@@ -292,10 +292,10 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
     id: '0455-s24-12-q18',
     stem_markdown: "A government wishes to prevent deflation.\n\nWhich combination of policies would be the most effective in achieving this aim?",
     options: [
-      { id: '0455-s24-12-q18-opt-a', text_markdown: "interest rate: increase | government spending: increase" },
-      { id: '0455-s24-12-q18-opt-b', text_markdown: "interest rate: increase | government spending: reduce" },
-      { id: '0455-s24-12-q18-opt-c', text_markdown: "interest rate: reduce | government spending: increase" },
-      { id: '0455-s24-12-q18-opt-d', text_markdown: "interest rate: reduce | government spending: reduce" }
+      { id: '0455-s24-12-q18-opt-a', text_markdown: "Increase | Increase" },
+      { id: '0455-s24-12-q18-opt-b', text_markdown: "Increase | Reduce" },
+      { id: '0455-s24-12-q18-opt-c', text_markdown: "Reduce | Increase" },
+      { id: '0455-s24-12-q18-opt-d', text_markdown: "Reduce | Reduce" }
     ],
     correct_option_id: '0455-s24-12-q18-opt-c',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q18",
@@ -809,7 +809,7 @@ export function mapDbQuestionToQuestion(row: any): Question {
 
   const options = sortedOptions.map((opt: any) => ({
     id: opt.id,
-    text_markdown: opt.content_markdown || '',
+    text_markdown: formatTableOptionText(opt.content_markdown || ''),
     label: opt.label,
     distractor_reasoning: opt.distractor_reasoning || undefined,
   }));
