@@ -124,44 +124,60 @@ if (fs.existsSync(hubPath)) {
   );
 }
 
-// 2. Verify components/admin/AppAdminNav.tsx
+// 1h. Embedded mode props on the history hub
+if (fs.existsSync(hubPath)) {
+  const hc = fs.readFileSync(hubPath, 'utf8');
+  check('IngestionHistoryHub accepts embedded and onOpenInStudio props', () => hc.includes('embedded') && hc.includes('onOpenInStudio'));
+  check('IngestionHistoryHub embedded mode renders a compact h2', () => hc.includes('<h2') );
+}
+
+// 2. AppAdminNav: Ingestion History button removed
 const navPath = path.join(rootDir, 'components/admin/AppAdminNav.tsx');
 check('AppAdminNav.tsx exists on disk', () => fs.existsSync(navPath));
 if (fs.existsSync(navPath)) {
   const navContent = fs.readFileSync(navPath, 'utf8');
   check(
-    "AppAdminNav includes 'history' nav item with Ingestion History label",
-    () =>
-      navContent.includes("handleNavClick('history')") &&
-      navContent.includes('Ingestion History')
+    'AppAdminNav no longer has an Ingestion History button',
+    () => !navContent.includes("handleNavClick('history')") && !navContent.includes('Ingestion History')
   );
 }
 
-// 3. Verify app/admin/page.tsx
+// 3. app/admin/page.tsx: tab=history redirects into Ingestion + subTab history
 const pagePath = path.join(rootDir, 'app/admin/page.tsx');
 check('app/admin/page.tsx exists on disk', () => fs.existsSync(pagePath));
 if (fs.existsSync(pagePath)) {
-  const pageContent = fs.readFileSync(pagePath, 'utf8');
-  check(
-    "app/admin/page.tsx includes history: 'Ingestion History' in TAB_TITLES and supports tab=history",
-    () =>
-      pageContent.includes("history: 'Ingestion History'") &&
-      pageContent.includes("'history'")
-  );
+  const pc = fs.readFileSync(pagePath, 'utf8');
+  check("TAB_TITLES no longer has a history entry", () => !pc.includes("history: 'Ingestion History'"));
+  check("tab=history and tab=ingestion-history are handled and map to subTab 'history'",
+    () => pc.includes("'history'") && pc.includes("'ingestion-history'") && pc.includes("'ingestion'"));
 }
 
-// 4. Verify components/admin/AppAdminHub.tsx
+// 4. AppAdminHub: no history case, passes initialView
 const hubAdminPath = path.join(rootDir, 'components/admin/AppAdminHub.tsx');
 check('AppAdminHub.tsx exists on disk', () => fs.existsSync(hubAdminPath));
 if (fs.existsSync(hubAdminPath)) {
-  const hubAdminContent = fs.readFileSync(hubAdminPath, 'utf8');
-  check(
-    "AppAdminHub.tsx imports IngestionHistoryHub and handles case 'history':",
-    () =>
-      hubAdminContent.includes('IngestionHistoryHub') &&
-      hubAdminContent.includes("case 'history':") &&
-      hubAdminContent.includes('<IngestionHistoryHub')
-  );
+  const ha = fs.readFileSync(hubAdminPath, 'utf8');
+  check("AppAdminHub has no case 'history' and no IngestionHistoryHub import",
+    () => !ha.includes("case 'history':") && !ha.includes('IngestionHistoryHub'));
+  check("AppAdminHub passes initialView derived from subTab === 'history'",
+    () => ha.includes('initialView') && ha.includes("'history'"));
+}
+
+// 4b. IngestionHub tabs
+const studioPath = path.join(rootDir, 'components/portal/IngestionHub.tsx');
+check('IngestionHub.tsx exists on disk', () => fs.existsSync(studioPath));
+if (fs.existsSync(studioPath)) {
+  const sc = fs.readFileSync(studioPath, 'utf8');
+  check('IngestionHub has tablist with studio-tab-new and studio-tab-history testids',
+    () => sc.includes('role="tablist"') && sc.includes('studio-tab-new') && sc.includes('studio-tab-history'));
+  check('IngestionHub accepts initialView/onViewChange/onOpenEditor props',
+    () => sc.includes('initialView') && sc.includes('onViewChange') && sc.includes('onOpenEditor'));
+  check('IngestionHub renders embedded IngestionHistoryHub with onOpenInStudio',
+    () => sc.includes('<IngestionHistoryHub') && sc.includes('embedded') && sc.includes('onOpenInStudio'));
+  check('IngestionHub tabs support arrow-key navigation',
+    () => sc.includes('ArrowRight') && sc.includes('ArrowLeft'));
+  check('IngestionHub tabs use role="tab" with aria-selected',
+    () => sc.includes('role="tab"') && sc.includes('aria-selected'));
 }
 
 // 5. Verify app/api/ingest/staged-paper/route.ts
