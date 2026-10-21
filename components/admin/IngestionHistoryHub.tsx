@@ -57,6 +57,12 @@ export interface IngestionHistoryItem extends StagedPaperSummary {
 export interface IngestionHistoryHubProps {
   onSelectTab?: (tab: string, sub?: string) => void;
   onOpenEditor?: (questionId: string) => void;
+  /** Render inside the Ingestion Studio: compact banner, h2 heading. */
+  embedded?: boolean;
+  /** Called after a paper is preloaded into the Studio store. */
+  onOpenInStudio?: (paperId: string) => void;
+  /** Embedded "+ New Ingest" action (defaults to onSelectTab('ingestion')). */
+  onNewIngest?: () => void;
 }
 
 // Formatting helpers
@@ -115,6 +121,9 @@ function formatRelativeTime(isoString?: string | null, fallbackYear?: number): s
 export default function IngestionHistoryHub({
   onSelectTab,
   onOpenEditor,
+  embedded = false,
+  onOpenInStudio,
+  onNewIngest,
 }: IngestionHistoryHubProps) {
   // UNCONDITIONAL HOOKS DECLARATION AT TOP (Error #310 rule compliance)
   const { questions: liveQuestions, loading: questionsLoading, refetch: refetchLiveQuestions } = useQuestions();
@@ -270,10 +279,12 @@ export default function IngestionHistoryHub({
     } catch (err) {
       console.warn('[IngestionHistoryHub] Could not preload preset in store:', err);
     }
-    if (onSelectTab) {
+    if (onOpenInStudio) {
+      onOpenInStudio(paperId);
+    } else if (onSelectTab) {
       onSelectTab('ingestion');
     }
-  }, [onSelectTab]);
+  }, [onSelectTab, onOpenInStudio]);
 
   // Match live question ID for CMS editor link
   const findLiveQuestionId = useCallback((
@@ -511,18 +522,26 @@ export default function IngestionHistoryHub({
       <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 sm:p-6 shadow-[3px_3px_0px_#201e1d]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider bg-[#ffe1d0] text-[#201e1d] border border-[#201e1d] px-2.5 py-0.5 rounded-full shadow-xs">
-                CONTENT PIPELINE · AUDIT LEDGER
-              </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black font-heading tracking-tight text-[#201e1d]">
-              Ingestion History & Batch Contents
-            </h1>
-            <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-2xl leading-relaxed">
-              Track every exam paper ingested into Revizz, when it was processed, its lifecycle status, and inspect the exact questions, topics, and diagrams inside each ingest.
-            </p>
+            {embedded ? (
+              <h2 className="text-xl font-black font-heading tracking-tight text-[#201e1d]">
+                Ingestion History & Batch Contents
+              </h2>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-wider bg-[#ffe1d0] text-[#201e1d] border border-[#201e1d] px-2.5 py-0.5 rounded-full shadow-xs">
+                    CONTENT PIPELINE · AUDIT LEDGER
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black font-heading tracking-tight text-[#201e1d]">
+                  Ingestion History & Batch Contents
+                </h1>
+                <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-2xl leading-relaxed">
+                  Track every exam paper ingested into Revizz, when it was processed, its lifecycle status, and inspect the exact questions, topics, and diagrams inside each ingest.
+                </p>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
@@ -542,7 +561,7 @@ export default function IngestionHistoryHub({
 
             <button
               type="button"
-              onClick={() => onSelectTab?.('ingestion')}
+              onClick={() => (onNewIngest ? onNewIngest() : onSelectTab?.('ingestion'))}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffe1d0] hover:bg-[#ffc6a5] border-2 border-[#201e1d] shadow-[2px_2px_0px_#201e1d] text-xs font-bold text-[#201e1d] transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
               title="Start a new exam paper ingestion session in Studio"
             >

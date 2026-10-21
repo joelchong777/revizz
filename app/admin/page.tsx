@@ -12,7 +12,6 @@ import { ProfileSwitcherModal } from '@/components/auth/ProfileSwitcherModal';
 
 const TAB_TITLES: Record<string, string> = {
   ingestion: 'Ingestion Studio',
-  history: 'Ingestion History',
   papers: 'Ingested Paper Viewer',
   diagnostics: 'Diagnostics Lab',
   bank: 'Question Bank',
@@ -72,8 +71,15 @@ function AdminContent() {
       const normalized = tab.toLowerCase();
       if (normalized === 'importer') {
         setActiveTab('ingestion');
-      } else if (normalized === 'ingestion-history') {
-        setActiveTab('history');
+      } else if (normalized === 'ingestion-history' || normalized === 'history') {
+        setActiveTab('ingestion');
+        setSubTab('history');
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('tab', 'ingestion');
+          url.searchParams.set('sub', 'history');
+          window.history.replaceState(null, '', url.toString());
+        }
       } else if (normalized === 'system') {
         setActiveTab('settings');
         setSubTab('system');
@@ -83,7 +89,7 @@ function AdminContent() {
       } else if (normalized === 'portal-menu') {
         setActiveTab('settings');
         setSubTab('portal-menu');
-      } else if (['ingestion', 'history', 'papers', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads', 'users'].includes(normalized)) {
+      } else if (['ingestion', 'papers', 'diagnostics', 'bank', 'flagged', 'editor', 'settings', 'ads', 'users'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }
@@ -95,6 +101,10 @@ function AdminContent() {
   }, [searchParams, isDev]);
 
   const handleSelectTab = (tab: string, sub?: string) => {
+    if (tab === 'history' || tab === 'ingestion-history') {
+      tab = 'ingestion';
+      sub = 'history';
+    }
     if (tab === 'system') {
       setActiveTab('settings');
       setSubTab('system');
@@ -108,6 +118,8 @@ function AdminContent() {
       setActiveTab(tab);
       if (sub) {
         setSubTab(sub);
+      } else if (tab === 'ingestion') {
+        setSubTab(undefined);
       }
     }
     setMobileNavOpen(false);

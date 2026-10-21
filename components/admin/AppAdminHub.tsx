@@ -6,7 +6,6 @@ import IngestionHub from '@/components/portal/IngestionHub';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import IngestionDiagnostics from '@/components/portal/IngestionDiagnostics';
-import IngestionHistoryHub from '@/components/admin/IngestionHistoryHub';
 import PortalMenuManager from '@/components/admin/PortalMenuManager';
 import AdminSettingsHub, { SettingsSubTab } from '@/components/admin/AdminSettingsHub';
 import AdsManagerHub from '@/components/admin/AdsManagerHub';
@@ -94,7 +93,22 @@ export default function AppAdminHub({
 
   const renderIngestion = () => (
     <div className="space-y-4">
-      <IngestionHub />
+      <IngestionHub
+        initialView={subTab === 'history' ? 'history' : 'new'}
+        onOpenEditor={handleOpenEditor}
+        onViewChange={(v) => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', 'ingestion');
+            if (v === 'history') {
+              url.searchParams.set('sub', 'history');
+            } else {
+              url.searchParams.delete('sub');
+            }
+            window.history.replaceState(null, '', url.toString());
+          }
+        }}
+      />
     </div>
   );
 
@@ -364,14 +378,6 @@ export default function AppAdminHub({
             }
           }}
           onSelectParentTab={onSelectTab}
-        />
-      );
-
-    case 'history':
-      return (
-        <IngestionHistoryHub
-          onSelectTab={onSelectTab}
-          onOpenEditor={handleOpenEditor}
         />
       );
 

@@ -21,8 +21,26 @@ import {
 } from "lucide-react";
 
 import IngestionSetupWizard from "./IngestionSetupWizard";
+import IngestionHistoryHub from "@/components/admin/IngestionHistoryHub";
 
-export default function IngestionHub() {
+export type StudioSetupView = "new" | "history";
+
+export interface IngestionHubProps {
+  initialView?: StudioSetupView;
+  onViewChange?: (view: StudioSetupView) => void;
+  onOpenEditor?: (questionId: string) => void;
+}
+
+const STUDIO_TABS: { id: StudioSetupView; label: string }[] = [
+  { id: "new", label: "New paper" },
+  { id: "history", label: "History" },
+];
+
+export default function IngestionHub({
+  initialView = "new",
+  onViewChange,
+  onOpenEditor,
+}: IngestionHubProps = {}) {
   const {
     paper,
     selectedIdx,
@@ -80,7 +98,28 @@ export default function IngestionHub() {
   } = useIngestionStore();
 
   // Local switch to toggle setup wizard screen even when paper is active
-  const [isSetupOpen, setIsSetupOpen] = useState(false);
+  const [isSetupOpen, setIsSetupOpen] = useState(initialView === "history");
+  const [setupView, setSetupView] = useState<StudioSetupView>(initialView);
+  const tabRefs = useRef<Record<StudioSetupView, HTMLButtonElement | null>>({ new: null, history: null });
+
+  // URL-driven view changes
+  useEffect(() => {
+    setSetupView(initialView);
+    if (initialView === "history") setIsSetupOpen(true);
+  }, [initialView]);
+
+  const changeSetupView = (v: StudioSetupView) => {
+    setSetupView(v);
+    onViewChange?.(v);
+  };
+
+  const handleTabKeyDown = (e: React.KeyboardEvent, idx: number) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const next = STUDIO_TABS[(idx + (e.key === "ArrowRight" ? 1 : STUDIO_TABS.length - 1)) % STUDIO_TABS.length];
+    changeSetupView(next.id);
+    tabRefs.current[next.id]?.focus();
+  };
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [isMarkSchemeModalOpen, setIsMarkSchemeModalOpen] = useState(false);
   const [markSchemeReport, setMarkSchemeReport] = useState<MarkSchemeVerificationReport | null>(null);
@@ -489,6 +528,51 @@ export default function IngestionHub() {
         }
       >
         {mode === "setup" ? (
+          <div>
+            <div
+              role="tablist"
+              aria-label="Ingestion Studio"
+              className="inline-flex gap-2 mb-4 p-1 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl shadow-[3px_3px_0px_#201e1d]"
+            >
+              {STUDIO_TABS.map((t, idx) => {
+                const selected = setupView === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    ref={(el) => { tabRefs.current[t.id] = el; }}
+                    type="button"
+                    role="tab"
+                    id={`studio-tab-${t.id}`}
+                    data-testid={`studio-tab-${t.id}`}
+                    aria-selected={selected}
+                    aria-controls="studio-tabpanel"
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => changeSetupView(t.id)}
+                    onKeyDown={(e) => handleTabKeyDown(e, idx)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      selected
+                        ? "bg-[#ffe1d0] text-[#201e1d] border-2 border-[#c67139]"
+                        : "text-[#645c50] border-2 border-transparent hover:bg-[#ffe1d0]/60"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div role="tabpanel" id="studio-tabpanel" aria-labelledby={`studio-tab-${setupView}`}>
+            {setupView === "history" ? (
+              <IngestionHistoryHub
+                embedded
+                onOpenEditor={onOpenEditor}
+                onNewIngest={() => changeSetupView("new")}
+                onOpenInStudio={() => {
+                  setSetupView("new");
+                  setIsSetupOpen(false);
+                  onViewChange?.("new");
+                }}
+              />
+            ) : (
           /* Step 1: Cambridge Paper Setup & PDF Ingestion Wizard */
           <IngestionSetupWizard
             onStartExtraction={handleStartExtraction}
@@ -519,6 +603,9 @@ export default function IngestionHub() {
             activePaper={paper}
             onReturnToWorkspace={() => setIsSetupOpen(false)}
           />
+            )}
+            </div>
+          </div>
         ) : (
           /* Step 2: Focused Dual-Pane Verification Workspace */
           <IngestionWorkspace
