@@ -1639,59 +1639,6 @@ export default function TestCompilerHub() {
                 </div>
               </div>
 
-              {/* Topic Coverage */}
-              {selectedQuestionIds.length > 0 && topicDistribution.length > 0 && (
-                <div className="flex flex-col gap-1.5 pt-1">
-                  <div className="flex h-2 rounded-full overflow-hidden gap-0.5 bg-[#dcd3c4]">
-                    {topicDistribution.map((item, idx) => {
-                      const colors = [
-                        '#c67139',
-                        '#728157',
-                        '#d67f48',
-                        '#8fa073',
-                        '#8c491a',
-                        '#56633f',
-                        '#f6a06b',
-                        '#aebf92',
-                      ];
-                      const color = colors[idx % colors.length];
-                      return (
-                        <div
-                          key={item.topic}
-                          style={{ flex: item.count, backgroundColor: color }}
-                          title={`${item.topic}: ${item.count} (${item.percentage}%)`}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#201e1d]">
-                    {topicDistribution.map((item, idx) => {
-                      const colors = [
-                        '#c67139',
-                        '#728157',
-                        '#d67f48',
-                        '#8fa073',
-                        '#8c491a',
-                        '#56633f',
-                        '#f6a06b',
-                        '#aebf92',
-                      ];
-                      const color = colors[idx % colors.length];
-                      return (
-                        <span key={item.topic} className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: color }}
-                          />
-                          <span className="font-medium truncate max-w-[130px]">{item.topic}</span>
-                          <span className="font-bold opacity-75">{item.count}</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
               {/* Show Selected Filter Button */}
               <button
                 type="button"
