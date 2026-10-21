@@ -1,6 +1,6 @@
 # Revizz Codebase Atlas & Line Coordinates
 
-> **Automated Symbol Atlas**: Indexing 169 files, 94,968 lines, and 845 symbols across core modules. Generated in 491ms.
+> **Automated Symbol Atlas**: Indexing 170 files, 96,152 lines, and 851 symbols across core modules. Generated in 470ms.
 
 Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact `[L<start>-L<end>]` coordinates.
 
@@ -8,7 +8,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 
 - **`app/admin/page.tsx`** (523 lines): `AdminPage [L503-L522]`
 - **`app/admin/papers/page.tsx`** (42 lines): `AdminPapersPage [L26-L41]`
-- **`app/api/admin/users/route.ts`** (443 lines): `ManagedUser [L13-L25]`, `GET [L52-L153]`, `POST [L159-L278]`, `PATCH [L285-L363]`, `DELETE [L369-L442]`
+- **`app/api/admin/users/route.ts`** (557 lines): `ManagedUser [L13-L25]`, `GET [L52-L153]`, `POST [L159-L392]`, `PATCH [L399-L477]`, `DELETE [L483-L556]`
 - **`app/api/ads/config/route.ts`** (129 lines): `GET [L59-L69]`, `POST [L71-L115]`, `DELETE [L117-L128]`
 - **`app/api/ingest/crop/route.ts`** (146 lines): `POST [L50-L145]`
 - **`app/api/ingest/extract/route.ts`** (347 lines): `POST [L45-L346]`
@@ -20,7 +20,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`app/homework/page.tsx`** (33 lines): `metadata [L5-L8]`, `HomeworkPage [L26-L32]`
 - **`app/layout.tsx`** (95 lines): `metadata [L35-L38]`, `viewport [L40-L46]`, `RootLayout [L48-L94]`
 - **`app/not-found.tsx`** (22 lines): `NotFound [L3-L21]`
-- **`app/page.tsx`** (403 lines): `HomePage [L23-L402]`
+- **`app/page.tsx`** (423 lines): `HomePage [L23-L422]`
 - **`app/portal/compiler/print/page.tsx`** (224 lines): `PrintPage [L208-L223]`
 - **`app/portal/page.tsx`** (994 lines): `PortalPage [L976-L993]`
 - **`app/profile/homework/page.tsx`** (33 lines): `metadata [L5-L8]`, `ProfileHomeworkPage [L26-L32]`
@@ -32,26 +32,26 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 ## 2. UI & Portal Components (components/)
 
 - **`components/AppShell.tsx`** (33 lines): `AppShell [L11-L30]`
-- **`components/AuthModal.tsx`** (394 lines): `AuthModalProps [L15-L20]`, `AuthModal [L22-L391]`
+- **`components/AuthModal.tsx`** (406 lines): `AuthModalProps [L15-L22]`, `AuthModal [L24-L403]`
 - **`components/Header.tsx`** (312 lines): `Header [L19-L309]`
 - **`components/LeaderboardModal.tsx`** (361 lines): `LeaderboardModal [L20-L360]`
 - **`components/QuestionCard.tsx`** (907 lines): `QuestionCard [L36-L904]`
 - **`components/RoundSummary.tsx`** (388 lines): `RoundSummary [L31-L385]`
 - **`components/SoundToggle.tsx`** (64 lines): `SoundToggle [L12-L61]`
 - **`components/StartFlow.tsx`** (990 lines): `StartFlow [L23-L987]`
-- **`components/StudentAuthGate.tsx`** (176 lines): `StudentAuthGate [L11-L173]`
+- **`components/StudentAuthGate.tsx`** (212 lines): `StudentAuthGate [L14-L209]`
 - **`components/TopicMasteryList.tsx`** (305 lines): `TopicMasteryList [L33-L302]`
 - **`components/admin/AdminSettingsHub.tsx`** (1553 lines): `AdminSettingsHubProps [L36-L40]`, `AdminSettingsHub [L70-L1552]`
 - **`components/admin/AdsManagerHub.tsx`** (2298 lines): `AdsManagerHub [L115-L2297]`
 - **`components/admin/AppAdminHub.tsx`** (922 lines): `AppAdminHubProps [L31-L37]`, `AppAdminHub [L39-L387]`, `EducatorSeat [L389-L396]`, `InstitutionalCohort [L398-L404]`, `SchoolLicenceManager [L406-L921]`
-- **`components/admin/AppAdminNav.tsx`** (388 lines): `AppAdminNavProps [L22-L32]`, `AppAdminNav [L34-L387]`
-- **`components/admin/IngestionHistoryHub.tsx`** (1307 lines): `IngestionHistoryItem [L42-L53]`, `IngestionHistoryHubProps [L55-L58]`, `IngestionHistoryHub [L113-L1306]`
+- **`components/admin/AppAdminNav.tsx`** (334 lines): `AppAdminNavProps [L22-L32]`, `AppAdminNav [L34-L333]`
+- **`components/admin/IngestionHistoryHub.tsx`** (1347 lines): `IngestionHistoryItem [L43-L54]`, `IngestionHistoryHubProps [L56-L59]`, `IngestionHistoryHub [L114-L1346]`
 - **`components/admin/PortalMenuManager.tsx`** (529 lines): `PortalMenuManager [L69-L528]`
-- **`components/admin/UserManagementHub.tsx`** (1784 lines): `ManagedUser [L49-L61]`, `UserManagementHub [L167-L1783]`
-- **`components/admin/WholePaperViewer.tsx`** (1112 lines): `WholePaperViewer [L42-L1111]`
+- **`components/admin/UserManagementHub.tsx`** (2247 lines): `ManagedUser [L53-L65]`, `UserManagementHub [L171-L2246]`
+- **`components/admin/WholePaperViewer.tsx`** (1103 lines): `WholePaperViewer [L38-L1102]`
 - **`components/ads/AdSlotBanner.tsx`** (769 lines): `AdSlotBannerProps [L23-L38]`, `AdSlotBanner [L74-L766]`
 - **`components/portal/AdminCMS.tsx`** (1155 lines): `AdminCMSProps [L40-L43]`, `AdminCMS [L45-L1154]`
-- **`components/portal/AdminNav.tsx`** (407 lines): `AdminNavProps [L25-L38]`, `AdminNav [L40-L406]`
+- **`components/portal/AdminNav.tsx`** (398 lines): `AdminNavProps [L25-L38]`, `AdminNav [L40-L397]`
 - **`components/portal/AdminTools.tsx`** (2821 lines): `QuestionBankItem [L79-L105]`, `getStatusBadgeClass [L107-L120]`, `createInitialBankItems [L122-L212]`, `BankFilterDropdown [L246-L396]`, `AdminTools [L398-L2820]`
 - **`components/portal/AssignedHomeworkHub.tsx`** (616 lines): `AssignedHomeworkHubProps [L38-L42]`, `AssignedHomeworkHub [L44-L615]`
 - **`components/portal/AssignedHomeworkModal.tsx`** (871 lines): `NewHomeworkModal [L76-L618]`, `SubmissionsDetailModal [L630-L870]`
@@ -75,19 +75,20 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`components/portal/IngestionWorkspace.tsx`** (345 lines): `IngestionWorkspaceProps [L17-L41]`, `IngestionWorkspace [L53-L342]`
 - **`components/portal/StagingReview.tsx`** (12 lines): `StagingReviewProps [L3-L7]`, `StagingReview [L9-L11]`
 - **`components/portal/TeacherAnalytics.tsx`** (2565 lines): `TeacherAnalyticsProps [L61-L65]`, `RosterStudent [L67-L87]`, `HeatRow [L89-L92]`, `TeacherAnalytics [L202-L2564]`
-- **`components/portal/TeacherOverviewHub.tsx`** (1605 lines): `TeacherOverviewHubProps [L57-L60]`, `TriageStudent [L62-L75]`, `MockAssignmentStats [L77-L81]`, `TeacherOverviewHub [L107-L1604]`
+- **`components/portal/TeacherOverviewHub.tsx`** (1784 lines): `TeacherOverviewHubProps [L57-L60]`, `TriageStudent [L62-L75]`, `MockAssignmentStats [L77-L81]`, `TeacherOverviewHub [L112-L1783]`
 - **`components/portal/compiler/CompilerDiagramPreview.tsx`** (272 lines): `CompilerDiagramPreviewProps [L19-L25]`, `CompilerDiagramPreview [L34-L271]`
-- **`components/portal/compiler/PrintableExamLayout.tsx`** (337 lines): `PrintableExamLayout [L19-L336]`
-- **`components/portal/compiler/TestCompilerHub.tsx`** (3232 lines): `TestCompilerHub [L88-L3231]`
+- **`components/portal/compiler/PrintableExamLayout.tsx`** (320 lines): `PrintableExamLayout [L14-L319]`
+- **`components/portal/compiler/TestCompilerHub.tsx`** (3216 lines): `TestCompilerHub [L84-L3215]`
 - **`components/portal/staged/StagedPaperAuditor.tsx`** (663 lines): `StagedPaperAuditorProps [L30-L34]`, `StagedPaperAuditor [L42-L660]`
 - **`components/portal/staged/StagedPapersQueue.tsx`** (733 lines): `StagedPaperItem [L29-L46]`, `StagedPapersQueueProps [L48-L51]`, `StagedPapersQueue [L87-L732]`
 - **`components/profile/StudentAchievementsActivityPanel.tsx`** (584 lines): `StudentAchievementsActivityPanelProps [L14-L20]`, `StudentAchievementsActivityPanel [L22-L583]`
-- **`components/profile/StudentHomeworkPanel.tsx`** (1157 lines): `StudentHomeworkPanel [L115-L1156]`
+- **`components/profile/StudentHomeworkPanel.tsx`** (1150 lines): `StudentHomeworkPanel [L111-L1149]`
 - **`components/profile/StudentProfileHub.tsx`** (912 lines): `StudentProfileHub [L79-L911]`
-- **`components/profile/StudentReviewPanel.tsx`** (784 lines): `StudentReviewPanelProps [L23-L29]`, `StudentReviewPanel [L31-L783]`
+- **`components/profile/StudentReviewPanel.tsx`** (768 lines): `StudentReviewPanelProps [L19-L25]`, `StudentReviewPanel [L27-L767]`
 - **`components/profile/StudentSettingsPanel.tsx`** (717 lines): `StudentSettingsPanelProps [L31-L39]`, `StudentSettingsPanel [L59-L716]`
 - **`components/profile/StudentStatsPanel.tsx`** (569 lines): `StudentStatsPanelProps [L7-L13]`, `StudentStatsPanel [L15-L568]`
 - **`components/ui/MarkdownErrorBoundary.tsx`** (59 lines): `MarkdownErrorBoundary [L22-L56]`
+- **`components/ui/RichMarkdown.tsx`** (103 lines): `neobrutalistTableComponents [L13-L34]`, `printableTableComponents [L36-L57]`, `RichMarkdownProps [L59-L64]`, `RichMarkdown [L66-L100]`
 - **`components/ui/badge.tsx`** (47 lines): `Badge [L40-L44]`
 - **`components/ui/dialog.tsx`** (131 lines): `DialogFooter [L81-L92]`, `Dialog [L119-L130]`, `DialogPortal [L119-L130]`, `DialogOverlay [L119-L130]`, `DialogClose [L119-L130]`
 - **`components/ui/select.tsx`** (274 lines): `SelectOption [L5-L9]`, `SelectProps [L11-L29]`, `Select [L31-L270]`, `NeobrutalistDropdown [L272-L272]`
@@ -110,7 +111,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`lib/ingestion/markSchemeChecker.ts`** (268 lines): `MismatchType [L6-L13]`, `QuestionMismatch [L15-L27]`, `MarkSchemeVerificationReport [L31-L43]`, `checkQuestionAgainstMarkScheme [L48-L51]`, `verifyPaperAgainstMarkScheme [L187-L261]`
 - **`lib/ingestion/markSchemeParser.ts`** (285 lines): `ParseMarkSchemeResult [L9-L15]`, `parseMarkSchemePdf [L23-L87]`, `parseMarkSchemeText [L96-L145]`, `findMarkSchemePdf [L157-L245]`
 - **`lib/ingestion/markSchemeRemediator.ts`** (219 lines): `RemediationChange [L5-L10]`, `RemediationResult [L12-L17]`, `remediatePaperWithMarkScheme [L26-L136]`
-- **`lib/ingestion/stagedPaperStorage.ts`** (503 lines): `fetchPersistentPaperStates [L31-L66]`, `savePersistentPaperStates [L68-L102]`, `getStagingLocations [L110-L144]`, `getFallbackStagingPaper [L146-L225]`, `fetchLiveSupabasePapers [L255-L357]`
+- **`lib/ingestion/stagedPaperStorage.ts`** (502 lines): `fetchPersistentPaperStates [L31-L66]`, `savePersistentPaperStates [L68-L101]`, `getStagingLocations [L109-L143]`, `getFallbackStagingPaper [L145-L224]`, `fetchLiveSupabasePapers [L254-L356]`
 - **`lib/ingestion/useIngestionStore.ts`** (1770 lines): `PublishReceipt [L17-L27]`, `IngestionState [L46-L86]`, `IngestionActions [L88-L157]`, `inferPaperMetadata [L239-L283]`, `normalizeStagingPayload [L294-L512]`
 - **`lib/leaderboard.ts`** (46 lines): `LeaderboardEntry [L4-L11]`, `fetchWeeklyLeaderboard [L13-L32]`, `toggleLeaderboardOptIn [L34-L45]`
 - **`lib/mastery.ts`** (251 lines): `getMasteryBadge [L46-L85]`, `getReviewPile [L117-L130]`, `addToReviewPile [L150-L164]`, `getFirstTryCorrectIds [L200-L213]`, `subscribeMasteryChanges [L237-L250]`
@@ -138,7 +139,7 @@ Use `npx tsx scripts/codebase-map.ts query <term>` to search symbols with exact 
 - **`scripts/ingest-paper.ts`** (669 lines): `CliOptions [L69-L84]`, `parseCliArgs [L86-L137]`, `InferredMetadata [L155-L164]`, `inferCambridgeMetadata [L170-L214]`, `upsertStagingPaperToSupabase [L224-L233]`
 - **`scripts/verify-revizz.ts`** (4479 lines): `test [L211-L233]`, `testAsync [L235-L257]`, `assert [L259-L263]`
 - **`scripts/verify-ui.ts`** (593 lines): `recordAssertion [L46-L62]`, `parseCliArgs [L71-L110]`, `resolveChromeExecutable [L113-L141]`
-- **`scripts/wt.ts`** (1763 lines): `commandCreate [L380-L521]`, `commandRelease [L689-L811]`, `commandServe [L986-L1135]`, `commandShip [L1178-L1412]`, `main [L1630-L1754]`
+- **`scripts/wt.ts`** (1838 lines): `commandCreate [L380-L521]`, `commandRelease [L689-L811]`, `commandServe [L986-L1135]`, `commandShip [L1178-L1459]`, `main [L1679-L1829]`
 
 ## 5. Database & Supabase Migrations (supabase/)
 

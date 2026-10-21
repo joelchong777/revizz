@@ -28,6 +28,7 @@
 | 20 | Vercel Deployment | **Vercel CLI Root Folder Stale Upload**: `npx vercel --prod` runs from repo root, deploying an older snapshot if root hasn't pulled `origin/main`. | Fast-forward root repo (`git pull --ff-only origin main`) immediately after atomic push in `scripts/wt.ts`. |
 | 21 | Local Dev Server | **Non-Daemon Process Teardown**: Running `npm run wt serve` with `IsDaemon: false` kills child `next dev` when the tool step exits. | Launch `npx next dev -p 3000` with `IsDaemon: true` and pre-warm `/portal` via `curl` for instant browser loads. |
 | 22 | Worktree Dev Root | **Next.js 15 Multiple Lockfile Inference**: Next.js 15 infers root from parent `package-lock.json`, breaking worktree routing (404 on worktree-only routes). | Set `outputFileTracingRoot: path.resolve(__dirname)` in `next.config.ts`. |
+| 23 | Vercel Deployment | **Duplicate Deployment & Missing Descriptions**: Running `git push` (webhook) AND `npx vercel --prod` spawns two builds: one with commit message and one with raw UID hash (`4bsWZp3yR`). | Avoid duplicate triggers; enrich git commit messages with multi-line body summarizing changes and verification log. |
 
 ## Recent Session Reflection — 2026-10-19: Student Homework Page & Mobile Assessment Runner
 - **Topic**: Student Homework & Assigned Work Hub (`app/homework/page.tsx`, `components/profile/StudentHomeworkPanel.tsx`, `lib/homework.ts`)

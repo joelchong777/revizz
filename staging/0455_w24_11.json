@@ -1,0 +1,1289 @@
+{
+  "id": "0455_w24_11",
+  "lifecycle_state": "review",
+  "state": "review",
+  "source_qp_filename": "0455_w24_qp_11.pdf",
+  "source_ms_filename": "0455_w24_ms_11.pdf",
+  "total_pages": 11,
+  "detected_year": 2024,
+  "detected_series": "w",
+  "detected_paper_code": "11",
+  "subject": {
+    "code": "0455",
+    "name": "Economics",
+    "icon": "trending-up"
+  },
+  "paper": {
+    "series": "w",
+    "paper_code": "11",
+    "year": 2024
+  },
+  "syllabus_topics": [
+    {
+      "name": "The basic economic problem",
+      "order_index": 1
+    },
+    {
+      "name": "The allocation of resources",
+      "order_index": 2
+    },
+    {
+      "name": "Microeconomic decision makers",
+      "order_index": 3
+    },
+    {
+      "name": "Government and the macroeconomy",
+      "order_index": 4
+    },
+    {
+      "name": "Economic development",
+      "order_index": 5
+    },
+    {
+      "name": "International trade and globalisation",
+      "order_index": 6
+    }
+  ],
+  "questions": [
+    {
+      "question_number": 1,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q1",
+      "topic_name": "The basic economic problem",
+      "stem_markdown": "What has an opportunity cost in consumption?",
+      "page_number": 2,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "air",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "food",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "sea water",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "sunlight",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The basic economic problem**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What has an opportunity cost in consumption?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **B** (food) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (air)**: Incorrect. 'air' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (food)**: Correct. Accurately identifies that food satisfies the economic condition required by the question.\n- **C (sea water)**: Incorrect. 'sea water' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (sunlight)**: Incorrect. 'sunlight' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'air' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Correct. Accurately identifies that food satisfies the economic condition required by the question.",
+        "C": "Incorrect. 'sea water' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'sunlight' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 2,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q2",
+      "topic_name": "The basic economic problem",
+      "stem_markdown": "In which case is it possible to set the level of reward before production takes place for the first factor of production but not for the second factor? \n\n| | first factor | second factor |\n| :---: | :---: | :---: |\n| **A** | capital | land |\n| **B** | enterprise | labour |\n| **C** | labour | capital |\n| **D** | land | enterprise |\n",
+      "page_number": 2,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "first factor: capital | second factor: land",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "first factor: enterprise | second factor: labour",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "first factor: labour | second factor: capital",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "first factor: land | second factor: enterprise",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The basic economic problem**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"In which case is it possible to set the level of reward before production takes place for the first factor of production but not for the second factor? \n\n| | first factor | second factor |\n| :---: | :---: | :---: |\n| **A** | capital | land |\n| **B** | enterprise | labour |\n| **C** | labour | capital |\n| **D** | land | enterprise |\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (first factor: land | second factor: enterprise) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (first factor: capital | second factor: land)**: Incorrect. 'first factor: capital | second factor: land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (first factor: enterprise | second factor: labour)**: Incorrect. 'first factor: enterprise | second factor: labour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (first factor: labour | second factor: capital)**: Incorrect. 'first factor: labour | second factor: capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (first factor: land | second factor: enterprise)**: Correct. Accurately identifies that first factor: land | second factor: enterprise satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'first factor: capital | second factor: land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'first factor: enterprise | second factor: labour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'first factor: labour | second factor: capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that first factor: land | second factor: enterprise satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 3,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q3",
+      "topic_name": "The basic economic problem",
+      "stem_markdown": "The diagram shows the production possibility curve (PPC) for an economy. Which cost can be determined as the economy moves along its PPC from point X to point Y?",
+      "page_number": 2,
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 475,
+          "xmin": 301,
+          "ymax": 681,
+          "xmax": 702,
+          "page_number": 2
+        },
+        "image_url": "/questions/0455_2024_w_11_q3.png",
+        "storage_path": "0455_2024_w_11_q3.png",
+        "alt_description": "Cambridge Economics past paper diagram for question 3 showing economic curves, axis values and labeled points."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "the opportunity cost of producing more capital goods",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "the opportunity cost of producing more consumer goods",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "the social cost of producing more capital goods",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "the social cost of producing more consumer goods",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The basic economic problem**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The diagram shows the production possibility curve (PPC) for an economy. Which cost can be determined as the economy moves along its PPC from point X to point Y?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **B** (the opportunity cost of producing more consumer goods) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (the opportunity cost of producing more capital goods)**: Incorrect. 'the opportunity cost of producing more capital goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (the opportunity cost of producing more consumer goods)**: Correct. Accurately identifies that the opportunity cost of producing more consumer goods satisfies the economic condition required by the question.\n- **C (the social cost of producing more capital goods)**: Incorrect. 'the social cost of producing more capital goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (the social cost of producing more consumer goods)**: Incorrect. 'the social cost of producing more consumer goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'the opportunity cost of producing more capital goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Correct. Accurately identifies that the opportunity cost of producing more consumer goods satisfies the economic condition required by the question.",
+        "C": "Incorrect. 'the social cost of producing more capital goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'the social cost of producing more consumer goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 4,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q4",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "Which person is most likely to make a microeconomic decision as part of their job?",
+      "page_number": 3,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a government finance minister",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "the global administrator of the Human Development Index",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "the governor of the central bank",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "the manager of a private sector firm",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"Which person is most likely to make a microeconomic decision as part of their job?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (the manager of a private sector firm) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (a government finance minister)**: Incorrect. 'a government finance minister' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (the global administrator of the Human Development Index)**: Incorrect. 'the global administrator of the Human Development Index' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (the governor of the central bank)**: Incorrect. 'the governor of the central bank' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (the manager of a private sector firm)**: Correct. Accurately identifies that the manager of a private sector firm satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'a government finance minister' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'the global administrator of the Human Development Index' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'the governor of the central bank' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that the manager of a private sector firm satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 5,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q5",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "What necessarily describes the market system?",
+      "page_number": 3,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "all resources used to produce consumer goods",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "an economy with both a private and a public sector",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "limited resources but unlimited wants",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "resources allocated through demand and supply",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What necessarily describes the market system?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (resources allocated through demand and supply) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (all resources used to produce consumer goods)**: Incorrect. 'all resources used to produce consumer goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (an economy with both a private and a public sector)**: Incorrect. 'an economy with both a private and a public sector' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (limited resources but unlimited wants)**: Incorrect. 'limited resources but unlimited wants' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (resources allocated through demand and supply)**: Correct. Accurately identifies that resources allocated through demand and supply satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'all resources used to produce consumer goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'an economy with both a private and a public sector' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'limited resources but unlimited wants' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that resources allocated through demand and supply satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 6,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q6",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "The diagram shows the demand for and supply of a product. The original equilibrium is at X. Which point indicates the new equilibrium position if there is an increase in the price of a close substitute for the product while other things remain the same?",
+      "page_number": 3,
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 460,
+          "xmin": 257,
+          "ymax": 676,
+          "xmax": 746,
+          "page_number": 3
+        },
+        "image_url": "/questions/0455_2024_w_11_q6.png",
+        "storage_path": "0455_2024_w_11_q6.png",
+        "alt_description": "Cambridge Economics past paper diagram for question 6 showing economic curves, axis values and labeled points."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "point A",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "point B",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "point C",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "point D",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The diagram shows the demand for and supply of a product. The original equilibrium is at X. Which point indicates the new equilibrium position if there is an increase in the price of a close substitute for the product while other things remain the same?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (point C) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (point A)**: Incorrect. 'point A' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (point B)**: Incorrect. 'point B' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (point C)**: Correct. Accurately identifies that point C satisfies the economic condition required by the question.\n- **D (point D)**: Incorrect. 'point D' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'point A' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'point B' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that point C satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'point D' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 7,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q7",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "A firm has the following supply schedule. \n\n| price ($) | quantity supplied |\n| :---: | :---: |\n| 5 | 10 |\n| 10 | 20 |\n What is the price elasticity of supply of the good as the price increases from \\$5 to \\$10?",
+      "page_number": 3,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "-0.5",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "+0.5",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "+1.0",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "+2.0",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"A firm has the following supply schedule. \n\n| price ($) | quantity supplied |\n| :---: | :---: |\n| 5 | 10 |\n| 10 | 20 |\n What is the price elasticity of supply of the good as the price increases from \\$5 to \\$10?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (+1.0) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (-0.5)**: Incorrect. '-0.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (+0.5)**: Incorrect. '+0.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (+1.0)**: Correct. Accurately identifies that +1.0 satisfies the economic condition required by the question.\n- **D (+2.0)**: Incorrect. '+2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. '-0.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. '+0.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that +1.0 satisfies the economic condition required by the question.",
+        "D": "Incorrect. '+2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 8,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q8",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "Why does a government provide certain goods and services in a mixed economic system?",
+      "page_number": 4,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "The government always provides goods more cheaply than private firms.",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "The government considers only private costs and private benefits.",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "The government provides goods to prevent the development of monopolies.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "The government provides public goods because private firms cannot charge for them.",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"Why does a government provide certain goods and services in a mixed economic system?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (The government provides public goods because private firms cannot charge for them.) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (The government always provides goods more cheaply than private firms.)**: Incorrect. 'The government always provides goods more cheaply than private firms.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (The government considers only private costs and private benefits.)**: Incorrect. 'The government considers only private costs and private benefits.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (The government provides goods to prevent the development of monopolies.)**: Incorrect. 'The government provides goods to prevent the development of monopolies.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (The government provides public goods because private firms cannot charge for them.)**: Correct. Accurately identifies that The government provides public goods because private firms cannot charge for them. satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'The government always provides goods more cheaply than private firms.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'The government considers only private costs and private benefits.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'The government provides goods to prevent the development of monopolies.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that The government provides public goods because private firms cannot charge for them. satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 9,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q9",
+      "topic_name": "The allocation of resources",
+      "stem_markdown": "A government intends to subsidise bus fares and increase taxes on private motoring. How would this affect the private cost of transport? \n\n| | for motorists | for bus passengers |\n| :---: | :---: | :---: |\n| **A** | decrease | decrease |\n| **B** | decrease | increase |\n| **C** | increase | decrease |\n| **D** | increase | increase |\n",
+      "page_number": 4,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "for motorists: decrease | for bus passengers: decrease",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "for motorists: decrease | for bus passengers: increase",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "for motorists: increase | for bus passengers: decrease",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "for motorists: increase | for bus passengers: increase",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **The allocation of resources**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"A government intends to subsidise bus fares and increase taxes on private motoring. How would this affect the private cost of transport? \n\n| | for motorists | for bus passengers |\n| :---: | :---: | :---: |\n| **A** | decrease | decrease |\n| **B** | decrease | increase |\n| **C** | increase | decrease |\n| **D** | increase | increase |\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (for motorists: increase | for bus passengers: decrease) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (for motorists: decrease | for bus passengers: decrease)**: Incorrect. 'for motorists: decrease | for bus passengers: decrease' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (for motorists: decrease | for bus passengers: increase)**: Incorrect. 'for motorists: decrease | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (for motorists: increase | for bus passengers: decrease)**: Correct. Accurately identifies that for motorists: increase | for bus passengers: decrease satisfies the economic condition required by the question.\n- **D (for motorists: increase | for bus passengers: increase)**: Incorrect. 'for motorists: increase | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'for motorists: decrease | for bus passengers: decrease' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'for motorists: decrease | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that for motorists: increase | for bus passengers: decrease satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'for motorists: increase | for bus passengers: increase' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 10,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q10",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "What is not a function of money?",
+      "page_number": 4,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "medium of exchange",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "portability",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "store of value",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "unit of account",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is not a function of money?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **B** (portability) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (medium of exchange)**: Incorrect. 'medium of exchange' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (portability)**: Correct. Accurately identifies that portability satisfies the economic condition required by the question.\n- **C (store of value)**: Incorrect. 'store of value' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (unit of account)**: Incorrect. 'unit of account' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'medium of exchange' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Correct. Accurately identifies that portability satisfies the economic condition required by the question.",
+        "C": "Incorrect. 'store of value' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'unit of account' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 11,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q11",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "Bus drivers receive a wage of \\$15 000 a year. The government introduces a national minimum wage. Under which circumstances will the largest number of bus drivers become unemployed as a result of the minimum wage? \n\n| | national minimum wage (per year) $ | demand for bus travel |\n| :---: | :---: | :---: |\n| **A** | 15 000 | increasing |\n| **B** | 15 000 | unchanged |\n| **C** | 18 000 | increasing |\n| **D** | 18 000 | unchanged |\n",
+      "page_number": 4,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "national minimum wage (per year) $: 15 000 | demand for bus travel: increasing",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "national minimum wage (per year) $: 18 000 | demand for bus travel: increasing",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"Bus drivers receive a wage of \\$15 000 a year. The government introduces a national minimum wage. Under which circumstances will the largest number of bus drivers become unemployed as a result of the minimum wage? \n\n| | national minimum wage (per year) $ | demand for bus travel |\n| :---: | :---: | :---: |\n| **A** | 15 000 | increasing |\n| **B** | 15 000 | unchanged |\n| **C** | 18 000 | increasing |\n| **D** | 18 000 | unchanged |\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (national minimum wage (per year) $: 15 000 | demand for bus travel: increasing)**: Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged)**: Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (national minimum wage (per year) $: 18 000 | demand for bus travel: increasing)**: Incorrect. 'national minimum wage (per year) $: 18 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged)**: Correct. Accurately identifies that national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'national minimum wage (per year) $: 15 000 | demand for bus travel: unchanged' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'national minimum wage (per year) $: 18 000 | demand for bus travel: increasing' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that national minimum wage (per year) $: 18 000 | demand for bus travel: unchanged satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 12,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q12",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "A clothes retailer borrows money to finance the opening of another clothes shop. Which type of growth is this?",
+      "page_number": 5,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "internal and horizontal",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "internal and vertical",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "external and horizontal",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "external and vertical",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"A clothes retailer borrows money to finance the opening of another clothes shop. Which type of growth is this?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **A** (internal and horizontal) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (internal and horizontal)**: Correct. Accurately identifies that internal and horizontal satisfies the economic condition required by the question.\n- **B (internal and vertical)**: Incorrect. 'internal and vertical' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (external and horizontal)**: Incorrect. 'external and horizontal' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (external and vertical)**: Incorrect. 'external and vertical' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Correct. Accurately identifies that internal and horizontal satisfies the economic condition required by the question.",
+        "B": "Incorrect. 'internal and vertical' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'external and horizontal' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'external and vertical' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 13,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q13",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "What is meant by internal diseconomies of scale?",
+      "page_number": 5,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "average cost for the firm decreases when the output of the firm increases",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "average cost for the firm decreases when the output of the industry increases",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "average cost for the firm increases when the output of the firm increases",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "average cost for the firm increases when the output of the industry increases",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is meant by internal diseconomies of scale?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (average cost for the firm increases when the output of the firm increases) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (average cost for the firm decreases when the output of the firm increases)**: Incorrect. 'average cost for the firm decreases when the output of the firm increases' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (average cost for the firm decreases when the output of the industry increases)**: Incorrect. 'average cost for the firm decreases when the output of the industry increases' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (average cost for the firm increases when the output of the firm increases)**: Correct. Accurately identifies that average cost for the firm increases when the output of the firm increases satisfies the economic condition required by the question.\n- **D (average cost for the firm increases when the output of the industry increases)**: Incorrect. 'average cost for the firm increases when the output of the industry increases' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'average cost for the firm decreases when the output of the firm increases' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'average cost for the firm decreases when the output of the industry increases' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that average cost for the firm increases when the output of the firm increases satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'average cost for the firm increases when the output of the industry increases' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 14,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q14",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "A food-processing firm decides to change from a labour-intensive production method to a capital-intensive production method. What is likely to decrease as a result of the change?",
+      "page_number": 5,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "fixed costs as a percentage of total cost",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "output per worker per hour",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "the level of total output",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "variable costs as a percentage of total cost",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"A food-processing firm decides to change from a labour-intensive production method to a capital-intensive production method. What is likely to decrease as a result of the change?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (variable costs as a percentage of total cost) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (fixed costs as a percentage of total cost)**: Incorrect. 'fixed costs as a percentage of total cost' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (output per worker per hour)**: Incorrect. 'output per worker per hour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (the level of total output)**: Incorrect. 'the level of total output' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (variable costs as a percentage of total cost)**: Correct. Accurately identifies that variable costs as a percentage of total cost satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'fixed costs as a percentage of total cost' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'output per worker per hour' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'the level of total output' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that variable costs as a percentage of total cost satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 15,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q15",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "What is an example of a fixed cost?",
+      "page_number": 5,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "electricity",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "insurance",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "raw materials",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "wages",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is an example of a fixed cost?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **B** (insurance) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (electricity)**: Incorrect. 'electricity' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (insurance)**: Correct. Accurately identifies that insurance satisfies the economic condition required by the question.\n- **C (raw materials)**: Incorrect. 'raw materials' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (wages)**: Incorrect. 'wages' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'electricity' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Correct. Accurately identifies that insurance satisfies the economic condition required by the question.",
+        "C": "Incorrect. 'raw materials' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'wages' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 16,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q16",
+      "topic_name": "Microeconomic decision makers",
+      "stem_markdown": "What is the definition of profit maximisation?",
+      "page_number": 5,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "The firm is allocating a proportion of profit to other business objectives.",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "The firm is making as much profit as possible.",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "The firm is making higher levels of profit this year than last year.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "The firm is making the same amount of profit this year as last year.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Microeconomic decision makers**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is the definition of profit maximisation?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **B** (The firm is making as much profit as possible.) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (The firm is allocating a proportion of profit to other business objectives.)**: Incorrect. 'The firm is allocating a proportion of profit to other business objectives.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (The firm is making as much profit as possible.)**: Correct. Accurately identifies that The firm is making as much profit as possible. satisfies the economic condition required by the question.\n- **C (The firm is making higher levels of profit this year than last year.)**: Incorrect. 'The firm is making higher levels of profit this year than last year.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (The firm is making the same amount of profit this year as last year.)**: Incorrect. 'The firm is making the same amount of profit this year as last year.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'The firm is allocating a proportion of profit to other business objectives.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Correct. Accurately identifies that The firm is making as much profit as possible. satisfies the economic condition required by the question.",
+        "C": "Incorrect. 'The firm is making higher levels of profit this year than last year.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'The firm is making the same amount of profit this year as last year.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 17,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q17",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "The central bank of Mexico set its rate of interest to try to keep the rise in the price level to only 3%. Which government aim was it directly trying to achieve?",
+      "page_number": 6,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "balance of payments equilibrium",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "economic growth",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "full employment",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "low inflation",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The central bank of Mexico set its rate of interest to try to keep the rise in the price level to only 3%. Which government aim was it directly trying to achieve?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (low inflation) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (balance of payments equilibrium)**: Incorrect. 'balance of payments equilibrium' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (economic growth)**: Incorrect. 'economic growth' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (full employment)**: Incorrect. 'full employment' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (low inflation)**: Correct. Accurately identifies that low inflation satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'balance of payments equilibrium' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'economic growth' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'full employment' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that low inflation satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 18,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q18",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "The table shows a forecast for a government budget for year 1 and for year 2. \n\n|  | year 1 \\$bn | year 2 \\$bn |\n| :---: | :---: | :---: |\n| revenue | 50 | 55 |\n| spending | 60 | 60 |\n What does the forecast government budget for year 2 show?",
+      "page_number": 6,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "The budget deficit decreased when compared with year 1.",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "The budget deficit increased when compared with year 1.",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "The budget surplus decreased when compared with year 1.",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "The budget surplus increased when compared with year 1.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows a forecast for a government budget for year 1 and for year 2. \n\n|  | year 1 \\$bn | year 2 \\$bn |\n| :---: | :---: | :---: |\n| revenue | 50 | 55 |\n| spending | 60 | 60 |\n What does the forecast government budget for year 2 show?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **A** (The budget deficit decreased when compared with year 1.) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (The budget deficit decreased when compared with year 1.)**: Correct. Accurately identifies that The budget deficit decreased when compared with year 1. satisfies the economic condition required by the question.\n- **B (The budget deficit increased when compared with year 1.)**: Incorrect. 'The budget deficit increased when compared with year 1.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (The budget surplus decreased when compared with year 1.)**: Incorrect. 'The budget surplus decreased when compared with year 1.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (The budget surplus increased when compared with year 1.)**: Incorrect. 'The budget surplus increased when compared with year 1.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Correct. Accurately identifies that The budget deficit decreased when compared with year 1. satisfies the economic condition required by the question.",
+        "B": "Incorrect. 'The budget deficit increased when compared with year 1.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'The budget surplus decreased when compared with year 1.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'The budget surplus increased when compared with year 1.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 19,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q19",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "The graph shows the impact of a tax on the supply of petrol (gas). What can be concluded from this graph?",
+      "page_number": 6,
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 592,
+          "xmin": 335,
+          "ymax": 770,
+          "xmax": 668,
+          "page_number": 6
+        },
+        "image_url": "/questions/0455_2024_w_11_q19.png",
+        "storage_path": "0455_2024_w_11_q19.png",
+        "alt_description": "Cambridge Economics past paper diagram for question 19 showing economic curves, axis values and labeled points."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "The government will receive no tax revenue.",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "The impact of the tax will be shared between the consumer and the producer.",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "The impact of the tax will fall entirely upon the consumer.",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "The impact of the tax will fall entirely on the producer.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The graph shows the impact of a tax on the supply of petrol (gas). What can be concluded from this graph?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (The impact of the tax will fall entirely upon the consumer.) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (The government will receive no tax revenue.)**: Incorrect. 'The government will receive no tax revenue.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (The impact of the tax will be shared between the consumer and the producer.)**: Incorrect. 'The impact of the tax will be shared between the consumer and the producer.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (The impact of the tax will fall entirely upon the consumer.)**: Correct. Accurately identifies that The impact of the tax will fall entirely upon the consumer. satisfies the economic condition required by the question.\n- **D (The impact of the tax will fall entirely on the producer.)**: Incorrect. 'The impact of the tax will fall entirely on the producer.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'The government will receive no tax revenue.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'The impact of the tax will be shared between the consumer and the producer.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that The impact of the tax will fall entirely upon the consumer. satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'The impact of the tax will fall entirely on the producer.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 20,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q20",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "What is most likely to result from a successful supply-side policy?",
+      "page_number": 7,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a deterioration in the current account of the balance of payments",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "economic growth",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "increased inflation",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "increased structural unemployment",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is most likely to result from a successful supply-side policy?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **B** (economic growth) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (a deterioration in the current account of the balance of payments)**: Incorrect. 'a deterioration in the current account of the balance of payments' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (economic growth)**: Correct. Accurately identifies that economic growth satisfies the economic condition required by the question.\n- **C (increased inflation)**: Incorrect. 'increased inflation' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (increased structural unemployment)**: Incorrect. 'increased structural unemployment' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'a deterioration in the current account of the balance of payments' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Correct. Accurately identifies that economic growth satisfies the economic condition required by the question.",
+        "C": "Incorrect. 'increased inflation' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'increased structural unemployment' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 21,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q21",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "The table shows the rates of unemployment and real GDP growth for an economy in year 1 and year 2. \n\n|  | year 1 | year 2 |\n| :---: | :---: | :---: |\n| rate of | 3 | 7 |\n| unemployment (%) |  |  |\n| rate of real GDP | 3 | −1 |\n| growth (%) |  |  |\n Which combination of policy measures would be most effective in returning the economy to the year 1 level of activity?",
+      "page_number": 7,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a decrease in direct taxes and an increase in the rate of interest",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "a decrease in government expenditure and an increase in the rate of interest",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "an increase in direct taxes and a decrease in the rate of interest",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "an increase in government expenditure and a decrease in the rate of interest",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows the rates of unemployment and real GDP growth for an economy in year 1 and year 2. \n\n|  | year 1 | year 2 |\n| :---: | :---: | :---: |\n| rate of | 3 | 7 |\n| unemployment (%) |  |  |\n| rate of real GDP | 3 | −1 |\n| growth (%) |  |  |\n Which combination of policy measures would be most effective in returning the economy to the year 1 level of activity?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (an increase in government expenditure and a decrease in the rate of interest) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (a decrease in direct taxes and an increase in the rate of interest)**: Incorrect. 'a decrease in direct taxes and an increase in the rate of interest' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (a decrease in government expenditure and an increase in the rate of interest)**: Incorrect. 'a decrease in government expenditure and an increase in the rate of interest' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (an increase in direct taxes and a decrease in the rate of interest)**: Incorrect. 'an increase in direct taxes and a decrease in the rate of interest' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (an increase in government expenditure and a decrease in the rate of interest)**: Correct. Accurately identifies that an increase in government expenditure and a decrease in the rate of interest satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'a decrease in direct taxes and an increase in the rate of interest' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'a decrease in government expenditure and an increase in the rate of interest' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'an increase in direct taxes and a decrease in the rate of interest' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that an increase in government expenditure and a decrease in the rate of interest satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 22,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q22",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "The table shows selected indicators for the labour market of an economy in year 1 and year 2. \n\n|  | year 1 (millions) | year 2 (millions) |\n| :---: | :---: | :---: |\n| total labour force | 30 | 30 |\n| employed workers | 25 | 28 |\n| long-term unemployed | 1 | 2 |\n| employment in manufacturing | 4 | 2 |\n| employment in services | 13 | 16 |\n According to the table, what is the most likely type of unemployment in year 2?",
+      "page_number": 8,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "cyclical",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "frictional",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "seasonal",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "structural",
+          "is_correct": true
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows selected indicators for the labour market of an economy in year 1 and year 2. \n\n|  | year 1 (millions) | year 2 (millions) |\n| :---: | :---: | :---: |\n| total labour force | 30 | 30 |\n| employed workers | 25 | 28 |\n| long-term unemployed | 1 | 2 |\n| employment in manufacturing | 4 | 2 |\n| employment in services | 13 | 16 |\n According to the table, what is the most likely type of unemployment in year 2?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **D** (structural) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (cyclical)**: Incorrect. 'cyclical' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (frictional)**: Incorrect. 'frictional' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (seasonal)**: Incorrect. 'seasonal' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (structural)**: Correct. Accurately identifies that structural satisfies the economic condition required by the question.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'cyclical' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'frictional' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'seasonal' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Correct. Accurately identifies that structural satisfies the economic condition required by the question."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 23,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q23",
+      "topic_name": "Government and the macroeconomy",
+      "stem_markdown": "The table shows the percentage changes in earnings and consumer prices for four countries in one year. Which country has experienced the greatest increase in real income during the year? \n\n| | earnings (% change) | consumer prices (% change) |\n| :---: | :---: | :---: |\n| **A** | +12.5 | +9.5 |\n| **B** | +4.0 | +2.0 |\n| **C** | +8.5 | +5.0 |\n| **D** | +4.0 | +4.0 |\n",
+      "page_number": 8,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "earnings (% change): +12.5 | consumer prices (% change): +9.5",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "earnings (% change): +4.0 | consumer prices (% change): +2.0",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "earnings (% change): +8.5 | consumer prices (% change): +5.0",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "earnings (% change): +4.0 | consumer prices (% change): +4.0",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Government and the macroeconomy**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows the percentage changes in earnings and consumer prices for four countries in one year. Which country has experienced the greatest increase in real income during the year? \n\n| | earnings (% change) | consumer prices (% change) |\n| :---: | :---: | :---: |\n| **A** | +12.5 | +9.5 |\n| **B** | +4.0 | +2.0 |\n| **C** | +8.5 | +5.0 |\n| **D** | +4.0 | +4.0 |\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (earnings (% change): +8.5 | consumer prices (% change): +5.0) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (earnings (% change): +12.5 | consumer prices (% change): +9.5)**: Incorrect. 'earnings (% change): +12.5 | consumer prices (% change): +9.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (earnings (% change): +4.0 | consumer prices (% change): +2.0)**: Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (earnings (% change): +8.5 | consumer prices (% change): +5.0)**: Correct. Accurately identifies that earnings (% change): +8.5 | consumer prices (% change): +5.0 satisfies the economic condition required by the question.\n- **D (earnings (% change): +4.0 | consumer prices (% change): +4.0)**: Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +4.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'earnings (% change): +12.5 | consumer prices (% change): +9.5' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +2.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that earnings (% change): +8.5 | consumer prices (% change): +5.0 satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'earnings (% change): +4.0 | consumer prices (% change): +4.0' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 24,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q24",
+      "topic_name": "Economic development",
+      "stem_markdown": "The table shows the distribution of income as measured by GDP for three countries in a year. \n\n|  |  |  | percentage of GDP received by each 20% of households |  |  |\n| :---: | :---: | :---: | :---: | :---: | :---: |\n|  | highest 20% | highest 20% second | middle 20% | lowest 20% second | lowest 20% |\n| Belgium | 36.4 | 22.4 | 18.0 | 14.3 | 8.9 |\n| Mexico | 51.7 | 20.0 | 13.5 | 9.4 | 5.4 |\n| US | 46.9 | 22.4 | 15.3 | 10.3 | 5.1 |\n What can be concluded from the table?",
+      "page_number": 9,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "The distribution of income is most equal in Belgium.",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "The highest 20% of households in the US receive half of the country’s income.",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Economic development**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows the distribution of income as measured by GDP for three countries in a year. \n\n|  |  |  | percentage of GDP received by each 20% of households |  |  |\n| :---: | :---: | :---: | :---: | :---: | :---: |\n|  | highest 20% | highest 20% second | middle 20% | lowest 20% second | lowest 20% |\n| Belgium | 36.4 | 22.4 | 18.0 | 14.3 | 8.9 |\n| Mexico | 51.7 | 20.0 | 13.5 | 9.4 | 5.4 |\n| US | 46.9 | 22.4 | 15.3 | 10.3 | 5.1 |\n What can be concluded from the table?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (The distribution of income is most equal in Belgium.) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.)**: Incorrect. 'The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.)**: Incorrect. 'The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (The distribution of income is most equal in Belgium.)**: Correct. Accurately identifies that The distribution of income is most equal in Belgium. satisfies the economic condition required by the question.\n- **D (The highest 20% of households in the US receive half of the country’s income.)**: Incorrect. 'The highest 20% of households in the US receive half of the country’s income.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that The distribution of income is most equal in Belgium. satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'The highest 20% of households in the US receive half of the country’s income.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 25,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q25",
+      "topic_name": "Economic development",
+      "stem_markdown": "The number of people in relative poverty in a country is decreasing. What is the most likely cause of this?",
+      "page_number": 9,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a contractionary fiscal policy",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "a decrease in the national minimum wage",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "an expansion of investment in education",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "an increase in barriers to entry for multinational companies",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Economic development**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The number of people in relative poverty in a country is decreasing. What is the most likely cause of this?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (an expansion of investment in education) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (a contractionary fiscal policy)**: Incorrect. 'a contractionary fiscal policy' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (a decrease in the national minimum wage)**: Incorrect. 'a decrease in the national minimum wage' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (an expansion of investment in education)**: Correct. Accurately identifies that an expansion of investment in education satisfies the economic condition required by the question.\n- **D (an increase in barriers to entry for multinational companies)**: Incorrect. 'an increase in barriers to entry for multinational companies' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'a contractionary fiscal policy' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'a decrease in the national minimum wage' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that an expansion of investment in education satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'an increase in barriers to entry for multinational companies' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 26,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q26",
+      "topic_name": "Economic development",
+      "stem_markdown": "African economies may have rapid economic growth because of a large increase in their working age population. Based on this idea, which factor of production is most likely to grow significantly?",
+      "page_number": 9,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "labour",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "enterprise",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "capital",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "land",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Economic development**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"African economies may have rapid economic growth because of a large increase in their working age population. Based on this idea, which factor of production is most likely to grow significantly?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **A** (labour) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (labour)**: Correct. Accurately identifies that labour satisfies the economic condition required by the question.\n- **B (enterprise)**: Incorrect. 'enterprise' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (capital)**: Incorrect. 'capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (land)**: Incorrect. 'land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Correct. Accurately identifies that labour satisfies the economic condition required by the question.",
+        "B": "Incorrect. 'enterprise' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'capital' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'land' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 27,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q27",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "Which statement shows two benefits for consumers from specialisation at a national level?",
+      "page_number": 10,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "decreased prices and better quality",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "decreased profits and high-quality raw materials",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "increased choice and high transport costs",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "increased productivity and increased economies of scale",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"Which statement shows two benefits for consumers from specialisation at a national level?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **A** (decreased prices and better quality) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (decreased prices and better quality)**: Correct. Accurately identifies that decreased prices and better quality satisfies the economic condition required by the question.\n- **B (decreased profits and high-quality raw materials)**: Incorrect. 'decreased profits and high-quality raw materials' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (increased choice and high transport costs)**: Incorrect. 'increased choice and high transport costs' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (increased productivity and increased economies of scale)**: Incorrect. 'increased productivity and increased economies of scale' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Correct. Accurately identifies that decreased prices and better quality satisfies the economic condition required by the question.",
+        "B": "Incorrect. 'decreased profits and high-quality raw materials' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'increased choice and high transport costs' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'increased productivity and increased economies of scale' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 28,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q28",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "A multinational company (MNC) opens up a new factory in a host country. What is a possible cost of this new factory to the host country?",
+      "page_number": 10,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "increased access to modern technology",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "increased competition for host-country industries",
+          "is_correct": true
+        },
+        {
+          "label": "C",
+          "content_markdown": "increased employment for workers",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "increased tax revenue for the government",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"A multinational company (MNC) opens up a new factory in a host country. What is a possible cost of this new factory to the host country?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **B** (increased competition for host-country industries) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (increased access to modern technology)**: Incorrect. 'increased access to modern technology' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (increased competition for host-country industries)**: Correct. Accurately identifies that increased competition for host-country industries satisfies the economic condition required by the question.\n- **C (increased employment for workers)**: Incorrect. 'increased employment for workers' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (increased tax revenue for the government)**: Incorrect. 'increased tax revenue for the government' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'increased access to modern technology' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Correct. Accurately identifies that increased competition for host-country industries satisfies the economic condition required by the question.",
+        "C": "Incorrect. 'increased employment for workers' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'increased tax revenue for the government' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 29,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q29",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "The diagram shows the change in the exchange rate market for country X’s $. Which change in country X would have caused this?",
+      "page_number": 10,
+      "diagram": {
+        "has_diagram": true,
+        "bounding_box": {
+          "ymin": 444,
+          "xmin": 329,
+          "ymax": 645,
+          "xmax": 673,
+          "page_number": 10
+        },
+        "image_url": "/questions/0455_2024_w_11_q29.png",
+        "storage_path": "0455_2024_w_11_q29.png",
+        "alt_description": "Cambridge Economics past paper diagram for question 29 showing economic curves, axis values and labeled points."
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "a fall in its international competitiveness",
+          "is_correct": false
+        },
+        {
+          "label": "B",
+          "content_markdown": "a fall in its level of interest rates",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "a rise in its exports of services",
+          "is_correct": true
+        },
+        {
+          "label": "D",
+          "content_markdown": "a rise in its imports of goods",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The diagram shows the change in the exchange rate market for country X’s $. Which change in country X would have caused this?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (a rise in its exports of services) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (a fall in its international competitiveness)**: Incorrect. 'a fall in its international competitiveness' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (a fall in its level of interest rates)**: Incorrect. 'a fall in its level of interest rates' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (a rise in its exports of services)**: Correct. Accurately identifies that a rise in its exports of services satisfies the economic condition required by the question.\n- **D (a rise in its imports of goods)**: Incorrect. 'a rise in its imports of goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Incorrect. 'a fall in its international competitiveness' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'a fall in its level of interest rates' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Correct. Accurately identifies that a rise in its exports of services satisfies the economic condition required by the question.",
+        "D": "Incorrect. 'a rise in its imports of goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    },
+    {
+      "question_number": 30,
+      "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q30",
+      "topic_name": "International trade and globalisation",
+      "stem_markdown": "What is the most likely cause of an increased current account surplus in a country?",
+      "page_number": 11,
+      "diagram": {
+        "has_diagram": false
+      },
+      "options": [
+        {
+          "label": "A",
+          "content_markdown": "lower prices for the country’s exports",
+          "is_correct": true
+        },
+        {
+          "label": "B",
+          "content_markdown": "higher exchange rate for the country",
+          "is_correct": false
+        },
+        {
+          "label": "C",
+          "content_markdown": "economic growth in the country",
+          "is_correct": false
+        },
+        {
+          "label": "D",
+          "content_markdown": "recession in trade-partner countries",
+          "is_correct": false
+        }
+      ],
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is the most likely cause of an increased current account surplus in a country?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **A** (lower prices for the country’s exports) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (lower prices for the country’s exports)**: Correct. Accurately identifies that lower prices for the country’s exports satisfies the economic condition required by the question.\n- **B (higher exchange rate for the country)**: Incorrect. 'higher exchange rate for the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (economic growth in the country)**: Incorrect. 'economic growth in the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (recession in trade-partner countries)**: Incorrect. 'recession in trade-partner countries' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "distractor_analysis": {
+        "A": "Correct. Accurately identifies that lower prices for the country’s exports satisfies the economic condition required by the question.",
+        "B": "Incorrect. 'higher exchange rate for the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "C": "Incorrect. 'economic growth in the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "D": "Incorrect. 'recession in trade-partner countries' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+      },
+      "status": "active"
+    }
+  ]
+}

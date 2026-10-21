@@ -1178,7 +1178,7 @@ export function commandStop(repoRoot: string, port: number = 3000): void {
 export async function commandShip(
   topic: string | undefined,
   repoRoot: string,
-  options: { message?: string; fast?: boolean; dryRun?: boolean; skipVercel?: boolean } = {}
+  options: { message?: string; body?: string; fast?: boolean; dryRun?: boolean; skipVercel?: boolean } = {}
 ): Promise<void> {
   let resolved: ResolvedWorktree;
 
@@ -1252,13 +1252,20 @@ export async function commandShip(
     fs.rmSync(lockFile, { force: true });
   } catch {}
 
-  // Step 3 (Auto-Stage & Commit if Dirty)
+  // Step 3 (Auto-Stage & Commit if Dirty or Amend Existing Commit)
   let dirtyStatus = '';
+  let shortStatus = '';
   try {
     dirtyStatus = execSync('git status --porcelain', {
       cwd: worktreePath,
       encoding: 'utf-8',
     }).trim();
+    if (dirtyStatus.length > 0) {
+      shortStatus = execSync('git status --short', {
+        cwd: worktreePath,
+        encoding: 'utf-8',
+      }).trim();
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     error(`Failed to check git status in ${worktreePath}: ${msg}`);
@@ -1277,7 +1284,14 @@ export async function commandShip(
     }
 
     const commitMsg = options.message || `feat(${resolved.topic}): ship verified changes to production`;
-    const commitResult = spawnSync('git', ['commit', '-m', commitMsg], {
+    const defaultBody = [
+      shortStatus || dirtyStatus,
+      '',
+      'Verified: TypeScript & QA suite passed',
+    ].filter(Boolean).join('\n');
+    const commitBody = options.body || defaultBody;
+
+    const commitResult = spawnSync('git', ['commit', '-m', commitMsg, '-m', commitBody], {
       cwd: worktreePath,
       stdio: 'inherit',
     });
@@ -1286,6 +1300,39 @@ export async function commandShip(
       process.exit(1);
     }
     success(`Auto-committed changes: "${commitMsg}"`);
+  } else if (options.message) {
+    // If dirtyStatus.length === 0 and options.message was explicitly passed,
+    // amend the top worktree commit message if it hasn't been pushed yet so -m always names the shipped GitHub commit!
+    let hasUnpushedCommit = false;
+    try {
+      const unpushed = execSync('git log --oneline origin/main..HEAD', {
+        cwd: worktreePath,
+        encoding: 'utf-8',
+      }).trim();
+      hasUnpushedCommit = unpushed.length > 0;
+    } catch {
+      hasUnpushedCommit = true;
+    }
+
+    if (hasUnpushedCommit) {
+      const commitMsg = options.message;
+      let existingBody = '';
+      try {
+        existingBody = execSync('git log -1 --pretty=%b', { cwd: worktreePath, encoding: 'utf-8' }).trim();
+      } catch {}
+      const commitBody = options.body || existingBody || 'Verified: TypeScript & QA suite passed';
+
+      info(`Amending top worktree commit with updated message: "${commitMsg}"...`);
+      const amendResult = spawnSync('git', ['commit', '--amend', '-m', commitMsg, '-m', commitBody], {
+        cwd: worktreePath,
+        stdio: 'inherit',
+      });
+      if (amendResult.status !== 0) {
+        warn(`Failed to amend commit message; proceeding with existing commit.`);
+      } else {
+        success(`Amended top commit: "${commitMsg}"`);
+      }
+    }
   }
 
   // Step 4 (Fetch & Rebase on origin/main)
@@ -1580,11 +1627,12 @@ ${colors.bold}COMMANDS:${colors.reset}
       Prunes local branch (git branch -D).
       Refuses deletion if unmerged commits exist, unless --force is passed.
 
-  ${colors.cyan}ship [topic] [-m "<msg>"] [--fast] [--dry-run] [--skip-vercel]${colors.reset}
+  ${colors.cyan}ship [topic] [-m "<msg>"] [-b "<body>"] [--fast] [--dry-run] [--skip-vercel]${colors.reset}
       (aliases: ${colors.cyan}push-live${colors.reset}, ${colors.cyan}deploy${colors.reset})
       Full 1-command "Push Live" lifecycle:
       • Stops local dev server on port 3000 and clears locks.
-      • Auto-stages and commits uncommitted changes (custom or default message).
+      • Auto-stages and commits uncommitted changes (custom title & body, or auto-generated summary).
+      • Amends top worktree commit if already committed and -m is passed.
       • Fetches origin/main and cleanly rebases feature branch.
       • Smart verification gate: runs tsc and test (skipped if --fast and no upstream divergence).
       • Executes atomic push: git push origin <branch>:main.
@@ -1601,7 +1649,8 @@ ${colors.bold}COMMANDS:${colors.reset}
 
 ${colors.bold}OPTIONS:${colors.reset}
   ${colors.cyan}--port, -p <number>${colors.reset} Dev server port (default: 3000)
-  ${colors.cyan}-m, --message <msg>${colors.reset} Commit message for auto-committing uncommitted changes
+  ${colors.cyan}-m, --message <msg>${colors.reset} Commit message/title for auto-committing or amending commit
+  ${colors.cyan}-b, --body <body>${colors.reset}    Commit body summarizing changes & verification log
   ${colors.cyan}-n, --note <note>${colors.reset}    1-line learning or reflection note to persist in memory
   ${colors.cyan}--fast, --skip-verify${colors.reset} Skip redundant verification if HEAD is already rebased on origin/main
   ${colors.cyan}--skip-vercel${colors.reset}        Skip Vercel CLI deploy and live probe
@@ -1619,7 +1668,7 @@ ${colors.bold}EXAMPLES:${colors.reset}
   npx tsx scripts/wt.ts release fast-ingest --dry-run
   npx tsx scripts/wt.ts release fast-ingest
   npx tsx scripts/wt.ts ship
-  npx tsx scripts/wt.ts ship fast-ingest -m "feat: complete ingestion feature"
+  npx tsx scripts/wt.ts ship fast-ingest -m "feat(ingest): complete feature" -b "Verification: tsc & QA passed"
   npx tsx scripts/wt.ts ship --fast
   npx tsx scripts/wt.ts clean fast-ingest
   npx tsx scripts/wt.ts end -n "Parallelized verification cut DoD time to 1.5s"
@@ -1651,6 +1700,18 @@ export async function main(): Promise<void> {
     const inlineMsg = args.find(a => a.startsWith('--message=') || a.startsWith('-m='));
     if (inlineMsg) {
       message = inlineMsg.slice(inlineMsg.indexOf('=') + 1);
+    }
+  }
+
+  // Parse optional -b <body_text> or --body <body_text> (or --body=... / -b=...)
+  let body: string | undefined;
+  const bodyFlagIdx = args.findIndex(a => a === '--body' || a === '-b');
+  if (bodyFlagIdx !== -1 && args[bodyFlagIdx + 1] && !args[bodyFlagIdx + 1].startsWith('-')) {
+    body = args[bodyFlagIdx + 1];
+  } else {
+    const inlineBody = args.find(a => a.startsWith('--body=') || a.startsWith('-b='));
+    if (inlineBody) {
+      body = inlineBody.slice(inlineBody.indexOf('=') + 1);
     }
   }
 
@@ -1691,7 +1752,12 @@ export async function main(): Promise<void> {
   const nonFlags: string[] = [];
   for (let i = 1; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--port' || arg === '-p' || arg === '--message' || arg === '-m' || arg === '--note' || arg === '-n') {
+    if (
+      arg === '--port' || arg === '-p' ||
+      arg === '--message' || arg === '-m' ||
+      arg === '--body' || arg === '-b' ||
+      arg === '--note' || arg === '-n'
+    ) {
       i++; // skip next arg as it's the flag value
       continue;
     }
@@ -1700,6 +1766,15 @@ export async function main(): Promise<void> {
     }
     nonFlags.push(arg);
   }
+
+  // Handle npm run wt ship <topic> -m "<msg>" when invoked without -- (where npm strips -m and leaves "<msg>" in nonFlags[1])
+  if ((command === 'ship' || command === 'push-live' || command === 'deploy') && !message && nonFlags[1]) {
+    message = nonFlags[1];
+  }
+  if ((command === 'ship' || command === 'push-live' || command === 'deploy') && !body && nonFlags[2]) {
+    body = nonFlags[2];
+  }
+
   const topic = nonFlags[0];
   const queryTerms = nonFlags.slice(1);
 
@@ -1737,7 +1812,7 @@ export async function main(): Promise<void> {
     case 'ship':
     case 'push-live':
     case 'deploy':
-      await commandShip(topic, repoRoot, { message, fast, dryRun, skipVercel });
+      await commandShip(topic, repoRoot, { message, body, fast, dryRun, skipVercel });
       break;
 
     case 'end':

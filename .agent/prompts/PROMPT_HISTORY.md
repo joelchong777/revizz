@@ -8,21 +8,31 @@
 
 ---
 
-## Active Prompts Table (`v12.3`)
+## Active Prompts Table (`v12.4`)
 
 | Prompt File | Version | 1-Word Trigger | Model Target | Core Discipline |
 | :--- | :---: | :---: | :---: | :--- |
-| [`flash.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/flash.md) | `v12.3` | `"flash"` | Flash / Fast Lead | Low-latency dispatcher; edits <= 15L fast-path; max 1 Argon subagent on Strike 1 fail |
-| [`argon.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/argon.md) | `v12.3` | `"argon"` / `"pro"` / `"argon/pro"` | Argon (`pro`) Lead | In-brain multi-file architecture; strictly all-flash subagent fleet (`Model="flash"`, 0 `pro`) |
-| [`opus.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/opus.md) | `v12.3` | `"opus"` | Claude Opus 5.5 Lead | Frontier Architect; razor-thin context shielding (`<= 80L` reads, `<= 8L` replies, all-fast fleet) |
-| [`universal.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/universal.md) | `v12.3` | *Agnostic* | Any Model Lead | 100% project-agnostic orchestrator rulebook portable to any repo |
+| [`flash.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/flash.md) | `v12.4` | `"flash"` | Flash / Fast Lead | Low-latency dispatcher; edits <= 15L fast-path; max 1 Argon subagent on Strike 1 fail |
+| [`argon.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/argon.md) | `v12.4` | `"argon"` / `"pro"` / `"argon/pro"` | Argon (`pro`) Lead | In-brain multi-file architecture; strictly all-flash subagent fleet (`Model="flash"`, 0 `pro`) |
+| [`opus.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/opus.md) | `v12.4` | `"opus"` | Claude Opus 5.5 Lead | Frontier Architect; razor-thin context shielding (`<= 80L` reads, `<= 8L` replies, all-fast fleet) |
+| [`universal.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/universal.md) | `v12.4` | *Agnostic* | Any Model Lead | 100% project-agnostic orchestrator rulebook portable to any repo |
 
 ---
 
 ## Chronological Version History
 
-### `v12.3` (2026-10-20) — Post-Ship `/compact` Context Reset, Claude Opus 5.5 Context-Shielding, & Universal Project-Agnostic Suite
-- **Post-Ship Cleanup & `/compact` Reset**: Updated push-live rule across all prompts (`npm run wt ship <topic> -m "<msg>" --fast`) to automatically execute `manage_subagents(kill_all)` and mandate `/compact` as **Suggested Next Step #1**, preventing context bloating after major deployments.
+### `v12.4` (2026-10-20) — GitHub Semantic Commit Naming, Multi-Line Descriptions, & Single-Trigger Vercel Webhook Rule
+- **Semantic GitHub Commit Naming & Multi-Line Change Summaries**:
+  - Enforced structured semantic commit titles (`feat(<scope>): ...`, `fix(<scope>): ...`) and multi-line body summaries (`-b "<change summary & verify log>"`) in `npm run wt -- ship`.
+  - Disallowed generic commit messages (e.g. `"ship verified changes"`) to maintain clean, auditable commit histories on GitHub.
+- **Single-Trigger Vercel Webhook Deployment Defense**:
+  - Eliminated duplicate deployments caused by simultaneous `git push` (Vercel GitHub integration webhook) and manual `npx vercel --prod` CLI uploads.
+  - Prevents untracked raw UID hash builds (`4bsWZp3yR`) on Vercel and guarantees every production deployment is linked to an enriched semantic git commit.
+- **Prompt Snapshot Archiving**:
+  - Snapshot archived in `.agent/prompts/history/v12.4/` across `flash.md`, `argon.md`, `opus.md`, and `universal.md`.
+
+### `v12.3` (2026-10-20) — Claude Opus 5.5 Context-Shielding, Universal Project-Agnostic Suite, & Post-Ship Subagent Reset
+- **Post-Ship Subagent Cleanup**: Updated push-live rule across all prompts (`npm run wt ship <topic> -m "<msg>" --fast`) to automatically execute `manage_subagents(kill_all)` once the worktree is removed.
 - **Claude Opus 5.5 Context-Shielding Specification ([`opus.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/opus.md))**:
   - Introduced dedicated orchestrator prompt for Claude Opus 5.5 (`"opus"` trigger).
   - Enforced strict token protection: `<= 80`-line read slices, all planning in-brain, and an **All-Fast Subagent Fleet** (`Model="flash"` / fast tier only, 0 expensive frontier subagents).

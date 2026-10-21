@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-20T08:16:48.219Z",
+  "generatedAt": "2026-10-20T17:54:48.056Z",
   "stats": {
-    "totalFiles": 169,
-    "totalLines": 94968,
-    "totalSymbols": 845,
-    "scanDurationMs": 491
+    "totalFiles": 170,
+    "totalLines": 96152,
+    "totalSymbols": 851,
+    "scanDurationMs": 470
   },
   "sections": {
     "app": [
@@ -41,7 +41,7 @@
       },
       {
         "path": "app/api/admin/users/route.ts",
-        "lineCount": 443,
+        "lineCount": 557,
         "purpose": "Polyfill WebSocket in Node runtime if absent",
         "category": "app",
         "symbols": [
@@ -84,21 +84,21 @@
             "name": "POST",
             "kind": "async-function",
             "startLine": 159,
-            "endLine": 278,
+            "endLine": 392,
             "exported": true
           },
           {
             "name": "PATCH",
             "kind": "async-function",
-            "startLine": 285,
-            "endLine": 363,
+            "startLine": 399,
+            "endLine": 477,
             "exported": true
           },
           {
             "name": "DELETE",
             "kind": "async-function",
-            "startLine": 369,
-            "endLine": 442,
+            "startLine": 483,
+            "endLine": 556,
             "exported": true
           }
         ]
@@ -347,7 +347,7 @@
       },
       {
         "path": "app/page.tsx",
-        "lineCount": 403,
+        "lineCount": 423,
         "purpose": "Revizz student home page and interactive quiz game launchpad",
         "category": "app",
         "symbols": [
@@ -355,7 +355,7 @@
             "name": "HomePage",
             "kind": "component",
             "startLine": 23,
-            "endLine": 402,
+            "endLine": 422,
             "exported": true
           }
         ]
@@ -519,22 +519,22 @@
       },
       {
         "path": "components/AuthModal.tsx",
-        "lineCount": 394,
-        "purpose": "Unconditional React hook declarations (React Error #310 Defense)",
+        "lineCount": 406,
+        "purpose": "UI component: AuthModal",
         "category": "components",
         "symbols": [
           {
             "name": "AuthModalProps",
             "kind": "interface",
             "startLine": 15,
-            "endLine": 20,
+            "endLine": 22,
             "exported": true
           },
           {
             "name": "AuthModal",
             "kind": "component",
-            "startLine": 22,
-            "endLine": 391,
+            "startLine": 24,
+            "endLine": 403,
             "exported": true
           }
         ]
@@ -631,15 +631,15 @@
       },
       {
         "path": "components/StudentAuthGate.tsx",
-        "lineCount": 176,
+        "lineCount": 212,
         "purpose": "UI component: StudentAuthGate",
         "category": "components",
         "symbols": [
           {
             "name": "StudentAuthGate",
             "kind": "component",
-            "startLine": 11,
-            "endLine": 173,
+            "startLine": 14,
+            "endLine": 209,
             "exported": true
           }
         ]
@@ -755,7 +755,7 @@
       },
       {
         "path": "components/admin/AppAdminNav.tsx",
-        "lineCount": 388,
+        "lineCount": 334,
         "purpose": "Admin navigation bar with tab switching",
         "category": "components",
         "symbols": [
@@ -770,36 +770,36 @@
             "name": "AppAdminNav",
             "kind": "component",
             "startLine": 34,
-            "endLine": 387,
+            "endLine": 333,
             "exported": true
           }
         ]
       },
       {
         "path": "components/admin/IngestionHistoryHub.tsx",
-        "lineCount": 1307,
+        "lineCount": 1347,
         "purpose": "UI component: IngestionHistoryHub",
         "category": "components",
         "symbols": [
           {
             "name": "IngestionHistoryItem",
             "kind": "interface",
-            "startLine": 42,
-            "endLine": 53,
+            "startLine": 43,
+            "endLine": 54,
             "exported": true
           },
           {
             "name": "IngestionHistoryHubProps",
             "kind": "interface",
-            "startLine": 55,
-            "endLine": 58,
+            "startLine": 56,
+            "endLine": 59,
             "exported": true
           },
           {
             "name": "IngestionHistoryHub",
             "kind": "component",
-            "startLine": 113,
-            "endLine": 1306,
+            "startLine": 114,
+            "endLine": 1346,
             "exported": true
           }
         ]
@@ -821,79 +821,79 @@
       },
       {
         "path": "components/admin/UserManagementHub.tsx",
-        "lineCount": 1784,
+        "lineCount": 2247,
         "purpose": "UI component: UserManagementHub",
         "category": "components",
         "symbols": [
           {
             "name": "UserRole",
             "kind": "type",
-            "startLine": 44,
-            "endLine": 44,
+            "startLine": 48,
+            "endLine": 48,
             "exported": true
           },
           {
             "name": "UserStatus",
             "kind": "type",
-            "startLine": 45,
-            "endLine": 45,
+            "startLine": 49,
+            "endLine": 49,
             "exported": true
           },
           {
             "name": "RoleFilterTab",
             "kind": "type",
-            "startLine": 46,
-            "endLine": 46,
+            "startLine": 50,
+            "endLine": 50,
             "exported": true
           },
           {
             "name": "AccountTypeFilter",
             "kind": "type",
-            "startLine": 47,
-            "endLine": 47,
+            "startLine": 51,
+            "endLine": 51,
             "exported": true
           },
           {
             "name": "ManagedUser",
             "kind": "interface",
-            "startLine": 49,
-            "endLine": 61,
+            "startLine": 53,
+            "endLine": 65,
             "exported": true
           },
           {
             "name": "UserManagementHubProps",
             "kind": "interface",
-            "startLine": 63,
-            "endLine": 65,
+            "startLine": 67,
+            "endLine": 69,
             "exported": true
           },
           {
             "name": "UserManagementHub",
             "kind": "component",
-            "startLine": 167,
-            "endLine": 1783,
+            "startLine": 171,
+            "endLine": 2246,
             "exported": true
           }
         ]
       },
       {
         "path": "components/admin/WholePaperViewer.tsx",
-        "lineCount": 1112,
+        "lineCount": 1103,
         "purpose": "UI component: WholePaperViewer",
         "category": "components",
         "symbols": [
           {
             "name": "WholePaperViewerProps",
             "kind": "interface",
-            "startLine": 38,
-            "endLine": 40,
+            "startLine": 34,
+            "endLine": 36,
             "exported": true
           },
           {
             "name": "WholePaperViewer",
             "kind": "component",
-            "startLine": 42,
-            "endLine": 1111,
+            "startLine": 38,
+            "endLine": 1102,
             "exported": true
           }
         ]
@@ -944,7 +944,7 @@
       },
       {
         "path": "components/portal/AdminNav.tsx",
-        "lineCount": 407,
+        "lineCount": 398,
         "purpose": "Portal navigation bar with school badge and mode indicator",
         "category": "components",
         "symbols": [
@@ -959,7 +959,7 @@
             "name": "AdminNav",
             "kind": "component",
             "startLine": 40,
-            "endLine": 406,
+            "endLine": 397,
             "exported": true
           }
         ]
@@ -1696,7 +1696,7 @@
       },
       {
         "path": "components/portal/TeacherOverviewHub.tsx",
-        "lineCount": 1605,
+        "lineCount": 1784,
         "purpose": "Portal & ingestion component: TeacherOverviewHub",
         "category": "components",
         "symbols": [
@@ -1724,15 +1724,15 @@
           {
             "name": "TOPIC_MASTERY_WEAK",
             "kind": "const",
-            "startLine": 105,
-            "endLine": 105,
+            "startLine": 95,
+            "endLine": 95,
             "exported": true
           },
           {
             "name": "TeacherOverviewHub",
             "kind": "component",
-            "startLine": 107,
-            "endLine": 1604,
+            "startLine": 112,
+            "endLine": 1783,
             "exported": true
           }
         ]
@@ -1768,30 +1768,30 @@
       },
       {
         "path": "components/portal/compiler/PrintableExamLayout.tsx",
-        "lineCount": 337,
+        "lineCount": 320,
         "purpose": "Printable Cambridge exam format layout with cover page & mark scheme",
         "category": "components",
         "symbols": [
           {
             "name": "PrintableExamLayout",
             "kind": "component",
-            "startLine": 19,
-            "endLine": 336,
+            "startLine": 14,
+            "endLine": 319,
             "exported": true
           }
         ]
       },
       {
         "path": "components/portal/compiler/TestCompilerHub.tsx",
-        "lineCount": 3232,
+        "lineCount": 3216,
         "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
         "category": "components",
         "symbols": [
           {
             "name": "TestCompilerHub",
             "kind": "component",
-            "startLine": 88,
-            "endLine": 3231,
+            "startLine": 84,
+            "endLine": 3215,
             "exported": true
           }
         ]
@@ -1871,15 +1871,15 @@
       },
       {
         "path": "components/profile/StudentHomeworkPanel.tsx",
-        "lineCount": 1157,
+        "lineCount": 1150,
         "purpose": "UI component: StudentHomeworkPanel",
         "category": "components",
         "symbols": [
           {
             "name": "StudentHomeworkPanel",
             "kind": "component",
-            "startLine": 115,
-            "endLine": 1156,
+            "startLine": 111,
+            "endLine": 1149,
             "exported": true
           }
         ]
@@ -1908,22 +1908,22 @@
       },
       {
         "path": "components/profile/StudentReviewPanel.tsx",
-        "lineCount": 784,
+        "lineCount": 768,
         "purpose": "UI component: StudentReviewPanel",
         "category": "components",
         "symbols": [
           {
             "name": "StudentReviewPanelProps",
             "kind": "interface",
-            "startLine": 23,
-            "endLine": 29,
+            "startLine": 19,
+            "endLine": 25,
             "exported": true
           },
           {
             "name": "StudentReviewPanel",
             "kind": "component",
-            "startLine": 31,
-            "endLine": 783,
+            "startLine": 27,
+            "endLine": 767,
             "exported": true
           }
         ]
@@ -1983,6 +1983,42 @@
             "kind": "class",
             "startLine": 22,
             "endLine": 56,
+            "exported": true
+          }
+        ]
+      },
+      {
+        "path": "components/ui/RichMarkdown.tsx",
+        "lineCount": 103,
+        "purpose": "Neobrutalist UI design primitive: RichMarkdown",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "neobrutalistTableComponents",
+            "kind": "const",
+            "startLine": 13,
+            "endLine": 34,
+            "exported": true
+          },
+          {
+            "name": "printableTableComponents",
+            "kind": "const",
+            "startLine": 36,
+            "endLine": 57,
+            "exported": true
+          },
+          {
+            "name": "RichMarkdownProps",
+            "kind": "interface",
+            "startLine": 59,
+            "endLine": 64,
+            "exported": true
+          },
+          {
+            "name": "RichMarkdown",
+            "kind": "component",
+            "startLine": 66,
+            "endLine": 100,
             "exported": true
           }
         ]
@@ -3417,7 +3453,7 @@
       },
       {
         "path": "lib/ingestion/stagedPaperStorage.ts",
-        "lineCount": 503,
+        "lineCount": 502,
         "purpose": "Polyfill WebSocket in Node runtime if absent (required by @supabase/supabase-js realtime client)",
         "category": "lib",
         "symbols": [
@@ -3467,56 +3503,56 @@
             "name": "savePersistentPaperStates",
             "kind": "async-function",
             "startLine": 68,
-            "endLine": 102,
+            "endLine": 101,
             "exported": true
           },
           {
             "name": "StagingLocation",
             "kind": "interface",
-            "startLine": 104,
-            "endLine": 108,
+            "startLine": 103,
+            "endLine": 107,
             "exported": true
           },
           {
             "name": "getStagingLocations",
             "kind": "function",
-            "startLine": 110,
-            "endLine": 144,
+            "startLine": 109,
+            "endLine": 143,
             "exported": true
           },
           {
             "name": "getFallbackStagingPaper",
             "kind": "function",
-            "startLine": 146,
-            "endLine": 225,
+            "startLine": 145,
+            "endLine": 224,
             "exported": true
           },
           {
             "name": "generateCleanPaperId",
             "kind": "function",
-            "startLine": 227,
-            "endLine": 239,
+            "startLine": 226,
+            "endLine": 238,
             "exported": true
           },
           {
             "name": "LiveSupabasePaperSummary",
             "kind": "interface",
-            "startLine": 241,
-            "endLine": 253,
+            "startLine": 240,
+            "endLine": 252,
             "exported": true
           },
           {
             "name": "fetchLiveSupabasePapers",
             "kind": "async-function",
-            "startLine": 255,
-            "endLine": 357,
+            "startLine": 254,
+            "endLine": 356,
             "exported": true
           },
           {
             "name": "fetchLiveSupabasePaperDetail",
             "kind": "async-function",
-            "startLine": 359,
-            "endLine": 361,
+            "startLine": 358,
+            "endLine": 360,
             "exported": true
           }
         ]
@@ -5650,7 +5686,7 @@
       },
       {
         "path": "scripts/fast-ingest.py",
-        "lineCount": 853,
+        "lineCount": 1034,
         "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
         "category": "scripts",
         "symbols": [
@@ -5697,45 +5733,59 @@
             "exported": true
           },
           {
-            "name": "extract_questions_from_qp",
+            "name": "parse_opt_marker",
             "kind": "def",
             "startLine": 296,
-            "endLine": 302,
+            "endLine": 310,
+            "exported": true
+          },
+          {
+            "name": "format_embedded_markdown_table",
+            "kind": "def",
+            "startLine": 313,
+            "endLine": 401,
+            "exported": true
+          },
+          {
+            "name": "extract_questions_from_qp",
+            "kind": "def",
+            "startLine": 404,
+            "endLine": 410,
             "exported": true
           },
           {
             "name": "assemble_staging_paper",
             "kind": "def",
-            "startLine": 644,
-            "endLine": 649,
+            "startLine": 825,
+            "endLine": 830,
             "exported": true
           },
           {
             "name": "ingest_single_paper",
             "kind": "def",
-            "startLine": 692,
-            "endLine": 698,
+            "startLine": 873,
+            "endLine": 879,
             "exported": true
           },
           {
             "name": "find_matching_ms",
             "kind": "def",
-            "startLine": 744,
-            "endLine": 763,
+            "startLine": 925,
+            "endLine": 944,
             "exported": true
           },
           {
             "name": "ingest_batch_directory",
             "kind": "def",
-            "startLine": 766,
-            "endLine": 771,
+            "startLine": 947,
+            "endLine": 952,
             "exported": true
           },
           {
             "name": "main",
             "kind": "def",
-            "startLine": 809,
-            "endLine": 848,
+            "startLine": 990,
+            "endLine": 1029,
             "exported": true
           }
         ]
@@ -6731,7 +6781,7 @@
       },
       {
         "path": "scripts/verify-quiz-tables.ts",
-        "lineCount": 256,
+        "lineCount": 346,
         "purpose": "Standalone Verification Script for Quiz Table Rendering.",
         "category": "scripts",
         "symbols": [
@@ -6746,7 +6796,7 @@
             "name": "verifyQuizTables",
             "kind": "function",
             "startLine": 33,
-            "endLine": 250,
+            "endLine": 340,
             "exported": false
           }
         ]
@@ -7048,7 +7098,7 @@
       },
       {
         "path": "scripts/wt.ts",
-        "lineCount": 1763,
+        "lineCount": 1838,
         "purpose": "Git worktree isolation manager and atomic release CLI",
         "category": "scripts",
         "symbols": [
@@ -7203,28 +7253,28 @@
             "name": "commandShip",
             "kind": "async-function",
             "startLine": 1178,
-            "endLine": 1412,
+            "endLine": 1459,
             "exported": true
           },
           {
             "name": "commandEnd",
             "kind": "function",
-            "startLine": 1418,
-            "endLine": 1534,
+            "startLine": 1465,
+            "endLine": 1581,
             "exported": true
           },
           {
             "name": "commandHelp",
             "kind": "function",
-            "startLine": 1539,
-            "endLine": 1627,
+            "startLine": 1586,
+            "endLine": 1676,
             "exported": true
           },
           {
             "name": "main",
             "kind": "async-function",
-            "startLine": 1630,
-            "endLine": 1754,
+            "startLine": 1679,
+            "endLine": 1829,
             "exported": true
           }
         ]
@@ -7317,7 +7367,7 @@
     },
     {
       "path": "app/api/admin/users/route.ts",
-      "lineCount": 443,
+      "lineCount": 557,
       "purpose": "Polyfill WebSocket in Node runtime if absent",
       "category": "app",
       "symbols": [
@@ -7360,21 +7410,21 @@
           "name": "POST",
           "kind": "async-function",
           "startLine": 159,
-          "endLine": 278,
+          "endLine": 392,
           "exported": true
         },
         {
           "name": "PATCH",
           "kind": "async-function",
-          "startLine": 285,
-          "endLine": 363,
+          "startLine": 399,
+          "endLine": 477,
           "exported": true
         },
         {
           "name": "DELETE",
           "kind": "async-function",
-          "startLine": 369,
-          "endLine": 442,
+          "startLine": 483,
+          "endLine": 556,
           "exported": true
         }
       ]
@@ -7623,7 +7673,7 @@
     },
     {
       "path": "app/page.tsx",
-      "lineCount": 403,
+      "lineCount": 423,
       "purpose": "Revizz student home page and interactive quiz game launchpad",
       "category": "app",
       "symbols": [
@@ -7631,7 +7681,7 @@
           "name": "HomePage",
           "kind": "component",
           "startLine": 23,
-          "endLine": 402,
+          "endLine": 422,
           "exported": true
         }
       ]
@@ -7793,22 +7843,22 @@
     },
     {
       "path": "components/AuthModal.tsx",
-      "lineCount": 394,
-      "purpose": "Unconditional React hook declarations (React Error #310 Defense)",
+      "lineCount": 406,
+      "purpose": "UI component: AuthModal",
       "category": "components",
       "symbols": [
         {
           "name": "AuthModalProps",
           "kind": "interface",
           "startLine": 15,
-          "endLine": 20,
+          "endLine": 22,
           "exported": true
         },
         {
           "name": "AuthModal",
           "kind": "component",
-          "startLine": 22,
-          "endLine": 391,
+          "startLine": 24,
+          "endLine": 403,
           "exported": true
         }
       ]
@@ -7905,15 +7955,15 @@
     },
     {
       "path": "components/StudentAuthGate.tsx",
-      "lineCount": 176,
+      "lineCount": 212,
       "purpose": "UI component: StudentAuthGate",
       "category": "components",
       "symbols": [
         {
           "name": "StudentAuthGate",
           "kind": "component",
-          "startLine": 11,
-          "endLine": 173,
+          "startLine": 14,
+          "endLine": 209,
           "exported": true
         }
       ]
@@ -8029,7 +8079,7 @@
     },
     {
       "path": "components/admin/AppAdminNav.tsx",
-      "lineCount": 388,
+      "lineCount": 334,
       "purpose": "Admin navigation bar with tab switching",
       "category": "components",
       "symbols": [
@@ -8044,36 +8094,36 @@
           "name": "AppAdminNav",
           "kind": "component",
           "startLine": 34,
-          "endLine": 387,
+          "endLine": 333,
           "exported": true
         }
       ]
     },
     {
       "path": "components/admin/IngestionHistoryHub.tsx",
-      "lineCount": 1307,
+      "lineCount": 1347,
       "purpose": "UI component: IngestionHistoryHub",
       "category": "components",
       "symbols": [
         {
           "name": "IngestionHistoryItem",
           "kind": "interface",
-          "startLine": 42,
-          "endLine": 53,
+          "startLine": 43,
+          "endLine": 54,
           "exported": true
         },
         {
           "name": "IngestionHistoryHubProps",
           "kind": "interface",
-          "startLine": 55,
-          "endLine": 58,
+          "startLine": 56,
+          "endLine": 59,
           "exported": true
         },
         {
           "name": "IngestionHistoryHub",
           "kind": "component",
-          "startLine": 113,
-          "endLine": 1306,
+          "startLine": 114,
+          "endLine": 1346,
           "exported": true
         }
       ]
@@ -8095,79 +8145,79 @@
     },
     {
       "path": "components/admin/UserManagementHub.tsx",
-      "lineCount": 1784,
+      "lineCount": 2247,
       "purpose": "UI component: UserManagementHub",
       "category": "components",
       "symbols": [
         {
           "name": "UserRole",
           "kind": "type",
-          "startLine": 44,
-          "endLine": 44,
+          "startLine": 48,
+          "endLine": 48,
           "exported": true
         },
         {
           "name": "UserStatus",
           "kind": "type",
-          "startLine": 45,
-          "endLine": 45,
+          "startLine": 49,
+          "endLine": 49,
           "exported": true
         },
         {
           "name": "RoleFilterTab",
           "kind": "type",
-          "startLine": 46,
-          "endLine": 46,
+          "startLine": 50,
+          "endLine": 50,
           "exported": true
         },
         {
           "name": "AccountTypeFilter",
           "kind": "type",
-          "startLine": 47,
-          "endLine": 47,
+          "startLine": 51,
+          "endLine": 51,
           "exported": true
         },
         {
           "name": "ManagedUser",
           "kind": "interface",
-          "startLine": 49,
-          "endLine": 61,
+          "startLine": 53,
+          "endLine": 65,
           "exported": true
         },
         {
           "name": "UserManagementHubProps",
           "kind": "interface",
-          "startLine": 63,
-          "endLine": 65,
+          "startLine": 67,
+          "endLine": 69,
           "exported": true
         },
         {
           "name": "UserManagementHub",
           "kind": "component",
-          "startLine": 167,
-          "endLine": 1783,
+          "startLine": 171,
+          "endLine": 2246,
           "exported": true
         }
       ]
     },
     {
       "path": "components/admin/WholePaperViewer.tsx",
-      "lineCount": 1112,
+      "lineCount": 1103,
       "purpose": "UI component: WholePaperViewer",
       "category": "components",
       "symbols": [
         {
           "name": "WholePaperViewerProps",
           "kind": "interface",
-          "startLine": 38,
-          "endLine": 40,
+          "startLine": 34,
+          "endLine": 36,
           "exported": true
         },
         {
           "name": "WholePaperViewer",
           "kind": "component",
-          "startLine": 42,
-          "endLine": 1111,
+          "startLine": 38,
+          "endLine": 1102,
           "exported": true
         }
       ]
@@ -8218,7 +8268,7 @@
     },
     {
       "path": "components/portal/AdminNav.tsx",
-      "lineCount": 407,
+      "lineCount": 398,
       "purpose": "Portal navigation bar with school badge and mode indicator",
       "category": "components",
       "symbols": [
@@ -8233,7 +8283,7 @@
           "name": "AdminNav",
           "kind": "component",
           "startLine": 40,
-          "endLine": 406,
+          "endLine": 397,
           "exported": true
         }
       ]
@@ -8970,7 +9020,7 @@
     },
     {
       "path": "components/portal/TeacherOverviewHub.tsx",
-      "lineCount": 1605,
+      "lineCount": 1784,
       "purpose": "Portal & ingestion component: TeacherOverviewHub",
       "category": "components",
       "symbols": [
@@ -8998,15 +9048,15 @@
         {
           "name": "TOPIC_MASTERY_WEAK",
           "kind": "const",
-          "startLine": 105,
-          "endLine": 105,
+          "startLine": 95,
+          "endLine": 95,
           "exported": true
         },
         {
           "name": "TeacherOverviewHub",
           "kind": "component",
-          "startLine": 107,
-          "endLine": 1604,
+          "startLine": 112,
+          "endLine": 1783,
           "exported": true
         }
       ]
@@ -9042,30 +9092,30 @@
     },
     {
       "path": "components/portal/compiler/PrintableExamLayout.tsx",
-      "lineCount": 337,
+      "lineCount": 320,
       "purpose": "Printable Cambridge exam format layout with cover page & mark scheme",
       "category": "components",
       "symbols": [
         {
           "name": "PrintableExamLayout",
           "kind": "component",
-          "startLine": 19,
-          "endLine": 336,
+          "startLine": 14,
+          "endLine": 319,
           "exported": true
         }
       ]
     },
     {
       "path": "components/portal/compiler/TestCompilerHub.tsx",
-      "lineCount": 3232,
+      "lineCount": 3216,
       "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
       "category": "components",
       "symbols": [
         {
           "name": "TestCompilerHub",
           "kind": "component",
-          "startLine": 88,
-          "endLine": 3231,
+          "startLine": 84,
+          "endLine": 3215,
           "exported": true
         }
       ]
@@ -9145,15 +9195,15 @@
     },
     {
       "path": "components/profile/StudentHomeworkPanel.tsx",
-      "lineCount": 1157,
+      "lineCount": 1150,
       "purpose": "UI component: StudentHomeworkPanel",
       "category": "components",
       "symbols": [
         {
           "name": "StudentHomeworkPanel",
           "kind": "component",
-          "startLine": 115,
-          "endLine": 1156,
+          "startLine": 111,
+          "endLine": 1149,
           "exported": true
         }
       ]
@@ -9182,22 +9232,22 @@
     },
     {
       "path": "components/profile/StudentReviewPanel.tsx",
-      "lineCount": 784,
+      "lineCount": 768,
       "purpose": "UI component: StudentReviewPanel",
       "category": "components",
       "symbols": [
         {
           "name": "StudentReviewPanelProps",
           "kind": "interface",
-          "startLine": 23,
-          "endLine": 29,
+          "startLine": 19,
+          "endLine": 25,
           "exported": true
         },
         {
           "name": "StudentReviewPanel",
           "kind": "component",
-          "startLine": 31,
-          "endLine": 783,
+          "startLine": 27,
+          "endLine": 767,
           "exported": true
         }
       ]
@@ -9257,6 +9307,42 @@
           "kind": "class",
           "startLine": 22,
           "endLine": 56,
+          "exported": true
+        }
+      ]
+    },
+    {
+      "path": "components/ui/RichMarkdown.tsx",
+      "lineCount": 103,
+      "purpose": "Neobrutalist UI design primitive: RichMarkdown",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "neobrutalistTableComponents",
+          "kind": "const",
+          "startLine": 13,
+          "endLine": 34,
+          "exported": true
+        },
+        {
+          "name": "printableTableComponents",
+          "kind": "const",
+          "startLine": 36,
+          "endLine": 57,
+          "exported": true
+        },
+        {
+          "name": "RichMarkdownProps",
+          "kind": "interface",
+          "startLine": 59,
+          "endLine": 64,
+          "exported": true
+        },
+        {
+          "name": "RichMarkdown",
+          "kind": "component",
+          "startLine": 66,
+          "endLine": 100,
           "exported": true
         }
       ]
@@ -10689,7 +10775,7 @@
     },
     {
       "path": "lib/ingestion/stagedPaperStorage.ts",
-      "lineCount": 503,
+      "lineCount": 502,
       "purpose": "Polyfill WebSocket in Node runtime if absent (required by @supabase/supabase-js realtime client)",
       "category": "lib",
       "symbols": [
@@ -10739,56 +10825,56 @@
           "name": "savePersistentPaperStates",
           "kind": "async-function",
           "startLine": 68,
-          "endLine": 102,
+          "endLine": 101,
           "exported": true
         },
         {
           "name": "StagingLocation",
           "kind": "interface",
-          "startLine": 104,
-          "endLine": 108,
+          "startLine": 103,
+          "endLine": 107,
           "exported": true
         },
         {
           "name": "getStagingLocations",
           "kind": "function",
-          "startLine": 110,
-          "endLine": 144,
+          "startLine": 109,
+          "endLine": 143,
           "exported": true
         },
         {
           "name": "getFallbackStagingPaper",
           "kind": "function",
-          "startLine": 146,
-          "endLine": 225,
+          "startLine": 145,
+          "endLine": 224,
           "exported": true
         },
         {
           "name": "generateCleanPaperId",
           "kind": "function",
-          "startLine": 227,
-          "endLine": 239,
+          "startLine": 226,
+          "endLine": 238,
           "exported": true
         },
         {
           "name": "LiveSupabasePaperSummary",
           "kind": "interface",
-          "startLine": 241,
-          "endLine": 253,
+          "startLine": 240,
+          "endLine": 252,
           "exported": true
         },
         {
           "name": "fetchLiveSupabasePapers",
           "kind": "async-function",
-          "startLine": 255,
-          "endLine": 357,
+          "startLine": 254,
+          "endLine": 356,
           "exported": true
         },
         {
           "name": "fetchLiveSupabasePaperDetail",
           "kind": "async-function",
-          "startLine": 359,
-          "endLine": 361,
+          "startLine": 358,
+          "endLine": 360,
           "exported": true
         }
       ]
@@ -12920,7 +13006,7 @@
     },
     {
       "path": "scripts/fast-ingest.py",
-      "lineCount": 853,
+      "lineCount": 1034,
       "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
       "category": "scripts",
       "symbols": [
@@ -12967,45 +13053,59 @@
           "exported": true
         },
         {
-          "name": "extract_questions_from_qp",
+          "name": "parse_opt_marker",
           "kind": "def",
           "startLine": 296,
-          "endLine": 302,
+          "endLine": 310,
+          "exported": true
+        },
+        {
+          "name": "format_embedded_markdown_table",
+          "kind": "def",
+          "startLine": 313,
+          "endLine": 401,
+          "exported": true
+        },
+        {
+          "name": "extract_questions_from_qp",
+          "kind": "def",
+          "startLine": 404,
+          "endLine": 410,
           "exported": true
         },
         {
           "name": "assemble_staging_paper",
           "kind": "def",
-          "startLine": 644,
-          "endLine": 649,
+          "startLine": 825,
+          "endLine": 830,
           "exported": true
         },
         {
           "name": "ingest_single_paper",
           "kind": "def",
-          "startLine": 692,
-          "endLine": 698,
+          "startLine": 873,
+          "endLine": 879,
           "exported": true
         },
         {
           "name": "find_matching_ms",
           "kind": "def",
-          "startLine": 744,
-          "endLine": 763,
+          "startLine": 925,
+          "endLine": 944,
           "exported": true
         },
         {
           "name": "ingest_batch_directory",
           "kind": "def",
-          "startLine": 766,
-          "endLine": 771,
+          "startLine": 947,
+          "endLine": 952,
           "exported": true
         },
         {
           "name": "main",
           "kind": "def",
-          "startLine": 809,
-          "endLine": 848,
+          "startLine": 990,
+          "endLine": 1029,
           "exported": true
         }
       ]
@@ -14001,7 +14101,7 @@
     },
     {
       "path": "scripts/verify-quiz-tables.ts",
-      "lineCount": 256,
+      "lineCount": 346,
       "purpose": "Standalone Verification Script for Quiz Table Rendering.",
       "category": "scripts",
       "symbols": [
@@ -14016,7 +14116,7 @@
           "name": "verifyQuizTables",
           "kind": "function",
           "startLine": 33,
-          "endLine": 250,
+          "endLine": 340,
           "exported": false
         }
       ]
@@ -14318,7 +14418,7 @@
     },
     {
       "path": "scripts/wt.ts",
-      "lineCount": 1763,
+      "lineCount": 1838,
       "purpose": "Git worktree isolation manager and atomic release CLI",
       "category": "scripts",
       "symbols": [
@@ -14473,28 +14573,28 @@
           "name": "commandShip",
           "kind": "async-function",
           "startLine": 1178,
-          "endLine": 1412,
+          "endLine": 1459,
           "exported": true
         },
         {
           "name": "commandEnd",
           "kind": "function",
-          "startLine": 1418,
-          "endLine": 1534,
+          "startLine": 1465,
+          "endLine": 1581,
           "exported": true
         },
         {
           "name": "commandHelp",
           "kind": "function",
-          "startLine": 1539,
-          "endLine": 1627,
+          "startLine": 1586,
+          "endLine": 1676,
           "exported": true
         },
         {
           "name": "main",
           "kind": "async-function",
-          "startLine": 1630,
-          "endLine": 1754,
+          "startLine": 1679,
+          "endLine": 1829,
           "exported": true
         }
       ]

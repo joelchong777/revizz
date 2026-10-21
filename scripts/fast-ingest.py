@@ -293,6 +293,114 @@ def render_diagram_crop(
         return False
 
 
+def parse_opt_marker(text: str) -> Optional[Tuple[str, str]]:
+    t = text.strip()
+    # Single letter alone on its line (e.g. "A", "B")
+    m = re.match(r"^([A-D])\s*$", t)
+    if m:
+        return m.group(1), ""
+    # Letter with period or parenthesis (e.g. "A.", "A)")
+    m = re.match(r"^([A-D])[.)]\s*(.*)", t)
+    if m:
+        return m.group(1), m.group(2).strip()
+    # Letter followed by at least two spaces
+    m = re.match(r"^([A-D])\s{2,}(.*)", t)
+    if m:
+        return m.group(1), m.group(2).strip()
+    return None
+
+
+def format_embedded_markdown_table(tbl_lines: List[Dict[str, Any]], tbl_drawings: List[Dict[str, Any]]) -> Optional[str]:
+    if not tbl_lines:
+        return None
+    col_clusters: List[List[Dict[str, Any]]] = []
+    for l in sorted(tbl_lines, key=lambda l: (l["x0"] + l["x1"]) / 2.0):
+        cx = (l["x0"] + l["x1"]) / 2.0
+        best_c = None
+        min_dist = float("inf")
+        for c in col_clusters:
+            avg_cx = sum((item["x0"] + item["x1"]) / 2.0 for item in c) / len(c)
+            if abs(cx - avg_cx) < 45 and abs(cx - avg_cx) < min_dist:
+                min_dist = abs(cx - avg_cx)
+                best_c = c
+        if best_c is not None:
+            best_c.append(l)
+        else:
+            col_clusters.append([l])
+
+    col_clusters.sort(key=lambda c: sum((item["x0"] + item["x1"]) / 2.0 for item in c) / len(c))
+    num_cols = len(col_clusters)
+    if num_cols < 2:
+        return None
+
+    h_drawings = sorted(list(set(round(d["rect"].y0, 1) for d in tbl_drawings if d["rect"].height <= 1.0 and d["rect"].width > 30)))
+    hdr_split_y = None
+    if len(h_drawings) >= 2:
+        hdr_split_y = h_drawings[1]
+    else:
+        all_ys = sorted(list(set(round(l["y0"], 1) for l in tbl_lines)))
+        if len(all_ys) >= 2:
+            gaps = [(all_ys[i+1] - all_ys[i], (all_ys[i+1] + all_ys[i]) / 2.0) for i in range(len(all_ys) - 1)]
+            gaps.sort(key=lambda g: g[0], reverse=True)
+            hdr_split_y = gaps[0][1]
+
+    def get_col_idx(l: Dict[str, Any]) -> int:
+        cx = (l["x0"] + l["x1"]) / 2.0
+        best_i = 0
+        min_d = float("inf")
+        for i, c in enumerate(col_clusters):
+            avg_cx = sum((item["x0"] + item["x1"]) / 2.0 for item in c) / len(c)
+            if abs(cx - avg_cx) < min_d:
+                min_d = abs(cx - avg_cx)
+                best_i = i
+        return best_i
+
+    headers: List[List[Dict[str, Any]]] = [[] for _ in range(num_cols)]
+    body_lines: List[Dict[str, Any]] = []
+    for l in tbl_lines:
+        if hdr_split_y and l["y0"] < hdr_split_y:
+            headers[get_col_idx(l)].append(l)
+        else:
+            body_lines.append(l)
+
+    header_texts = []
+    for col_lines in headers:
+        col_lines.sort(key=lambda l: (round(l["y0"], 1), l["x0"]))
+        header_texts.append(" ".join(l["text"] for l in col_lines))
+
+    row_clusters: List[List[Dict[str, Any]]] = []
+    for l in sorted(body_lines, key=lambda l: l["y0"]):
+        matched_row = None
+        for r in row_clusters:
+            avg_y = sum(item["y0"] for item in r) / len(r)
+            if abs(l["y0"] - avg_y) < 10:
+                matched_row = r
+                break
+        if matched_row is not None:
+            matched_row.append(l)
+        else:
+            row_clusters.append([l])
+
+    row_clusters.sort(key=lambda r: sum(item["y0"] for item in r) / len(r))
+
+    rows_data = []
+    for r in row_clusters:
+        row_cells: List[List[Dict[str, Any]]] = [[] for _ in range(num_cols)]
+        for l in r:
+            row_cells[get_col_idx(l)].append(l)
+        row_texts = []
+        for cell in row_cells:
+            cell.sort(key=lambda l: l["x0"])
+            row_texts.append(" ".join(l["text"] for l in cell))
+        rows_data.append(row_texts)
+
+    md = "\n\n| " + " | ".join(header_texts) + " |\n"
+    md += "| " + " | ".join([":---:"] * num_cols) + " |\n"
+    for r in rows_data:
+        md += "| " + " | ".join(r) + " |\n"
+    return md
+
+
 def extract_questions_from_qp(
     qp_path: str,
     ms_answers: Dict[int, str],
@@ -373,14 +481,14 @@ def extract_questions_from_qp(
             v_markers = []
             for l in q_lines:
                 if l["x0"] < 90:
-                    opt_m = re.match(r"^([A-D])(?:\b|\.|\))\s*(.*)", l["text"])
+                    opt_m = parse_opt_marker(l["text"])
                     if opt_m:
                         v_markers.append({
                             "line": l,
-                            "label": opt_m.group(1),
+                            "label": opt_m[0],
                             "y0": l["y0"],
                             "x0": l["x0"],
-                            "remainder": opt_m.group(2).strip()
+                            "remainder": opt_m[1]
                         })
 
             v_markers.sort(key=lambda l: l["y0"])
@@ -388,31 +496,39 @@ def extract_questions_from_qp(
             # Find horizontal option markers
             h_markers = []
             for l in q_lines:
-                opt_m = re.match(r"^([A-D])(?:\b|\.|\))\s*(.*)", l["text"])
+                opt_m = parse_opt_marker(l["text"])
                 if opt_m:
                     h_markers.append({
                         "line": l,
-                        "label": opt_m.group(1),
+                        "label": opt_m[0],
                         "y0": l["y0"],
                         "x0": l["x0"],
-                        "remainder": opt_m.group(2).strip()
+                        "remainder": opt_m[1]
                     })
 
             h_markers.sort(key=lambda l: (round(l["y0"], 1), round(l["x0"], 1)))
 
             # Detect whether this is a table question vs a diagram question
-            is_table_opts = len(v_markers) == 4 and (78 < v_markers[0]["x0"] < 88)
+            v_labels = [vm["label"] for vm in v_markers]
+            has_4_vertical = len(v_markers) == 4 and v_labels == ["A", "B", "C", "D"]
+            is_table_opts = has_4_vertical and (78 < v_markers[0]["x0"] < 88)
+
+            same_y_opts = [l for l in h_markers if h_markers and abs(l["y0"] - h_markers[0]["y0"]) < 15]
+            same_y_opts.sort(key=lambda l: l["x0"])
+            has_4_horizontal = len(same_y_opts) == 4 and [o["label"] for o in same_y_opts] == ["A", "B", "C", "D"]
+
             all_text_str = " ".join(l["text"] for l in q_lines).lower()
 
             diag_text_indicated = any(w in all_text_str for w in [
                 "diagram shows", "diagrams show", "in the diagram", "the curve", "production possibility curve"
             ])
+            all_table_borders = bool(drawings) and all(d["rect"].width <= 1.5 or d["rect"].height <= 1.5 for d in drawings)
 
             has_diag = False
             diag_bbox_dict = None
             clip_rect = None
 
-            if (drawings and not is_table_opts) or diag_text_indicated:
+            if (drawings and not is_table_opts and not (all_table_borders and not diag_text_indicated)) or diag_text_indicated:
                 if drawings:
                     has_diag = True
                     rects = [d["rect"] for d in drawings]
@@ -451,10 +567,6 @@ def extract_questions_from_qp(
             if qm.get("remainder"):
                 stem_text_parts.append(qm["remainder"])
 
-            # Check if exactly 4 unique vertical option markers exist
-            v_labels = [vm["label"] for vm in v_markers]
-            has_4_vertical = len(v_markers) == 4 and v_labels == ["A", "B", "C", "D"]
-
             if has_4_vertical and not is_table_opts:
                 # Standard vertical options using midpoints
                 yA, yB, yC, yD = [o["y0"] for o in v_markers]
@@ -463,11 +575,24 @@ def extract_questions_from_qp(
                 mCD = (yC + yD) / 2.0
 
                 # Stem: prompt lines before option A
-                for l in q_lines:
-                    if l["y0"] < yA - 8 and l["x0"] < 75:
-                        stem_text_parts.append(l["text"])
-                    elif has_diag and clip_rect and l["y0"] > clip_rect.y1 - 2 and l["y0"] < yA - 8 and l["x0"] < 75:
-                        stem_text_parts.append(l["text"])
+                prompt_lines = [l for l in q_lines if l["y0"] < yA - 8 and l["x0"] < 75]
+                tbl_lines = [l for l in q_lines if l["x0"] > 75 and prompt_lines and prompt_lines[0]["y0"] < l["y0"] < yA - 8]
+                if tbl_lines and not has_diag:
+                    tbl_top_y = min(t["y0"] for t in tbl_lines)
+                    tbl_bot_y = max(t["y1"] for t in tbl_lines)
+                    before_tbl = [l["text"] for l in prompt_lines if l["y0"] < tbl_top_y]
+                    after_tbl = [l["text"] for l in prompt_lines if l["y0"] >= tbl_bot_y - 5]
+                    stem_text_parts.extend(before_tbl)
+                    tbl_md = format_embedded_markdown_table(tbl_lines, drawings)
+                    if tbl_md:
+                        stem_text_parts.append(tbl_md)
+                    stem_text_parts.extend(after_tbl)
+                else:
+                    for l in q_lines:
+                        if l["y0"] < yA - 8 and l["x0"] < 75:
+                            stem_text_parts.append(l["text"])
+                        elif has_diag and clip_rect and l["y0"] > clip_rect.y1 - 2 and l["y0"] < yA - 8 and l["x0"] < 75:
+                            stem_text_parts.append(l["text"])
 
                 raw_opts = {"A": [], "B": [], "C": [], "D": []}
                 # Include remainder if option was merged
@@ -531,21 +656,76 @@ def extract_questions_from_qp(
 
                 for lbl in ["A", "B", "C", "D"]:
                     table_rows[lbl].sort(key=lambda l: l["x0"])
-                    cell_text = " | ".join(l["text"] for l in table_rows[lbl])
+
+                # Table column headers between prompt text and option A
+                th_lines = [l for l in q_lines if yA - 60 <= l["y0"] < yA - 8 and l["x0"] > 75]
+                col_headers = []
+                if th_lines:
+                    clusters = []
+                    for l in sorted(th_lines, key=lambda l: (round(l["y0"], 1), l["x0"])):
+                        c_x = (l["x0"] + l["x1"]) / 2.0
+                        best_cluster = None
+                        min_dist = float("inf")
+                        for c in clusters:
+                            avg_cx = sum((item["x0"] + item["x1"]) / 2.0 for item in c) / len(c)
+                            dist = abs(c_x - avg_cx)
+                            if dist < 45 and dist < min_dist:
+                                min_dist = dist
+                                best_cluster = c
+                        if best_cluster is not None:
+                            best_cluster.append(l)
+                        else:
+                            clusters.append([l])
+
+                    clusters.sort(key=lambda c: sum(item["x0"] for item in c) / len(c))
+                    for c in clusters:
+                        c_sorted = sorted(c, key=lambda l: (round(l["y0"], 1), l["x0"]))
+                        hdr = " ".join(item["text"].strip() for item in c_sorted if item["text"].strip())
+                        if hdr:
+                            col_headers.append(hdr)
+
+                if len(col_headers) >= 2:
+                    table_md = "\n\n| | " + " | ".join(col_headers) + " |\n"
+                    table_md += "| :---: | " + " | ".join([":---:"] * len(col_headers)) + " |\n"
+                    for lbl in ["A", "B", "C", "D"]:
+                        cells = [x["text"] for x in table_rows[lbl]]
+                        table_md += "| **" + lbl + "** | " + " | ".join(cells) + " |\n"
+                    stem_text_parts.append(table_md)
+
+                for lbl in ["A", "B", "C", "D"]:
+                    if len(col_headers) >= 2:
+                        cell_parts = []
+                        for idx, l in enumerate(table_rows[lbl]):
+                            hdr = col_headers[idx] if idx < len(col_headers) else f"Column {idx+1}"
+                            cell_parts.append(f"{hdr}: {l['text']}")
+                        cell_text = " | ".join(cell_parts) if cell_parts else " | ".join(l["text"] for l in table_rows[lbl])
+                    else:
+                        cell_text = " | ".join(l["text"] for l in table_rows[lbl])
                     options_list.append({
                         "label": lbl,
                         "content_markdown": escape_currency_dollars(cell_text),
                         "is_correct": (ms_answers.get(q_num) == lbl)
                     })
 
-            elif any(len(set(o["label"] for o in h_markers if abs(o["y0"] - h_markers[0]["y0"]) < 15)) >= 4 for _ in [1]):
-                # Horizontal row options (like Q30)
-                same_y_opts = [l for l in h_markers if abs(l["y0"] - h_markers[0]["y0"]) < 15]
-                same_y_opts.sort(key=lambda l: l["x0"])
+            elif has_4_horizontal:
+                # Horizontal row options (like Q7, Q30)
                 opt_y = same_y_opts[0]["y0"]
 
-                for l in q_lines:
-                    if l["y0"] < opt_y - 8 and l["x0"] < 75:
+                prompt_lines = [l for l in q_lines if l["y0"] < opt_y - 8 and l["x0"] < 75]
+                tbl_lines = [l for l in q_lines if l["x0"] > 75 and prompt_lines and prompt_lines[0]["y0"] < l["y0"] < opt_y - 8]
+
+                if tbl_lines:
+                    tbl_top_y = min(t["y0"] for t in tbl_lines)
+                    tbl_bot_y = max(t["y1"] for t in tbl_lines)
+                    before_tbl = [l["text"] for l in prompt_lines if l["y0"] < tbl_top_y]
+                    after_tbl = [l["text"] for l in prompt_lines if l["y0"] >= tbl_bot_y - 5]
+                    stem_text_parts.extend(before_tbl)
+                    tbl_md = format_embedded_markdown_table(tbl_lines, drawings)
+                    if tbl_md:
+                        stem_text_parts.append(tbl_md)
+                    stem_text_parts.extend(after_tbl)
+                else:
+                    for l in prompt_lines:
                         stem_text_parts.append(l["text"])
 
                 for idx, opt in enumerate(same_y_opts):
@@ -557,14 +737,15 @@ def extract_questions_from_qp(
                         l["text"] for l in q_lines
                         if abs(l["y0"] - opt_y) < 10 and opt["x0"] < l["x0"] < nxt_x and l is not opt["line"]
                     )
+                    clean_cell = " ".join(cell_lines).replace("\u2212", "-")
                     options_list.append({
                         "label": opt["label"],
-                        "content_markdown": escape_currency_dollars(" ".join(cell_lines)),
+                        "content_markdown": escape_currency_dollars(clean_cell),
                         "is_correct": (ms_answers.get(q_num) == opt["label"])
                     })
 
             else:
-                # Diagram point options (like Q3)
+                # Diagram point options (like Q3, Q6)
                 for l in q_lines:
                     if l["x0"] < 75:
                         stem_text_parts.append(l["text"])

@@ -1,4 +1,4 @@
-# Universal Master Orchestrator & Agent Fleet Rules (v12.3 — Project-Agnostic)
+# Universal Master Orchestrator & Agent Fleet Rules (v12.4 — Project-Agnostic)
 
 ## 0. Zero-Read Boot & Mode Switch (`"flash"` | `"argon"` / `"pro"` / `"argon/pro"`)
 - **Preloaded Rules**: Keep these rules in root `AGENTS.md` so every chat and subagent inherits them at Turn 0 with **0 startup file reads**.
@@ -26,8 +26,9 @@
 - **Worktree Isolation**: Always branch worktrees from `origin/main` (`.worktrees/<topic>`), symlinking shared dependencies (`node_modules`, `.env*`) so local `main` is never polluted by WIP work.
 - **Detached Local Server (`"start local"` / `"kill server"`)**: Spawn dev servers detached (`unref()`) logging to `/tmp/<project>-dev.log` and poll readiness so the tool call exits in ~2s instead of hanging.
 - **Failure-Only Verification Gate**: Run typecheck and tests in parallel where possible, suppressing passing test noise and head-truncating failure output to the first 20 actionable error lines.
-- **Explicit Push Permission (`"push live"`)**: NEVER push to remote or deploy without explicit user permission. When commanded, rebase worktree on `origin/main`, verify, push atomically (`git push origin <branch>:main`), clean up the worktree, call `manage_subagents(kill_all)`, and prompt the user to run `/compact` as Next Step #1 to reset context.
+- **Explicit Push Permission (`"push live"`)**: NEVER push to remote or deploy without explicit user permission. When commanded (`npm run wt -- ship <topic> -m "feat(<scope>): <descriptive title>" -b "<multi-line change summary & verify log>" --fast` with `WaitMsBeforeAsync: 10000`), always provide a descriptive semantic commit title and multi-line body summarizing changes + verification log; never use generic `"ship verified changes"` titles or run duplicate `npx vercel --prod` alongside `git push` (prevents raw UID hash deployments on Vercel/GitHub). Rebase worktree on `origin/main`, verify, push atomically (`git push origin <branch>:main`), clean up the worktree, and call `manage_subagents(kill_all)`.
 - **1-Command End Session (`"end chat"`)**: Append a 1-line session takeaway to `.agent/memory/learnings_and_reflections.md` (capped at `<= 110 lines` via sliding window), stop local servers, prune merged worktrees, kill active subagents (`manage_subagents(kill_all)`), and output a 4-line handoff card.
+- **Prompt Versioning & History**: Whenever any prompt file is updated, bump the version (`vX.Y`), archive snapshots in `.agent/prompts/history/vX.Y/`, and document the change in `.agent/prompts/PROMPT_HISTORY.md`.
 
 ## 4. Mandatory User-Facing Closing Block
 Every final response to the user MUST end with:
