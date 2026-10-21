@@ -34,6 +34,7 @@ interface QuestionCardProps {
   onFinish: () => void;
   totalXP: number;
   subject?: string;
+  isChecking?: boolean;
 }
 
 export function QuestionCard({
@@ -52,11 +53,14 @@ export function QuestionCard({
   onFinish,
   totalXP,
   subject,
+  isChecking = false,
 }: QuestionCardProps) {
   const shouldReduceMotion = useReducedMotion();
   const sanitizedStem = useMemo(() => sanitizeKaTeX(question.stem_markdown || ''), [question.stem_markdown]);
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
   const lowTimeAnnouncedRef = useRef(false);
+  const isCheckingRef = useRef(isChecking);
+  isCheckingRef.current = isChecking;
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -176,6 +180,7 @@ export function QuestionCard({
               return;
             }
             e.preventDefault();
+            if (isCheckingRef.current) return;
             onAnswer(option.id);
           }
           return;
@@ -193,7 +198,9 @@ export function QuestionCard({
   const correctOptionIndex = question.options.findIndex(
     (o) => o.id === question.correct_option_id
   );
-  const correctLetter = correctOptionIndex >= 0 ? letters[correctOptionIndex] : 'A';
+  // The correct answer is only known after the server reveals it.
+  const isRevealed = correctOptionIndex >= 0;
+  const correctLetter = isRevealed ? letters[correctOptionIndex] : '';
   const correctOption = question.options[correctOptionIndex];
 
   const isResolved = status === 'answered' || status === 'timeout';
@@ -237,10 +244,12 @@ export function QuestionCard({
   const isFirstTryCorrect =
     status === 'answered' &&
     !firstWrongOptionId &&
+    isRevealed &&
     selectedOptionId === question.correct_option_id;
   const isRetryCorrect =
     status === 'answered' &&
     firstWrongOptionId &&
+    isRevealed &&
     selectedOptionId === question.correct_option_id;
   const isFailed = status === 'timeout' || (status === 'answered' && !isFirstTryCorrect && !isRetryCorrect);
 
@@ -256,7 +265,9 @@ export function QuestionCard({
     ? `First try · ${streakMultiplier.toFixed(1)}× streak bonus`
     : isRetryCorrect
     ? 'Half XP · added to your Review Pile'
-    : `Answer ${correctLetter} · queued to your Review Pile`;
+    : isRevealed
+    ? `Answer ${correctLetter} · queued to your Review Pile`
+    : 'Queued to your Review Pile';
   const fbBg = isFirstTryCorrect
     ? 'bg-accent-2-300'
     : isRetryCorrect
@@ -271,7 +282,7 @@ export function QuestionCard({
   ];
 
   // Distractor breakdown
-  const distractorBreakdown = question.options
+  const distractorBreakdown = !isRevealed ? [] : question.options
     .filter((opt) => opt.id !== question.correct_option_id)
     .map((opt) => {
       const idx = question.options.findIndex((o) => o.id === opt.id);
@@ -542,7 +553,7 @@ export function QuestionCard({
                   Correct! Spot on 🎉
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
-                  Option {correctLetter} · First-try mastery
+                  {isRevealed ? `Option ${correctLetter} · ` : ''}First-try mastery
                 </span>
               </div>
             </div>
@@ -591,7 +602,7 @@ export function QuestionCard({
                   Correct on retry! 👍
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
-                  Option {correctLetter} · Added to Review Pile
+                  {isRevealed ? `Option ${correctLetter} · ` : ''}Added to Review Pile
                 </span>
               </div>
             </div>
@@ -619,14 +630,14 @@ export function QuestionCard({
       {/* Fifth Row: Options List (Tactile Rounded-2xl Cards) */}
       <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Answer options">
         {question.options.map((opt, i) => {
-          const isCorrect = opt.id === question.correct_option_id;
+          const isCorrect = isRevealed && opt.id === question.correct_option_id;
           const isPicked = selectedOptionId === opt.id;
           const isFirstWrongPick = firstWrongOptionId === opt.id;
           const isCorrectPick = isResolved && isCorrect && isPicked;
 
           const showCheck = isResolved && isCorrect;
           const showX = (isRetry && isFirstWrongPick) || (isResolved && isPicked && !isCorrect);
-          const isDisabled = isResolved || (isRetry && isFirstWrongPick);
+          const isDisabled = isChecking || isResolved || (isRetry && isFirstWrongPick);
 
           let cardStyles = 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer';
           let chipBg = 'bg-white text-text';
@@ -775,6 +786,7 @@ export function QuestionCard({
           </div>
 
           {/* Step by Step Explanation: Why Option X is Correct */}
+          {isRevealed && (
           <div className="p-3.5 rounded-2xl bg-accent-2-100 border-2 border-text flex flex-col gap-1.5">
             <h6 className="font-bold text-xs uppercase tracking-wider text-accent-2-900 m-0">
               Why Option {correctLetter} is Correct
@@ -790,6 +802,7 @@ export function QuestionCard({
               </div>
             ))}
           </div>
+          )}
 
           {/* Distractor Breakdown: Distractor Traps */}
           {distractorBreakdown.length > 0 && (

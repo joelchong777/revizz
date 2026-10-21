@@ -3,6 +3,8 @@ import type { Question, DiagramFilter } from '../hooks/useQuizGame';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { resolveDiagramUrl } from './resolveDiagramUrl';
+import { attachAnswerKeys } from './quizApi';
+import { useAuth } from './auth';
 import { hasDataTable, formatTableOptionText } from './compilerFilters';
 export { resolveDiagramUrl, formatTableOptionText };
 export type { Question, DiagramFilter };
@@ -56,7 +58,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q01-opt-c', text_markdown: "There are unlimited resources." },
       { id: '0455-s24-12-q01-opt-d', text_markdown: "There are unlimited wants." }
     ],
-    correct_option_id: '0455-s24-12-q01-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q1",
     topic_id: 'e47a52b4-e86e-4d69-b790-d7a5b5d15397',
     topic: "The basic economic problem",
@@ -70,7 +71,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q02-opt-c', text_markdown: "\\$25,000" },
       { id: '0455-s24-12-q02-opt-d', text_markdown: "\\$32,000" }
     ],
-    correct_option_id: '0455-s24-12-q02-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q2",
     topic_id: 'e47a52b4-e86e-4d69-b790-d7a5b5d15397',
     topic: "The basic economic problem",
@@ -84,7 +84,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q03-opt-c', text_markdown: "R and S" },
       { id: '0455-s24-12-q03-opt-d', text_markdown: "U and V" }
     ],
-    correct_option_id: '0455-s24-12-q03-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q3",
     topic_id: 'e47a52b4-e86e-4d69-b790-d7a5b5d15397',
     topic: "The basic economic problem",
@@ -100,7 +99,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q04-opt-c', text_markdown: "the level of unemployment in Spain" },
       { id: '0455-s24-12-q04-opt-d', text_markdown: "the total output of the German car industry" }
     ],
-    correct_option_id: '0455-s24-12-q04-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q4",
     topic_id: '6b7bf963-f082-467c-a7ca-812891a838ab',
     topic: "The allocation of resources",
@@ -114,7 +112,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q05-opt-c', text_markdown: "a rival firm leaving the market" },
       { id: '0455-s24-12-q05-opt-d', text_markdown: "a successful advertising campaign by the firm" }
     ],
-    correct_option_id: '0455-s24-12-q05-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q5",
     topic_id: '6b7bf963-f082-467c-a7ca-812891a838ab',
     topic: "The allocation of resources",
@@ -128,7 +125,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q06-opt-c', text_markdown: "Shift of the supply curve to the left | Shift of the supply curve to the right" },
       { id: '0455-s24-12-q06-opt-d', text_markdown: "Shift of the supply curve to the right | Shift of the demand curve to the right" }
     ],
-    correct_option_id: '0455-s24-12-q06-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q6",
     topic_id: '6b7bf963-f082-467c-a7ca-812891a838ab',
     topic: "The allocation of resources",
@@ -142,7 +138,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q07-opt-c', text_markdown: "Price changes cause further changes in both demand and supply." },
       { id: '0455-s24-12-q07-opt-d', text_markdown: "The quantity demanded by consumers equals the quantity supplied by producers." }
     ],
-    correct_option_id: '0455-s24-12-q07-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q7",
     topic_id: '6b7bf963-f082-467c-a7ca-812891a838ab',
     topic: "The allocation of resources",
@@ -156,7 +151,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q08-opt-c', text_markdown: "1.2" },
       { id: '0455-s24-12-q08-opt-d', text_markdown: "1.25" }
     ],
-    correct_option_id: '0455-s24-12-q08-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q8",
     topic_id: '6b7bf963-f082-467c-a7ca-812891a838ab',
     topic: "The allocation of resources",
@@ -170,7 +164,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q09-opt-c', text_markdown: "minimum price" },
       { id: '0455-s24-12-q09-opt-d', text_markdown: "subsidy" }
     ],
-    correct_option_id: '0455-s24-12-q09-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q9",
     topic_id: '6b7bf963-f082-467c-a7ca-812891a838ab',
     topic: "The allocation of resources",
@@ -184,7 +177,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q10-opt-c', text_markdown: "Rise | Fall" },
       { id: '0455-s24-12-q10-opt-d', text_markdown: "Rise | No change" }
     ],
-    correct_option_id: '0455-s24-12-q10-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q10",
     topic_id: '76de1d41-45e1-46a2-9a23-714d283948f2',
     topic: "Microeconomic decision makers",
@@ -200,7 +192,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q11-opt-c', text_markdown: "lower interest rates" },
       { id: '0455-s24-12-q11-opt-d', text_markdown: "lower savings" }
     ],
-    correct_option_id: '0455-s24-12-q11-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q11",
     topic_id: '76de1d41-45e1-46a2-9a23-714d283948f2',
     topic: "Microeconomic decision makers",
@@ -214,7 +205,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q12-opt-c', text_markdown: "Yes | Yes | No" },
       { id: '0455-s24-12-q12-opt-d', text_markdown: "Yes | Yes | Yes" }
     ],
-    correct_option_id: '0455-s24-12-q12-opt-c',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q12",
     topic_id: '76de1d41-45e1-46a2-9a23-714d283948f2',
     topic: "Microeconomic decision makers",
@@ -228,7 +218,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q13-opt-c', text_markdown: "the rent on the factory" },
       { id: '0455-s24-12-q13-opt-d', text_markdown: "the insurance on the factory buildings" }
     ],
-    correct_option_id: '0455-s24-12-q13-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q13",
     topic_id: '76de1d41-45e1-46a2-9a23-714d283948f2',
     topic: "Microeconomic decision makers",
@@ -242,7 +231,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q14-opt-c', text_markdown: "The firm's prices are always greater than total revenue." },
       { id: '0455-s24-12-q14-opt-d', text_markdown: "The firm's total revenue always increases as output rises." }
     ],
-    correct_option_id: '0455-s24-12-q14-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q14",
     topic_id: '76de1d41-45e1-46a2-9a23-714d283948f2',
     topic: "Microeconomic decision makers",
@@ -256,7 +244,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q15-opt-c', text_markdown: "a store of wealth" },
       { id: '0455-s24-12-q15-opt-d', text_markdown: "a unit of account" }
     ],
-    correct_option_id: '0455-s24-12-q15-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q15",
     topic_id: '76de1d41-45e1-46a2-9a23-714d283948f2',
     topic: "Microeconomic decision makers",
@@ -270,7 +257,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q16-opt-c', text_markdown: "Lower | Higher" },
       { id: '0455-s24-12-q16-opt-d', text_markdown: "Lower | Lower" }
     ],
-    correct_option_id: '0455-s24-12-q16-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q16",
     topic_id: '76de1d41-45e1-46a2-9a23-714d283948f2',
     topic: "Microeconomic decision makers",
@@ -284,7 +270,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q17-opt-c', text_markdown: "providing public goods" },
       { id: '0455-s24-12-q17-opt-d', text_markdown: "stabilising the economy" }
     ],
-    correct_option_id: '0455-s24-12-q17-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q17",
     topic_id: '09266079-92a1-44f2-961d-daf0c1b2ac2b',
     topic: "Government and the macroeconomy",
@@ -298,7 +283,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q18-opt-c', text_markdown: "Reduce | Increase" },
       { id: '0455-s24-12-q18-opt-d', text_markdown: "Reduce | Reduce" }
     ],
-    correct_option_id: '0455-s24-12-q18-opt-c',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q18",
     topic_id: '09266079-92a1-44f2-961d-daf0c1b2ac2b',
     topic: "Government and the macroeconomy",
@@ -312,7 +296,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q19-opt-c', text_markdown: "OP2EQ2" },
       { id: '0455-s24-12-q19-opt-d', text_markdown: "P1P2EF" }
     ],
-    correct_option_id: '0455-s24-12-q19-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q19",
     topic_id: '09266079-92a1-44f2-961d-daf0c1b2ac2b',
     topic: "Government and the macroeconomy",
@@ -328,7 +311,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q20-opt-c', text_markdown: "It involves changes in the equilibrium foreign exchange rate." },
       { id: '0455-s24-12-q20-opt-d', text_markdown: "It involves changes in the rate of interest." }
     ],
-    correct_option_id: '0455-s24-12-q20-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q20",
     topic_id: '09266079-92a1-44f2-961d-daf0c1b2ac2b',
     topic: "Government and the macroeconomy",
@@ -342,7 +324,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q21-opt-c', text_markdown: "an increase in the death rate" },
       { id: '0455-s24-12-q21-opt-d', text_markdown: "an increase in the retirement age" }
     ],
-    correct_option_id: '0455-s24-12-q21-opt-d',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q21",
     topic_id: '09266079-92a1-44f2-961d-daf0c1b2ac2b',
     topic: "Government and the macroeconomy",
@@ -356,7 +337,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q22-opt-c', text_markdown: "from technical employment to manual employment" },
       { id: '0455-s24-12-q22-opt-d', text_markdown: "from tertiary employment to secondary employment" }
     ],
-    correct_option_id: '0455-s24-12-q22-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q22",
     topic_id: 'c9501184-3e43-4b00-aac5-791638119278',
     topic: "Economic development",
@@ -370,7 +350,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q23-opt-c', text_markdown: "milk" },
       { id: '0455-s24-12-q23-opt-d', text_markdown: "personal mobile phones" }
     ],
-    correct_option_id: '0455-s24-12-q23-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q23",
     topic_id: '09266079-92a1-44f2-961d-daf0c1b2ac2b',
     topic: "Government and the macroeconomy",
@@ -384,7 +363,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q24-opt-c', text_markdown: "C" },
       { id: '0455-s24-12-q24-opt-d', text_markdown: "D" }
     ],
-    correct_option_id: '0455-s24-12-q24-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q24",
     topic_id: 'c9501184-3e43-4b00-aac5-791638119278',
     topic: "Economic development",
@@ -398,7 +376,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q25-opt-c', text_markdown: "Country Y has a higher level of investment spending than country X." },
       { id: '0455-s24-12-q25-opt-d', text_markdown: "Country Y has a higher level of spending on healthcare than country X." }
     ],
-    correct_option_id: '0455-s24-12-q25-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q25",
     topic_id: 'c9501184-3e43-4b00-aac5-791638119278',
     topic: "Economic development",
@@ -412,7 +389,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q26-opt-c', text_markdown: "infant mortality rate" },
       { id: '0455-s24-12-q26-opt-d', text_markdown: "net emigration" }
     ],
-    correct_option_id: '0455-s24-12-q26-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q26",
     topic_id: 'c9501184-3e43-4b00-aac5-791638119278',
     topic: "Economic development",
@@ -426,7 +402,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q27-opt-c', text_markdown: "C" },
       { id: '0455-s24-12-q27-opt-d', text_markdown: "D" }
     ],
-    correct_option_id: '0455-s24-12-q27-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q27",
     topic_id: '941a998b-8700-47b5-8695-c262070d4949',
     topic: "International trade and globalisation",
@@ -442,7 +417,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q28-opt-c', text_markdown: "an increase in the buying of yuan by central banks" },
       { id: '0455-s24-12-q28-opt-d', text_markdown: "an increase in the Chinese rate of interest" }
     ],
-    correct_option_id: '0455-s24-12-q28-opt-a',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q28",
     topic_id: '941a998b-8700-47b5-8695-c262070d4949',
     topic: "International trade and globalisation",
@@ -458,7 +432,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q29-opt-c', text_markdown: "increased quantity of imports" },
       { id: '0455-s24-12-q29-opt-d', text_markdown: "increased trade deficit" }
     ],
-    correct_option_id: '0455-s24-12-q29-opt-b',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q29",
     topic_id: '941a998b-8700-47b5-8695-c262070d4949',
     topic: "International trade and globalisation",
@@ -472,7 +445,6 @@ export const CAMBRIDGE_QUESTIONS: Question[] = [
       { id: '0455-s24-12-q30-opt-c', text_markdown: "balance of secondary income" },
       { id: '0455-s24-12-q30-opt-d', text_markdown: "balance of services" }
     ],
-    correct_option_id: '0455-s24-12-q30-opt-c',
     citation: "Cambridge IGCSE Economics 0455/12 May/June 2024 Q30",
     topic_id: '941a998b-8700-47b5-8695-c262070d4949',
     topic: "International trade and globalisation",
@@ -812,11 +784,7 @@ export function mapDbQuestionToQuestion(row: any): Question {
     id: opt.id,
     text_markdown: formatTableOptionText(opt.content_markdown || ''),
     label: opt.label,
-    distractor_reasoning: opt.distractor_reasoning || undefined,
   }));
-
-  const correctOption = sortedOptions.find((opt: any) => opt.is_correct);
-  const correct_option_id = correctOption ? correctOption.id : (sortedOptions[0]?.id ?? '');
 
   const topicName = row.topics?.name || undefined;
   const paper = row.papers;
@@ -840,7 +808,6 @@ export function mapDbQuestionToQuestion(row: any): Question {
     id: row.id,
     stem_markdown: row.stem_markdown || '',
     options,
-    correct_option_id,
     citation: citation || undefined,
     topic: topicName,
     topic_id: row.topic_id || undefined,
@@ -849,7 +816,6 @@ export function mapDbQuestionToQuestion(row: any): Question {
     diagram: diagramMeta
       ? { ...diagramMeta, image_url: imageUrl || diagramMeta.image_url }
       : (hasDiagram ? { has_diagram: true, image_url: imageUrl } : undefined),
-    explanation_markdown: row.explanation_markdown || undefined,
     paper_id: row.paper_id || undefined,
     question_number: row.question_number ?? undefined,
     year: row.papers?.year ?? undefined,
@@ -878,7 +844,6 @@ export async function fetchQuestionsFromDb(filters?: FetchQuestionsFilters): Pro
         question_number,
         stem_markdown,
         image_url,
-        explanation_markdown,
         cambridge_source_ref,
         active,
         diagram_metadata,
@@ -896,9 +861,7 @@ export async function fetchQuestionsFromDb(filters?: FetchQuestionsFilters): Pro
         question_options (
           id,
           label,
-          content_markdown,
-          is_correct,
-          distractor_reasoning
+          content_markdown
         )
       `);
 
@@ -1210,7 +1173,6 @@ export async function fetchPaperQuestions(paperIdOrCleanId: string): Promise<Que
             String(a.label || '').localeCompare(String(b.label || ''))
           );
 
-          let correctOptionId = '';
           const options = sortedOptions.map((opt: any, optIdx: number) => {
             const label = String(opt.label || String.fromCharCode(65 + optIdx)).toUpperCase();
             const optId = opt.id || `${qId}-opt-${label.toLowerCase()}`;
@@ -1222,10 +1184,6 @@ export async function fetchPaperQuestions(paperIdOrCleanId: string): Promise<Que
                 : undefined) ||
               undefined;
 
-            if (opt.is_correct || opt.isCorrect) {
-              correctOptionId = optId;
-            }
-
             return {
               id: optId,
               label,
@@ -1233,20 +1191,6 @@ export async function fetchPaperQuestions(paperIdOrCleanId: string): Promise<Que
               distractor_reasoning: distractorReasoning,
             };
           });
-
-          if (!correctOptionId && options.length > 0) {
-            if (q.correct_option_id) {
-              const matched = options.find(
-                (o: any) => o.id === q.correct_option_id || o.label === q.correct_option_id
-              );
-              if (matched) {
-                correctOptionId = matched.id;
-              }
-            }
-            if (!correctOptionId) {
-              correctOptionId = options[0].id;
-            }
-          }
 
           let citation = q.cambridge_source_ref;
           if (!citation && (seriesLabel || paperYear || paperCode)) {
@@ -1269,7 +1213,6 @@ export async function fetchPaperQuestions(paperIdOrCleanId: string): Promise<Que
             id: qId,
             stem_markdown: q.stem_markdown || '',
             options,
-            correct_option_id: correctOptionId,
             citation: citation || undefined,
             topic: q.topic_name || undefined,
             topic_id: q.topic_id || undefined,
@@ -1392,12 +1335,15 @@ export function useQuestions(subjectId?: string): UseQuestionsResult {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const { userProfile } = useAuth();
+  const isStaff = userProfile?.role === 'teacher' || userProfile?.role === 'admin';
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchQuestionsFromDb(subjectId ? { subjectId } : undefined);
+      let data = await fetchQuestionsFromDb(subjectId ? { subjectId } : undefined);
+      if (isStaff) data = await attachAnswerKeys(data);
       setQuestions(data);
       return data;
     } catch (err) {
@@ -1408,7 +1354,7 @@ export function useQuestions(subjectId?: string): UseQuestionsResult {
     } finally {
       setLoading(false);
     }
-  }, [subjectId]);
+  }, [subjectId, isStaff]);
 
   useEffect(() => {
     let active = true;

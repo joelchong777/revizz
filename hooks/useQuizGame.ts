@@ -7,7 +7,8 @@ import {
   recordFirstTryCorrect,
 } from '../lib/mastery';
 import { calculateAttemptScore } from '../lib/scoring';
-import { supabase } from '../lib/supabaseClient';
+import { submitAnswer, applyReveal, labelOf } from '../lib/quizApi';
+import type { QuizAnswerResponse, QuizScoring } from '../types/quiz';
 import { useAuth } from '../lib/auth';
 import { recordCompletedRound } from '../lib/studentProfile';
 
@@ -20,7 +21,7 @@ export type Question = {
     label?: string;
     distractor_reasoning?: string;
   }[];
-  correct_option_id: string;
+  correct_option_id?: string; // undefined until the server reveals it
   citation?: string;
   topic?: string;
   topic_id?: string;
@@ -105,6 +106,8 @@ export function useQuizGame() {
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const hasQueuedMistakeRef = useRef(false);
   const hasRecordedRoundRef = useRef(false);
+  const isCheckingRef = useRef(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   const startRound = (newConfig: QuizRoundConfig, initialQuestions: Question[]) => {
     setConfig(newConfig);
@@ -148,55 +151,20 @@ export function useQuizGame() {
     if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
   }, [config]);
 
-  const saveAttempt = async (
-    q: Question,
-    outcome: 'first-correct' | 'first-wrong' | 'retry-correct' | 'wrong' | 'timeout',
-    xpAwarded: number,
-    streak: number,
-    incrementReviewMistakes?: boolean
-  ) => {
-    if (!userProfile) return;
-    const timeSpentMs = Date.now() - questionStartTime;
-    const isFirstCorrect = outcome === 'first-correct';
-    const isRetryCorrect = outcome === 'retry-correct';
-
-    const shouldIncrementMistakes = incrementReviewMistakes !== undefined
-      ? incrementReviewMistakes
-      : (outcome === 'first-wrong' || (!hasQueuedMistakeRef.current && !isFirstCorrect));
-
-    try {
-      await supabase.from('user_attempts').upsert({
-        user_id: userProfile.id,
-        question_id: q.id,
-        first_attempt_correct: isFirstCorrect,
-        retry_correct: isRetryCorrect,
-        xp_awarded: xpAwarded,
-        time_spent_ms: timeSpentMs
-      }, { onConflict: 'user_id, question_id' });
-
-      if (!isFirstCorrect && shouldIncrementMistakes) {
-        const { data } = await supabase.from('review_pile').select('mistakes_count').eq('user_id', userProfile.id).eq('question_id', q.id).single();
-        const count = (data?.mistakes_count || 0) + 1;
-        await supabase.from('review_pile').upsert({
-          user_id: userProfile.id,
-          question_id: q.id,
-          mistakes_count: count
-        }, { onConflict: 'user_id, question_id' });
-      }
-
-      const newTotalXp = userProfile.total_xp + xpAwarded;
-      const newStreak = isFirstCorrect ? streak : 0;
-      
-      await supabase.from('profiles').update({
-        total_xp: newTotalXp,
-        current_streak: newStreak
-      }).eq('id', userProfile.id);
-
-      setUserProfile({ ...userProfile, total_xp: newTotalXp, current_streak: newStreak });
-    } catch (e) {
-      console.error('Failed to save attempt to supabase:', e);
+  // Signed-in users get server-computed XP/streak; guests (scoring === null) keep the local calculation.
+  const applyServerScoring = useCallback((scoring: QuizScoring | null) => {
+    if (!scoring) return;
+    if (userProfile) {
+      setUserProfile({ ...userProfile, total_xp: scoring.totalXp, current_streak: scoring.streak });
     }
-  };
+  }, [userProfile, setUserProfile]);
+
+  const revealInState = useCallback((q: Question, resp: QuizAnswerResponse): Question => {
+    if (!resp.reveal) return q;
+    const revealed = applyReveal(q, resp.reveal);
+    setQuestions(prev => prev.map(item => (item.id === q.id ? applyReveal(item, resp.reveal!) : item)));
+    return revealed;
+  }, []);
 
   const recordMissed = useCallback((q: Question, outcome: 'retry-correct' | 'wrong' | 'timeout', qNum: number) => {
     setMissedDetails(prev => {
@@ -219,22 +187,49 @@ export function useQuizGame() {
   }, []);
 
   const handleTimeout = useCallback(() => {
-    setStatus('timeout');
-    const { xpAwarded, newStreak, shouldAddToReview } = calculateAttemptScore('timeout', currentStreak);
-    setCurrentStreak(newStreak);
-    setWrongCount(prev => prev + 1);
-
+    if (isCheckingRef.current) return;
     const currentQ = questions[currentQuestionIndex];
-    if (currentQ) {
-      const shouldIncrement = !hasQueuedMistakeRef.current;
-      const canSaveToReview = !isDemoSession && Boolean(userProfile?.email);
-      if (shouldAddToReview && shouldIncrement && canSaveToReview) addToReviewPile(currentQ.id);
-      recordMissed(currentQ, 'timeout', currentQuestionIndex + 1);
-      saveAttempt(currentQ, 'timeout', xpAwarded, newStreak, shouldIncrement);
-      hasQueuedMistakeRef.current = true;
-    }
+    if (!currentQ) return;
+    const qNum = currentQuestionIndex + 1;
+    const timeSpentMs = Date.now() - questionStartTime;
+
+    setStatus('timeout');
     playBuzzer();
-  }, [questions, currentQuestionIndex, currentStreak, recordMissed, isDemoSession, userProfile?.email]);
+    isCheckingRef.current = true;
+    setIsChecking(true);
+
+    const { newStreak: localStreak, shouldAddToReview } = calculateAttemptScore('timeout', currentStreak);
+    setWrongCount(prev => prev + 1);
+    setCurrentStreak(localStreak);
+
+    const shouldIncrement = !hasQueuedMistakeRef.current;
+    const canSaveToReview = !isDemoSession && Boolean(userProfile?.email);
+    if (shouldAddToReview && shouldIncrement && canSaveToReview) addToReviewPile(currentQ.id);
+    hasQueuedMistakeRef.current = true;
+
+    (async () => {
+      let recorded = currentQ;
+      try {
+        const resp = await submitAnswer({
+          questionId: currentQ.id,
+          event: 'timeout',
+          attempt: firstWrongOptionId ? 2 : 1,
+          timeSpentMs,
+        });
+        recorded = revealInState(currentQ, resp);
+        if (resp.scoring) {
+          setCurrentStreak(resp.scoring.streak);
+          applyServerScoring(resp.scoring);
+        }
+      } catch (e) {
+        console.error('Failed to record timeout:', e);
+      } finally {
+        recordMissed(recorded, 'timeout', qNum);
+        isCheckingRef.current = false;
+        setIsChecking(false);
+      }
+    })();
+  }, [questions, currentQuestionIndex, currentStreak, questionStartTime, firstWrongOptionId, recordMissed, revealInState, applyServerScoring, isDemoSession, userProfile?.email]);
 
   // Timer logic
   useEffect(() => {
@@ -284,93 +279,101 @@ export function useQuizGame() {
     }
   }, []);
 
-  const handleAnswer = (optionId: string) => {
+  const handleAnswer = async (optionId: string) => {
     if (status === 'answered' || status === 'timeout') return;
+    if (isCheckingRef.current) return;
+    if (status === 'first-wrong' && optionId === firstWrongOptionId) return;
 
     const currentQ = questions[currentQuestionIndex];
     if (!currentQ) return;
-
-    const isCorrect = optionId === currentQ.correct_option_id;
     const qNum = currentQuestionIndex + 1;
+    const wasRetry = status === 'first-wrong';
 
-    if (status === 'unanswered') {
-      if (isCorrect) {
-        // Correct on first try
+    isCheckingRef.current = true;
+    setIsChecking(true);
+    let resp: QuizAnswerResponse;
+    try {
+      resp = await submitAnswer({
+        questionId: currentQ.id,
+        optionLabel: labelOf(currentQ, optionId),
+        event: 'answer',
+        attempt: wasRetry ? 2 : 1,
+        timeSpentMs: Date.now() - questionStartTime,
+      });
+    } catch (e) {
+      // Network or server error: nothing is revealed, status is unchanged so the student can tap again.
+      console.error('Failed to submit answer:', e);
+      isCheckingRef.current = false;
+      setIsChecking(false);
+      return;
+    }
+
+    try {
+      const correct = resp.correct === true;
+      const isFirstAttempt = resp.attempt === 1;
+      const revealedQ = resp.final ? revealInState(currentQ, resp) : currentQ;
+      const server = resp.scoring;
+
+      if (correct && resp.final) {
         setStatus('answered');
         setSelectedOptionId(optionId);
-
-        const { xpAwarded, newStreak } = calculateAttemptScore('first-correct', currentStreak);
-        setCurrentStreak(newStreak);
-        if (newStreak > peakStreak) setPeakStreak(newStreak);
-
-        setTotalXP(prev => prev + xpAwarded);
-        setCorrectFirstTryCount(prev => prev + 1);
-
-        recordFirstTryCorrect(currentQ.id);
-
-        if (config?.sourceType === 'review') {
-          resolveFromReviewPile(currentQ.id);
+        if (isFirstAttempt) {
+          const local = calculateAttemptScore('first-correct', currentStreak);
+          const xp = server ? server.xpAwarded : local.xpAwarded;
+          const streak = server ? server.streak : local.newStreak;
+          setCurrentStreak(streak);
+          if (streak > peakStreak) setPeakStreak(streak);
+          setTotalXP(prev => prev + xp);
+          setCorrectFirstTryCount(prev => prev + 1);
+          recordFirstTryCorrect(currentQ.id);
+          if (config?.sourceType === 'review') resolveFromReviewPile(currentQ.id);
+          playChime();
+          triggerCelebration(streak);
+        } else {
+          const local = calculateAttemptScore('retry-correct', currentStreak);
+          const xp = server ? server.xpAwarded : local.xpAwarded;
+          setTotalXP(prev => prev + xp);
+          if (server) setCurrentStreak(server.streak);
+          setCorrectRetryCount(prev => prev + 1);
+          recordMissed(revealedQ, 'retry-correct', qNum);
+          playChime();
         }
-
-        saveAttempt(currentQ, 'first-correct', xpAwarded, newStreak);
-        playChime();
-        triggerCelebration(newStreak);
-      } else {
-        // Wrong on first try
+        applyServerScoring(server);
+      } else if (!correct && !resp.final) {
         setStatus('first-wrong');
         setFirstWrongOptionId(optionId);
-        const { newStreak } = calculateAttemptScore('first-wrong', currentStreak);
-        setCurrentStreak(newStreak);
-
+        const local = calculateAttemptScore('first-wrong', currentStreak);
+        setCurrentStreak(server ? server.streak : local.newStreak);
         if (!hasQueuedMistakeRef.current) {
           hasQueuedMistakeRef.current = true;
           recordMissed(currentQ, 'retry-correct', qNum);
-          if (!isDemoSession && Boolean(userProfile?.email)) {
-            addToReviewPile(currentQ.id);
-          }
-          saveAttempt(currentQ, 'first-wrong', 0, 0);
+          if (!isDemoSession && Boolean(userProfile?.email)) addToReviewPile(currentQ.id);
         }
-
+        applyServerScoring(server);
         playBuzzer();
-      }
-    } else if (status === 'first-wrong') {
-      if (optionId === firstWrongOptionId) return;
-
-      if (isCorrect) {
-        // Correct on second try
-        setStatus('answered');
-        setSelectedOptionId(optionId);
-        const { xpAwarded } = calculateAttemptScore('retry-correct', currentStreak);
-        setTotalXP(prev => prev + xpAwarded);
-        setCorrectRetryCount(prev => prev + 1);
-
-        recordMissed(currentQ, 'retry-correct', qNum);
-        saveAttempt(currentQ, 'retry-correct', xpAwarded, 0, false);
-
-        playChime();
       } else {
-        // Wrong on second try
+        // Wrong and final (second wrong attempt)
         setStatus('answered');
         setSelectedOptionId(optionId);
-        const { xpAwarded } = calculateAttemptScore('wrong', currentStreak);
         setWrongCount(prev => prev + 1);
-
-        recordMissed(currentQ, 'wrong', qNum);
-
-        const shouldIncrementMistakes = !hasQueuedMistakeRef.current;
-        saveAttempt(currentQ, 'wrong', xpAwarded, 0, shouldIncrementMistakes);
-
-        if (shouldIncrementMistakes && !isDemoSession && Boolean(userProfile?.email)) {
+        if (server) setCurrentStreak(server.streak);
+        else setCurrentStreak(0);
+        recordMissed(revealedQ, 'wrong', qNum);
+        if (!hasQueuedMistakeRef.current && !isDemoSession && Boolean(userProfile?.email)) {
           addToReviewPile(currentQ.id);
         }
         hasQueuedMistakeRef.current = true;
-
+        applyServerScoring(server);
         playBuzzer();
       }
+    } finally {
+      isCheckingRef.current = false;
+      setIsChecking(false);
     }
   };
 
-  const nextQuestion = () => {
+  const nextQuestion = async () => {
+    if (isCheckingRef.current) return;
     if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
 
     let effectiveWrongCount = wrongCount;
@@ -379,8 +382,28 @@ export function useQuizGame() {
       if (currentQ) {
         setWrongCount(prev => prev + 1);
         effectiveWrongCount = wrongCount + 1;
-        recordMissed(currentQ, 'wrong', currentQuestionIndex + 1);
-        saveAttempt(currentQ, 'wrong', 0, 0, false);
+        isCheckingRef.current = true;
+        setIsChecking(true);
+        let recorded = currentQ;
+        try {
+          const resp = await submitAnswer({
+            questionId: currentQ.id,
+            event: 'give-up',
+            attempt: 2,
+            timeSpentMs: Date.now() - questionStartTime,
+          });
+          recorded = revealInState(currentQ, resp);
+          if (resp.scoring) {
+            setCurrentStreak(resp.scoring.streak);
+            applyServerScoring(resp.scoring);
+          }
+        } catch (e) {
+          console.error('Failed to record give-up:', e);
+        } finally {
+          isCheckingRef.current = false;
+          setIsChecking(false);
+        }
+        recordMissed(recorded, 'wrong', currentQuestionIndex + 1);
       }
     }
 
@@ -443,6 +466,7 @@ export function useQuizGame() {
     currentQuestionIndex,
     totalQuestions: questions.length,
     status,
+    isChecking,
     timeLeft,
     totalXP,
     currentStreak,

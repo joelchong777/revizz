@@ -41,6 +41,7 @@ import {
   Question
 } from '@/lib/questions';
 import { fetchSubjectsFromDb } from '@/lib/subjects';
+import { attachAnswerKeys } from '@/lib/quizApi';
 import {
   BankItemStatus,
   BankDifficulty,
@@ -488,7 +489,6 @@ export default function AdminTools({
           question_number,
           stem_markdown,
           image_url,
-          explanation_markdown,
           cambridge_source_ref,
           active,
           status,
@@ -511,15 +511,43 @@ export default function AdminTools({
           options:question_options (
             id,
             label,
-            content_markdown,
-            is_correct,
-            distractor_reasoning
+            content_markdown
           )
         `)
         .order('created_at', { ascending: false });
 
       if (!error && Array.isArray(data) && data.length > 0) {
-        setLiveQuestions(data);
+        // Answer keys are hidden from direct selects: merge them in from the staff-only endpoint.
+        let merged: any[] = data;
+        try {
+          const keyed = await attachAnswerKeys(
+            data.map((row: any) => ({
+              id: row.id,
+              stem_markdown: row.stem_markdown || '',
+              options: (row.options || []).map((o: any) => ({ id: o.id, label: o.label, text_markdown: o.content_markdown || '' })),
+            }))
+          );
+          const byId = new Map(keyed.map((k) => [k.id, k]));
+          merged = data.map((row: any) => {
+            const k = byId.get(row.id);
+            if (!k || !k.correct_option_id) return row;
+            return {
+              ...row,
+              explanation_markdown: k.explanation_markdown ?? row.explanation_markdown,
+              options: (row.options || []).map((o: any) => {
+                const ko = k.options.find((x) => x.id === o.id);
+                return {
+                  ...o,
+                  is_correct: o.id === k.correct_option_id,
+                  distractor_reasoning: ko?.distractor_reasoning ?? o.distractor_reasoning,
+                };
+              }),
+            };
+          });
+        } catch {
+          // Keep the rows without keys.
+        }
+        setLiveQuestions(merged);
       } else {
         // Fallback to empty or null
         setLiveQuestions([]);

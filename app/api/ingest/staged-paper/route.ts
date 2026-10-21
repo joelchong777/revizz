@@ -420,7 +420,56 @@ async function deletePaperAndRelationsFromDatabase(
  * - `include_archived` (optional): If 'true' or '1', also includes archived papers.
  *   If omitted or false: Lists all active papers and returns `{ success: true, papers: [...], stagedPapers: [...] }`.
  */
+const ANSWER_KEYS_TO_STRIP = new Set([
+  'is_correct', 'isCorrect', 'distractor_reasoning', 'correct_option_id', 'correct_answer',
+  'explanation_markdown', 'distractor_analysis',
+]);
+
+function stripQuestionAnswers(q: any): any {
+  if (!q || typeof q !== 'object') return q;
+  const out: any = {};
+  for (const [k, v] of Object.entries(q)) {
+    if (ANSWER_KEYS_TO_STRIP.has(k) || k.startsWith('mark_scheme')) continue;
+    if (k === 'options' && Array.isArray(v)) {
+      out[k] = v.map((o: any) => {
+        if (!o || typeof o !== 'object') return o;
+        const c: any = {};
+        for (const [ok, ov] of Object.entries(o)) {
+          if (ANSWER_KEYS_TO_STRIP.has(ok)) continue;
+          c[ok] = ov;
+        }
+        return c;
+      });
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+function stripAnswersDeep(node: any): any {
+  if (Array.isArray(node)) return node.map(stripAnswersDeep);
+  if (!node || typeof node !== 'object') return node;
+  const out: any = {};
+  for (const [k, v] of Object.entries(node)) {
+    out[k] = k === 'questions' && Array.isArray(v) ? v.map(stripQuestionAnswers) : stripAnswersDeep(v);
+  }
+  return out;
+}
+
 export async function GET(request: NextRequest) {
+  const res = await getInner(request);
+  const caller = await getCaller(request);
+  if (caller?.role === 'teacher' || caller?.role === 'admin') return res;
+  try {
+    const body = await res.clone().json();
+    return NextResponse.json(stripAnswersDeep(body), { status: res.status });
+  } catch {
+    return res;
+  }
+}
+
+async function getInner(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawId = searchParams.get('id');
   const includeArchived =

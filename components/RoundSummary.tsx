@@ -184,7 +184,7 @@ export function RoundSummary({
                 const correctIdx = item.question.options.findIndex(
                   (opt) => opt.id === item.question.correct_option_id
                 );
-                const correctLetter = correctIdx >= 0 ? letters[correctIdx] : 'A';
+                const correctLetter = correctIdx >= 0 ? letters[correctIdx] : '';
                 const correctOption = item.question.options[correctIdx];
 
                 const stemPreview = item.question.stem_markdown
@@ -194,7 +194,9 @@ export function RoundSummary({
 
                 const steps = [
                   `Review concept: ${stemPreview.slice(0, 90)}...`,
-                  `Correct answer is Option ${correctLetter}: "${correctOption?.text_markdown.replace(/[*#$]/g, '') || ''}".`,
+                  correctLetter
+                    ? `Correct answer is Option ${correctLetter}: "${correctOption?.text_markdown.replace(/[*#$]/g, '') || ''}".`
+                    : `The answer could not be loaded. Retry this question from your Review Pile.`,
                   `This question has been queued to your Review Pile for spaced repetition practice.`,
                 ];
 

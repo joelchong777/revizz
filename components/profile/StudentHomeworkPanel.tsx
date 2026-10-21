@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 
 import { Question } from '@/lib/questions';
+import { applyReveal, gradeHomework, labelOf } from '@/lib/quizApi';
+import type { AnswerReveal } from '@/types/quiz';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 import { playChime, playFanfare, playPop } from '@/lib/audio';
 import {
@@ -129,6 +131,11 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
   const [quizTimerActive, setQuizTimerActive] = useState<boolean>(false);
   const [quizSubmittedResult, setQuizSubmittedResult] = useState<HomeworkSubmission | null>(null);
 
+  // Answer keys revealed by the server after grading (never shipped with the questions)
+  const [reveals, setReveals] = useState<Record<string, AnswerReveal>>({});
+  const [isGrading, setIsGrading] = useState(false);
+  const [gradeError, setGradeError] = useState<string | null>(null);
+
   // Pool of available questions
   const questionPool = useMemo(() => questions || [], [questions]);
 
@@ -190,7 +197,16 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
       setQuizTimerActive(false);
       setSelectedAnswers(existingSubmission?.answers || {});
       setQuizSubmittedResult(existingSubmission || null);
+      if (existingSubmission) {
+        const qs = assignment.questionIds
+          .map((id) => questionPool.find((q) => q.id === id))
+          .filter((q): q is Question => Boolean(q));
+        gradeAnswers(qs, existingSubmission.answers || {})
+          .then(({ found }) => setReveals((prev) => ({ ...prev, ...found })))
+          .catch(() => setGradeError('Could not load the answer key. Try again later.'));
+      }
     }
+    setGradeError(null);
   };
 
   const closeModal = () => {
@@ -234,8 +250,27 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
     if (!activeModalItem) return [];
     return activeModalItem.questionIds
       .map((id) => questionPool.find((q) => q.id === id))
-      .filter((q): q is Question => Boolean(q));
-  }, [activeModalItem, questionPool]);
+      .filter((q): q is Question => Boolean(q))
+      .map((q) => (reveals[q.id] ? applyReveal(q, reveals[q.id]) : q));
+  }, [activeModalItem, questionPool, reveals]);
+
+  // Grade answers on the server (no writes). Returns score and per-question reveals.
+  const gradeAnswers = async (qs: Question[], answers: Record<string, string>) => {
+    let score = 0;
+    const found: Record<string, AnswerReveal> = {};
+    for (let i = 0; i < qs.length; i += 60) {
+      const chunk = qs.slice(i, i + 60);
+      const resp = await gradeHomework(
+        chunk.map((q) => ({
+          questionId: q.id,
+          optionLabel: answers[q.id] ? labelOf(q, answers[q.id]) : null,
+        }))
+      );
+      score += resp.score;
+      for (const r of resp.results) found[r.questionId] = r.reveal;
+    }
+    return { score, found };
+  };
 
   // Handle quiz answer selection
   const handleSelectOption = (questionId: string, optionId: string) => {
@@ -248,19 +283,23 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
   };
 
   // Handle quiz submission
-  const handleSubmitQuiz = () => {
-    if (!activeModalItem) return;
+  const handleSubmitQuiz = async () => {
+    if (!activeModalItem || isGrading) return;
 
-    // Calculate score
-    let score = 0;
     const totalQuestions = modalQuestions.length;
-
-    modalQuestions.forEach((q) => {
-      const selected = selectedAnswers[q.id];
-      if (selected && selected === q.correct_option_id) {
-        score += 1;
-      }
-    });
+    let score = 0;
+    setIsGrading(true);
+    setGradeError(null);
+    try {
+      const graded = await gradeAnswers(modalQuestions, selectedAnswers);
+      score = graded.score;
+      setReveals((prev) => ({ ...prev, ...graded.found }));
+    } catch {
+      setGradeError('Could not submit. Check your connection and try again.');
+      setIsGrading(false);
+      return;
+    }
+    setIsGrading(false);
 
     const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
     const timeSpentSeconds = Math.max(0, activeModalItem.durationMinutes * 60 - quizTimeRemaining);
@@ -969,7 +1008,7 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
                           const optionLabels = ['A', 'B', 'C', 'D'];
                           const label = optionLabels[optIdx] || 'A';
                           const isSelected = selectedOptId === opt.id;
-                          const isCorrect = opt.id === currentQ.correct_option_id;
+                          const isCorrect = Boolean(currentQ.correct_option_id) && opt.id === currentQ.correct_option_id;
 
                           let optionBtnStyle =
                             'bg-white border-[#201e1d] hover:bg-[#FEF08A]/30 text-[#201e1d] shadow-[2px_2px_0_0_#201e1d]';
@@ -1024,7 +1063,7 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
                                   Correct
                                 </span>
                               )}
-                              {modalMode === 'review' && isSelected && !isCorrect && (
+                              {modalMode === 'review' && isSelected && !isCorrect && Boolean(currentQ.correct_option_id) && (
                                 <span className="text-[11px] font-heading font-black px-2.5 py-1 rounded-lg bg-[#E11D48] text-white shrink-0 flex items-center gap-1">
                                   <X className="w-3 h-3 stroke-[3]" />
                                   Your Choice
@@ -1118,14 +1157,18 @@ export function StudentHomeworkPanel({ questions = [] }: StudentHomeworkPanelPro
                     </button>
                   ) : null}
 
+                  {modalMode === 'quiz' && gradeError && (
+                    <span role="alert" className="text-xs font-bold text-[#881337]">{gradeError}</span>
+                  )}
                   {modalMode === 'quiz' && (
                     <button
                       type="button"
+                      disabled={isGrading}
                       onClick={handleSubmitQuiz}
                       className="px-5 py-2 min-h-[44px] bg-[#86EFAC] hover:bg-[#4ADE80] border-2 border-[#201e1d] rounded-xl text-xs sm:text-sm font-heading font-black text-[#14532D] shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <Check className="w-4 h-4 stroke-[3]" />
-                      Submit Assignment
+                      {isGrading ? 'Checking...' : 'Submit Assignment'}
                     </button>
                   )}
 

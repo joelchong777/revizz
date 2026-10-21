@@ -13,6 +13,8 @@ import {
   BookmarkEntry,
   subscribeStudentProfileChanges,
 } from '@/lib/studentProfile';
+import { applyReveal, revealAnswers } from '@/lib/quizApi';
+import type { AnswerReveal } from '@/types/quiz';
 import { stripCambridgeIgcse } from '@/lib/compilerFilters';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
 
@@ -66,14 +68,49 @@ export function StudentReviewPanel({
     };
   }, [refreshStorageData]);
 
+  // Answer keys the server has revealed for questions this student has finished
+  const [reveals, setReveals] = useState<Record<string, AnswerReveal>>({});
+
+  const pileIdsKey = useMemo(() => {
+    const ids = new Set<string>([
+      ...Object.keys(reviewPile),
+      ...bookmarks.map((b) => b.questionId),
+    ]);
+    return Array.from(ids).sort().join(',');
+  }, [reviewPile, bookmarks]);
+
+  useEffect(() => {
+    if (isDemoSession || !pileIdsKey) return;
+    let cancelled = false;
+    const ids = pileIdsKey.split(',').filter((id) => !reveals[id]);
+    if (ids.length === 0) return;
+    (async () => {
+      try {
+        const found: Record<string, AnswerReveal> = {};
+        for (let i = 0; i < ids.length; i += 200) {
+          for (const r of await revealAnswers(ids.slice(i, i + 200))) found[r.questionId] = r;
+        }
+        if (!cancelled && Object.keys(found).length > 0) {
+          setReveals((prev) => ({ ...prev, ...found }));
+        }
+      } catch {
+        // No reveal: options are shown without marking the answer.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pileIdsKey, isDemoSession]);
+
   // Map of question lookup by ID for fast retrieval
   const questionsById = useMemo(() => {
     const map = new Map<string, Question>();
     for (const q of questions) {
-      map.set(q.id, q);
+      map.set(q.id, reveals[q.id] ? applyReveal(q, reveals[q.id]) : q);
     }
     return map;
-  }, [questions]);
+  }, [questions, reveals]);
 
   // Questions in mistake pile
   const mistakeQuestionsList = useMemo(() => {
