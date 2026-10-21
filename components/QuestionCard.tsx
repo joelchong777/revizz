@@ -207,7 +207,7 @@ export function QuestionCard({
   let gainedXP = 0;
   if (status === 'answered') {
     if (firstWrongOptionId) {
-      gainedXP = 5;
+      gainedXP = selectedOptionId === question.correct_option_id ? 5 : 0;
     } else if (selectedOptionId === question.correct_option_id) {
       gainedXP = potentialGain;
     }
