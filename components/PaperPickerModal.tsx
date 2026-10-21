@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Check } from 'lucide-react';
 import { IngestedPaperSummary } from '@/lib/questions';
 import { playPop } from '@/lib/audio';
@@ -25,6 +25,43 @@ export function PaperPickerModal({
   subjectName,
   loading = false,
 }: PaperPickerModalProps) {
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
+  const [selectedPaperCode, setSelectedPaperCode] = useState<string>('all');
+
+  const availableYears = useMemo(() => {
+    const years = Array.from(
+      new Set(
+        papers
+          .map((p) => p.year)
+          .filter((y): y is number => typeof y === 'number' && !isNaN(y))
+      )
+    );
+    return years.sort((a, b) => b - a);
+  }, [papers]);
+
+  const availablePaperCodes = useMemo(() => {
+    const codes = Array.from(
+      new Set(
+        papers
+          .map((p) => p.paperCode)
+          .filter((c): c is string => Boolean(c))
+      )
+    );
+    return codes.sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+    );
+  }, [papers]);
+
+  const filteredPapers = useMemo(() => {
+    return papers.filter((paper) => {
+      if (selectedYear !== 'all' && paper.year !== selectedYear) return false;
+      if (selectedPaperCode !== 'all' && paper.paperCode !== selectedPaperCode) return false;
+      return true;
+    });
+  }, [papers, selectedYear, selectedPaperCode]);
+
+  const isFiltering = selectedYear !== 'all' || selectedPaperCode !== 'all';
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -97,10 +134,119 @@ export function PaperPickerModal({
             <span className="text-xs font-semibold text-neutral-700">
               {loading
                 ? 'Loading papers...'
+                : isFiltering
+                ? `${filteredPapers.length} of ${papers.length} papers`
                 : `${papers.length} paper${papers.length === 1 ? '' : 's'} available`}
             </span>
+            {isFiltering && (
+              <button
+                type="button"
+                data-testid="paper-clear-filters"
+                onClick={() => {
+                  playPop();
+                  setSelectedYear('all');
+                  setSelectedPaperCode('all');
+                }}
+                className="text-xs font-bold text-accent hover:underline cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Filter Controls */}
+        {!loading && papers.length > 0 && (
+          <div className="flex flex-col gap-2 p-2.5 rounded-2xl bg-neutral-100/70 border border-text/15">
+            {/* Year Filters */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-heading font-black text-neutral-700 mr-1 shrink-0">
+                Year:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedYear !== 'all') {
+                    playPop();
+                    setSelectedYear('all');
+                  }
+                }}
+                className={cn(
+                  'px-2.5 py-1 transition-all cursor-pointer',
+                  selectedYear === 'all'
+                    ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                    : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                )}
+              >
+                All
+              </button>
+              {availableYears.map((year) => (
+                <button
+                  key={year}
+                  type="button"
+                  onClick={() => {
+                    if (selectedYear !== year) {
+                      playPop();
+                      setSelectedYear(year);
+                    }
+                  }}
+                  className={cn(
+                    'px-2.5 py-1 transition-all cursor-pointer',
+                    selectedYear === year
+                      ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                      : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                  )}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
+
+            {/* Paper Code Filters */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-heading font-black text-neutral-700 mr-1 shrink-0">
+                Paper:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedPaperCode !== 'all') {
+                    playPop();
+                    setSelectedPaperCode('all');
+                  }
+                }}
+                className={cn(
+                  'px-2.5 py-1 transition-all cursor-pointer',
+                  selectedPaperCode === 'all'
+                    ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                    : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                )}
+              >
+                All
+              </button>
+              {availablePaperCodes.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => {
+                    if (selectedPaperCode !== code) {
+                      playPop();
+                      setSelectedPaperCode(code);
+                    }
+                  }}
+                  className={cn(
+                    'px-2.5 py-1 transition-all cursor-pointer',
+                    selectedPaperCode === code
+                      ? 'bg-accent text-neutral-100 border border-text shadow-offset-1 text-xs font-bold rounded-xl'
+                      : 'border border-text/40 bg-white/90 text-xs font-bold rounded-xl text-text hover:bg-white'
+                  )}
+                >
+                  Paper {code}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (
@@ -118,13 +264,31 @@ export function PaperPickerModal({
               Try selecting another subject or check back soon as more Cambridge papers are staged.
             </p>
           </div>
+        ) : filteredPapers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 px-4 text-center border-2 border-dashed border-text/30 rounded-2xl bg-neutral-100/50 gap-3">
+            <span className="text-3xl">🔍</span>
+            <span className="font-heading text-base sm:text-lg text-text">
+              No papers match the selected filters
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                playPop();
+                setSelectedYear('all');
+                setSelectedPaperCode('all');
+              }}
+              className="px-4 py-2 rounded-xl bg-accent text-neutral-100 border-2 border-text font-bold text-xs shadow-offset-2 hover:bg-accent-600 active:translate-y-0.5 cursor-pointer"
+            >
+              Reset filters
+            </button>
+          </div>
         ) : (
           <div
             role="listbox"
             data-testid="paper-picker-menu"
             className="flex flex-col gap-2.5 max-h-[48vh] overflow-y-auto pr-1"
           >
-            {papers.map((paper) => {
+            {filteredPapers.map((paper) => {
               const isSelected =
                 selectedPaperId === paper.id || selectedPaperId === paper.cleanId;
 
