@@ -55,6 +55,8 @@ export interface IngestionHistoryHubProps {
   onOpenEditor?: (questionId: string) => void;
   /** Called after a paper is preloaded into the Studio store. */
   onOpenInStudio?: (paperId: string) => void;
+  /** Rendered first in the header row (the Studio passes its tab strip). */
+  headerStart?: React.ReactNode;
 }
 
 // Formatting helpers
@@ -114,6 +116,7 @@ export default function IngestionHistoryHub({
   onSelectTab,
   onOpenEditor,
   onOpenInStudio,
+  headerStart,
 }: IngestionHistoryHubProps) {
   // UNCONDITIONAL HOOKS DECLARATION AT TOP (Error #310 rule compliance)
   const { questions: liveQuestions, loading: questionsLoading, refetch: refetchLiveQuestions } = useQuestions();
@@ -524,8 +527,9 @@ export default function IngestionHistoryHub({
   return (
     <div className="space-y-4">
       {/* HEADER ROW */}
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-black font-heading tracking-tight text-[#201e1d]">
+      <div className="flex flex-wrap items-center gap-3">
+        {headerStart && <div className="w-full sm:w-auto max-w-full">{headerStart}</div>}
+        <h2 className="flex-1 min-w-0 text-lg font-black font-heading tracking-tight text-[#201e1d]">
           Ingestion history
           <span className="ml-2 text-xs font-mono font-bold text-[#645c50]">
             {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
@@ -538,7 +542,7 @@ export default function IngestionHistoryHub({
             refetchLiveQuestions();
           }}
           disabled={isRefreshing || loading}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f5ead8] hover:bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] transition-colors disabled:opacity-50 cursor-pointer"
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f5ead8] hover:bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] transition-colors disabled:opacity-50 cursor-pointer"
           title="Refresh with latest disk & cloud state"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />

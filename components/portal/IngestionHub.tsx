@@ -115,6 +115,21 @@ export default function IngestionHub({
     if (initialView === "history") setIsSetupOpen(true);
   }, [initialView]);
 
+  // Warm the History chunk after first paint so switching tabs never shows the bare placeholder
+  useEffect(() => {
+    const t = setTimeout(() => void import("@/components/admin/IngestionHistoryHub"), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const pendingTabFocus = useRef<StudioSetupView | null>(null);
+  // The tablist re-mounts when the view changes; restore focus after keyboard switches
+  useEffect(() => {
+    if (pendingTabFocus.current) {
+      tabRefs.current[pendingTabFocus.current]?.focus();
+      pendingTabFocus.current = null;
+    }
+  }, [setupView]);
+
   const changeSetupView = (v: StudioSetupView) => {
     setSetupView(v);
     onViewChange?.(v);
@@ -124,8 +139,8 @@ export default function IngestionHub({
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
     const next = STUDIO_TABS[(idx + (e.key === "ArrowRight" ? 1 : STUDIO_TABS.length - 1)) % STUDIO_TABS.length];
+    pendingTabFocus.current = next.id;
     changeSetupView(next.id);
-    tabRefs.current[next.id]?.focus();
   };
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [isMarkSchemeModalOpen, setIsMarkSchemeModalOpen] = useState(false);
@@ -342,6 +357,40 @@ export default function IngestionHub({
 
   // Studio mode management: 'setup' | 'workspace'
   // Mode starts purely in 'setup' when paper is null or has no questions loaded
+  const studioTabs = (
+            <div
+              role="tablist"
+              aria-label="Ingestion Studio"
+              className="inline-flex gap-2 p-1 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl shadow-[3px_3px_0px_#201e1d]"
+            >
+              {STUDIO_TABS.map((t, idx) => {
+                const selected = setupView === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    ref={(el) => { tabRefs.current[t.id] = el; }}
+                    type="button"
+                    role="tab"
+                    id={`studio-tab-${t.id}`}
+                    data-testid={`studio-tab-${t.id}`}
+                    aria-selected={selected}
+                    aria-controls="studio-tabpanel"
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => changeSetupView(t.id)}
+                    onKeyDown={(e) => handleTabKeyDown(e, idx)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      selected
+                        ? "bg-[#ffe1d0] text-[#201e1d] border-2 border-[#c67139]"
+                        : "text-[#645c50] border-2 border-transparent hover:bg-[#ffe1d0]/60"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+  );
+
   const mode: "setup" | "workspace" =
     !paper || !paper.questions || paper.questions.length === 0 || isSetupOpen
       ? "setup"
@@ -536,40 +585,11 @@ export default function IngestionHub({
       >
         {mode === "setup" ? (
           <div>
-            <div
-              role="tablist"
-              aria-label="Ingestion Studio"
-              className="inline-flex gap-2 mb-4 p-1 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl shadow-[3px_3px_0px_#201e1d]"
-            >
-              {STUDIO_TABS.map((t, idx) => {
-                const selected = setupView === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    ref={(el) => { tabRefs.current[t.id] = el; }}
-                    type="button"
-                    role="tab"
-                    id={`studio-tab-${t.id}`}
-                    data-testid={`studio-tab-${t.id}`}
-                    aria-selected={selected}
-                    aria-controls="studio-tabpanel"
-                    tabIndex={selected ? 0 : -1}
-                    onClick={() => changeSetupView(t.id)}
-                    onKeyDown={(e) => handleTabKeyDown(e, idx)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      selected
-                        ? "bg-[#ffe1d0] text-[#201e1d] border-2 border-[#c67139]"
-                        : "text-[#645c50] border-2 border-transparent hover:bg-[#ffe1d0]/60"
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
+            {setupView === "new" && <div className="mb-4">{studioTabs}</div>}
             <div role="tabpanel" id="studio-tabpanel" aria-labelledby={`studio-tab-${setupView}`}>
             {setupView === "history" ? (
               <IngestionHistoryHub
+                headerStart={studioTabs}
                 onOpenEditor={onOpenEditor}
                 onOpenInStudio={() => {
                   setSetupView("new");
