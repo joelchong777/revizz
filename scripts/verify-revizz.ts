@@ -3935,18 +3935,19 @@ async function runSuite20() {
   });
 
   await testAsync('Roster Engine: deleteRosterInvite deletes invite and updates storage', async () => {
+    const deleteCohort = 'DeleteTest_' + Date.now();
     const invite = await addRosterInvite({
-      email: 'temp.delete@school.edu',
-      cohort: 'DeleteTest',
+      email: `temp.delete.${Date.now()}@school.edu`,
+      cohort: deleteCohort,
     });
 
-    const before = await getRosterInvites('DeleteTest');
+    const before = await getRosterInvites(deleteCohort);
     assertEqual(before.length, 1, 'Invite created before delete');
 
     const success = await deleteRosterInvite(invite.id);
     assertEqual(success, true, 'deleteRosterInvite returns true');
 
-    const after = await getRosterInvites('DeleteTest');
+    const after = await getRosterInvites(deleteCohort);
     assertEqual(after.length, 0, 'Invite removed from storage');
   });
 

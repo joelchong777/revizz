@@ -1,10 +1,10 @@
-# Master Rules (v12.5)
+# Master Rules (v12.6)
 
 0. **Zero-Read Boot (`"flash"` | `"argon"`/`"pro"`/`"argon/pro"` | `"opus"`)**:
 - Preloaded in `<user_rules>`: **0 startup reads/tool calls**.
 - `"flash"` -> Flash Master: `flash` lead; 1 `Model="flash"` single, 2+ disjoint; max 1 Argon (`Model="pro"`) only 4+ arch/Strike 1 fail.
 - `"argon"`/`"pro"`/`"argon/pro"`/`"opus"` -> Chief Architect Master (`pro` / Claude Opus 5.5): in-brain plan + **All-Flash Fleet** (`Model="flash"`, 0 `pro` subagents; shield root context with <=80-line reads & <=8-line subagent replies).
-- Mode-Only: 1 line (`⚡ Flash Master (v12.5)...` / `🧠 Argon Master...` / `🏛️ Opus 5.5 Master...`) + Closing Block (**0 tool calls**).
+- Mode-Only: 1 line (`⚡ Flash Master (v12.6)...` / `🧠 Argon Master...` / `🏛️ Opus 5.5 Master...`) + Closing Block (**0 tool calls**).
 - Task Given: `npm run wt create <topic> <keywords...>` (creates worktree & coords). Read `CODEBASE_MAP.md`/`learnings` (`L1-L94`) if needed.
 
 1. **Fast-Path & Delta Delegation**:
@@ -18,7 +18,7 @@
 
 3. **Worktree, Server & Live Ship (`npm run wt`)**:
 - Create/Query: `npm run wt create <topic> [terms...]` | Verify: `npm run wt verify <topic>` (`npx tsc --noEmit && npm test`).
-- Serve: `npm run wt serve [topic]` (`WaitMsBeforeAsync: 5000`, `localhost:3000` ~2.5s). Stop: `npm run wt stop`.
+- Serve & Preview: `npm run wt serve [topic]` (`WaitMsBeforeAsync: 5000`, `localhost:3000` ~2.5s). Stop: `npm run wt stop`. If there is any preview to show, agents MUST start a local server upon completion of given work and include a direct link to the preview in the work summary.
 - Push Live (user permission): `npm run wt -- ship <topic> -m "feat(<scope>): <descriptive title>" -b "<multi-line change summary & verify log>" --fast` (`WaitMsBeforeAsync: 10000`) + `manage_subagents(kill_all)`. Always provide semantic title + multi-line body summarizing changes & verify log; never generic `"ship verified changes"` or duplicate `npx vercel --prod` alongside `git push` (prevents raw UID hash deployments). Post-push: output mandatory `### Push Summary` (feature add vs bugfix, exact app changes).
 - End Chat: 1 cmd: `npm run wt end -n "<1-line learning>"` + `manage_subagents(kill_all)` (auto-memory, cleans server/git).
 - Prompt Updates: bump version + archive snapshot in `.agent/prompts/history/vX.Y/` and `.agent/prompts/PROMPT_HISTORY.md`.
@@ -31,5 +31,5 @@
 
 5. **Mandatory Closing Block**: End final responses with:
 - (On push turns): `### Push Summary` (explicit breakdown: Feature Add vs Bugfix, exact app surfaces changed, user-visible behavior)
-- `### Simple Summary of What Was Done` (2–4 plain sentences)
+- `### Simple Summary of What Was Done` (2–4 plain sentences; if preview available, include direct link to preview)
 - `### 3 Suggested Next Steps` (`1.`, `2.`, `3.`)

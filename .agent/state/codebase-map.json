@@ -1,25 +1,25 @@
 {
   "version": "1.0.0",
-  "generatedAt": "2026-10-21T05:39:47.333Z",
+  "generatedAt": "2026-10-21T18:36:43.166Z",
   "stats": {
-    "totalFiles": 171,
-    "totalLines": 96326,
-    "totalSymbols": 854,
-    "scanDurationMs": 408
+    "totalFiles": 174,
+    "totalLines": 99506,
+    "totalSymbols": 878,
+    "scanDurationMs": 306
   },
   "sections": {
     "app": [
       {
         "path": "app/admin/page.tsx",
-        "lineCount": 523,
+        "lineCount": 590,
         "purpose": "Admin dashboard portal page for question management & paper ingestion",
         "category": "app",
         "symbols": [
           {
             "name": "AdminPage",
             "kind": "component",
-            "startLine": 503,
-            "endLine": 522,
+            "startLine": 570,
+            "endLine": 589,
             "exported": true
           }
         ]
@@ -207,29 +207,29 @@
       },
       {
         "path": "app/api/ingest/staged-paper/route.ts",
-        "lineCount": 1154,
+        "lineCount": 1439,
         "purpose": "API route for staged paper metadata and question retrieval",
         "category": "app",
         "symbols": [
           {
             "name": "GET",
             "kind": "async-function",
-            "startLine": 167,
-            "endLine": 730,
+            "startLine": 422,
+            "endLine": 994,
             "exported": true
           },
           {
             "name": "POST",
             "kind": "async-function",
-            "startLine": 742,
-            "endLine": 1058,
+            "startLine": 1006,
+            "endLine": 1333,
             "exported": true
           },
           {
             "name": "DELETE",
             "kind": "async-function",
-            "startLine": 1064,
-            "endLine": 1153,
+            "startLine": 1339,
+            "endLine": 1438,
             "exported": true
           }
         ]
@@ -347,15 +347,15 @@
       },
       {
         "path": "app/page.tsx",
-        "lineCount": 423,
+        "lineCount": 474,
         "purpose": "Revizz student home page and interactive quiz game launchpad",
         "category": "app",
         "symbols": [
           {
             "name": "HomePage",
             "kind": "component",
-            "startLine": 23,
-            "endLine": 422,
+            "startLine": 24,
+            "endLine": 473,
             "exported": true
           }
         ]
@@ -377,15 +377,15 @@
       },
       {
         "path": "app/portal/page.tsx",
-        "lineCount": 994,
+        "lineCount": 1043,
         "purpose": "Teacher and student portal hub with tabs and analytics",
         "category": "app",
         "symbols": [
           {
             "name": "PortalPage",
             "kind": "component",
-            "startLine": 976,
-            "endLine": 993,
+            "startLine": 1025,
+            "endLine": 1042,
             "exported": true
           }
         ]
@@ -519,7 +519,7 @@
       },
       {
         "path": "components/AuthModal.tsx",
-        "lineCount": 406,
+        "lineCount": 390,
         "purpose": "UI component: AuthModal",
         "category": "components",
         "symbols": [
@@ -534,7 +534,7 @@
             "name": "AuthModal",
             "kind": "component",
             "startLine": 24,
-            "endLine": 403,
+            "endLine": 387,
             "exported": true
           }
         ]
@@ -570,16 +570,38 @@
         ]
       },
       {
+        "path": "components/PaperPickerModal.tsx",
+        "lineCount": 498,
+        "purpose": "UI component: PaperPickerModal",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "PaperPickerModalProps",
+            "kind": "interface",
+            "startLine": 9,
+            "endLine": 17,
+            "exported": true
+          },
+          {
+            "name": "PaperPickerModal",
+            "kind": "component",
+            "startLine": 19,
+            "endLine": 495,
+            "exported": true
+          }
+        ]
+      },
+      {
         "path": "components/QuestionCard.tsx",
-        "lineCount": 892,
+        "lineCount": 893,
         "purpose": "Tactile 3D neobrutalist question card with markdown and KaTeX math",
         "category": "components",
         "symbols": [
           {
             "name": "QuestionCard",
             "kind": "component",
-            "startLine": 37,
-            "endLine": 889,
+            "startLine": 38,
+            "endLine": 890,
             "exported": true
           }
         ]
@@ -616,22 +638,22 @@
       },
       {
         "path": "components/StartFlow.tsx",
-        "lineCount": 990,
+        "lineCount": 1171,
         "purpose": "Interactive topic selector and game launch controller",
         "category": "components",
         "symbols": [
           {
             "name": "StartFlow",
             "kind": "component",
-            "startLine": 23,
-            "endLine": 987,
+            "startLine": 24,
+            "endLine": 1168,
             "exported": true
           }
         ]
       },
       {
         "path": "components/StudentAuthGate.tsx",
-        "lineCount": 212,
+        "lineCount": 259,
         "purpose": "UI component: StudentAuthGate",
         "category": "components",
         "symbols": [
@@ -639,7 +661,7 @@
             "name": "StudentAuthGate",
             "kind": "component",
             "startLine": 14,
-            "endLine": 209,
+            "endLine": 256,
             "exported": true
           }
         ]
@@ -755,22 +777,22 @@
       },
       {
         "path": "components/admin/AppAdminNav.tsx",
-        "lineCount": 334,
+        "lineCount": 367,
         "purpose": "Admin navigation bar with tab switching",
         "category": "components",
         "symbols": [
           {
             "name": "AppAdminNavProps",
             "kind": "interface",
-            "startLine": 22,
-            "endLine": 32,
+            "startLine": 24,
+            "endLine": 35,
             "exported": true
           },
           {
             "name": "AppAdminNav",
             "kind": "component",
-            "startLine": 34,
-            "endLine": 333,
+            "startLine": 37,
+            "endLine": 366,
             "exported": true
           }
         ]
@@ -821,7 +843,7 @@
       },
       {
         "path": "components/admin/UserManagementHub.tsx",
-        "lineCount": 2247,
+        "lineCount": 2272,
         "purpose": "UI component: UserManagementHub",
         "category": "components",
         "symbols": [
@@ -871,29 +893,29 @@
             "name": "UserManagementHub",
             "kind": "component",
             "startLine": 171,
-            "endLine": 2246,
+            "endLine": 2271,
             "exported": true
           }
         ]
       },
       {
         "path": "components/admin/WholePaperViewer.tsx",
-        "lineCount": 1103,
+        "lineCount": 1374,
         "purpose": "UI component: WholePaperViewer",
         "category": "components",
         "symbols": [
           {
             "name": "WholePaperViewerProps",
             "kind": "interface",
-            "startLine": 34,
-            "endLine": 36,
+            "startLine": 37,
+            "endLine": 39,
             "exported": true
           },
           {
             "name": "WholePaperViewer",
             "kind": "component",
-            "startLine": 38,
-            "endLine": 1102,
+            "startLine": 41,
+            "endLine": 1373,
             "exported": true
           }
         ]
@@ -916,6 +938,28 @@
             "kind": "component",
             "startLine": 74,
             "endLine": 766,
+            "exported": true
+          }
+        ]
+      },
+      {
+        "path": "components/auth/ProfileSwitcherModal.tsx",
+        "lineCount": 791,
+        "purpose": "UI component: ProfileSwitcherModal",
+        "category": "components",
+        "symbols": [
+          {
+            "name": "ProfileSwitcherModalProps",
+            "kind": "interface",
+            "startLine": 48,
+            "endLine": 53,
+            "exported": true
+          },
+          {
+            "name": "ProfileSwitcherModal",
+            "kind": "component",
+            "startLine": 55,
+            "endLine": 788,
             "exported": true
           }
         ]
@@ -944,114 +988,114 @@
       },
       {
         "path": "components/portal/AdminNav.tsx",
-        "lineCount": 398,
+        "lineCount": 416,
         "purpose": "Portal navigation bar with school badge and mode indicator",
         "category": "components",
         "symbols": [
           {
             "name": "AdminNavProps",
             "kind": "interface",
-            "startLine": 25,
-            "endLine": 38,
+            "startLine": 27,
+            "endLine": 41,
             "exported": true
           },
           {
             "name": "AdminNav",
             "kind": "component",
-            "startLine": 40,
-            "endLine": 397,
+            "startLine": 43,
+            "endLine": 415,
             "exported": true
           }
         ]
       },
       {
         "path": "components/portal/AdminTools.tsx",
-        "lineCount": 2821,
+        "lineCount": 2822,
         "purpose": "Question audit and management tools for administrators",
         "category": "components",
         "symbols": [
           {
             "name": "applyMassTopicReassign",
             "kind": "const",
-            "startLine": 69,
-            "endLine": 69,
+            "startLine": 70,
+            "endLine": 70,
             "exported": true
           },
           {
             "name": "BankQuestionOption",
             "kind": "interface",
-            "startLine": 71,
-            "endLine": 77,
+            "startLine": 72,
+            "endLine": 78,
             "exported": true
           },
           {
             "name": "QuestionBankItem",
             "kind": "interface",
-            "startLine": 79,
-            "endLine": 105,
+            "startLine": 80,
+            "endLine": 106,
             "exported": true
           },
           {
             "name": "getStatusBadgeClass",
             "kind": "function",
-            "startLine": 107,
-            "endLine": 120,
+            "startLine": 108,
+            "endLine": 121,
             "exported": true
           },
           {
             "name": "createInitialBankItems",
             "kind": "function",
-            "startLine": 122,
-            "endLine": 212,
+            "startLine": 123,
+            "endLine": 213,
             "exported": true
           },
           {
             "name": "TeacherQuestionAnnotation",
             "kind": "interface",
-            "startLine": 214,
-            "endLine": 219,
+            "startLine": 215,
+            "endLine": 220,
             "exported": true
           },
           {
             "name": "TEACHER_ANNOTATION_STORAGE_KEY",
             "kind": "const",
-            "startLine": 221,
-            "endLine": 221,
+            "startLine": 222,
+            "endLine": 222,
             "exported": true
           },
           {
             "name": "AdminToolsProps",
             "kind": "interface",
-            "startLine": 223,
-            "endLine": 227,
+            "startLine": 224,
+            "endLine": 228,
             "exported": true
           },
           {
             "name": "BankFilterOption",
             "kind": "interface",
-            "startLine": 229,
-            "endLine": 233,
+            "startLine": 230,
+            "endLine": 234,
             "exported": true
           },
           {
             "name": "BankFilterDropdownProps",
             "kind": "interface",
-            "startLine": 235,
-            "endLine": 244,
+            "startLine": 236,
+            "endLine": 245,
             "exported": true
           },
           {
             "name": "BankFilterDropdown",
             "kind": "component",
-            "startLine": 246,
-            "endLine": 396,
+            "startLine": 247,
+            "endLine": 397,
             "exported": true
           },
           {
             "name": "AdminTools",
             "kind": "component",
-            "startLine": 398,
-            "endLine": 2820,
+            "startLine": 399,
+            "endLine": 2821,
             "exported": true
           }
         ]
@@ -1768,7 +1812,7 @@
       },
       {
         "path": "components/portal/compiler/PrintableExamLayout.tsx",
-        "lineCount": 320,
+        "lineCount": 325,
         "purpose": "Printable Cambridge exam format layout with cover page & mark scheme",
         "category": "components",
         "symbols": [
@@ -1776,22 +1820,22 @@
             "name": "PrintableExamLayout",
             "kind": "component",
             "startLine": 14,
-            "endLine": 319,
+            "endLine": 324,
             "exported": true
           }
         ]
       },
       {
         "path": "components/portal/compiler/TestCompilerHub.tsx",
-        "lineCount": 3225,
+        "lineCount": 3236,
         "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
         "category": "components",
         "symbols": [
           {
             "name": "TestCompilerHub",
             "kind": "component",
-            "startLine": 85,
-            "endLine": 3224,
+            "startLine": 86,
+            "endLine": 3235,
             "exported": true
           }
         ]
@@ -2235,7 +2279,7 @@
     "lib": [
       {
         "path": "hooks/useQuizGame.ts",
-        "lineCount": 462,
+        "lineCount": 468,
         "purpose": "Core quiz game loop, scoring, timer, and attempt persistence hook",
         "category": "lib",
         "symbols": [
@@ -2243,49 +2287,49 @@
             "name": "Question",
             "kind": "type",
             "startLine": 14,
-            "endLine": 40,
+            "endLine": 46,
             "exported": true
           },
           {
             "name": "DiagramFilter",
             "kind": "type",
-            "startLine": 42,
-            "endLine": 42,
+            "startLine": 48,
+            "endLine": 48,
             "exported": true
           },
           {
             "name": "QuizRoundConfig",
             "kind": "type",
-            "startLine": 44,
-            "endLine": 51,
+            "startLine": 50,
+            "endLine": 57,
             "exported": true
           },
           {
             "name": "GameState",
             "kind": "type",
-            "startLine": 53,
-            "endLine": 53,
+            "startLine": 59,
+            "endLine": 59,
             "exported": true
           },
           {
             "name": "QuestionStatus",
             "kind": "type",
-            "startLine": 55,
-            "endLine": 55,
+            "startLine": 61,
+            "endLine": 61,
             "exported": true
           },
           {
             "name": "MissedQuestionItem",
             "kind": "interface",
-            "startLine": 57,
-            "endLine": 61,
+            "startLine": 63,
+            "endLine": 67,
             "exported": true
           },
           {
             "name": "useQuizGame",
             "kind": "hook",
-            "startLine": 63,
-            "endLine": 460,
+            "startLine": 69,
+            "endLine": 466,
             "exported": true
           }
         ]
@@ -2708,7 +2752,7 @@
       },
       {
         "path": "lib/auth.ts",
-        "lineCount": 580,
+        "lineCount": 744,
         "purpose": "Authentication state, user sanitization, and school account tagging",
         "category": "lib",
         "symbols": [
@@ -2804,94 +2848,178 @@
             "exported": true
           },
           {
+            "name": "DEFAULT_DEMO_ADMIN_PROFILE",
+            "kind": "const",
+            "startLine": 253,
+            "endLine": 262,
+            "exported": true
+          },
+          {
+            "name": "ACTIVE_CUSTOM_SESSION_KEY",
+            "kind": "const",
+            "startLine": 264,
+            "endLine": 264,
+            "exported": true
+          },
+          {
+            "name": "CUSTOM_PROFILES_STORAGE_KEY",
+            "kind": "const",
+            "startLine": 265,
+            "endLine": 265,
+            "exported": true
+          },
+          {
             "name": "getDemoStudentSession",
             "kind": "const",
-            "startLine": 263,
-            "endLine": 274,
+            "startLine": 277,
+            "endLine": 288,
             "exported": true
           },
           {
             "name": "setDemoStudentSession",
             "kind": "const",
-            "startLine": 276,
-            "endLine": 289,
+            "startLine": 290,
+            "endLine": 303,
             "exported": true
           },
           {
             "name": "clearDemoStudentSession",
             "kind": "const",
-            "startLine": 291,
-            "endLine": 304,
+            "startLine": 305,
+            "endLine": 318,
             "exported": true
           },
           {
             "name": "signInAsDemoStudent",
             "kind": "const",
-            "startLine": 306,
-            "endLine": 321,
+            "startLine": 320,
+            "endLine": 336,
             "exported": true
           },
           {
             "name": "isDemoStudentSession",
             "kind": "const",
-            "startLine": 323,
-            "endLine": 326,
+            "startLine": 338,
+            "endLine": 341,
             "exported": true
           },
           {
             "name": "getGuestEducatorSession",
             "kind": "const",
-            "startLine": 328,
-            "endLine": 339,
-            "exported": true
-          },
-          {
-            "name": "setGuestEducatorSession",
-            "kind": "const",
-            "startLine": 341,
+            "startLine": 343,
             "endLine": 354,
             "exported": true
           },
           {
-            "name": "clearGuestEducatorSession",
+            "name": "setGuestEducatorSession",
             "kind": "const",
             "startLine": 356,
             "endLine": 369,
             "exported": true
           },
           {
+            "name": "clearGuestEducatorSession",
+            "kind": "const",
+            "startLine": 371,
+            "endLine": 384,
+            "exported": true
+          },
+          {
             "name": "signInAsGuestEducator",
             "kind": "const",
-            "startLine": 374,
-            "endLine": 389,
+            "startLine": 389,
+            "endLine": 405,
+            "exported": true
+          },
+          {
+            "name": "getActiveLocalSession",
+            "kind": "const",
+            "startLine": 407,
+            "endLine": 425,
+            "exported": true
+          },
+          {
+            "name": "setActiveLocalSession",
+            "kind": "const",
+            "startLine": 427,
+            "endLine": 442,
+            "exported": true
+          },
+          {
+            "name": "clearActiveLocalSession",
+            "kind": "const",
+            "startLine": 444,
+            "endLine": 457,
+            "exported": true
+          },
+          {
+            "name": "getCustomTestProfiles",
+            "kind": "const",
+            "startLine": 459,
+            "endLine": 471,
+            "exported": true
+          },
+          {
+            "name": "saveCustomTestProfile",
+            "kind": "const",
+            "startLine": 473,
+            "endLine": 488,
+            "exported": true
+          },
+          {
+            "name": "deleteCustomTestProfile",
+            "kind": "const",
+            "startLine": 490,
+            "endLine": 504,
+            "exported": true
+          },
+          {
+            "name": "switchActiveProfile",
+            "kind": "const",
+            "startLine": 506,
+            "endLine": 516,
+            "exported": true
+          },
+          {
+            "name": "signInAsDemoAdmin",
+            "kind": "const",
+            "startLine": 518,
+            "endLine": 525,
+            "exported": true
+          },
+          {
+            "name": "createAndSwitchTestProfile",
+            "kind": "const",
+            "startLine": 527,
+            "endLine": 545,
             "exported": true
           },
           {
             "name": "signOut",
             "kind": "const",
-            "startLine": 391,
-            "endLine": 396,
+            "startLine": 547,
+            "endLine": 553,
             "exported": true
           },
           {
             "name": "formatDisplayName",
             "kind": "const",
-            "startLine": 398,
-            "endLine": 407,
+            "startLine": 555,
+            "endLine": 564,
             "exported": true
           },
           {
             "name": "checkIsSchoolAccount",
             "kind": "const",
-            "startLine": 409,
-            "endLine": 411,
+            "startLine": 566,
+            "endLine": 568,
             "exported": true
           },
           {
             "name": "useAuth",
             "kind": "hook",
-            "startLine": 413,
-            "endLine": 579,
+            "startLine": 570,
+            "endLine": 743,
             "exported": true
           }
         ]
@@ -2927,7 +3055,7 @@
       },
       {
         "path": "lib/compilerFilters.ts",
-        "lineCount": 408,
+        "lineCount": 431,
         "purpose": "Search, filter, and sort algorithms for teacher test compiler",
         "category": "lib",
         "symbols": [
@@ -3002,31 +3130,38 @@
             "exported": true
           },
           {
+            "name": "formatTableOptionText",
+            "kind": "function",
+            "startLine": 261,
+            "endLine": 278,
+            "exported": true
+          },
+          {
             "name": "isMathOrCalculation",
             "kind": "function",
-            "startLine": 260,
-            "endLine": 283,
+            "startLine": 283,
+            "endLine": 306,
             "exported": true
           },
           {
             "name": "getAvailableSeries",
             "kind": "function",
-            "startLine": 288,
-            "endLine": 297,
+            "startLine": 311,
+            "endLine": 320,
             "exported": true
           },
           {
             "name": "filterAndSortQuestions",
             "kind": "function",
-            "startLine": 302,
-            "endLine": 386,
+            "startLine": 325,
+            "endLine": 409,
             "exported": true
           },
           {
             "name": "countActiveFilters",
             "kind": "function",
-            "startLine": 391,
-            "endLine": 407,
+            "startLine": 414,
+            "endLine": 430,
             "exported": true
           }
         ]
@@ -4527,12 +4662,19 @@
       },
       {
         "path": "lib/questions.ts",
-        "lineCount": 1070,
+        "lineCount": 1472,
         "purpose": "Cambridge 0455 Economics question bank and topic definitions",
         "category": "lib",
         "symbols": [
           {
             "name": "resolveDiagramUrl",
+            "kind": "const",
+            "startLine": 6,
+            "endLine": 6,
+            "exported": true
+          },
+          {
+            "name": "formatTableOptionText",
             "kind": "const",
             "startLine": 6,
             "endLine": 6,
@@ -4661,49 +4803,77 @@
             "name": "mapDbQuestionToQuestion",
             "kind": "function",
             "startLine": 805,
-            "endLine": 853,
+            "endLine": 858,
             "exported": true
           },
           {
             "name": "fetchQuestionsFromDb",
             "kind": "async-function",
-            "startLine": 859,
-            "endLine": 940,
+            "startLine": 864,
+            "endLine": 945,
+            "exported": true
+          },
+          {
+            "name": "formatSeriesLabel",
+            "kind": "function",
+            "startLine": 951,
+            "endLine": 982,
+            "exported": true
+          },
+          {
+            "name": "IngestedPaperSummary",
+            "kind": "interface",
+            "startLine": 984,
+            "endLine": 997,
+            "exported": true
+          },
+          {
+            "name": "fetchIngestedPapers",
+            "kind": "async-function",
+            "startLine": 1003,
+            "endLine": 1166,
+            "exported": true
+          },
+          {
+            "name": "fetchPaperQuestions",
+            "kind": "async-function",
+            "startLine": 1172,
+            "endLine": 1342,
             "exported": true
           },
           {
             "name": "fetchTopicsFromDb",
             "kind": "async-function",
-            "startLine": 946,
-            "endLine": 975,
+            "startLine": 1348,
+            "endLine": 1377,
             "exported": true
           },
           {
             "name": "UseQuestionsResult",
             "kind": "interface",
-            "startLine": 977,
-            "endLine": 982,
+            "startLine": 1379,
+            "endLine": 1384,
             "exported": true
           },
           {
             "name": "useQuestions",
             "kind": "hook",
-            "startLine": 988,
-            "endLine": 1021,
+            "startLine": 1390,
+            "endLine": 1423,
             "exported": true
           },
           {
             "name": "UseTopicsResult",
             "kind": "interface",
-            "startLine": 1023,
-            "endLine": 1028,
+            "startLine": 1425,
+            "endLine": 1430,
             "exported": true
           },
           {
             "name": "useTopics",
             "kind": "hook",
-            "startLine": 1034,
-            "endLine": 1067,
+            "startLine": 1436,
+            "endLine": 1469,
             "exported": true
           }
         ]
@@ -5249,197 +5419,197 @@
       },
       {
         "path": "lib/testCompiler.ts",
-        "lineCount": 644,
+        "lineCount": 646,
         "purpose": "Test compiler draft persistence in localStorage and exam compiler",
         "category": "lib",
         "symbols": [
           {
             "name": "DRAFT_KEY_PREFIX",
             "kind": "const",
-            "startLine": 5,
-            "endLine": 5,
-            "exported": true
-          },
-          {
-            "name": "PRINT_SNAPSHOT_PREFIX",
-            "kind": "const",
             "startLine": 6,
             "endLine": 6,
             "exported": true
           },
           {
-            "name": "DRAFT_CHANGE_EVENT",
+            "name": "PRINT_SNAPSHOT_PREFIX",
             "kind": "const",
             "startLine": 7,
             "endLine": 7,
             "exported": true
           },
           {
+            "name": "DRAFT_CHANGE_EVENT",
+            "kind": "const",
+            "startLine": 8,
+            "endLine": 8,
+            "exported": true
+          },
+          {
             "name": "SUBJECT_CATALOG",
             "kind": "const",
-            "startLine": 10,
-            "endLine": 10,
+            "startLine": 11,
+            "endLine": 11,
             "exported": true
           },
           {
             "name": "GeneratedTestPaper",
             "kind": "interface",
-            "startLine": 17,
-            "endLine": 21,
+            "startLine": 18,
+            "endLine": 22,
             "exported": true
           },
           {
             "name": "resolveQuestionExplanation",
             "kind": "function",
-            "startLine": 23,
-            "endLine": 35,
+            "startLine": 24,
+            "endLine": 36,
             "exported": true
           },
           {
             "name": "notifyDraftsChanged",
             "kind": "function",
-            "startLine": 37,
-            "endLine": 53,
+            "startLine": 38,
+            "endLine": 54,
             "exported": true
           },
           {
             "name": "sanitizeAccountScope",
             "kind": "function",
-            "startLine": 55,
-            "endLine": 65,
+            "startLine": 56,
+            "endLine": 66,
             "exported": true
           },
           {
             "name": "resolveCurrentAccountScope",
             "kind": "function",
-            "startLine": 67,
-            "endLine": 116,
+            "startLine": 68,
+            "endLine": 117,
             "exported": true
           },
           {
             "name": "getDraftStorageKey",
             "kind": "function",
-            "startLine": 118,
-            "endLine": 121,
+            "startLine": 119,
+            "endLine": 122,
             "exported": true
           },
           {
             "name": "formatDefaultDraftTitle",
             "kind": "function",
-            "startLine": 123,
-            "endLine": 134,
+            "startLine": 124,
+            "endLine": 135,
             "exported": true
           },
           {
             "name": "saveTestDraft",
             "kind": "function",
-            "startLine": 136,
-            "endLine": 188,
+            "startLine": 137,
+            "endLine": 189,
             "exported": true
           },
           {
             "name": "savePrintSnapshot",
             "kind": "function",
-            "startLine": 190,
-            "endLine": 219,
+            "startLine": 191,
+            "endLine": 220,
             "exported": true
           },
           {
             "name": "loadTestDraft",
             "kind": "function",
-            "startLine": 221,
-            "endLine": 286,
+            "startLine": 222,
+            "endLine": 287,
             "exported": true
           },
           {
             "name": "listTestDrafts",
             "kind": "function",
-            "startLine": 288,
-            "endLine": 324,
+            "startLine": 289,
+            "endLine": 325,
             "exported": true
           },
           {
             "name": "deleteTestDraft",
             "kind": "function",
-            "startLine": 326,
-            "endLine": 349,
+            "startLine": 327,
+            "endLine": 350,
             "exported": true
           },
           {
             "name": "duplicateTestDraft",
             "kind": "function",
-            "startLine": 351,
-            "endLine": 366,
+            "startLine": 352,
+            "endLine": 367,
             "exported": true
           },
           {
             "name": "renameTestDraft",
             "kind": "function",
-            "startLine": 368,
-            "endLine": 386,
+            "startLine": 369,
+            "endLine": 387,
             "exported": true
           },
           {
             "name": "exportTestDraftJson",
             "kind": "function",
-            "startLine": 388,
-            "endLine": 398,
+            "startLine": 389,
+            "endLine": 399,
             "exported": true
           },
           {
             "name": "importTestDraftJson",
             "kind": "function",
-            "startLine": 400,
-            "endLine": 468,
+            "startLine": 401,
+            "endLine": 469,
             "exported": true
           },
           {
             "name": "buildCompiledQuestions",
             "kind": "function",
-            "startLine": 470,
-            "endLine": 509,
+            "startLine": 471,
+            "endLine": 511,
             "exported": true
           },
           {
             "name": "autoSelectQuestions",
             "kind": "function",
-            "startLine": 512,
-            "endLine": 549,
+            "startLine": 514,
+            "endLine": 551,
             "exported": true
           },
           {
             "name": "generateTestPaper",
             "kind": "function",
-            "startLine": 551,
-            "endLine": 579,
+            "startLine": 553,
+            "endLine": 581,
             "exported": true
           },
           {
             "name": "shuffleQuestionIds",
             "kind": "function",
-            "startLine": 581,
-            "endLine": 588,
+            "startLine": 583,
+            "endLine": 590,
             "exported": true
           },
           {
             "name": "computeTopicDistribution",
             "kind": "function",
-            "startLine": 590,
-            "endLine": 619,
+            "startLine": 592,
+            "endLine": 621,
             "exported": true
           },
           {
             "name": "saveOnlineAssignment",
             "kind": "function",
-            "startLine": 621,
-            "endLine": 624,
+            "startLine": 623,
+            "endLine": 626,
             "exported": true
           },
           {
             "name": "listOnlineAssignments",
             "kind": "function",
-            "startLine": 626,
-            "endLine": 641,
+            "startLine": 628,
+            "endLine": 643,
             "exported": true
           }
         ]
@@ -5715,7 +5885,7 @@
       },
       {
         "path": "scripts/fast-ingest.py",
-        "lineCount": 1036,
+        "lineCount": 1035,
         "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
         "category": "scripts",
         "symbols": [
@@ -5785,36 +5955,36 @@
           {
             "name": "assemble_staging_paper",
             "kind": "def",
-            "startLine": 827,
-            "endLine": 832,
+            "startLine": 826,
+            "endLine": 831,
             "exported": true
           },
           {
             "name": "ingest_single_paper",
             "kind": "def",
-            "startLine": 875,
-            "endLine": 881,
+            "startLine": 874,
+            "endLine": 880,
             "exported": true
           },
           {
             "name": "find_matching_ms",
             "kind": "def",
-            "startLine": 927,
-            "endLine": 946,
+            "startLine": 926,
+            "endLine": 945,
             "exported": true
           },
           {
             "name": "ingest_batch_directory",
             "kind": "def",
-            "startLine": 949,
-            "endLine": 954,
+            "startLine": 948,
+            "endLine": 953,
             "exported": true
           },
           {
             "name": "main",
             "kind": "def",
-            "startLine": 992,
-            "endLine": 1031,
+            "startLine": 991,
+            "endLine": 1030,
             "exported": true
           }
         ]
@@ -6211,43 +6381,43 @@
       },
       {
         "path": "scripts/verify-delete-papers.ts",
-        "lineCount": 493,
+        "lineCount": 595,
         "purpose": "Automated Verification Suite: Delete Staged and Archived Papers Verifies: 1.",
         "category": "scripts",
         "symbols": [
           {
             "name": "pass",
             "kind": "function",
-            "startLine": 44,
-            "endLine": 48,
+            "startLine": 45,
+            "endLine": 49,
             "exported": false
           },
           {
             "name": "fail",
             "kind": "function",
-            "startLine": 50,
-            "endLine": 54,
+            "startLine": 51,
+            "endLine": 55,
             "exported": false
           },
           {
             "name": "assert",
             "kind": "function",
-            "startLine": 56,
-            "endLine": 62,
+            "startLine": 57,
+            "endLine": 63,
             "exported": false
           },
           {
             "name": "createDummyPaper",
             "kind": "function",
-            "startLine": 64,
-            "endLine": 88,
+            "startLine": 65,
+            "endLine": 89,
             "exported": false
           },
           {
             "name": "runVerification",
             "kind": "function",
-            "startLine": 90,
-            "endLine": 490,
+            "startLine": 91,
+            "endLine": 592,
             "exported": false
           }
         ]
@@ -6832,78 +7002,78 @@
       },
       {
         "path": "scripts/verify-revizz.ts",
-        "lineCount": 4479,
+        "lineCount": 4523,
         "purpose": "Master Revizz QA and gameplay test suite with 56 assertions",
         "category": "scripts",
         "symbols": [
           {
             "name": "test",
             "kind": "function",
-            "startLine": 211,
-            "endLine": 233,
+            "startLine": 212,
+            "endLine": 234,
             "exported": false
           },
           {
             "name": "testAsync",
             "kind": "function",
-            "startLine": 235,
-            "endLine": 257,
+            "startLine": 236,
+            "endLine": 258,
             "exported": false
           },
           {
             "name": "assert",
             "kind": "function",
-            "startLine": 259,
-            "endLine": 263,
+            "startLine": 260,
+            "endLine": 264,
             "exported": false
           },
           {
             "name": "assertEqual",
             "kind": "function",
-            "startLine": 265,
-            "endLine": 269,
+            "startLine": 266,
+            "endLine": 270,
             "exported": false
           },
           {
             "name": "runSuite13",
             "kind": "function",
-            "startLine": 1615,
-            "endLine": 3830,
+            "startLine": 1616,
+            "endLine": 3873,
             "exported": false
           },
           {
             "name": "runSuite20",
             "kind": "function",
-            "startLine": 3835,
-            "endLine": 4007,
+            "startLine": 3878,
+            "endLine": 4051,
             "exported": false
           },
           {
             "name": "runSuite21",
             "kind": "function",
-            "startLine": 4009,
-            "endLine": 4161,
+            "startLine": 4053,
+            "endLine": 4205,
             "exported": false
           },
           {
             "name": "runSuite22",
             "kind": "function",
-            "startLine": 4163,
-            "endLine": 4301,
+            "startLine": 4207,
+            "endLine": 4345,
             "exported": false
           },
           {
             "name": "runSuite23",
             "kind": "function",
-            "startLine": 4303,
-            "endLine": 4441,
+            "startLine": 4347,
+            "endLine": 4485,
             "exported": false
           },
           {
             "name": "main",
             "kind": "function",
-            "startLine": 4443,
-            "endLine": 4472,
+            "startLine": 4487,
+            "endLine": 4516,
             "exported": false
           }
         ]
@@ -7121,6 +7291,28 @@
             "kind": "function",
             "startLine": 441,
             "endLine": 479,
+            "exported": false
+          }
+        ]
+      },
+      {
+        "path": "scripts/verify-whole-paper-delete.ts",
+        "lineCount": 120,
+        "purpose": "Verification Script: Whole Paper Deletion Suite",
+        "category": "scripts",
+        "symbols": [
+          {
+            "name": "assert",
+            "kind": "function",
+            "startLine": 11,
+            "endLine": 19,
+            "exported": false
+          },
+          {
+            "name": "run",
+            "kind": "function",
+            "startLine": 21,
+            "endLine": 114,
             "exported": false
           }
         ]
@@ -7366,15 +7558,15 @@
   "files": [
     {
       "path": "app/admin/page.tsx",
-      "lineCount": 523,
+      "lineCount": 590,
       "purpose": "Admin dashboard portal page for question management & paper ingestion",
       "category": "app",
       "symbols": [
         {
           "name": "AdminPage",
           "kind": "component",
-          "startLine": 503,
-          "endLine": 522,
+          "startLine": 570,
+          "endLine": 589,
           "exported": true
         }
       ]
@@ -7562,29 +7754,29 @@
     },
     {
       "path": "app/api/ingest/staged-paper/route.ts",
-      "lineCount": 1154,
+      "lineCount": 1439,
       "purpose": "API route for staged paper metadata and question retrieval",
       "category": "app",
       "symbols": [
         {
           "name": "GET",
           "kind": "async-function",
-          "startLine": 167,
-          "endLine": 730,
+          "startLine": 422,
+          "endLine": 994,
           "exported": true
         },
         {
           "name": "POST",
           "kind": "async-function",
-          "startLine": 742,
-          "endLine": 1058,
+          "startLine": 1006,
+          "endLine": 1333,
           "exported": true
         },
         {
           "name": "DELETE",
           "kind": "async-function",
-          "startLine": 1064,
-          "endLine": 1153,
+          "startLine": 1339,
+          "endLine": 1438,
           "exported": true
         }
       ]
@@ -7702,15 +7894,15 @@
     },
     {
       "path": "app/page.tsx",
-      "lineCount": 423,
+      "lineCount": 474,
       "purpose": "Revizz student home page and interactive quiz game launchpad",
       "category": "app",
       "symbols": [
         {
           "name": "HomePage",
           "kind": "component",
-          "startLine": 23,
-          "endLine": 422,
+          "startLine": 24,
+          "endLine": 473,
           "exported": true
         }
       ]
@@ -7732,15 +7924,15 @@
     },
     {
       "path": "app/portal/page.tsx",
-      "lineCount": 994,
+      "lineCount": 1043,
       "purpose": "Teacher and student portal hub with tabs and analytics",
       "category": "app",
       "symbols": [
         {
           "name": "PortalPage",
           "kind": "component",
-          "startLine": 976,
-          "endLine": 993,
+          "startLine": 1025,
+          "endLine": 1042,
           "exported": true
         }
       ]
@@ -7872,7 +8064,7 @@
     },
     {
       "path": "components/AuthModal.tsx",
-      "lineCount": 406,
+      "lineCount": 390,
       "purpose": "UI component: AuthModal",
       "category": "components",
       "symbols": [
@@ -7887,7 +8079,7 @@
           "name": "AuthModal",
           "kind": "component",
           "startLine": 24,
-          "endLine": 403,
+          "endLine": 387,
           "exported": true
         }
       ]
@@ -7923,16 +8115,38 @@
       ]
     },
     {
+      "path": "components/PaperPickerModal.tsx",
+      "lineCount": 498,
+      "purpose": "UI component: PaperPickerModal",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "PaperPickerModalProps",
+          "kind": "interface",
+          "startLine": 9,
+          "endLine": 17,
+          "exported": true
+        },
+        {
+          "name": "PaperPickerModal",
+          "kind": "component",
+          "startLine": 19,
+          "endLine": 495,
+          "exported": true
+        }
+      ]
+    },
+    {
       "path": "components/QuestionCard.tsx",
-      "lineCount": 892,
+      "lineCount": 893,
       "purpose": "Tactile 3D neobrutalist question card with markdown and KaTeX math",
       "category": "components",
       "symbols": [
         {
           "name": "QuestionCard",
           "kind": "component",
-          "startLine": 37,
-          "endLine": 889,
+          "startLine": 38,
+          "endLine": 890,
           "exported": true
         }
       ]
@@ -7969,22 +8183,22 @@
     },
     {
       "path": "components/StartFlow.tsx",
-      "lineCount": 990,
+      "lineCount": 1171,
       "purpose": "Interactive topic selector and game launch controller",
       "category": "components",
       "symbols": [
         {
           "name": "StartFlow",
           "kind": "component",
-          "startLine": 23,
-          "endLine": 987,
+          "startLine": 24,
+          "endLine": 1168,
           "exported": true
         }
       ]
     },
     {
       "path": "components/StudentAuthGate.tsx",
-      "lineCount": 212,
+      "lineCount": 259,
       "purpose": "UI component: StudentAuthGate",
       "category": "components",
       "symbols": [
@@ -7992,7 +8206,7 @@
           "name": "StudentAuthGate",
           "kind": "component",
           "startLine": 14,
-          "endLine": 209,
+          "endLine": 256,
           "exported": true
         }
       ]
@@ -8108,22 +8322,22 @@
     },
     {
       "path": "components/admin/AppAdminNav.tsx",
-      "lineCount": 334,
+      "lineCount": 367,
       "purpose": "Admin navigation bar with tab switching",
       "category": "components",
       "symbols": [
         {
           "name": "AppAdminNavProps",
           "kind": "interface",
-          "startLine": 22,
-          "endLine": 32,
+          "startLine": 24,
+          "endLine": 35,
           "exported": true
         },
         {
           "name": "AppAdminNav",
           "kind": "component",
-          "startLine": 34,
-          "endLine": 333,
+          "startLine": 37,
+          "endLine": 366,
           "exported": true
         }
       ]
@@ -8174,7 +8388,7 @@
     },
     {
       "path": "components/admin/UserManagementHub.tsx",
-      "lineCount": 2247,
+      "lineCount": 2272,
       "purpose": "UI component: UserManagementHub",
       "category": "components",
       "symbols": [
@@ -8224,29 +8438,29 @@
           "name": "UserManagementHub",
           "kind": "component",
           "startLine": 171,
-          "endLine": 2246,
+          "endLine": 2271,
           "exported": true
         }
       ]
     },
     {
       "path": "components/admin/WholePaperViewer.tsx",
-      "lineCount": 1103,
+      "lineCount": 1374,
       "purpose": "UI component: WholePaperViewer",
       "category": "components",
       "symbols": [
         {
           "name": "WholePaperViewerProps",
           "kind": "interface",
-          "startLine": 34,
-          "endLine": 36,
+          "startLine": 37,
+          "endLine": 39,
           "exported": true
         },
         {
           "name": "WholePaperViewer",
           "kind": "component",
-          "startLine": 38,
-          "endLine": 1102,
+          "startLine": 41,
+          "endLine": 1373,
           "exported": true
         }
       ]
@@ -8269,6 +8483,28 @@
           "kind": "component",
           "startLine": 74,
           "endLine": 766,
+          "exported": true
+        }
+      ]
+    },
+    {
+      "path": "components/auth/ProfileSwitcherModal.tsx",
+      "lineCount": 791,
+      "purpose": "UI component: ProfileSwitcherModal",
+      "category": "components",
+      "symbols": [
+        {
+          "name": "ProfileSwitcherModalProps",
+          "kind": "interface",
+          "startLine": 48,
+          "endLine": 53,
+          "exported": true
+        },
+        {
+          "name": "ProfileSwitcherModal",
+          "kind": "component",
+          "startLine": 55,
+          "endLine": 788,
           "exported": true
         }
       ]
@@ -8297,114 +8533,114 @@
     },
     {
       "path": "components/portal/AdminNav.tsx",
-      "lineCount": 398,
+      "lineCount": 416,
       "purpose": "Portal navigation bar with school badge and mode indicator",
       "category": "components",
       "symbols": [
         {
           "name": "AdminNavProps",
           "kind": "interface",
-          "startLine": 25,
-          "endLine": 38,
+          "startLine": 27,
+          "endLine": 41,
           "exported": true
         },
         {
           "name": "AdminNav",
           "kind": "component",
-          "startLine": 40,
-          "endLine": 397,
+          "startLine": 43,
+          "endLine": 415,
           "exported": true
         }
       ]
     },
     {
       "path": "components/portal/AdminTools.tsx",
-      "lineCount": 2821,
+      "lineCount": 2822,
       "purpose": "Question audit and management tools for administrators",
       "category": "components",
       "symbols": [
         {
           "name": "applyMassTopicReassign",
           "kind": "const",
-          "startLine": 69,
-          "endLine": 69,
+          "startLine": 70,
+          "endLine": 70,
           "exported": true
         },
         {
           "name": "BankQuestionOption",
           "kind": "interface",
-          "startLine": 71,
-          "endLine": 77,
+          "startLine": 72,
+          "endLine": 78,
           "exported": true
         },
         {
           "name": "QuestionBankItem",
           "kind": "interface",
-          "startLine": 79,
-          "endLine": 105,
+          "startLine": 80,
+          "endLine": 106,
           "exported": true
         },
         {
           "name": "getStatusBadgeClass",
           "kind": "function",
-          "startLine": 107,
-          "endLine": 120,
+          "startLine": 108,
+          "endLine": 121,
           "exported": true
         },
         {
           "name": "createInitialBankItems",
           "kind": "function",
-          "startLine": 122,
-          "endLine": 212,
+          "startLine": 123,
+          "endLine": 213,
           "exported": true
         },
         {
           "name": "TeacherQuestionAnnotation",
           "kind": "interface",
-          "startLine": 214,
-          "endLine": 219,
+          "startLine": 215,
+          "endLine": 220,
           "exported": true
         },
         {
           "name": "TEACHER_ANNOTATION_STORAGE_KEY",
           "kind": "const",
-          "startLine": 221,
-          "endLine": 221,
+          "startLine": 222,
+          "endLine": 222,
           "exported": true
         },
         {
           "name": "AdminToolsProps",
           "kind": "interface",
-          "startLine": 223,
-          "endLine": 227,
+          "startLine": 224,
+          "endLine": 228,
           "exported": true
         },
         {
           "name": "BankFilterOption",
           "kind": "interface",
-          "startLine": 229,
-          "endLine": 233,
+          "startLine": 230,
+          "endLine": 234,
           "exported": true
         },
         {
           "name": "BankFilterDropdownProps",
           "kind": "interface",
-          "startLine": 235,
-          "endLine": 244,
+          "startLine": 236,
+          "endLine": 245,
           "exported": true
         },
         {
           "name": "BankFilterDropdown",
           "kind": "component",
-          "startLine": 246,
-          "endLine": 396,
+          "startLine": 247,
+          "endLine": 397,
           "exported": true
         },
         {
           "name": "AdminTools",
           "kind": "component",
-          "startLine": 398,
-          "endLine": 2820,
+          "startLine": 399,
+          "endLine": 2821,
           "exported": true
         }
       ]
@@ -9121,7 +9357,7 @@
     },
     {
       "path": "components/portal/compiler/PrintableExamLayout.tsx",
-      "lineCount": 320,
+      "lineCount": 325,
       "purpose": "Printable Cambridge exam format layout with cover page & mark scheme",
       "category": "components",
       "symbols": [
@@ -9129,22 +9365,22 @@
           "name": "PrintableExamLayout",
           "kind": "component",
           "startLine": 14,
-          "endLine": 319,
+          "endLine": 324,
           "exported": true
         }
       ]
     },
     {
       "path": "components/portal/compiler/TestCompilerHub.tsx",
-      "lineCount": 3225,
+      "lineCount": 3236,
       "purpose": "Teacher test compiler builder for custom exams, filters, and drafts",
       "category": "components",
       "symbols": [
         {
           "name": "TestCompilerHub",
           "kind": "component",
-          "startLine": 85,
-          "endLine": 3224,
+          "startLine": 86,
+          "endLine": 3235,
           "exported": true
         }
       ]
@@ -9586,7 +9822,7 @@
     },
     {
       "path": "hooks/useQuizGame.ts",
-      "lineCount": 462,
+      "lineCount": 468,
       "purpose": "Core quiz game loop, scoring, timer, and attempt persistence hook",
       "category": "lib",
       "symbols": [
@@ -9594,49 +9830,49 @@
           "name": "Question",
           "kind": "type",
           "startLine": 14,
-          "endLine": 40,
+          "endLine": 46,
           "exported": true
         },
         {
           "name": "DiagramFilter",
           "kind": "type",
-          "startLine": 42,
-          "endLine": 42,
+          "startLine": 48,
+          "endLine": 48,
           "exported": true
         },
         {
           "name": "QuizRoundConfig",
           "kind": "type",
-          "startLine": 44,
-          "endLine": 51,
+          "startLine": 50,
+          "endLine": 57,
           "exported": true
         },
         {
           "name": "GameState",
           "kind": "type",
-          "startLine": 53,
-          "endLine": 53,
+          "startLine": 59,
+          "endLine": 59,
           "exported": true
         },
         {
           "name": "QuestionStatus",
           "kind": "type",
-          "startLine": 55,
-          "endLine": 55,
+          "startLine": 61,
+          "endLine": 61,
           "exported": true
         },
         {
           "name": "MissedQuestionItem",
           "kind": "interface",
-          "startLine": 57,
-          "endLine": 61,
+          "startLine": 63,
+          "endLine": 67,
           "exported": true
         },
         {
           "name": "useQuizGame",
           "kind": "hook",
-          "startLine": 63,
-          "endLine": 460,
+          "startLine": 69,
+          "endLine": 466,
           "exported": true
         }
       ]
@@ -10059,7 +10295,7 @@
     },
     {
       "path": "lib/auth.ts",
-      "lineCount": 580,
+      "lineCount": 744,
       "purpose": "Authentication state, user sanitization, and school account tagging",
       "category": "lib",
       "symbols": [
@@ -10155,94 +10391,178 @@
           "exported": true
         },
         {
+          "name": "DEFAULT_DEMO_ADMIN_PROFILE",
+          "kind": "const",
+          "startLine": 253,
+          "endLine": 262,
+          "exported": true
+        },
+        {
+          "name": "ACTIVE_CUSTOM_SESSION_KEY",
+          "kind": "const",
+          "startLine": 264,
+          "endLine": 264,
+          "exported": true
+        },
+        {
+          "name": "CUSTOM_PROFILES_STORAGE_KEY",
+          "kind": "const",
+          "startLine": 265,
+          "endLine": 265,
+          "exported": true
+        },
+        {
           "name": "getDemoStudentSession",
           "kind": "const",
-          "startLine": 263,
-          "endLine": 274,
+          "startLine": 277,
+          "endLine": 288,
           "exported": true
         },
         {
           "name": "setDemoStudentSession",
           "kind": "const",
-          "startLine": 276,
-          "endLine": 289,
+          "startLine": 290,
+          "endLine": 303,
           "exported": true
         },
         {
           "name": "clearDemoStudentSession",
           "kind": "const",
-          "startLine": 291,
-          "endLine": 304,
+          "startLine": 305,
+          "endLine": 318,
           "exported": true
         },
         {
           "name": "signInAsDemoStudent",
           "kind": "const",
-          "startLine": 306,
-          "endLine": 321,
+          "startLine": 320,
+          "endLine": 336,
           "exported": true
         },
         {
           "name": "isDemoStudentSession",
           "kind": "const",
-          "startLine": 323,
-          "endLine": 326,
+          "startLine": 338,
+          "endLine": 341,
           "exported": true
         },
         {
           "name": "getGuestEducatorSession",
           "kind": "const",
-          "startLine": 328,
-          "endLine": 339,
-          "exported": true
-        },
-        {
-          "name": "setGuestEducatorSession",
-          "kind": "const",
-          "startLine": 341,
+          "startLine": 343,
           "endLine": 354,
           "exported": true
         },
         {
-          "name": "clearGuestEducatorSession",
+          "name": "setGuestEducatorSession",
           "kind": "const",
           "startLine": 356,
           "endLine": 369,
           "exported": true
         },
         {
+          "name": "clearGuestEducatorSession",
+          "kind": "const",
+          "startLine": 371,
+          "endLine": 384,
+          "exported": true
+        },
+        {
           "name": "signInAsGuestEducator",
           "kind": "const",
-          "startLine": 374,
-          "endLine": 389,
+          "startLine": 389,
+          "endLine": 405,
+          "exported": true
+        },
+        {
+          "name": "getActiveLocalSession",
+          "kind": "const",
+          "startLine": 407,
+          "endLine": 425,
+          "exported": true
+        },
+        {
+          "name": "setActiveLocalSession",
+          "kind": "const",
+          "startLine": 427,
+          "endLine": 442,
+          "exported": true
+        },
+        {
+          "name": "clearActiveLocalSession",
+          "kind": "const",
+          "startLine": 444,
+          "endLine": 457,
+          "exported": true
+        },
+        {
+          "name": "getCustomTestProfiles",
+          "kind": "const",
+          "startLine": 459,
+          "endLine": 471,
+          "exported": true
+        },
+        {
+          "name": "saveCustomTestProfile",
+          "kind": "const",
+          "startLine": 473,
+          "endLine": 488,
+          "exported": true
+        },
+        {
+          "name": "deleteCustomTestProfile",
+          "kind": "const",
+          "startLine": 490,
+          "endLine": 504,
+          "exported": true
+        },
+        {
+          "name": "switchActiveProfile",
+          "kind": "const",
+          "startLine": 506,
+          "endLine": 516,
+          "exported": true
+        },
+        {
+          "name": "signInAsDemoAdmin",
+          "kind": "const",
+          "startLine": 518,
+          "endLine": 525,
+          "exported": true
+        },
+        {
+          "name": "createAndSwitchTestProfile",
+          "kind": "const",
+          "startLine": 527,
+          "endLine": 545,
           "exported": true
         },
         {
           "name": "signOut",
           "kind": "const",
-          "startLine": 391,
-          "endLine": 396,
+          "startLine": 547,
+          "endLine": 553,
           "exported": true
         },
         {
           "name": "formatDisplayName",
           "kind": "const",
-          "startLine": 398,
-          "endLine": 407,
+          "startLine": 555,
+          "endLine": 564,
           "exported": true
         },
         {
           "name": "checkIsSchoolAccount",
           "kind": "const",
-          "startLine": 409,
-          "endLine": 411,
+          "startLine": 566,
+          "endLine": 568,
           "exported": true
         },
         {
           "name": "useAuth",
           "kind": "hook",
-          "startLine": 413,
-          "endLine": 579,
+          "startLine": 570,
+          "endLine": 743,
           "exported": true
         }
       ]
@@ -10278,7 +10598,7 @@
     },
     {
       "path": "lib/compilerFilters.ts",
-      "lineCount": 408,
+      "lineCount": 431,
       "purpose": "Search, filter, and sort algorithms for teacher test compiler",
       "category": "lib",
       "symbols": [
@@ -10353,31 +10673,38 @@
           "exported": true
         },
         {
+          "name": "formatTableOptionText",
+          "kind": "function",
+          "startLine": 261,
+          "endLine": 278,
+          "exported": true
+        },
+        {
           "name": "isMathOrCalculation",
           "kind": "function",
-          "startLine": 260,
-          "endLine": 283,
+          "startLine": 283,
+          "endLine": 306,
           "exported": true
         },
         {
           "name": "getAvailableSeries",
           "kind": "function",
-          "startLine": 288,
-          "endLine": 297,
+          "startLine": 311,
+          "endLine": 320,
           "exported": true
         },
         {
           "name": "filterAndSortQuestions",
           "kind": "function",
-          "startLine": 302,
-          "endLine": 386,
+          "startLine": 325,
+          "endLine": 409,
           "exported": true
         },
         {
           "name": "countActiveFilters",
           "kind": "function",
-          "startLine": 391,
-          "endLine": 407,
+          "startLine": 414,
+          "endLine": 430,
           "exported": true
         }
       ]
@@ -11878,12 +12205,19 @@
     },
     {
       "path": "lib/questions.ts",
-      "lineCount": 1070,
+      "lineCount": 1472,
       "purpose": "Cambridge 0455 Economics question bank and topic definitions",
       "category": "lib",
       "symbols": [
         {
           "name": "resolveDiagramUrl",
+          "kind": "const",
+          "startLine": 6,
+          "endLine": 6,
+          "exported": true
+        },
+        {
+          "name": "formatTableOptionText",
           "kind": "const",
           "startLine": 6,
           "endLine": 6,
@@ -12012,49 +12346,77 @@
           "name": "mapDbQuestionToQuestion",
           "kind": "function",
           "startLine": 805,
-          "endLine": 853,
+          "endLine": 858,
           "exported": true
         },
         {
           "name": "fetchQuestionsFromDb",
           "kind": "async-function",
-          "startLine": 859,
-          "endLine": 940,
+          "startLine": 864,
+          "endLine": 945,
+          "exported": true
+        },
+        {
+          "name": "formatSeriesLabel",
+          "kind": "function",
+          "startLine": 951,
+          "endLine": 982,
+          "exported": true
+        },
+        {
+          "name": "IngestedPaperSummary",
+          "kind": "interface",
+          "startLine": 984,
+          "endLine": 997,
+          "exported": true
+        },
+        {
+          "name": "fetchIngestedPapers",
+          "kind": "async-function",
+          "startLine": 1003,
+          "endLine": 1166,
+          "exported": true
+        },
+        {
+          "name": "fetchPaperQuestions",
+          "kind": "async-function",
+          "startLine": 1172,
+          "endLine": 1342,
           "exported": true
         },
         {
           "name": "fetchTopicsFromDb",
           "kind": "async-function",
-          "startLine": 946,
-          "endLine": 975,
+          "startLine": 1348,
+          "endLine": 1377,
           "exported": true
         },
         {
           "name": "UseQuestionsResult",
           "kind": "interface",
-          "startLine": 977,
-          "endLine": 982,
+          "startLine": 1379,
+          "endLine": 1384,
           "exported": true
         },
         {
           "name": "useQuestions",
           "kind": "hook",
-          "startLine": 988,
-          "endLine": 1021,
+          "startLine": 1390,
+          "endLine": 1423,
           "exported": true
         },
         {
           "name": "UseTopicsResult",
           "kind": "interface",
-          "startLine": 1023,
-          "endLine": 1028,
+          "startLine": 1425,
+          "endLine": 1430,
           "exported": true
         },
         {
           "name": "useTopics",
           "kind": "hook",
-          "startLine": 1034,
-          "endLine": 1067,
+          "startLine": 1436,
+          "endLine": 1469,
           "exported": true
         }
       ]
@@ -12600,197 +12962,197 @@
     },
     {
       "path": "lib/testCompiler.ts",
-      "lineCount": 644,
+      "lineCount": 646,
       "purpose": "Test compiler draft persistence in localStorage and exam compiler",
       "category": "lib",
       "symbols": [
         {
           "name": "DRAFT_KEY_PREFIX",
           "kind": "const",
-          "startLine": 5,
-          "endLine": 5,
-          "exported": true
-        },
-        {
-          "name": "PRINT_SNAPSHOT_PREFIX",
-          "kind": "const",
           "startLine": 6,
           "endLine": 6,
           "exported": true
         },
         {
-          "name": "DRAFT_CHANGE_EVENT",
+          "name": "PRINT_SNAPSHOT_PREFIX",
           "kind": "const",
           "startLine": 7,
           "endLine": 7,
           "exported": true
         },
         {
+          "name": "DRAFT_CHANGE_EVENT",
+          "kind": "const",
+          "startLine": 8,
+          "endLine": 8,
+          "exported": true
+        },
+        {
           "name": "SUBJECT_CATALOG",
           "kind": "const",
-          "startLine": 10,
-          "endLine": 10,
+          "startLine": 11,
+          "endLine": 11,
           "exported": true
         },
         {
           "name": "GeneratedTestPaper",
           "kind": "interface",
-          "startLine": 17,
-          "endLine": 21,
+          "startLine": 18,
+          "endLine": 22,
           "exported": true
         },
         {
           "name": "resolveQuestionExplanation",
           "kind": "function",
-          "startLine": 23,
-          "endLine": 35,
+          "startLine": 24,
+          "endLine": 36,
           "exported": true
         },
         {
           "name": "notifyDraftsChanged",
           "kind": "function",
-          "startLine": 37,
-          "endLine": 53,
+          "startLine": 38,
+          "endLine": 54,
           "exported": true
         },
         {
           "name": "sanitizeAccountScope",
           "kind": "function",
-          "startLine": 55,
-          "endLine": 65,
+          "startLine": 56,
+          "endLine": 66,
           "exported": true
         },
         {
           "name": "resolveCurrentAccountScope",
           "kind": "function",
-          "startLine": 67,
-          "endLine": 116,
+          "startLine": 68,
+          "endLine": 117,
           "exported": true
         },
         {
           "name": "getDraftStorageKey",
           "kind": "function",
-          "startLine": 118,
-          "endLine": 121,
+          "startLine": 119,
+          "endLine": 122,
           "exported": true
         },
         {
           "name": "formatDefaultDraftTitle",
           "kind": "function",
-          "startLine": 123,
-          "endLine": 134,
+          "startLine": 124,
+          "endLine": 135,
           "exported": true
         },
         {
           "name": "saveTestDraft",
           "kind": "function",
-          "startLine": 136,
-          "endLine": 188,
+          "startLine": 137,
+          "endLine": 189,
           "exported": true
         },
         {
           "name": "savePrintSnapshot",
           "kind": "function",
-          "startLine": 190,
-          "endLine": 219,
+          "startLine": 191,
+          "endLine": 220,
           "exported": true
         },
         {
           "name": "loadTestDraft",
           "kind": "function",
-          "startLine": 221,
-          "endLine": 286,
+          "startLine": 222,
+          "endLine": 287,
           "exported": true
         },
         {
           "name": "listTestDrafts",
           "kind": "function",
-          "startLine": 288,
-          "endLine": 324,
+          "startLine": 289,
+          "endLine": 325,
           "exported": true
         },
         {
           "name": "deleteTestDraft",
           "kind": "function",
-          "startLine": 326,
-          "endLine": 349,
+          "startLine": 327,
+          "endLine": 350,
           "exported": true
         },
         {
           "name": "duplicateTestDraft",
           "kind": "function",
-          "startLine": 351,
-          "endLine": 366,
+          "startLine": 352,
+          "endLine": 367,
           "exported": true
         },
         {
           "name": "renameTestDraft",
           "kind": "function",
-          "startLine": 368,
-          "endLine": 386,
+          "startLine": 369,
+          "endLine": 387,
           "exported": true
         },
         {
           "name": "exportTestDraftJson",
           "kind": "function",
-          "startLine": 388,
-          "endLine": 398,
+          "startLine": 389,
+          "endLine": 399,
           "exported": true
         },
         {
           "name": "importTestDraftJson",
           "kind": "function",
-          "startLine": 400,
-          "endLine": 468,
+          "startLine": 401,
+          "endLine": 469,
           "exported": true
         },
         {
           "name": "buildCompiledQuestions",
           "kind": "function",
-          "startLine": 470,
-          "endLine": 509,
+          "startLine": 471,
+          "endLine": 511,
           "exported": true
         },
         {
           "name": "autoSelectQuestions",
           "kind": "function",
-          "startLine": 512,
-          "endLine": 549,
+          "startLine": 514,
+          "endLine": 551,
           "exported": true
         },
         {
           "name": "generateTestPaper",
           "kind": "function",
-          "startLine": 551,
-          "endLine": 579,
+          "startLine": 553,
+          "endLine": 581,
           "exported": true
         },
         {
           "name": "shuffleQuestionIds",
           "kind": "function",
-          "startLine": 581,
-          "endLine": 588,
+          "startLine": 583,
+          "endLine": 590,
           "exported": true
         },
         {
           "name": "computeTopicDistribution",
           "kind": "function",
-          "startLine": 590,
-          "endLine": 619,
+          "startLine": 592,
+          "endLine": 621,
           "exported": true
         },
         {
           "name": "saveOnlineAssignment",
           "kind": "function",
-          "startLine": 621,
-          "endLine": 624,
+          "startLine": 623,
+          "endLine": 626,
           "exported": true
         },
         {
           "name": "listOnlineAssignments",
           "kind": "function",
-          "startLine": 626,
-          "endLine": 641,
+          "startLine": 628,
+          "endLine": 643,
           "exported": true
         }
       ]
@@ -13064,7 +13426,7 @@
     },
     {
       "path": "scripts/fast-ingest.py",
-      "lineCount": 1036,
+      "lineCount": 1035,
       "purpose": "Fast multimodal Gemini ingestion pipeline with bounding box cropping",
       "category": "scripts",
       "symbols": [
@@ -13134,36 +13496,36 @@
         {
           "name": "assemble_staging_paper",
           "kind": "def",
-          "startLine": 827,
-          "endLine": 832,
+          "startLine": 826,
+          "endLine": 831,
           "exported": true
         },
         {
           "name": "ingest_single_paper",
           "kind": "def",
-          "startLine": 875,
-          "endLine": 881,
+          "startLine": 874,
+          "endLine": 880,
           "exported": true
         },
         {
           "name": "find_matching_ms",
           "kind": "def",
-          "startLine": 927,
-          "endLine": 946,
+          "startLine": 926,
+          "endLine": 945,
           "exported": true
         },
         {
           "name": "ingest_batch_directory",
           "kind": "def",
-          "startLine": 949,
-          "endLine": 954,
+          "startLine": 948,
+          "endLine": 953,
           "exported": true
         },
         {
           "name": "main",
           "kind": "def",
-          "startLine": 992,
-          "endLine": 1031,
+          "startLine": 991,
+          "endLine": 1030,
           "exported": true
         }
       ]
@@ -13560,43 +13922,43 @@
     },
     {
       "path": "scripts/verify-delete-papers.ts",
-      "lineCount": 493,
+      "lineCount": 595,
       "purpose": "Automated Verification Suite: Delete Staged and Archived Papers Verifies: 1.",
       "category": "scripts",
       "symbols": [
         {
           "name": "pass",
           "kind": "function",
-          "startLine": 44,
-          "endLine": 48,
+          "startLine": 45,
+          "endLine": 49,
           "exported": false
         },
         {
           "name": "fail",
           "kind": "function",
-          "startLine": 50,
-          "endLine": 54,
+          "startLine": 51,
+          "endLine": 55,
           "exported": false
         },
         {
           "name": "assert",
           "kind": "function",
-          "startLine": 56,
-          "endLine": 62,
+          "startLine": 57,
+          "endLine": 63,
           "exported": false
         },
         {
           "name": "createDummyPaper",
           "kind": "function",
-          "startLine": 64,
-          "endLine": 88,
+          "startLine": 65,
+          "endLine": 89,
           "exported": false
         },
         {
           "name": "runVerification",
           "kind": "function",
-          "startLine": 90,
-          "endLine": 490,
+          "startLine": 91,
+          "endLine": 592,
           "exported": false
         }
       ]
@@ -14181,78 +14543,78 @@
     },
     {
       "path": "scripts/verify-revizz.ts",
-      "lineCount": 4479,
+      "lineCount": 4523,
       "purpose": "Master Revizz QA and gameplay test suite with 56 assertions",
       "category": "scripts",
       "symbols": [
         {
           "name": "test",
           "kind": "function",
-          "startLine": 211,
-          "endLine": 233,
+          "startLine": 212,
+          "endLine": 234,
           "exported": false
         },
         {
           "name": "testAsync",
           "kind": "function",
-          "startLine": 235,
-          "endLine": 257,
+          "startLine": 236,
+          "endLine": 258,
           "exported": false
         },
         {
           "name": "assert",
           "kind": "function",
-          "startLine": 259,
-          "endLine": 263,
+          "startLine": 260,
+          "endLine": 264,
           "exported": false
         },
         {
           "name": "assertEqual",
           "kind": "function",
-          "startLine": 265,
-          "endLine": 269,
+          "startLine": 266,
+          "endLine": 270,
           "exported": false
         },
         {
           "name": "runSuite13",
           "kind": "function",
-          "startLine": 1615,
-          "endLine": 3830,
+          "startLine": 1616,
+          "endLine": 3873,
           "exported": false
         },
         {
           "name": "runSuite20",
           "kind": "function",
-          "startLine": 3835,
-          "endLine": 4007,
+          "startLine": 3878,
+          "endLine": 4051,
           "exported": false
         },
         {
           "name": "runSuite21",
           "kind": "function",
-          "startLine": 4009,
-          "endLine": 4161,
+          "startLine": 4053,
+          "endLine": 4205,
           "exported": false
         },
         {
           "name": "runSuite22",
           "kind": "function",
-          "startLine": 4163,
-          "endLine": 4301,
+          "startLine": 4207,
+          "endLine": 4345,
           "exported": false
         },
         {
           "name": "runSuite23",
           "kind": "function",
-          "startLine": 4303,
-          "endLine": 4441,
+          "startLine": 4347,
+          "endLine": 4485,
           "exported": false
         },
         {
           "name": "main",
           "kind": "function",
-          "startLine": 4443,
-          "endLine": 4472,
+          "startLine": 4487,
+          "endLine": 4516,
           "exported": false
         }
       ]
@@ -14470,6 +14832,28 @@
           "kind": "function",
           "startLine": 441,
           "endLine": 479,
+          "exported": false
+        }
+      ]
+    },
+    {
+      "path": "scripts/verify-whole-paper-delete.ts",
+      "lineCount": 120,
+      "purpose": "Verification Script: Whole Paper Deletion Suite",
+      "category": "scripts",
+      "symbols": [
+        {
+          "name": "assert",
+          "kind": "function",
+          "startLine": 11,
+          "endLine": 19,
+          "exported": false
+        },
+        {
+          "name": "run",
+          "kind": "function",
+          "startLine": 21,
+          "endLine": 114,
           "exported": false
         }
       ]

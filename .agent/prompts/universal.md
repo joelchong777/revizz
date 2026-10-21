@@ -1,4 +1,4 @@
-# Universal Master Orchestrator & Agent Fleet Rules (v12.5 — Project-Agnostic)
+# Universal Master Orchestrator & Agent Fleet Rules (v12.6 — Project-Agnostic)
 
 ## 0. Zero-Read Boot & Mode Switch (`"flash"` | `"argon"` / `"pro"` / `"argon/pro"`)
 - **Preloaded Rules**: Keep these rules in root `AGENTS.md` so every chat and subagent inherits them at Turn 0 with **0 startup file reads**.
@@ -24,7 +24,7 @@
 
 ## 3. Worktree Isolation, Failure-Only Verification & Explicit Live Ship
 - **Worktree Isolation**: Always branch worktrees from `origin/main` (`.worktrees/<topic>`), symlinking shared dependencies (`node_modules`, `.env*`) so local `main` is never polluted by WIP work.
-- **Detached Local Server (`"start local"` / `"kill server"`)**: Spawn dev servers detached (`unref()`) logging to `/tmp/<project>-dev.log` and poll readiness so the tool call exits in ~2s instead of hanging.
+- **Detached Local Server & Auto-Preview (`"start local"` / `"kill server"`)**: Spawn dev servers detached (`unref()`) logging to `/tmp/<project>-dev.log` and poll readiness so the tool call exits in ~2s instead of hanging. If there is any preview to show, agents MUST start a local server upon completion of given work and include a direct link to the preview in the work summary.
 - **Failure-Only Verification Gate**: Run typecheck and tests in parallel where possible, suppressing passing test noise and head-truncating failure output to the first 20 actionable error lines.
 - **Explicit Push Permission (`"push live"`)**: NEVER push to remote or deploy without explicit user permission. When commanded (`npm run wt -- ship <topic> -m "feat(<scope>): <descriptive title>" -b "<multi-line change summary & verify log>" --fast` with `WaitMsBeforeAsync: 10000`), always provide a descriptive semantic commit title and multi-line body summarizing changes + verification log; never use generic `"ship verified changes"` titles or run duplicate `npx vercel --prod` alongside `git push` (prevents raw UID hash deployments on Vercel/GitHub). Rebase worktree on `origin/main`, verify, push atomically (`git push origin <branch>:main`), clean up the worktree, call `manage_subagents(kill_all)`, and output a mandatory `### Push Summary` (feature add vs bugfix, exact app changes).
 - **1-Command End Session (`"end chat"`)**: Append a 1-line session takeaway to `.agent/memory/learnings_and_reflections.md` (capped at `<= 110 lines` via sliding window), stop local servers, prune merged worktrees, kill active subagents (`manage_subagents(kill_all)`), and output a 4-line handoff card.
@@ -33,5 +33,5 @@
 ## 4. Mandatory User-Facing Closing Block
 Every final response to the user MUST end with:
 - (On push turns): `### Push Summary` (explicit breakdown: Feature Add vs Bugfix, exact app surfaces changed, user-visible behavior)
-- `### Simple Summary of What Was Done` (2–4 plain-English, non-technical sentences explaining what changed, why it matters, and the visible result.)
+- `### Simple Summary of What Was Done` (2–4 plain-English, non-technical sentences explaining what changed, why it matters, and the visible result; if preview available, include direct link to preview)
 - `### 3 Suggested Next Steps` (`1.`, `2.`, `3.`)

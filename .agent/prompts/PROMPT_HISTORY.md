@@ -8,18 +8,28 @@
 
 ---
 
-## Active Prompts Table (`v12.5`)
+## Active Prompts Table (`v12.6`)
 
 | Prompt File | Version | 1-Word Trigger | Model Target | Core Discipline |
 | :--- | :---: | :---: | :---: | :--- |
-| [`flash.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/flash.md) | `v12.5` | `"flash"` | Flash / Fast Lead | Low-latency dispatcher; edits <= 15L fast-path; mandatory post-push ### Push Summary |
-| [`argon.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/argon.md) | `v12.5` | `"argon"` / `"pro"` / `"argon/pro"` | Argon (`pro`) Lead | In-brain multi-file architecture; all-flash subagent fleet; mandatory post-push ### Push Summary |
-| [`opus.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/opus.md) | `v12.5` | `"opus"` | Claude Opus 5.5 Lead | Frontier Architect; context shielding (`<= 80L` reads, `<= 8L` replies); mandatory post-push ### Push Summary |
-| [`universal.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/universal.md) | `v12.5` | *Agnostic* | Any Model Lead | 100% project-agnostic orchestrator rulebook portable to any repo with post-push ### Push Summary |
+| [`flash.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/flash.md) | `v12.6` | `"flash"` | Flash / Fast Lead | Low-latency dispatcher; edits <= 15L fast-path; completion auto-preview + direct link |
+| [`argon.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/argon.md) | `v12.6` | `"argon"` / `"pro"` / `"argon/pro"` | Argon (`pro`) Lead | In-brain multi-file architecture; all-flash subagent fleet; completion auto-preview + direct link |
+| [`opus.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/opus.md) | `v12.6` | `"opus"` | Claude Opus 5.5 Lead | Frontier Architect; context shielding (`<= 80L` reads, `<= 8L` replies); completion auto-preview + direct link |
+| [`universal.md`](file:///Users/joelchong/Documents/MCQ%20App/Anti/.agent/prompts/universal.md) | `v12.6` | *Agnostic* | Any Model Lead | 100% project-agnostic orchestrator rulebook with completion auto-preview + direct link |
 
 ---
 
 ## Chronological Version History
+
+### `v12.6` (2026-10-21) — Completion Auto-Preview Server & Direct Link Invariant
+- **Automatic Local Server Boot on Work Completion**:
+  - Enforced mandatory rule: *If there is any preview to show, agents MUST start a local server upon completion of given work (`npm run wt serve [topic]`)*.
+  - Ensures the user never has to manually request `npm run wt serve` or wait to inspect UI, page, or layout changes.
+- **Direct Preview Link in Closing Summary**:
+  - Enforced that the work summary (`### Simple Summary of What Was Done`) must include a clickable direct markdown link to the local preview (e.g. `[Local Preview: http://localhost:3000](http://localhost:3000)`, `/portal`, `/admin`).
+- **Prompt Parity & Archiving**:
+  - Synchronized across `AGENTS.md`, `flash.md`, `argon.md`, `opus.md`, and `universal.md`.
+  - Immutable snapshots archived under `.agent/prompts/history/v12.6/`.
 
 ### `v12.5` (2026-10-21) — Post-Push "Push Summary" Response Contract & Scope Transparency
 - **Mandatory `### Push Summary` Response Section**:
