@@ -849,6 +849,11 @@ export function mapDbQuestionToQuestion(row: any): Question {
       ? { ...diagramMeta, image_url: imageUrl || diagramMeta.image_url }
       : (hasDiagram ? { has_diagram: true, image_url: imageUrl } : undefined),
     explanation_markdown: row.explanation_markdown || undefined,
+    paper_id: row.paper_id || undefined,
+    question_number: row.question_number ?? undefined,
+    year: row.papers?.year ?? undefined,
+    series: row.papers?.series ?? undefined,
+    paper_code: row.papers?.paper_code ? String(row.papers.paper_code) : undefined,
   };
 }
 
@@ -937,6 +942,403 @@ export async function fetchQuestionsFromDb(filters?: FetchQuestionsFilters): Pro
     console.warn('Failed to fetch questions from Supabase:', err);
     return [];
   }
+}
+
+/**
+ * Maps series codes to human-readable Cambridge session names.
+ * e.g., 's' / 'summer' -> 'May/June', 'w' / 'winter' -> 'Oct/Nov', 'm' / 'march' -> 'Feb/March'
+ */
+export function formatSeriesLabel(s: string): string {
+  const norm = (s || '').trim().toLowerCase();
+  if (
+    norm === 's' ||
+    norm === 'summer' ||
+    norm === 'm/j' ||
+    norm === 'may/june' ||
+    norm === 'may' ||
+    norm === 'june'
+  ) {
+    return 'May/June';
+  }
+  if (
+    norm === 'w' ||
+    norm === 'winter' ||
+    norm === 'o/n' ||
+    norm === 'oct/nov' ||
+    norm === 'october/november'
+  ) {
+    return 'Oct/Nov';
+  }
+  if (
+    norm === 'm' ||
+    norm === 'march' ||
+    norm === 'f/m' ||
+    norm === 'feb/march' ||
+    norm === 'february/march'
+  ) {
+    return 'Feb/March';
+  }
+  return s || '';
+}
+
+export interface IngestedPaperSummary {
+  id: string;
+  cleanId: string;
+  subjectCode: string;
+  subjectName: string;
+  year: number;
+  series: string;
+  seriesLabel: string;
+  paperCode: string;
+  title: string;
+  questionsCount: number;
+  diagramsCount: number;
+  isPublished: boolean;
+}
+
+/**
+ * Fetches all staged & published Cambridge exam papers.
+ * Filters out empty papers (questionsCount === 0) and sorts by year desc, series asc, paperCode asc.
+ */
+export async function fetchIngestedPapers(subjectCode?: string): Promise<IngestedPaperSummary[]> {
+  try {
+    let res: Response | null = null;
+    if (typeof window !== 'undefined') {
+      res = await fetch('/api/ingest/staged-paper');
+    } else {
+      const base =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      try {
+        res = await fetch(`${base}/api/ingest/staged-paper`);
+      } catch {
+        res = null;
+      }
+    }
+
+    if (res && res.ok) {
+      const data = await res.json();
+      const rawPapers = Array.isArray(data?.stagedPapers) ? data.stagedPapers : [];
+      const result: IngestedPaperSummary[] = [];
+
+      for (const item of rawPapers) {
+        const questionsCount = Number(item.questionsCount) || 0;
+        if (questionsCount === 0) continue;
+
+        let cleanId = '';
+        if (typeof item.filename === 'string' && item.filename) {
+          cleanId = item.filename.replace(/\.json$/i, '').trim();
+        } else if (typeof item.id === 'string' && !item.id.includes('-') && item.id.includes('_')) {
+          cleanId = item.id;
+        }
+
+        const itemSubjCode = String(item.subject?.code || cleanId.split('_')[0] || '0455').trim();
+        if (subjectCode && itemSubjCode.toLowerCase() !== subjectCode.trim().toLowerCase()) {
+          continue;
+        }
+
+        const itemSubjName = String(
+          item.subject?.name || (itemSubjCode === '0455' ? 'Economics' : itemSubjCode)
+        );
+        const rawSeries = String(item.paper?.series || cleanId.split('_')[1]?.charAt(0) || 's');
+        const seriesLabel = formatSeriesLabel(rawSeries);
+        const year =
+          Number(item.paper?.year) ||
+          (cleanId.split('_')[1] ? 2000 + Number(cleanId.split('_')[1].slice(1)) : 2024);
+        const paperCode = String(item.paper?.paper_code || cleanId.split('_')[2] || '12').replace(
+          /^paper\s*/i,
+          ''
+        );
+
+        if (!cleanId) {
+          const sLower = rawSeries.toLowerCase();
+          const y2 = String(year).slice(-2);
+          cleanId = `${itemSubjCode}_${sLower}${y2}_${paperCode}`;
+        }
+
+        const diagramsCount = Number(item.diagramsCount) || 0;
+        const isPublished = Boolean(item.is_published);
+        const title = `${seriesLabel} ${year} · Paper ${paperCode}`;
+
+        result.push({
+          id: String(item.id || cleanId),
+          cleanId,
+          subjectCode: itemSubjCode,
+          subjectName: itemSubjName,
+          year,
+          series: rawSeries,
+          seriesLabel,
+          paperCode,
+          title,
+          questionsCount,
+          diagramsCount,
+          isPublished,
+        });
+      }
+
+      result.sort((a, b) => {
+        if (b.year !== a.year) return b.year - a.year; // year desc
+        if (a.series.localeCompare(b.series) !== 0) return a.series.localeCompare(b.series); // series asc
+        return a.paperCode.localeCompare(b.paperCode); // paperCode asc
+      });
+
+      return result;
+    }
+  } catch (err) {
+    console.warn('[fetchIngestedPapers] Staged papers API route fetch failed, trying database fallback:', err);
+  }
+
+  // Fallback to Supabase query or empty array on error
+  try {
+    const { data: papersData, error: papersErr } = await supabase
+      .from('papers')
+      .select('id, series, paper_code, year, subjects ( id, code, name )');
+
+    if (!papersErr && Array.isArray(papersData) && papersData.length > 0) {
+      const { data: questionsData } = await supabase
+        .from('questions')
+        .select('id, paper_id, image_url, diagram_metadata');
+
+      const qMap = new Map<string, any[]>();
+      if (Array.isArray(questionsData)) {
+        for (const q of questionsData) {
+          if (q.paper_id) {
+            const list = qMap.get(q.paper_id) || [];
+            list.push(q);
+            qMap.set(q.paper_id, list);
+          }
+        }
+      }
+
+      const list: IngestedPaperSummary[] = [];
+      for (const row of papersData as any[]) {
+        const subj = Array.isArray(row.subjects) ? row.subjects[0] : row.subjects;
+        const sCode = String(subj?.code || '0455');
+        if (subjectCode && sCode.toLowerCase() !== subjectCode.trim().toLowerCase()) {
+          continue;
+        }
+
+        const qList = qMap.get(row.id) || [];
+        const questionsCount = qList.length;
+        if (questionsCount === 0) continue;
+
+        const diagramsCount = qList.filter((q) =>
+          Boolean(q.image_url || q.diagram_metadata?.has_diagram || q.diagram_metadata?.image_url)
+        ).length;
+
+        const rawSeries = String(row.series || 's');
+        const seriesLabel = formatSeriesLabel(rawSeries);
+        const year = Number(row.year) || 2024;
+        const paperCode = String(row.paper_code || '12').replace(/^paper\s*/i, '');
+        const y2 = String(year).slice(-2);
+        const cleanId = `${sCode}_${rawSeries.toLowerCase()}${y2}_${paperCode}`;
+        const title = `${seriesLabel} ${year} · Paper ${paperCode}`;
+
+        list.push({
+          id: row.id,
+          cleanId,
+          subjectCode: sCode,
+          subjectName: String(subj?.name || (sCode === '0455' ? 'Economics' : sCode)),
+          year,
+          series: rawSeries,
+          seriesLabel,
+          paperCode,
+          title,
+          questionsCount,
+          diagramsCount,
+          isPublished: true,
+        });
+      }
+
+      list.sort((a, b) => {
+        if (b.year !== a.year) return b.year - a.year;
+        if (a.series.localeCompare(b.series) !== 0) return a.series.localeCompare(b.series);
+        return a.paperCode.localeCompare(b.paperCode);
+      });
+
+      return list;
+    }
+  } catch (fallbackErr) {
+    console.warn('[fetchIngestedPapers] Database fallback query error:', fallbackErr);
+  }
+
+  return [];
+}
+
+/**
+ * Fetches all questions for a specific Cambridge paper from the staging API route,
+ * falling back to Supabase database query if unavailable.
+ */
+export async function fetchPaperQuestions(paperIdOrCleanId: string): Promise<Question[]> {
+  try {
+    let res: Response | null = null;
+    const endpoint = `/api/ingest/staged-paper?id=${encodeURIComponent(paperIdOrCleanId)}`;
+    if (typeof window !== 'undefined') {
+      res = await fetch(endpoint);
+    } else {
+      const base =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      try {
+        res = await fetch(`${base}${endpoint}`);
+      } catch {
+        res = null;
+      }
+    }
+
+    if (res && res.ok) {
+      const data = await res.json();
+      const rawQuestions = data?.paper?.questions;
+      if (Array.isArray(rawQuestions) && rawQuestions.length > 0) {
+        const paperMeta = data.paper?.paper;
+        const subjMeta = data.paper?.subject;
+        const paperYear = paperMeta?.year ? Number(paperMeta.year) : undefined;
+        const paperSeries = paperMeta?.series ? String(paperMeta.series) : undefined;
+        const paperCode = paperMeta?.paper_code
+          ? String(paperMeta.paper_code).replace(/^paper\s*/i, '')
+          : undefined;
+        const seriesLabel = paperSeries ? formatSeriesLabel(paperSeries) : '';
+        const paperId = data.published_exam_paper_id || data.paper?.id || paperIdOrCleanId;
+
+        const mapped: Question[] = rawQuestions.map((q: any, idx: number) => {
+          const qNum = typeof q.question_number === 'number' ? q.question_number : idx + 1;
+          const qId = q.id || `${paperIdOrCleanId}-q${String(qNum).padStart(2, '0')}`;
+
+          const rawOptions = Array.isArray(q.options) ? q.options : [];
+          const sortedOptions = rawOptions.slice().sort((a: any, b: any) =>
+            String(a.label || '').localeCompare(String(b.label || ''))
+          );
+
+          let correctOptionId = '';
+          const options = sortedOptions.map((opt: any, optIdx: number) => {
+            const label = String(opt.label || String.fromCharCode(65 + optIdx)).toUpperCase();
+            const optId = opt.id || `${qId}-opt-${label.toLowerCase()}`;
+            const textMarkdown = opt.content_markdown ?? opt.text_markdown ?? opt.text ?? '';
+            const distractorReasoning =
+              opt.distractor_reasoning ||
+              (q.distractor_analysis && typeof q.distractor_analysis === 'object'
+                ? q.distractor_analysis[label]
+                : undefined) ||
+              undefined;
+
+            if (opt.is_correct || opt.isCorrect) {
+              correctOptionId = optId;
+            }
+
+            return {
+              id: optId,
+              label,
+              text_markdown: textMarkdown,
+              distractor_reasoning: distractorReasoning,
+            };
+          });
+
+          if (!correctOptionId && options.length > 0) {
+            if (q.correct_option_id) {
+              const matched = options.find(
+                (o: any) => o.id === q.correct_option_id || o.label === q.correct_option_id
+              );
+              if (matched) {
+                correctOptionId = matched.id;
+              }
+            }
+            if (!correctOptionId) {
+              correctOptionId = options[0].id;
+            }
+          }
+
+          let citation = q.cambridge_source_ref;
+          if (!citation && (seriesLabel || paperYear || paperCode)) {
+            const parts = [
+              subjMeta?.code ? `Cambridge ${subjMeta.code}` : null,
+              seriesLabel,
+              paperYear,
+              paperCode ? `Paper ${paperCode}` : null,
+              `Q${qNum}`,
+            ].filter(Boolean);
+            citation = parts.join(' ');
+          }
+
+          const diagramMeta = q.diagram;
+          const rawImageUrl = diagramMeta?.image_url || q.image_url || undefined;
+          const imageUrl = resolveDiagramUrl(rawImageUrl);
+          const hasDiagram = Boolean(imageUrl || diagramMeta?.has_diagram || q.has_diagram);
+
+          return {
+            id: qId,
+            stem_markdown: q.stem_markdown || '',
+            options,
+            correct_option_id: correctOptionId,
+            citation: citation || undefined,
+            topic: q.topic_name || undefined,
+            topic_id: q.topic_id || undefined,
+            has_diagram: hasDiagram,
+            image_url: imageUrl,
+            diagram: diagramMeta
+              ? {
+                  ...diagramMeta,
+                  has_diagram: hasDiagram,
+                  image_url: imageUrl || diagramMeta.image_url,
+                }
+              : hasDiagram
+              ? { has_diagram: true, image_url: imageUrl }
+              : undefined,
+            explanation_markdown: q.explanation_markdown || undefined,
+            paper_id: paperId,
+            question_number: qNum,
+            year: paperYear,
+            series: paperSeries,
+            paper_code: paperCode,
+            status: q.status || 'active',
+          };
+        });
+
+        mapped.sort((a, b) => (a.question_number ?? 0) - (b.question_number ?? 0));
+        return mapped;
+      }
+    }
+  } catch (err) {
+    console.warn(`[fetchPaperQuestions] Failed fetching from API route for "${paperIdOrCleanId}":`, err);
+  }
+
+  // Fallback to fetchQuestionsFromDb or empty array on error
+  try {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(paperIdOrCleanId)) {
+      const dbQuestions = await fetchQuestionsFromDb({ paperId: paperIdOrCleanId });
+      if (dbQuestions.length > 0) {
+        return dbQuestions.sort((a, b) => (a.question_number ?? 0) - (b.question_number ?? 0));
+      }
+    }
+
+    const clean = paperIdOrCleanId.replace(/\.json$/i, '').trim();
+    const parts = clean.split('_');
+    if (parts.length >= 3) {
+      const seriesChar = parts[1].charAt(0);
+      const rawY = parts[1].slice(1);
+      const yearNum = rawY.length === 2 ? 2000 + Number(rawY) : Number(rawY);
+      const paperCodeStr = parts[2].replace(/^paper\s*/i, '');
+
+      const { data: matchedPapers } = await supabase
+        .from('papers')
+        .select('id, series, paper_code, year')
+        .ilike('series', `${seriesChar}%`)
+        .eq('year', yearNum)
+        .eq('paper_code', paperCodeStr)
+        .limit(1);
+
+      if (matchedPapers && matchedPapers.length > 0) {
+        const dbQuestions = await fetchQuestionsFromDb({ paperId: matchedPapers[0].id });
+        if (dbQuestions.length > 0) {
+          return dbQuestions.sort((a, b) => (a.question_number ?? 0) - (b.question_number ?? 0));
+        }
+      }
+    }
+  } catch (fallbackErr) {
+    console.warn(`[fetchPaperQuestions] Fallback database fetch failed:`, fallbackErr);
+  }
+
+  return [];
 }
 
 /**

@@ -14,7 +14,12 @@ import { recordCompletedRound } from '../lib/studentProfile';
 export type Question = {
   id: string;
   stem_markdown: string;
-  options: { id: string; text_markdown: string }[];
+  options: {
+    id: string;
+    text_markdown: string;
+    label?: string;
+    distractor_reasoning?: string;
+  }[];
   correct_option_id: string;
   citation?: string;
   topic?: string;
@@ -28,6 +33,7 @@ export type Question = {
   };
   explanation_markdown?: string;
   // Optional extended metadata fields:
+  paper_id?: string;
   year?: number;
   variant?: string;
   series?: string;
@@ -45,7 +51,7 @@ export type QuizRoundConfig = {
   subject: string;
   sourceType: 'topic' | 'paper' | 'random' | 'review';
   sourceValue: string; // e.g., topic id, paper id, or 'review'
-  roundLength: 3 | 5 | 10 | 30 | 'endless';
+  roundLength: 3 | 5 | 10 | 30 | 40 | 'endless' | number;
   isTimed: boolean;
   diagramFilter?: DiagramFilter;
 };

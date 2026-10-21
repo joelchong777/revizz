@@ -11,6 +11,7 @@ import { useQuizGame, Question, QuizRoundConfig } from '../hooks/useQuizGame';
 import {
   fetchQuestionsFromDb,
   fetchTopicsFromDb,
+  fetchPaperQuestions,
   SyllabusTopic,
   shuffleQuestions,
   isDiagramQuestion,
@@ -92,7 +93,27 @@ export default function HomePage() {
     game.startRound(config, questionsToStart);
   };
 
-  const handleStartStandard = (config: QuizRoundConfig) => {
+  const handleStartStandard = async (config: QuizRoundConfig, customQuestions?: Question[]) => {
+    // If customQuestions provided (e.g. from whole paper mode), start round directly
+    // Preserves exact Cambridge exam paper question order (no shuffling!)
+    if (customQuestions && customQuestions.length > 0) {
+      handleStartRound(config, customQuestions);
+      return;
+    }
+
+    // If config specifies paper mode without customQuestions, fetch using fetchPaperQuestions
+    if (config.sourceType === 'paper' && config.sourceValue) {
+      try {
+        const paperQuestions = await fetchPaperQuestions(config.sourceValue);
+        if (paperQuestions.length > 0) {
+          handleStartRound(config, paperQuestions);
+          return;
+        }
+      } catch (err) {
+        console.warn('[handleStartStandard] Failed to fetch paper questions:', err);
+      }
+    }
+
     if (questions.length === 0) return;
     let pool = [...questions];
 
@@ -204,6 +225,31 @@ export default function HomePage() {
     }
 
     const searchParams = new URLSearchParams(window.location.search);
+
+    // 0. Whole exam paper deep-link (?paper=<id> or ?paperId=<id>)
+    const paperParam = searchParams.get('paper') || searchParams.get('paperId');
+    if (paperParam) {
+      window.history.replaceState({}, '', '/');
+      fetchPaperQuestions(paperParam).then((paperQuestions) => {
+        if (paperQuestions.length > 0) {
+          const firstQ = paperQuestions[0];
+          const subjectLabel = firstQ.series && firstQ.year && firstQ.paper_code
+            ? `${firstQ.series} ${firstQ.year} Paper ${firstQ.paper_code}`
+            : 'Cambridge Exam Paper';
+          const paperConfig: QuizRoundConfig = {
+            subject: subjectLabel,
+            sourceType: 'paper',
+            sourceValue: paperParam,
+            roundLength: paperQuestions.length,
+            isTimed: true,
+          };
+          handleStartRound(paperConfig, paperQuestions);
+        }
+      }).catch((err) => {
+        console.warn('Failed to load deep-linked paper:', err);
+      });
+      return;
+    }
 
     // 1. Direct assignment deep-link (?assignmentId=<id | testCode>)
     const assignmentId = searchParams.get('assignmentId') || searchParams.get('assignment') || searchParams.get('testCode');

@@ -6,14 +6,15 @@ import { QuizRoundConfig, DiagramFilter } from '../hooks/useQuizGame';
 import { getReviewPileCount, subscribeMasteryChanges, getFirstTryCorrectIds } from '@/lib/mastery';
 import { playPop } from '@/lib/audio';
 import { TopicMasteryList } from './TopicMasteryList';
-import { SyllabusTopic, Question } from '@/lib/questions';
+import { SyllabusTopic, Question, IngestedPaperSummary, fetchIngestedPapers, fetchPaperQuestions } from '@/lib/questions';
+import { PaperPickerModal } from './PaperPickerModal';
 import { useAuth, isDemoStudentSession } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { fetchSubjectsFromDb, getSubjectEmoji, DbSubject, FALLBACK_SUBJECTS } from '@/lib/subjects';
 import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 
 interface StartFlowProps {
-  onStart: (config: QuizRoundConfig) => void;
+  onStart: (config: QuizRoundConfig, customQuestions?: Question[]) => void;
   onStartReview: () => void;
   onPracticeTopic: (topicId: string, topicName: string) => void;
   questions?: Question[];
@@ -38,9 +39,15 @@ export function StartFlow({
   const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>('0455');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'review'>('standard');
+  const [selectedMode, setSelectedMode] = useState<'standard' | 'topic' | 'paper' | 'review'>('standard');
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [isTopicModalOpen, setIsTopicModalOpen] = useState<boolean>(false);
+
+  // Whole Past Paper Mode State
+  const [availablePapers, setAvailablePapers] = useState<IngestedPaperSummary[]>([]);
+  const [selectedPaper, setSelectedPaper] = useState<IngestedPaperSummary | null>(null);
+  const [isPaperModalOpen, setIsPaperModalOpen] = useState<boolean>(false);
+  const [loadingPapers, setLoadingPapers] = useState<boolean>(false);
 
   useEffect(() => {
     if (isDemo && selectedMode === 'review') {
@@ -124,6 +131,7 @@ export function StartFlow({
           setDiagramFilter(parsed.diagramFilter);
         }
         if (parsed.sourceType === 'review') setSelectedMode('review');
+        else if (parsed.sourceType === 'paper') setSelectedMode('paper');
         else if (parsed.sourceType === 'topic') {
           setSelectedMode('topic');
           if (parsed.sourceValue && typeof parsed.sourceValue === 'string') {
@@ -197,6 +205,49 @@ export function StartFlow({
       icon: null,
     };
 
+  // Fetch ingested Cambridge past papers whenever current subject changes
+  useEffect(() => {
+    let isCancelled = false;
+    setLoadingPapers(true);
+    fetchIngestedPapers(currentSubject.code)
+      .then((papers) => {
+        if (isCancelled) return;
+        setAvailablePapers(papers);
+        setSelectedPaper((prev) => {
+          if (prev && papers.some((p) => p.id === prev.id || p.cleanId === prev.cleanId)) {
+            return papers.find((p) => p.id === prev.id || p.cleanId === prev.cleanId)!;
+          }
+          let savedPaperId: string | null = null;
+          try {
+            const saved = localStorage.getItem('revizz_last_config');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (parsed.sourceType === 'paper' && parsed.sourceValue) {
+                savedPaperId = parsed.sourceValue;
+              }
+            }
+          } catch {
+            // ignore
+          }
+          if (savedPaperId) {
+            const matched = papers.find((p) => p.id === savedPaperId || p.cleanId === savedPaperId);
+            if (matched) return matched;
+          }
+          return papers.length > 0 ? papers[0] : null;
+        });
+      })
+      .catch((err) => {
+        console.warn('[StartFlow] Error fetching papers:', err);
+      })
+      .finally(() => {
+        if (!isCancelled) setLoadingPapers(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentSubject.code]);
+
   const subjectTopics = currentSubject.id
     ? effectiveTopics.filter(
         (t) => !(t as { subjectId?: string }).subjectId || (t as { subjectId?: string }).subjectId === currentSubject.id
@@ -244,7 +295,7 @@ export function StartFlow({
       ? userProfile.display_name.split(' ')[0]
       : null;
 
-  const handleStart = () => {
+  const handleStart = async () => {
     playPop();
 
     if (selectedMode === 'review') {
@@ -254,6 +305,31 @@ export function StartFlow({
     }
 
     const fullSubjectName = `${currentSubject.name} ${currentSubject.code}`;
+
+    if (selectedMode === 'paper') {
+      if (!selectedPaper) {
+        setIsPaperModalOpen(true);
+        return;
+      }
+      try {
+        const paperQuestions = await fetchPaperQuestions(selectedPaper.id);
+        const paperLength = paperQuestions.length > 0 ? paperQuestions.length : (selectedPaper.questionsCount || 30);
+        const roundConfig: QuizRoundConfig = {
+          subject: fullSubjectName,
+          sourceType: 'paper',
+          sourceValue: selectedPaper.id,
+          roundLength: paperLength,
+          isTimed,
+          diagramFilter: 'all',
+        };
+        localStorage.setItem('revizz_last_config', JSON.stringify(roundConfig));
+        onStart(roundConfig, paperQuestions);
+      } catch (err) {
+        console.warn('[StartFlow] Failed to load paper questions:', err);
+      }
+      return;
+    }
+
     const topicSourceValue =
       selectedTopicIds.length === 0 || selectedTopicIds.length === subjectTopics.length
         ? 'all'
@@ -279,7 +355,7 @@ export function StartFlow({
     setIsDropdownOpen(false);
   };
 
-  const handleModeSelect = (mode: 'standard' | 'topic' | 'review') => {
+  const handleModeSelect = (mode: 'standard' | 'topic' | 'paper' | 'review') => {
     if (mode === 'review' && isDemo) {
       return;
     }
@@ -287,6 +363,10 @@ export function StartFlow({
     setSelectedMode(mode);
     if (mode === 'topic') {
       setIsTopicModalOpen(true);
+    } else if (mode === 'paper') {
+      if (!selectedPaper && availablePapers.length > 0) {
+        setSelectedPaper(availablePapers[0]);
+      }
     }
   };
 
@@ -476,7 +556,38 @@ export function StartFlow({
             )}
           </button>
 
-          {/* Mode 3: Review Pile */}
+          {/* Mode 3: Whole Past Paper */}
+          <button
+            type="button"
+            onClick={() => handleModeSelect('paper')}
+            className={cn(
+              'flex items-center gap-3 p-3.5 rounded-2xl border-2 border-text text-left cursor-pointer transition-all',
+              selectedMode === 'paper'
+                ? 'bg-accent-2-200 shadow-offset-3 ring-2 ring-text/10 -translate-y-0.5'
+                : 'bg-white/80 shadow-offset-2 hover:bg-white hover:border-text active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+            )}
+          >
+            <span className="w-10 h-10 flex-none rounded-full bg-neutral-100 border-2 border-text flex items-center justify-center text-lg">
+              📑
+            </span>
+            <span className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="font-heading text-[17px] text-text leading-tight">
+                Whole past paper
+              </span>
+              <span className="text-[13px] text-neutral-800 font-medium leading-snug">
+                {selectedMode === 'paper' && selectedPaper
+                  ? `${selectedPaper.seriesLabel} ${selectedPaper.year} · Paper ${selectedPaper.paperCode} (${selectedPaper.questionsCount} Qs)`
+                  : 'Take a complete ingested Cambridge exam paper in official question order'}
+              </span>
+            </span>
+            {selectedMode === 'paper' && (
+              <span className="w-6 h-6 rounded-full bg-text text-neutral-100 flex items-center justify-center flex-shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              </span>
+            )}
+          </button>
+
+          {/* Mode 4: Review Pile */}
           <button
             type="button"
             disabled={isDemo}
@@ -588,6 +699,51 @@ export function StartFlow({
         </div>
       )}
 
+      {/* Paper Selection Summary & Modal Trigger (Visible only in Whole Past Paper Mode) */}
+      {selectedMode === 'paper' && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
+              Choose Past Paper
+            </h2>
+            {selectedPaper && (
+              <span className="px-2 py-0.5 rounded-full bg-neutral-200/80 border border-text/30 text-xs font-bold text-neutral-700">
+                {selectedPaper.questionsCount} Questions
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            data-testid="paper-picker-trigger"
+            onClick={() => {
+              playPop();
+              setIsPaperModalOpen(true);
+            }}
+            className="border-2 border-text bg-neutral-100 rounded-2xl shadow-offset-3 p-3 sm:p-3.5 px-4 flex items-center justify-between w-full hover:bg-neutral-200/60 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer select-none"
+          >
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 mr-2">
+              <span className="text-xl flex-shrink-0">📑</span>
+              <span className="font-heading text-sm sm:text-base text-text truncate">
+                {selectedPaper
+                  ? selectedPaper.title
+                  : loadingPapers
+                  ? 'Loading papers...'
+                  : 'No paper selected'}
+              </span>
+              {selectedPaper && (
+                <span className="px-2 py-0.5 rounded-full bg-neutral-200/90 border border-text/30 text-xs font-bold flex-shrink-0">
+                  {selectedPaper.questionsCount} Qs
+                </span>
+              )}
+            </div>
+            <span className="px-2.5 py-1 rounded-xl bg-accent-2-300 border border-text text-xs font-bold text-text flex items-center gap-1 flex-shrink-0 hover:brightness-95">
+              Change Paper ✎
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* 3. Unified "Mission Rules" Deck */}
       <div className="flex flex-col gap-3.5 p-4 rounded-3xl bg-neutral-100/90 border-2 border-text shadow-offset-3">
         {/* Round Length */}
@@ -595,31 +751,40 @@ export function StartFlow({
           <h2 className="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">
             Round length
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { val: 3 as const, label: '3 Qs' },
-              { val: 5 as const, label: '5 Qs' },
-              { val: 10 as const, label: '10 Qs' },
-              { val: 'endless' as const, label: 'Endless ∞' },
-            ].map((item) => {
-              const isSelected = roundLength === item.val;
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => handleLengthSelect(item.val)}
-                  className={cn(
-                    'px-3.5 py-1.5 rounded-full border-2 border-text font-bold text-xs sm:text-sm cursor-pointer transition-all select-none',
-                    isSelected
-                      ? 'bg-accent text-neutral-100 shadow-offset-2'
-                      : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
-                  )}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+          {selectedMode === 'paper' ? (
+            <div className="flex items-center gap-2">
+              <div className="px-3.5 py-1.5 rounded-full border-2 border-text bg-accent text-neutral-100 font-bold text-xs sm:text-sm shadow-offset-2 flex items-center gap-1.5 select-none">
+                <span>📑</span>
+                <span>Full Paper ({selectedPaper?.questionsCount || 30} Qs)</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {[
+                { val: 3 as const, label: '3 Qs' },
+                { val: 5 as const, label: '5 Qs' },
+                { val: 10 as const, label: '10 Qs' },
+                { val: 'endless' as const, label: 'Endless ∞' },
+              ].map((item) => {
+                const isSelected = roundLength === item.val;
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleLengthSelect(item.val)}
+                    className={cn(
+                      'px-3.5 py-1.5 rounded-full border-2 border-text font-bold text-xs sm:text-sm cursor-pointer transition-all select-none',
+                      isSelected
+                        ? 'bg-accent text-neutral-100 shadow-offset-2'
+                        : 'bg-white/80 text-text hover:bg-white shadow-offset-2 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Diagram Filter */}
@@ -755,7 +920,9 @@ export function StartFlow({
         onClick={handleStart}
         className="w-full py-4 px-6 rounded-2xl bg-accent hover:bg-accent-600 text-neutral-100 border-2 border-text shadow-offset-4 font-heading text-xl sm:text-2xl tracking-wide flex items-center justify-center gap-2 transition-all active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer select-none"
       >
-        {selectedMode === 'review' && reviewCount > 0
+        {selectedMode === 'paper'
+          ? `START PAPER · ${selectedPaper?.questionsCount || 30} Qs 📝`
+          : selectedMode === 'review' && reviewCount > 0
           ? `START REVIEW · ${reviewCount} Qs 🧠`
           : `START ROUND · ${roundLength === 'endless' ? '∞' : roundLength + ' Qs'} 🚀`}
       </button>
@@ -982,6 +1149,20 @@ export function StartFlow({
           </div>
         </div>
       )}
+
+      {/* Paper Picker Modal */}
+      <PaperPickerModal
+        isOpen={isPaperModalOpen}
+        onClose={() => setIsPaperModalOpen(false)}
+        papers={availablePapers}
+        selectedPaperId={selectedPaper?.id || null}
+        onSelectPaper={(paper) => {
+          setSelectedPaper(paper);
+          setIsPaperModalOpen(false);
+        }}
+        subjectName={currentSubject.name}
+        loading={loadingPapers}
+      />
     </div>
   );
 }
