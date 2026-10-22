@@ -43,7 +43,7 @@ import {
   deleteRosterInvite,
   RosterInvite,
 } from '@/lib/roster';
-import { getDemoStudentSession, getGuestEducatorSession, switchActiveProfile } from '@/lib/auth';
+import { switchActiveProfile } from '@/lib/auth';
 import type { UserProfile } from '@/types';
 
 export type UserRole = 'student' | 'teacher' | 'admin';
@@ -77,9 +77,42 @@ interface LocalUserOverrides {
   };
 }
 
-const STORAGE_OVERRIDES_KEY = 'revizz_admin_user_overrides_v1';
-const STORAGE_DELETED_KEY = 'revizz_admin_deleted_users_v1';
-const STORAGE_USERS_CACHE_KEY = 'revizz_admin_users_cache_v1';
+const STORAGE_OVERRIDES_KEY = 'revizz_admin_user_overrides_v2';
+const STORAGE_DELETED_KEY = 'revizz_admin_deleted_users_v2';
+const STORAGE_USERS_CACHE_KEY = 'revizz_admin_users_cache_v2';
+
+const LEGACY_STORAGE_KEYS = [
+  'revizz_admin_user_overrides_v1',
+  'revizz_admin_deleted_users_v1',
+  'revizz_admin_users_cache_v1',
+];
+
+const cleanupLegacyStorage = (): void => {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    for (const key of LEGACY_STORAGE_KEYS) {
+      storage.removeItem(key);
+    }
+  } catch (e) {
+    console.warn('Failed to cleanup legacy admin storage:', e);
+  }
+};
+
+export const isTestFixtureEmail = (email?: string): boolean => {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  if (
+    normalized === 'student.alpha@school.edu' ||
+    normalized === 'teacher.beta@school.edu' ||
+    normalized === 'test_user_admin_verify@example.com' ||
+    normalized === 'created_via_rpc@example.com' ||
+    normalized.endsWith('@revizz.local')
+  ) {
+    return true;
+  }
+  return false;
+};
 
 const getStorage = (): Storage | null => {
   if (typeof window !== 'undefined' && window.localStorage) {
@@ -89,11 +122,13 @@ const getStorage = (): Storage | null => {
 };
 
 const getStoredUsersCache = (): ManagedUser[] => {
+  cleanupLegacyStorage();
   const storage = getStorage();
   if (!storage) return [];
   try {
     const raw = storage.getItem(STORAGE_USERS_CACHE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed: ManagedUser[] = raw ? JSON.parse(raw) : [];
+    return parsed.filter((u) => !isTestFixtureEmail(u.email));
   } catch (e) {
     console.warn('Failed to parse admin users cache:', e);
     return [];
@@ -250,7 +285,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
         const data = await res.json();
         if (data.success && Array.isArray(data.users)) {
           const liveUsers: ManagedUser[] = data.users
-            .filter((u: ManagedUser) => !deletedIds.has(u.id))
+            .filter((u: ManagedUser) => !deletedIds.has(u.id) && !isTestFixtureEmail(u.email))
             .map((u: ManagedUser) => {
               const override = overrides[u.id];
               if (!override) return u;
@@ -278,7 +313,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     // 2. Offline fallback: check cached users
     const cached = getStoredUsersCache();
     if (cached.length > 0) {
-      const filteredCached = cached.filter((u) => !deletedIds.has(u.id));
+      const filteredCached = cached.filter((u) => !deletedIds.has(u.id) && !isTestFixtureEmail(u.email));
       setUsers(filteredCached);
       setLoading(false);
       return;
@@ -298,6 +333,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
         for (const p of profiles) {
           if (!p.id || deletedIds.has(p.id)) continue;
           const email = (p.email || '').trim().toLowerCase();
+          if (isTestFixtureEmail(email)) continue;
           if (email) seenEmails.add(email);
 
           const override = overrides[p.id] || {};
@@ -332,6 +368,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       for (const inv of invites) {
         if (!inv.id || deletedIds.has(inv.id)) continue;
         const normEmail = (inv.email || '').trim().toLowerCase();
+        if (isTestFixtureEmail(normEmail)) continue;
         if (normEmail && seenEmails.has(normEmail)) continue;
         if (normEmail) seenEmails.add(normEmail);
 
@@ -360,66 +397,13 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       console.warn('Roster invites query notice:', e);
     }
 
-    try {
-      const demoStudent = getDemoStudentSession();
-      if (demoStudent && demoStudent.id && !deletedIds.has(demoStudent.id)) {
-        const demoEmail = (demoStudent.email || '').trim().toLowerCase();
-        if (!demoEmail || !seenEmails.has(demoEmail)) {
-          const override = overrides[demoStudent.id] || {};
-          directory.push({
-            id: demoStudent.id,
-            name: demoStudent.display_name || 'Demo Student',
-            email: demoStudent.email || 'demo.student@revizz.local',
-            role: override.role || (demoStudent.role as UserRole) || 'student',
-            is_school_account:
-              override.is_school_account !== undefined
-                ? override.is_school_account
-                : demoStudent.is_school_account,
-            total_xp: demoStudent.total_xp || 0,
-            current_streak: demoStudent.current_streak || 0,
-            status: override.status || 'active',
-            cohort: 'Demo Practice',
-            created_at: new Date().toISOString(),
-            isInvite: false,
-          });
-          if (demoEmail) seenEmails.add(demoEmail);
-        }
-      }
-
-      const guestEducator = getGuestEducatorSession();
-      if (guestEducator && guestEducator.id && !deletedIds.has(guestEducator.id)) {
-        const guestEmail = (guestEducator.email || '').trim().toLowerCase();
-        if (!guestEmail || !seenEmails.has(guestEmail)) {
-          const override = overrides[guestEducator.id] || {};
-          directory.push({
-            id: guestEducator.id,
-            name: guestEducator.display_name || 'Guest Educator',
-            email: guestEducator.email || 'educator.guest@revizz.local',
-            role: override.role || (guestEducator.role as UserRole) || 'teacher',
-            is_school_account:
-              override.is_school_account !== undefined
-                ? override.is_school_account
-                : guestEducator.is_school_account,
-            total_xp: guestEducator.total_xp || 2500,
-            current_streak: guestEducator.current_streak || 5,
-            status: override.status || 'active',
-            cohort: 'Faculty Campus',
-            created_at: new Date().toISOString(),
-            isInvite: false,
-          });
-          if (guestEmail) seenEmails.add(guestEmail);
-        }
-      }
-    } catch (e) {
-      console.warn('Demo session fallback check notice:', e);
-    }
-
     setUsers(directory);
     saveStoredUsersCache(directory);
     setLoading(false);
   }, []);
 
   useEffect(() => {
+    cleanupLegacyStorage();
     loadDirectoryData();
   }, [loadDirectoryData]);
 
@@ -926,7 +910,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     const students = users.filter((u) => u.role === 'student').length;
     const teachers = users.filter((u) => u.role === 'teacher').length;
     const admins = users.filter((u) => u.role === 'admin').length;
-    const pendingInvites = users.filter((u) => u.status === 'invited' || u.isInvite).length;
+    const pendingInvites = users.filter((u) => u.status === 'invited').length;
     const schoolAccounts = users.filter((u) => u.is_school_account).length;
 
     return {
@@ -962,7 +946,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
     } else if (activeRoleFilter === 'admins') {
       result = result.filter((u) => u.role === 'admin');
     } else if (activeRoleFilter === 'invites') {
-      result = result.filter((u) => u.status === 'invited' || u.isInvite);
+      result = result.filter((u) => u.status === 'invited');
     }
 
     // Account Type dropdown filter
@@ -1404,7 +1388,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                       ? 'bg-[#ffe1d0]'
                       : 'bg-[#bae6fd]';
 
-                  const isPendingInvite = user.status === 'invited' || Boolean(user.isInvite);
+                  const isPendingInvite = user.status === 'invited';
 
                   return (
                     <tr
@@ -1425,7 +1409,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                               <span className="font-heading font-bold text-sm text-[#201e1d] truncate">
                                 {user.name}
                               </span>
-                              {user.isInvite && (
+                              {isPendingInvite && (
                                 <span className="px-1.5 py-0.2 rounded-full bg-[#fef9c3] border border-[#201e1d]/30 text-[9px] font-mono font-bold text-[#854d0e]">
                                   Invite
                                 </span>

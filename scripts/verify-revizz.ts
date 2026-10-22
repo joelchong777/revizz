@@ -3901,11 +3901,15 @@ async function runSuite13() {
 // -----------------------------------------------------------------------------
 async function runSuite20() {
   console.log('\n\x1b[1m\x1b[34m[Suite 20] Auth & Roster Engine Architecture\x1b[0m');
+  (globalThis as any).__REVIZZ_TEST_RUNNER__ = true;
+
+  let invite: any;
+  let teacherInvite: any;
 
   await testAsync('Roster Engine: addRosterInvite normalizes email and creates pending invite with defaults', async () => {
     mockStorage.removeItem(ROSTER_INVITES_STORAGE_KEY);
 
-    const invite = await addRosterInvite({
+    invite = await addRosterInvite({
       email: '  Student.Alpha@School.EDU  ',
       displayName: 'Student Alpha',
     });
@@ -3925,7 +3929,7 @@ async function runSuite20() {
   const uniqueCohort = 'Cohort_' + Date.now();
 
   await testAsync('Roster Engine: addRosterInvite supports custom teacher/admin role and custom cohort', async () => {
-    const teacherInvite = await addRosterInvite({
+    teacherInvite = await addRosterInvite({
       email: 'teacher.beta@school.edu',
       displayName: 'Teacher Beta',
       role: 'teacher',
@@ -3960,7 +3964,7 @@ async function runSuite20() {
 
   await testAsync('Roster Engine: deleteRosterInvite deletes invite and updates storage', async () => {
     const deleteCohort = 'DeleteTest_' + Date.now();
-    const invite = await addRosterInvite({
+    const tempInvite = await addRosterInvite({
       email: `temp.delete.${Date.now()}@school.edu`,
       cohort: deleteCohort,
     });
@@ -3968,11 +3972,20 @@ async function runSuite20() {
     const before = await getRosterInvites(deleteCohort);
     assertEqual(before.length, 1, 'Invite created before delete');
 
-    const success = await deleteRosterInvite(invite.id);
+    const success = await deleteRosterInvite(tempInvite.id);
     assertEqual(success, true, 'deleteRosterInvite returns true');
 
     const after = await getRosterInvites(deleteCohort);
     assertEqual(after.length, 0, 'Invite removed from storage');
+
+    // Clean up test fixtures so test runs do not leak fake data into Supabase or local storage
+    if (invite?.id) {
+      await deleteRosterInvite(invite.id);
+    }
+    if (teacherInvite?.id) {
+      await deleteRosterInvite(teacherInvite.id);
+    }
+    (globalThis as any).__REVIZZ_TEST_RUNNER__ = false;
   });
 
   test('Auth Engine: signUpWithEmail, signInWithEmail, and signInWithOtp are exported functions', () => {

@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
       students: users.filter((u) => u.role === 'student').length,
       teachers: users.filter((u) => u.role === 'teacher').length,
       admins: users.filter((u) => u.role === 'admin').length,
-      invites: users.filter((u) => u.isInvite || u.status === 'invited').length,
+      invites: users.filter((u) => u.status === 'invited').length,
       schoolAccounts: users.filter((u) => u.is_school_account).length,
     };
 

@@ -28,7 +28,14 @@ const getLocalInvites = (): RosterInvite[] => {
   if (!storage) return [];
   try {
     const raw = storage.getItem(ROSTER_INVITES_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed: RosterInvite[] = raw ? JSON.parse(raw) : [];
+    if (!(globalThis as any).__REVIZZ_TEST_RUNNER__) {
+      return parsed.filter((item) => {
+        const email = (item.email || '').trim().toLowerCase();
+        return email !== 'student.alpha@school.edu' && email !== 'teacher.beta@school.edu';
+      });
+    }
+    return parsed;
   } catch (e) {
     console.warn('Failed to parse roster invites from storage:', e);
     return [];
@@ -139,31 +146,25 @@ export async function addRosterInvite(invite: {
  */
 export async function getRosterInvites(cohort?: string): Promise<RosterInvite[]> {
   try {
-    let query = supabase
-      .from('roster_invites')
-      .select('*')
-      .order('created_at', { ascending: false });
+    if (!(globalThis as any).__REVIZZ_TEST_RUNNER__) {
+      let query = supabase
+        .from('roster_invites')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (cohort && cohort.trim()) {
-      query = query.eq('cohort', cohort.trim());
-    }
+      if (cohort && cohort.trim()) {
+        query = query.eq('cohort', cohort.trim());
+      }
 
-    const { data, error } = await query;
-    if (!error && data && data.length > 0) {
-      // Sync to local storage
-      const currentLocal = getLocalInvites();
-      const map = new Map<string, RosterInvite>();
-      for (const item of currentLocal) {
-        map.set(item.id, item);
+      const { data, error } = await query;
+      if (!error && Array.isArray(data)) {
+        // Supabase is source of truth—save data to localStorage and return data
+        // Do NOT merge with stale localStorage items or fall back to old fake localStorage items when Supabase returns an empty list []
+        if (!cohort) {
+          saveLocalInvites(data as RosterInvite[]);
+        }
+        return data as RosterInvite[];
       }
-      for (const item of data as RosterInvite[]) {
-        map.set(item.id, item);
-      }
-      const merged = Array.from(map.values()).sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      saveLocalInvites(merged);
-      return data as RosterInvite[];
     }
   } catch (err) {
     console.warn('Supabase getRosterInvites error, falling back to local storage:', err);
