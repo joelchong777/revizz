@@ -1138,12 +1138,13 @@ test('QuestionCard CTA: First-try correct banner and Next CTA are positioned bel
   const content = fs.readFileSync(cardPath, 'utf8');
 
   // Verify first-try correct condition and onNext wiring
-  assertEqual(content.includes('{isFirstTryCorrect && ('), true, 'QuestionCard checks isFirstTryCorrect');
+  assertEqual(content.includes('isFirstTryCorrect'), true, 'QuestionCard checks isFirstTryCorrect');
+  assertEqual(content.includes('{isFirstTryCorrect && ('), false, 'No separate first-try banner (one feedback panel only)');
   assertEqual(content.includes('onClick={onNext}'), true, 'Next button wires onClick to onNext');
 
   // Verify position relative to stem/question card and options list
   const stemIndex = content.indexOf('question.stem_markdown');
-  const firstTryCtaIndex = content.indexOf('{isFirstTryCorrect && (');
+  const firstTryCtaIndex = content.indexOf('{/* Feedback Panel on Answer / Timeout */}');
   const optionsIndex = content.indexOf('role="radiogroup" aria-label="Answer options"');
 
   assertEqual(stemIndex !== -1, true, 'Question stem found');
@@ -1151,11 +1152,11 @@ test('QuestionCard CTA: First-try correct banner and Next CTA are positioned bel
   assertEqual(optionsIndex !== -1, true, 'Options list found');
 
   assertEqual(stemIndex < optionsIndex, true, 'Options are rendered after question card stem');
-  assertEqual(optionsIndex < firstTryCtaIndex, true, 'First-try banner is rendered below the options list (options never jump)');
+  assertEqual(optionsIndex < firstTryCtaIndex, true, 'Single feedback panel is rendered below the options list (options never jump)');
   assertEqual(content.indexOf('sticky bottom-4') > firstTryCtaIndex, true, 'Next CTA is sticky and rendered below the feedback');
 
   // Verify motion and button styling invariants
-  assertEqual(content.includes("transition={{ type: 'spring', stiffness: 450, damping: 25 }}"), true, 'CTA adheres to spring physics invariants');
+  assertEqual(content.includes("transition={{ type: 'spring', stiffness: 350, damping: 25 }}"), true, 'Feedback panel adheres to spring physics invariants');
   assertEqual(content.includes('bg-accent hover:bg-accent-600'), true, 'Next question button contains bg-accent hover:bg-accent-600 styling');
   assertEqual(content.includes('text-2xl font-black'), true, 'Next question button renders arrow with larger text-2xl font-black styling');
   assertEqual(content.includes('Next question'), true, 'CTA includes Next question label');
@@ -1168,9 +1169,9 @@ test('QuestionCard Correct Feedback: Celebratory banner and selected correct opt
   const cardPath = path.resolve(process.cwd(), 'components/QuestionCard.tsx');
   const content = fs.readFileSync(cardPath, 'utf8');
 
-  assertEqual(content.includes('data-testid="correct-answer-banner"'), true, 'Celebratory correct answer banner exists above options');
-  assertEqual(content.includes('Correct! Spot on'), true, 'Celebratory banner includes clear correct headline');
-  assertEqual(content.includes('data-testid="retry-correct-banner"') || content.includes('data-testid=" retry-correct-banner"'), true, 'Retry correct banner exists for 2nd-try correct answers');
+  assertEqual(content.includes("'correct-answer-banner'"), true, 'Correct-answer feedback panel is tagged for first-try answers');
+  assertEqual(content.includes('Nailed it!'), true, 'Feedback panel includes clear correct headline');
+  assertEqual(content.includes("'retry-correct-banner'"), true, 'Feedback panel is tagged for 2nd-try correct answers');
   assertEqual(content.includes('data-testid="correct-option-pill"'), true, 'Selected correct option card renders a prominent CORRECT +XP pill badge');
   assertEqual(content.includes('✓ Correct · +{gainedXP} XP'), true, 'Correct option pill displays checkmark and gained XP');
   assertEqual(content.includes('isCorrectPick'), true, 'Distinguishes user-picked correct option from revealed correct option');

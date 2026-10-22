@@ -262,9 +262,9 @@ export function QuestionCard({
     ? 'Time’s up'
     : 'Not this time';
   const fbSub = isFirstTryCorrect
-    ? `First try · ${streakMultiplier.toFixed(1)}× streak bonus`
+    ? `Option ${correctLetter} · first try · ${streakMultiplier.toFixed(1)}× streak bonus`
     : isRetryCorrect
-    ? 'Half XP · added to your Review Pile'
+    ? `Option ${correctLetter} · half XP · added to your Review Pile`
     : isRevealed
     ? `Answer ${correctLetter} · queued to your Review Pile`
     : 'Queued to your Review Pile';
@@ -653,69 +653,6 @@ export function QuestionCard({
         </motion.div>
       )}
 
-      {isFirstTryCorrect && (
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-          data-testid="correct-answer-banner"
-          className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-accent-2-300 border-2 border-text shadow-offset-4"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black flex-shrink-0">
-              🎉
-            </span>
-            <div className="flex flex-col leading-tight min-w-0">
-              <span className="font-heading text-lg sm:text-xl text-text leading-tight">
-                Correct! Spot on 🎉
-              </span>
-              <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
-                {isRevealed ? `Option ${correctLetter} · ` : ''}First-try mastery
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {currentStreak > 0 && (
-              <span className="px-3 py-1 rounded-full bg-accent-300 border-2 border-text font-heading text-xs sm:text-sm text-text shadow-offset-2">
-                🔥 {currentStreak}
-              </span>
-            )}
-            <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2">
-              +{gainedXP} XP
-            </span>
-          </div>
-        </motion.div>
-      )}
-
-      {isRetryCorrect && (
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, y: -6, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-          data-testid="retry-correct-banner"
-          className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-accent-2-200 border-2 border-text shadow-offset-4"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="w-10 h-10 rounded-xl bg-accent-2-600 border-2 border-text text-neutral-100 flex items-center justify-center text-xl font-black flex-shrink-0">
-              👍
-            </span>
-            <div className="flex flex-col leading-tight min-w-0">
-              <span className="font-heading text-lg sm:text-xl text-text leading-tight">
-                Correct on retry! 👍
-              </span>
-              <span className="text-xs sm:text-sm font-bold text-accent-2-900 truncate">
-                {isRevealed ? `Option ${correctLetter} · ` : ''}Added to Review Pile
-              </span>
-            </div>
-          </div>
-
-          <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-heading text-sm sm:text-base text-accent-2-900 shadow-offset-2 flex-shrink-0">
-            +{gainedXP} XP
-          </span>
-        </motion.div>
-      )}
-
       {/* Feedback Panel on Answer / Timeout */}
       {isResolved && (
         <motion.div
@@ -731,16 +668,26 @@ export function QuestionCard({
           <div className="flex items-center gap-3">
             <span className="text-3xl leading-none">{fbEmoji}</span>
             <div className="flex flex-col leading-[1.15] flex-1 min-w-0">
-              <span className="font-heading text-[21px] text-text truncate">
+              <span className="font-heading text-xl text-text leading-tight">
                 {fbTitle}
               </span>
               <span className="text-[13px] font-semibold text-text">
                 {fbSub}
               </span>
             </div>
-            <span className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-bold text-sm text-text whitespace-nowrap shadow-offset-2">
-              +{gainedXP} XP
-            </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {isFirstTryCorrect && currentStreak > 0 && (
+                <span className="px-3 py-1 rounded-full bg-accent-300 border-2 border-text font-bold text-sm text-text whitespace-nowrap shadow-offset-2">
+                  🔥 {currentStreak}
+                </span>
+              )}
+              <span
+                data-testid={isFirstTryCorrect ? 'correct-answer-banner' : isRetryCorrect ? 'retry-correct-banner' : undefined}
+                className="px-3 py-1 rounded-full bg-neutral-100 border-2 border-text font-bold text-sm text-text whitespace-nowrap shadow-offset-2"
+              >
+                +{gainedXP} XP
+              </span>
+            </div>
           </div>
 
           {/* Step by Step Explanation: Why Option X is Correct */}
