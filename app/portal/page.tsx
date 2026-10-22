@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useAuth, signInWithGoogle } from '@/lib/auth';
-import { useSearchParams } from 'next/navigation';
-import { Menu, ChevronDown, ChevronUp, Copy, Check, ExternalLink } from 'lucide-react';
+import { useAuth, signInWithGoogle, signOut } from '@/lib/auth';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Menu, ChevronDown, ChevronUp, Copy, Check, ExternalLink, LogOut } from 'lucide-react';
 import AdminNav from '@/components/portal/AdminNav';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
@@ -45,6 +45,7 @@ const getTier = (xp: number) => {
 };
 
 function PortalContent() {
+  const router = useRouter();
   const { userProfile, loading } = useAuth();
   const searchParams = useSearchParams();
 
@@ -759,6 +760,10 @@ function PortalContent() {
           active={activeNav}
           onSelect={handleSelectNav}
           onToggleRole={handleToggleRole}
+          onSignOut={async () => {
+            await signOut();
+            router.refresh();
+          }}
           userDisplayName={userProfile?.display_name || 'Guest Educator'}
           isAdmin={isAdmin}
         />
@@ -780,6 +785,10 @@ function PortalContent() {
               active={activeNav}
               onSelect={handleSelectNav}
               onToggleRole={handleToggleRole}
+              onSignOut={async () => {
+                await signOut();
+                router.refresh();
+              }}
               onClose={() => setMobileNavOpen(false)}
               userDisplayName={userProfile?.display_name || 'Guest Educator'}
               isAdmin={isAdmin}
@@ -811,6 +820,18 @@ function PortalContent() {
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              router.refresh();
+            }}
+            className="p-1.5 rounded-lg border-2 border-[#201e1d] bg-[#fff1f2] hover:bg-[#ffe4e6] text-rose-700 shadow-offset-2 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+            title="Log Out"
+            aria-label="Log Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </header>
 
         {/* Desktop Sticky Top Header */}
@@ -824,6 +845,18 @@ function PortalContent() {
               {activeLabel}
             </span>
           </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              router.refresh();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-[#201e1d] bg-[#fff1f2] hover:bg-[#ffe4e6] text-rose-700 font-heading font-black text-xs shadow-offset-2 active:translate-y-0.5 transition-all cursor-pointer"
+            title="Log Out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out</span>
+          </button>
         </header>
 
         {/* Scrollable Main Content Area */}

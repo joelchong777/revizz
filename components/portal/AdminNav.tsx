@@ -15,6 +15,7 @@ import {
   FileText,
   Home,
   ExternalLink,
+  LogOut,
 } from 'lucide-react';
 import {
   PortalNavItem,
@@ -22,6 +23,7 @@ import {
   PORTAL_NAV_CHANGE_EVENT,
 } from '@/lib/portal/menuConfig';
 import { cn } from '@/lib/utils';
+import { signOut } from '@/lib/auth';
 
 export interface AdminNavProps {
   role?: 'teacher' | 'content';
@@ -30,6 +32,7 @@ export interface AdminNavProps {
   onSelect?: (tab: string) => void;
   onSwitchRole?: (role: 'teacher' | 'content') => void;
   onToggleRole?: () => void;
+  onSignOut?: () => void;
   compact?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
@@ -45,6 +48,7 @@ export default function AdminNav({
   onSelect,
   onSwitchRole,
   onToggleRole,
+  onSignOut,
   compact = false,
   isOpen = false,
   onClose,
@@ -378,19 +382,37 @@ export default function AdminNav({
       {/* Footer: User Profile */}
       <div className="mt-auto flex flex-col gap-2.5 pt-3 border-t-2 border-[#201e1d]/15">
         {/* User Card */}
-        <div className={`px-1 py-1 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center gap-2'}`}>
-          <span
-            className="w-7 h-7 shrink-0 rounded-xl border-2 border-[#201e1d] grid place-items-center text-xs font-black shadow-offset-2"
-            style={{ backgroundColor: avatarBg }}
+        <div className={`px-1 py-1 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center justify-between gap-2'}`}>
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span
+              className="w-7 h-7 shrink-0 rounded-xl border-2 border-[#201e1d] grid place-items-center text-xs font-black shadow-offset-2"
+              style={{ backgroundColor: avatarBg }}
+            >
+              {initials}
+            </span>
+            {!compact && (
+              <div className="flex flex-col leading-tight min-w-0 flex-1">
+                <span className="font-bold text-[11px] text-[#201e1d] truncate">{userName}</span>
+                <span className="text-[9px] font-bold text-[#645c50] truncate">{userRole}</span>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              if (onSignOut) {
+                onSignOut();
+              } else {
+                await signOut();
+                window.location.href = '/portal';
+              }
+            }}
+            className="p-1.5 rounded-lg border-2 border-[#201e1d] bg-[#fff1f2] hover:bg-[#ffe4e6] text-rose-700 shadow-offset-2 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+            title="Log Out"
+            aria-label="Log Out"
           >
-            {initials}
-          </span>
-          {!compact && (
-            <div className="flex flex-col leading-tight min-w-0 flex-1">
-              <span className="font-bold text-[11px] text-[#201e1d] truncate">{userName}</span>
-              <span className="text-[9px] font-bold text-[#645c50] truncate">{userRole}</span>
-            </div>
-          )}
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </aside>

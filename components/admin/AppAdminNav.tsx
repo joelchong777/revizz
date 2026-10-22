@@ -15,12 +15,15 @@ import {
   Sliders,
   Megaphone,
   Users,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { signOut } from '@/lib/auth';
 
 export interface AppAdminNavProps {
   active?: string;
   onSelectTab?: (tab: string) => void;
+  onSignOut?: () => void;
   compact?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
@@ -33,6 +36,7 @@ export interface AppAdminNavProps {
 export default function AppAdminNav({
   active = 'ingestion',
   onSelectTab,
+  onSignOut,
   compact = false,
   isOpen = false,
   onClose,
@@ -302,6 +306,22 @@ export default function AppAdminNav({
             </div>
           )}
         </div>
+        <button
+          type="button"
+          onClick={async () => {
+            if (onSignOut) {
+              onSignOut();
+            } else {
+              await signOut();
+              window.location.href = '/admin';
+            }
+          }}
+          className="p-1.5 rounded-lg border-2 border-[#201e1d] bg-[#fff1f2] hover:bg-[#ffe4e6] text-rose-700 shadow-offset-2 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+          title="Log Out"
+          aria-label="Log Out"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+        </button>
       </div>
     </aside>
   );

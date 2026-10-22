@@ -4,11 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useAnimation, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useAuth, signInWithGoogle, isProviderNotEnabledError } from '../lib/auth';
+import { useAuth, signInWithGoogle, isProviderNotEnabledError, signOut } from '../lib/auth';
 import { syncGuestDataToUser } from '../lib/sync';
 import { isSoundEnabled, setSoundEnabled, playPop, subscribeSoundState } from '@/lib/audio';
 import LeaderboardModal from './LeaderboardModal';
 import { AuthModal } from './AuthModal';
+import { User, Trophy, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   currentXp?: number;
@@ -24,6 +25,8 @@ export function Header({
   const { userProfile, loading, setUserProfile } = useAuth();
   const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [modalTab, setModalTab] = useState<'account' | 'leaderboard'>('account');
   const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
   const [soundOn, setSoundOn] = useState<boolean>(false);
@@ -63,6 +66,20 @@ export function Header({
     }, 5000);
     return () => clearTimeout(timer);
   }, [syncToastMessage]);
+
+  // Close account dropdown menu on outside click/pointerdown
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent | PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener('pointerdown', handleClickOutside);
+    return () => {
+      window.removeEventListener('pointerdown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   useEffect(() => {
     setLiveXp(currentXp);
@@ -262,28 +279,87 @@ export function Header({
               )}
             </button>
 
-            {/* Compact User Profile Avatar Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (userProfile) {
-                  setModalTab('account');
-                  setLeaderboardOpen(true);
-                } else {
-                  setAuthModalOpen(true);
+            {/* Compact User Profile Avatar Button & Account Dropdown */}
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (userProfile) {
+                    setIsMenuOpen((prev) => !prev);
+                  } else {
+                    setAuthModalOpen(true);
+                  }
+                }}
+                title={
+                  isDemo
+                    ? 'Demo Mode • Click for account menu'
+                    : userProfile
+                    ? `Signed in as ${userName} (${userBadge}) • Account menu`
+                    : 'Sign in to save progress'
                 }
-              }}
-              title={
-                isDemo
-                  ? 'Demo Mode • Click to sign in or view stats'
-                  : userProfile
-                  ? `Signed in as ${userName} (${userBadge}) • View Profile & Leaderboard`
-                  : 'Sign in to save progress'
-              }
-              className="w-9 h-9 rounded-full bg-accent-2-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-sm text-text hover:bg-accent-2-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex-shrink-0"
-            >
-              {userInitials}
-            </button>
+                aria-expanded={isMenuOpen}
+                aria-haspopup="true"
+                className="w-9 h-9 rounded-full bg-accent-2-300 border-2 border-text shadow-offset-2 flex items-center justify-center font-bold text-sm text-text hover:bg-accent-2-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer transition-all flex-shrink-0"
+              >
+                {userInitials}
+              </button>
+
+              {/* Account Dropdown Menu */}
+              {isMenuOpen && userProfile && (
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl bg-[#FFFDF7] border-2 border-text shadow-[4px_4px_0_0_#201e1d] p-2 z-50 flex flex-col gap-1">
+                  {/* User summary header */}
+                  <div className="px-2.5 py-1.5 border-b border-text/10 mb-1">
+                    <p className="text-xs font-heading font-bold text-text truncate">
+                      {userName}
+                    </p>
+                    <p className="text-[10px] text-text/70 truncate">
+                      {userProfile.email || userBadge}
+                    </p>
+                  </div>
+
+                  {/* Profile & Stats Link */}
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold text-text rounded-xl hover:bg-neutral-100 transition-colors"
+                  >
+                    <User className="w-4 h-4 text-text/80 shrink-0" />
+                    <span>Profile & Stats</span>
+                  </Link>
+
+                  {/* Leaderboard Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setModalTab('leaderboard');
+                      setLeaderboardOpen(true);
+                    }}
+                    className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 text-xs font-bold text-text rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  >
+                    <Trophy className="w-4 h-4 text-text/80 shrink-0" />
+                    <span>Leaderboard</span>
+                  </button>
+
+                  {/* Log Out Button */}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsMenuOpen(false);
+                      try {
+                        await signOut();
+                      } catch (err) {
+                        console.error('Failed to sign out:', err);
+                      }
+                    }}
+                    className="flex items-center gap-2 w-full text-left px-2.5 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-50 rounded-xl border-t border-text/10 pt-2 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-700 shrink-0" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

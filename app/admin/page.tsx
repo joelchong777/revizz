@@ -3,8 +3,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth, signInWithGoogle, signInWithEmail, resolveLoginIdentifier } from '@/lib/auth';
-import { Menu, ArrowRight, GraduationCap, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import { useAuth, signInWithGoogle, signInWithEmail, resolveLoginIdentifier, signOut } from '@/lib/auth';
+import { Menu, ArrowRight, GraduationCap, ChevronDown, ChevronUp, Copy, Check, LogOut } from 'lucide-react';
 import AppAdminNav from '@/components/admin/AppAdminNav';
 import AppAdminHub from '@/components/admin/AppAdminHub';
 import { useQuestions } from '@/lib/questions';
@@ -24,6 +24,7 @@ const TAB_TITLES: Record<string, string> = {
 };
 
 function AdminContent() {
+  const router = useRouter();
   const { userProfile, loading } = useAuth();
   const searchParams = useSearchParams();
   const { questions, loading: questionsLoading } = useQuestions();
@@ -519,6 +520,10 @@ function AdminContent() {
         <AppAdminNav
           active={activeTab}
           onSelectTab={handleSelectTab}
+          onSignOut={async () => {
+            await signOut();
+            router.refresh();
+          }}
           userDisplayName={userProfile?.display_name || (guestMode ? 'Demo App Admin' : 'Administrator')}
           questionCount={questions.length}
           questionsLoading={questionsLoading}
@@ -537,6 +542,10 @@ function AdminContent() {
             <AppAdminNav
               active={activeTab}
               onSelectTab={handleSelectTab}
+              onSignOut={async () => {
+                await signOut();
+                router.refresh();
+              }}
               isOpen={true}
               onClose={() => setMobileNavOpen(false)}
               userDisplayName={userProfile?.display_name || (guestMode ? 'Demo App Admin' : 'Administrator')}
@@ -570,6 +579,18 @@ function AdminContent() {
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              router.refresh();
+            }}
+            className="p-1.5 rounded-lg border-2 border-[#201e1d] bg-[#fff1f2] hover:bg-[#ffe4e6] text-rose-700 shadow-offset-2 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+            title="Log Out"
+            aria-label="Log Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </header>
 
         {/* Desktop Sticky Top Command Bar */}
@@ -583,6 +604,18 @@ function AdminContent() {
               {TAB_TITLES[activeTab] || 'Ingestion Studio'}
             </span>
           </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              router.refresh();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-[#201e1d] bg-[#fff1f2] hover:bg-[#ffe4e6] text-rose-700 font-heading font-black text-xs shadow-offset-2 active:translate-y-0.5 transition-all cursor-pointer"
+            title="Log Out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out</span>
+          </button>
         </header>
 
         {/* Scrollable Main Area */}
