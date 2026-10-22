@@ -159,6 +159,11 @@ export default function IngestionHistoryHub({
       const res = await authFetch('/api/ingest/staged-paper?include_archived=true', {
         cache: 'no-store',
       });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(
+          'You are not signed in with an admin account (Demo App Admin has no server access). Sign in with your admin account to see ingestion history.'
+        );
+      }
       if (!res.ok) {
         throw new Error(`Failed to fetch staged paper ledger: HTTP ${res.status}`);
       }
