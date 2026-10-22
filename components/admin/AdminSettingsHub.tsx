@@ -393,426 +393,441 @@ export default function AdminSettingsHub({
       {/* TAB 1: SCHOOL & LICENCES */}
       {/* ========================================================================= */}
       {activeSubTab === 'school' && (
-        <div className="space-y-6">
-          {/* Seat Quota & Expiry KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-3">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Seat Utilization</span>
-                <Building2 className="w-4 h-4 text-[#201e1d]" />
-              </div>
-              <div className="space-y-1">
-                <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-                  {utilizedSeats} / {totalSeatQuota}{' '}
-                  <span className="text-sm font-medium text-[#645c50]">Seats</span>
+        <div className="space-y-3">
+          {/* KPI strip + Licence quota settings */}
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-3 items-stretch">
+            {/* Seat Quota & Expiry KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+              <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 text-[#645c50]">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">Seat Utilization</span>
+                  <Building2 className="w-3.5 h-3.5 shrink-0 text-[#201e1d]" />
                 </div>
-                <div className="w-full bg-[#eee7db] rounded-full h-2.5 border border-[#201e1d] overflow-hidden">
+                <div className="text-lg font-black font-heading text-[#201e1d] leading-tight truncate">
+                  {utilizedSeats} / {totalSeatQuota}{' '}
+                  <span className="text-[11px] font-medium text-[#645c50]">Seats</span>
+                </div>
+                <div className="w-full bg-[#eee7db] rounded-full h-1.5 border border-[#201e1d] overflow-hidden">
                   <div
                     className="bg-[#201e1d] h-full rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(100, totalSeatQuota > 0 ? Math.round((utilizedSeats / totalSeatQuota) * 100) : 0)}%` }}
                   />
                 </div>
+                <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-[#645c50] leading-tight">
+                  <span className="truncate">{Math.max(0, totalSeatQuota - utilizedSeats)} seats remaining</span>
+                  <span className="shrink-0 text-[#201e1d] font-black">{totalSeatQuota > 0 ? Math.round((utilizedSeats / totalSeatQuota) * 100) : 0}% Used</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-xs font-bold text-[#645c50]">
-                <span>{Math.max(0, totalSeatQuota - utilizedSeats)} seats remaining</span>
-                <span className="text-[#201e1d] font-black">{totalSeatQuota > 0 ? Math.round((utilizedSeats / totalSeatQuota) * 100) : 0}% Used</span>
-              </div>
-            </div>
 
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-3">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Teacher Allocations</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-black text-[#272e1b]">
-                  {educators.length} of {teacherSeatLimit}
-                </span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-                {educators.length} <span className="text-sm font-medium text-[#645c50]">Educators Active</span>
-              </div>
-              <p className="text-xs font-bold text-[#645c50]">
-                Full edit or read-only bank permissions configured per teacher seat.
-              </p>
-            </div>
-
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-3">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Licence Status</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-black text-[#272e1b]">
-                  {licenceExpiry ? 'ACTIVE' : 'STANDARD'}
-                </span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black font-heading text-[#201e1d]">
-                {licenceExpiry || 'Standard Tier'}
-              </div>
-              <p className="text-xs font-bold text-[#645c50]">
-                Tier: <span className="text-[#201e1d] font-black">{planTier}</span>{licenceExpiry ? ` (Renewal: ${licenceExpiry})` : ' (No expiry configured)'}
-              </p>
-            </div>
-          </div>
-
-          {/* Institutional Cohort Allocations Table */}
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-[#201e1d]/10 pb-4">
-              <div>
-                <h2 className="text-lg sm:text-xl font-black text-[#201e1d] font-heading">
-                  Active Institutional Cohorts ({cohorts.length})
-                </h2>
-                <p className="text-xs sm:text-sm font-medium text-[#645c50]">
-                  Class cohorts, assigned Cambridge syllabus codes, enrolled student counts, and supervising teachers.
+              <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 text-[#645c50]">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">Teacher Allocations</span>
+                  <span className="shrink-0 px-2 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-black text-[#272e1b]">
+                    {educators.length} of {teacherSeatLimit}
+                  </span>
+                </div>
+                <div className="text-lg font-black font-heading text-[#201e1d] leading-tight truncate">
+                  {educators.length} <span className="text-[11px] font-medium text-[#645c50]">Educators Active</span>
+                </div>
+                <p
+                  className="text-[11px] font-bold text-[#645c50] leading-tight truncate"
+                  title="Full edit or read-only bank permissions configured per teacher seat."
+                >
+                  Full edit or read-only bank permissions configured per teacher seat.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowAddCohort(!showAddCohort)}
-                className="px-4 py-2 rounded-xl bg-[#ccdbb2] text-[#272e1b] font-black text-xs sm:text-sm border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all cursor-pointer self-start sm:self-auto active:translate-y-0.5"
-              >
-                {showAddCohort ? 'Cancel Registration' : '+ Register Cohort'}
-              </button>
-            </div>
 
-            {/* Add Cohort Form */}
-            {showAddCohort && (
-              <form onSubmit={handleAddCohort} className="bg-[#ebddc5]/40 border-2 border-[#201e1d] rounded-2xl p-4 space-y-3">
-                <div className="font-heading font-black text-xs uppercase tracking-wider text-[#201e1d]">
-                  Register New Institutional Cohort
+              <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 text-[#645c50]">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">Licence Status</span>
+                  <span className="shrink-0 px-2 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-black text-[#272e1b]">
+                    {licenceExpiry ? 'ACTIVE' : 'STANDARD'}
+                  </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold text-[#645c50] mb-1">
-                      Cohort Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 11B Physics"
-                      value={newCohortName}
-                      onChange={(e) => setNewCohortName(e.target.value)}
-                      required
-                      className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold text-[#645c50] mb-1">
-                      Subject Syllabus
-                    </label>
-                    <select
-                      value={newCohortSubject}
-                      onChange={(e) => {
-                        setNewCohortSubject(e.target.value);
-                        setNewCohortDept(e.target.value.includes('Physics') ? 'Physics' : e.target.value.includes('Economics') ? 'Economics' : 'Science');
-                      }}
-                      className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                    >
-                      <option value="0625 Physics">0625 Physics</option>
-                      <option value="0455 Economics">0455 Economics</option>
-                      <option value="0620 Chemistry">0620 Chemistry</option>
-                      <option value="0610 Biology">0610 Biology</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold text-[#645c50] mb-1">
-                      Student Count
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={newCohortStudents}
-                      onChange={(e) => setNewCohortStudents(Number(e.target.value) || 0)}
-                      required
-                      className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold text-[#645c50] mb-1">
-                      Assigned Teacher
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Instructor Name"
-                      value={newCohortTeacher}
-                      onChange={(e) => setNewCohortTeacher(e.target.value)}
-                      className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold text-[#645c50] mb-1">
-                      Session / Term
-                    </label>
-                    <input
-                      type="text"
-                      value={newCohortTerm}
-                      onChange={(e) => setNewCohortTerm(e.target.value)}
-                      className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                    />
-                  </div>
+                <div className="text-lg font-black font-heading text-[#201e1d] leading-tight truncate">
+                  {licenceExpiry || 'Standard Tier'}
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddCohort(false)}
-                    className="px-3 py-1.5 rounded-xl border border-[#201e1d] text-xs font-bold text-[#645c50] hover:bg-[#eee7db]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#272e1b] text-xs font-black shadow-offset-1 hover:bg-[#b8c99d]"
-                  >
-                    Save Cohort
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Table */}
-            <div className="overflow-x-auto rounded-2xl border-2 border-[#201e1d] bg-white">
-              <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                <thead>
-                  <tr className="bg-[#ebddc5] border-b-2 border-[#201e1d] text-[#201e1d] font-heading font-black">
-                    <th className="p-3 sm:p-3.5">Cohort Name</th>
-                    <th className="p-3 sm:p-3.5">Cambridge Syllabus</th>
-                    <th className="p-3 sm:p-3.5">Enrolled Students</th>
-                    <th className="p-3 sm:p-3.5">Assigned Educator</th>
-                    <th className="p-3 sm:p-3.5">Session Term</th>
-                    <th className="p-3 sm:p-3.5 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#201e1d]/15">
-                  {cohorts.map((c) => (
-                    <tr key={c.id} className="hover:bg-[#fff9f2] transition-colors">
-                      <td className="p-3 sm:p-3.5 font-bold text-[#201e1d] flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                        <span>{c.name}</span>
-                      </td>
-                      <td className="p-3 sm:p-3.5">
-                        <span className="px-2.5 py-0.5 rounded-md bg-[#eee7db] border border-[#201e1d]/30 font-mono text-xs font-bold text-[#201e1d]">
-                          {c.subjectCode} ({c.department})
-                        </span>
-                      </td>
-                      <td className="p-3 sm:p-3.5">
-                        <span className="px-2.5 py-1 rounded-full bg-[#f9f4ed] border border-[#201e1d]/30 text-xs font-black text-[#201e1d]">
-                          {c.studentCount} students
-                        </span>
-                      </td>
-                      <td className="p-3 sm:p-3.5 font-medium text-[#201e1d]">{c.assignedTeacher}</td>
-                      <td className="p-3 sm:p-3.5 text-xs font-mono font-bold text-[#645c50]">{c.term}</td>
-                      <td className="p-3 sm:p-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCohort(c.id)}
-                          className="px-2.5 py-1 rounded-lg bg-[#fde8e8] border border-[#201e1d] text-xs font-bold text-[#e0533c] hover:bg-[#fca5a5] transition-colors shadow-offset-1 active:translate-y-0.5 cursor-pointer"
-                          title="Remove institutional cohort"
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {cohorts.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-xs sm:text-sm font-bold text-[#645c50]">
-                        No institutional cohorts registered yet. Click &quot;+ New Cohort&quot; to configure classroom groups.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Licensed Educators Management */}
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-[#201e1d]/10 pb-4">
-              <div>
-                <h2 className="text-lg sm:text-xl font-black text-[#201e1d] font-heading">
-                  Licensed Educators ({educators.length} / {teacherSeatLimit} Seats)
-                </h2>
-                <p className="text-xs sm:text-sm font-medium text-[#645c50]">
-                  Instructors with access to Cambridge question banks and classroom cohort diagnostics.
+                <p
+                  className="text-[11px] font-bold text-[#645c50] leading-tight truncate"
+                  title={`Tier: ${planTier}${licenceExpiry ? ` (Renewal: ${licenceExpiry})` : ' (No expiry configured)'}`}
+                >
+                  Tier: <span className="text-[#201e1d] font-black">{planTier}</span>{licenceExpiry ? ` (Renewal: ${licenceExpiry})` : ' (No expiry configured)'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowAddEducator(!showAddEducator)}
-                className="px-4 py-2 rounded-xl bg-[#ffe1d0] text-[#201e1d] font-black text-xs sm:text-sm border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all cursor-pointer self-start sm:self-auto active:translate-y-0.5"
-              >
-                {showAddEducator ? 'Cancel' : '+ Invite Educator'}
-              </button>
             </div>
 
-            {showAddEducator && (
-              <form onSubmit={handleAddEducator} className="bg-[#ebddc5]/40 border-2 border-[#201e1d] rounded-2xl p-4 space-y-3">
-                <div className="font-heading font-black text-xs uppercase tracking-wider text-[#201e1d]">
-                  Invite Institutional Educator
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Full Name"
-                    value={newEducatorName}
-                    onChange={(e) => setNewEducatorName(e.target.value)}
-                    required
-                    className="bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Institutional Email"
-                    value={newEducatorEmail}
-                    onChange={(e) => setNewEducatorEmail(e.target.value)}
-                    required
-                    className="bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Department (e.g. Physics)"
-                    value={newEducatorDept}
-                    onChange={(e) => setNewEducatorDept(e.target.value)}
-                    className="bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                  />
-                  <select
-                    value={newEducatorRole}
-                    onChange={(e) => setNewEducatorRole(e.target.value as any)}
-                    className="bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                  >
-                    <option value="Teacher (Read-Only Bank)">Teacher (Read-Only Bank)</option>
-                    <option value="App Admin (Full Edit)">App Admin (Full Edit)</option>
-                  </select>
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddEducator(false)}
-                    className="px-3 py-1.5 rounded-xl border border-[#201e1d] text-xs font-bold text-[#645c50] hover:bg-[#eee7db]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] text-[#201e1d] text-xs font-black shadow-offset-1 hover:bg-[#ffc6a5]"
-                  >
-                    Send Invitation
-                  </button>
-                </div>
-              </form>
-            )}
-
-            <div className="overflow-x-auto rounded-2xl border-2 border-[#201e1d] bg-white">
-              <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                <thead>
-                  <tr className="bg-[#ebddc5] border-b-2 border-[#201e1d] text-[#201e1d] font-heading font-black">
-                    <th className="p-3 sm:p-3.5">Educator</th>
-                    <th className="p-3 sm:p-3.5">Department</th>
-                    <th className="p-3 sm:p-3.5">Access Role</th>
-                    <th className="p-3 sm:p-3.5">Status</th>
-                    <th className="p-3 sm:p-3.5 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#201e1d]/15">
-                  {educators.map((ed) => (
-                    <tr key={ed.id} className="hover:bg-[#fff9f2] transition-colors">
-                      <td className="p-3 sm:p-3.5">
-                        <div className="font-bold text-[#201e1d]">{ed.name}</div>
-                        <div className="text-xs text-[#645c50] font-mono">{ed.email}</div>
-                      </td>
-                      <td className="p-3 sm:p-3.5 font-medium text-[#201e1d]">{ed.department}</td>
-                      <td className="p-3 sm:p-3.5">
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#f5ead8] border border-[#201e1d]/30 text-xs font-bold text-[#201e1d]">
-                          {ed.role}
-                        </span>
-                      </td>
-                      <td className="p-3 sm:p-3.5">
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d]/30 text-xs font-black text-[#272e1b]">
-                          {ed.status}
-                        </span>
-                      </td>
-                      <td className="p-3 sm:p-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveEducator(ed.id)}
-                          className="px-2.5 py-1 rounded-lg bg-[#fde8e8] border border-[#201e1d] text-xs font-bold text-[#e0533c] hover:bg-[#fca5a5] transition-colors shadow-offset-1 active:translate-y-0.5 cursor-pointer"
-                        >
-                          Revoke
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {educators.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-xs sm:text-sm font-bold text-[#645c50]">
-                        No licensed educators assigned yet. Click &quot;+ Invite Educator&quot; to grant team access.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Save Quota Form */}
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black font-heading text-[#201e1d]">
+            {/* Save Quota Form */}
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-1.5 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-black font-heading text-[#201e1d] truncate">
                   Licence Quota Settings
                 </h3>
-                <p className="text-xs text-[#645c50]">
-                  Configure campus seat thresholds and licence expiry dates.
-                </p>
-              </div>
-              {schoolSaveSuccess && (
-                <span className="px-3 py-1 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-xs font-black text-[#272e1b] animate-pulse">
-                  ✓ Quotas saved!
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-                  Plan Tier
-                </label>
-                <select
-                  value={planTier}
-                  onChange={(e) => setPlanTier(e.target.value)}
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
+                <button
+                  type="button"
+                  onClick={triggerSchoolSaveFeedback}
+                  className="shrink-0 px-3 py-1 rounded-xl bg-[#ccdbb2] text-[#272e1b] font-black text-[11px] border-2 border-[#201e1d] shadow-offset-1 hover:bg-[#b8c99d] transition-all cursor-pointer flex items-center gap-1.5 active:translate-y-0.5"
                 >
-                  <option value="Standard Educator">Standard Educator</option>
-                  <option value="Enterprise Campus">Enterprise Campus</option>
-                  <option value="Department Pro">Department Pro</option>
-                  <option value="Pilot">Pilot</option>
-                </select>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Licence Quotas</span>
+                </button>
               </div>
-              <div>
-                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-                  Total Student Seat Quota
-                </label>
-                <input
-                  type="number"
-                  value={totalSeatQuota}
-                  onChange={(e) => setTotalSeatQuota(Number(e.target.value) || 0)}
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                />
+              <div className="flex items-center justify-between gap-2 text-[11px] text-[#645c50] leading-tight">
+                <span className="truncate" title="Configure campus seat thresholds and licence expiry dates.">
+                  Configure campus seat thresholds and licence expiry dates.
+                </span>
+                {schoolSaveSuccess && (
+                  <span className="shrink-0 px-2 py-0.5 rounded-lg bg-[#ccdbb2] border border-[#201e1d] text-[10px] font-black text-[#272e1b] animate-pulse">
+                    ✓ Quotas saved!
+                  </span>
+                )}
               </div>
-              <div>
-                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#645c50] mb-1">
-                  Teacher Seat Limit
-                </label>
-                <input
-                  type="number"
-                  value={teacherSeatLimit}
-                  onChange={(e) => setTeacherSeatLimit(Number(e.target.value) || 0)}
-                  className="w-full bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2 text-xs font-bold text-[#201e1d] focus:outline-none"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                <div className="min-w-0">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-0.5 truncate" title="Plan Tier">
+                    Plan Tier
+                  </label>
+                  <select
+                    value={planTier}
+                    onChange={(e) => setPlanTier(e.target.value)}
+                    className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                  >
+                    <option value="Standard Educator">Standard Educator</option>
+                    <option value="Enterprise Campus">Enterprise Campus</option>
+                    <option value="Department Pro">Department Pro</option>
+                    <option value="Pilot">Pilot</option>
+                  </select>
+                </div>
+                <div className="min-w-0">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-0.5 truncate" title="Total Student Seat Quota">
+                    Total Student Seat Quota
+                  </label>
+                  <input
+                    type="number"
+                    value={totalSeatQuota}
+                    onChange={(e) => setTotalSeatQuota(Number(e.target.value) || 0)}
+                    className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#645c50] mb-0.5 truncate" title="Teacher Seat Limit">
+                    Teacher Seat Limit
+                  </label>
+                  <input
+                    type="number"
+                    value={teacherSeatLimit}
+                    onChange={(e) => setTeacherSeatLimit(Number(e.target.value) || 0)}
+                    className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={triggerSchoolSaveFeedback}
-                className="px-5 py-2.5 rounded-xl bg-[#ccdbb2] text-[#272e1b] font-black text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all cursor-pointer flex items-center gap-2 active:translate-y-0.5"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save Licence Quotas</span>
-              </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-stretch">
+            {/* Institutional Cohort Allocations Table */}
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-3 space-y-2 min-w-0 flex flex-col">
+              <div className="flex items-center justify-between gap-3 border-b-2 border-[#201e1d]/10 pb-2">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-black text-[#201e1d] font-heading truncate">
+                    Active Institutional Cohorts ({cohorts.length})
+                  </h2>
+                  <p
+                    className="text-[11px] font-medium text-[#645c50] leading-tight truncate"
+                    title="Class cohorts, assigned Cambridge syllabus codes, enrolled student counts, and supervising teachers."
+                  >
+                    Class cohorts, assigned Cambridge syllabus codes, enrolled student counts, and supervising teachers.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCohort(!showAddCohort)}
+                  className="shrink-0 px-3 py-1 rounded-xl bg-[#ccdbb2] text-[#272e1b] font-black text-[11px] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all cursor-pointer active:translate-y-0.5"
+                >
+                  {showAddCohort ? 'Cancel Registration' : '+ Register Cohort'}
+                </button>
+              </div>
+
+              {/* Add Cohort Form */}
+              {showAddCohort && (
+                <form onSubmit={handleAddCohort} className="bg-[#ebddc5]/40 border-2 border-[#201e1d] rounded-xl p-2.5 space-y-2">
+                  <div className="font-heading font-black text-[10px] uppercase tracking-wider text-[#201e1d]">
+                    Register New Institutional Cohort
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="min-w-0">
+                      <label className="block text-[10px] font-mono font-bold text-[#645c50] mb-0.5">
+                        Cohort Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 11B Physics"
+                        value={newCohortName}
+                        onChange={(e) => setNewCohortName(e.target.value)}
+                        required
+                        className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <label className="block text-[10px] font-mono font-bold text-[#645c50] mb-0.5">
+                        Subject Syllabus
+                      </label>
+                      <select
+                        value={newCohortSubject}
+                        onChange={(e) => {
+                          setNewCohortSubject(e.target.value);
+                          setNewCohortDept(e.target.value.includes('Physics') ? 'Physics' : e.target.value.includes('Economics') ? 'Economics' : 'Science');
+                        }}
+                        className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                      >
+                        <option value="0625 Physics">0625 Physics</option>
+                        <option value="0455 Economics">0455 Economics</option>
+                        <option value="0620 Chemistry">0620 Chemistry</option>
+                        <option value="0610 Biology">0610 Biology</option>
+                      </select>
+                    </div>
+                    <div className="min-w-0">
+                      <label className="block text-[10px] font-mono font-bold text-[#645c50] mb-0.5">
+                        Student Count
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={newCohortStudents}
+                        onChange={(e) => setNewCohortStudents(Number(e.target.value) || 0)}
+                        required
+                        className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <label className="block text-[10px] font-mono font-bold text-[#645c50] mb-0.5">
+                        Assigned Teacher
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Instructor Name"
+                        value={newCohortTeacher}
+                        onChange={(e) => setNewCohortTeacher(e.target.value)}
+                        className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <label className="block text-[10px] font-mono font-bold text-[#645c50] mb-0.5">
+                        Session / Term
+                      </label>
+                      <input
+                        type="text"
+                        value={newCohortTerm}
+                        onChange={(e) => setNewCohortTerm(e.target.value)}
+                        className="w-full bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex items-end justify-end gap-2 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddCohort(false)}
+                        className="px-2.5 py-1 rounded-lg border border-[#201e1d] text-[11px] font-bold text-[#645c50] hover:bg-[#eee7db]"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-3 py-1 rounded-lg bg-[#ccdbb2] border-2 border-[#201e1d] text-[#272e1b] text-[11px] font-black shadow-offset-1 hover:bg-[#b8c99d]"
+                      >
+                        Save Cohort
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              {/* Table */}
+              <div className="overflow-auto max-h-[160px] rounded-xl border-2 border-[#201e1d] bg-white">
+                <table className="w-full text-left text-[11px] border-collapse">
+                  <thead className="sticky top-0 z-10 bg-[#ebddc5] shadow-[0_2px_0_0_#201e1d]">
+                    <tr className="bg-[#ebddc5] text-[#201e1d] font-heading font-black whitespace-nowrap">
+                      <th className="px-2 py-1.5">Cohort Name</th>
+                      <th className="px-2 py-1.5">Cambridge Syllabus</th>
+                      <th className="px-2 py-1.5">Enrolled Students</th>
+                      <th className="px-2 py-1.5">Assigned Educator</th>
+                      <th className="px-2 py-1.5">Session Term</th>
+                      <th className="px-2 py-1.5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#201e1d]/15">
+                    {cohorts.map((c) => (
+                      <tr key={c.id} className="hover:bg-[#fff9f2] transition-colors">
+                        <td className="px-2 py-1.5 font-bold text-[#201e1d]">
+                          <div className="flex items-center gap-1.5 whitespace-nowrap">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                            <span>{c.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-md bg-[#eee7db] border border-[#201e1d]/30 font-mono text-[11px] font-bold text-[#201e1d]">
+                            {c.subjectCode} ({c.department})
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full bg-[#f9f4ed] border border-[#201e1d]/30 text-[11px] font-black text-[#201e1d]">
+                            {c.studentCount} students
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 font-medium text-[#201e1d] whitespace-nowrap">{c.assignedTeacher}</td>
+                        <td className="px-2 py-1.5 text-[11px] font-mono font-bold text-[#645c50] whitespace-nowrap">{c.term}</td>
+                        <td className="px-2 py-1.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCohort(c.id)}
+                            className="px-2 py-0.5 rounded-lg bg-[#fde8e8] border border-[#201e1d] text-[11px] font-bold text-[#e0533c] hover:bg-[#fca5a5] transition-colors shadow-offset-1 active:translate-y-0.5 cursor-pointer"
+                            title="Remove institutional cohort"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {cohorts.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-2 py-3 text-center text-[11px] font-bold text-[#645c50]">
+                          No institutional cohorts registered yet. Click &quot;+ New Cohort&quot; to configure classroom groups.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Licensed Educators Management */}
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-3 space-y-2 min-w-0 flex flex-col">
+              <div className="flex items-center justify-between gap-3 border-b-2 border-[#201e1d]/10 pb-2">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-black text-[#201e1d] font-heading truncate">
+                    Licensed Educators ({educators.length} / {teacherSeatLimit} Seats)
+                  </h2>
+                  <p
+                    className="text-[11px] font-medium text-[#645c50] leading-tight truncate"
+                    title="Instructors with access to Cambridge question banks and classroom cohort diagnostics."
+                  >
+                    Instructors with access to Cambridge question banks and classroom cohort diagnostics.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddEducator(!showAddEducator)}
+                  className="shrink-0 px-3 py-1 rounded-xl bg-[#ffe1d0] text-[#201e1d] font-black text-[11px] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all cursor-pointer active:translate-y-0.5"
+                >
+                  {showAddEducator ? 'Cancel' : '+ Invite Educator'}
+                </button>
+              </div>
+
+              {showAddEducator && (
+                <form onSubmit={handleAddEducator} className="bg-[#ebddc5]/40 border-2 border-[#201e1d] rounded-xl p-2.5 space-y-2">
+                  <div className="font-heading font-black text-[10px] uppercase tracking-wider text-[#201e1d]">
+                    Invite Institutional Educator
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Full Name"
+                      value={newEducatorName}
+                      onChange={(e) => setNewEducatorName(e.target.value)}
+                      required
+                      className="min-w-0 bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Institutional Email"
+                      value={newEducatorEmail}
+                      onChange={(e) => setNewEducatorEmail(e.target.value)}
+                      required
+                      className="min-w-0 bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Department (e.g. Physics)"
+                      value={newEducatorDept}
+                      onChange={(e) => setNewEducatorDept(e.target.value)}
+                      className="min-w-0 bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                    />
+                    <select
+                      value={newEducatorRole}
+                      onChange={(e) => setNewEducatorRole(e.target.value as any)}
+                      className="min-w-0 bg-white border-2 border-[#201e1d] rounded-lg px-2 py-1 text-[11px] font-bold text-[#201e1d] focus:outline-none"
+                    >
+                      <option value="Teacher (Read-Only Bank)">Teacher (Read-Only Bank)</option>
+                      <option value="App Admin (Full Edit)">App Admin (Full Edit)</option>
+                    </select>
+                    <div className="col-span-2 flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddEducator(false)}
+                        className="px-2.5 py-1 rounded-lg border border-[#201e1d] text-[11px] font-bold text-[#645c50] hover:bg-[#eee7db]"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-3 py-1 rounded-lg bg-[#ffe1d0] border-2 border-[#201e1d] text-[#201e1d] text-[11px] font-black shadow-offset-1 hover:bg-[#ffc6a5]"
+                      >
+                        Send Invitation
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              <div className="overflow-auto max-h-[160px] rounded-xl border-2 border-[#201e1d] bg-white">
+                <table className="w-full text-left text-[11px] border-collapse">
+                  <thead className="sticky top-0 z-10 bg-[#ebddc5] shadow-[0_2px_0_0_#201e1d]">
+                    <tr className="bg-[#ebddc5] text-[#201e1d] font-heading font-black whitespace-nowrap">
+                      <th className="px-2 py-1.5">Educator</th>
+                      <th className="px-2 py-1.5">Department</th>
+                      <th className="px-2 py-1.5">Access Role</th>
+                      <th className="px-2 py-1.5">Status</th>
+                      <th className="px-2 py-1.5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#201e1d]/15">
+                    {educators.map((ed) => (
+                      <tr key={ed.id} className="hover:bg-[#fff9f2] transition-colors">
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          <div className="font-bold text-[#201e1d] leading-tight">{ed.name}</div>
+                          <div className="text-[10px] text-[#645c50] font-mono leading-tight">{ed.email}</div>
+                        </td>
+                        <td className="px-2 py-1.5 font-medium text-[#201e1d] whitespace-nowrap">{ed.department}</td>
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full bg-[#f5ead8] border border-[#201e1d]/30 text-[11px] font-bold text-[#201e1d]">
+                            {ed.role}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d]/30 text-[11px] font-black text-[#272e1b]">
+                            {ed.status}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEducator(ed.id)}
+                            className="px-2 py-0.5 rounded-lg bg-[#fde8e8] border border-[#201e1d] text-[11px] font-bold text-[#e0533c] hover:bg-[#fca5a5] transition-colors shadow-offset-1 active:translate-y-0.5 cursor-pointer"
+                          >
+                            Revoke
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {educators.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-2 py-3 text-center text-[11px] font-bold text-[#645c50]">
+                          No licensed educators assigned yet. Click &quot;+ Invite Educator&quot; to grant team access.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
