@@ -504,10 +504,10 @@
       "diagram": {
         "has_diagram": true,
         "bounding_box": {
-          "ymin": 684,
-          "xmin": 108,
-          "ymax": 902,
-          "xmax": 516,
+          "ymin": 727,
+          "xmin": 121,
+          "ymax": 893,
+          "xmax": 503,
           "page_number": 4
         },
         "image_url": "/questions/0455_2024_w_11_q11.png",
@@ -1102,7 +1102,7 @@
         },
         {
           "label": "B",
-          "content_markdown": "The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.",
+          "content_markdown": "The lowest 40% of households in Belgium receive a larger share of the country\u2019s income than the highest 20% of households.",
           "is_correct": false
         },
         {
@@ -1112,16 +1112,16 @@
         },
         {
           "label": "D",
-          "content_markdown": "The highest 20% of households in the US receive half of the country’s income.",
+          "content_markdown": "The highest 20% of households in the US receive half of the country\u2019s income.",
           "is_correct": false
         }
       ],
-      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Economic development**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows the distribution of income as measured by GDP for three countries in a year. What can be concluded from the table?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (The distribution of income is most equal in Belgium.) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.)**: Incorrect. 'The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.)**: Incorrect. 'The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (The distribution of income is most equal in Belgium.)**: Correct. Accurately identifies that The distribution of income is most equal in Belgium. satisfies the economic condition required by the question.\n- **D (The highest 20% of households in the US receive half of the country’s income.)**: Incorrect. 'The highest 20% of households in the US receive half of the country’s income.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **Economic development**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The table shows the distribution of income as measured by GDP for three countries in a year. What can be concluded from the table?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (The distribution of income is most equal in Belgium.) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.)**: Incorrect. 'The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (The lowest 40% of households in Belgium receive a larger share of the country\u2019s income than the highest 20% of households.)**: Incorrect. 'The lowest 40% of households in Belgium receive a larger share of the country\u2019s income than the highest 20% of households.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (The distribution of income is most equal in Belgium.)**: Correct. Accurately identifies that The distribution of income is most equal in Belgium. satisfies the economic condition required by the question.\n- **D (The highest 20% of households in the US receive half of the country\u2019s income.)**: Incorrect. 'The highest 20% of households in the US receive half of the country\u2019s income.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
       "distractor_analysis": {
         "A": "Incorrect. 'The lowest 20% of households in the US have lower incomes than the lowest 20% of households in Mexico.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
-        "B": "Incorrect. 'The lowest 40% of households in Belgium receive a larger share of the country’s income than the highest 20% of households.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+        "B": "Incorrect. 'The lowest 40% of households in Belgium receive a larger share of the country\u2019s income than the highest 20% of households.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
         "C": "Correct. Accurately identifies that The distribution of income is most equal in Belgium. satisfies the economic condition required by the question.",
-        "D": "Incorrect. 'The highest 20% of households in the US receive half of the country’s income.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
+        "D": "Incorrect. 'The highest 20% of households in the US receive half of the country\u2019s income.' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
       },
       "status": "active"
     },
@@ -1289,7 +1289,7 @@
       "question_number": 29,
       "cambridge_source_ref": "Cambridge IGCSE Economics 0455/11 Oct/Nov 2024 Q29",
       "topic_name": "International trade and globalisation",
-      "stem_markdown": "The diagram shows the change in the exchange rate market for country X’s $. Which change in country X would have caused this?",
+      "stem_markdown": "The diagram shows the change in the exchange rate market for country X\u2019s $. Which change in country X would have caused this?",
       "page_number": 10,
       "diagram": {
         "has_diagram": true,
@@ -1326,7 +1326,7 @@
           "is_correct": false
         }
       ],
-      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The diagram shows the change in the exchange rate market for country X’s $. Which change in country X would have caused this?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (a rise in its exports of services) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (a fall in its international competitiveness)**: Incorrect. 'a fall in its international competitiveness' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (a fall in its level of interest rates)**: Incorrect. 'a fall in its level of interest rates' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (a rise in its exports of services)**: Correct. Accurately identifies that a rise in its exports of services satisfies the economic condition required by the question.\n- **D (a rise in its imports of goods)**: Incorrect. 'a rise in its imports of goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"The diagram shows the change in the exchange rate market for country X\u2019s $. Which change in country X would have caused this?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **C** (a rise in its exports of services) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (a fall in its international competitiveness)**: Incorrect. 'a fall in its international competitiveness' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **B (a fall in its level of interest rates)**: Incorrect. 'a fall in its level of interest rates' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (a rise in its exports of services)**: Correct. Accurately identifies that a rise in its exports of services satisfies the economic condition required by the question.\n- **D (a rise in its imports of goods)**: Incorrect. 'a rise in its imports of goods' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
       "distractor_analysis": {
         "A": "Incorrect. 'a fall in its international competitiveness' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
         "B": "Incorrect. 'a fall in its level of interest rates' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
@@ -1347,7 +1347,7 @@
       "options": [
         {
           "label": "A",
-          "content_markdown": "lower prices for the country’s exports",
+          "content_markdown": "lower prices for the country\u2019s exports",
           "is_correct": true
         },
         {
@@ -1366,9 +1366,9 @@
           "is_correct": false
         }
       ],
-      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is the most likely cause of an increased current account surplus in a country?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **A** (lower prices for the country’s exports) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (lower prices for the country’s exports)**: Correct. Accurately identifies that lower prices for the country’s exports satisfies the economic condition required by the question.\n- **B (higher exchange rate for the country)**: Incorrect. 'higher exchange rate for the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (economic growth in the country)**: Incorrect. 'economic growth in the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (recession in trade-partner countries)**: Incorrect. 'recession in trade-partner countries' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
+      "explanation_markdown": "### Concept & Definition\nThe question assesses understanding of **International trade and globalisation**.\n\n### Step-by-Step Analysis\n1. **Identify Key Conditions**: The prompt asks: *\"What is the most likely cause of an increased current account surplus in a country?\"*.\n2. **Evaluate Options**: Analyzing the available choices relative to the core principle.\n3. **Select Optimal Choice**: Option **A** (lower prices for the country\u2019s exports) directly fulfills the analytical condition.\n\n### Distractor Analysis\n- **A (lower prices for the country\u2019s exports)**: Correct. Accurately identifies that lower prices for the country\u2019s exports satisfies the economic condition required by the question.\n- **B (higher exchange rate for the country)**: Incorrect. 'higher exchange rate for the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **C (economic growth in the country)**: Incorrect. 'economic growth in the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.\n- **D (recession in trade-partner countries)**: Incorrect. 'recession in trade-partner countries' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
       "distractor_analysis": {
-        "A": "Correct. Accurately identifies that lower prices for the country’s exports satisfies the economic condition required by the question.",
+        "A": "Correct. Accurately identifies that lower prices for the country\u2019s exports satisfies the economic condition required by the question.",
         "B": "Incorrect. 'higher exchange rate for the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
         "C": "Incorrect. 'economic growth in the country' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context.",
         "D": "Incorrect. 'recession in trade-partner countries' does not address the required outcome; it represents an unrelated concept or opposite economic effect in this context."
