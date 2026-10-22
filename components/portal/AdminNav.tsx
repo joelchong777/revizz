@@ -156,15 +156,13 @@ export default function AdminNav({
             </Link>
 
             {!compact && (
-              <div className="flex flex-col leading-tight">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-heading font-black tracking-tight text-base text-[#201e1d]">
-                    REVIZZ
-                  </span>
-                  <span className="px-1 py-0.5 rounded-full bg-[#ffe1d0] text-[#c67139] text-[8px] font-black uppercase tracking-wider border border-[#201e1d]/20">
-                    EDUCATOR
-                  </span>
-                </div>
+              <div className="flex flex-col leading-none">
+                <span className="font-heading font-black tracking-tight text-base text-[#201e1d]">
+                  REVIZZ
+                </span>
+                <span className="inline-block mt-0.5 px-1 py-0.2 rounded-full bg-[#ffe1d0] text-[#c67139] text-[8px] font-black uppercase tracking-wider border border-[#201e1d]/20 w-fit">
+                  EDUCATOR
+                </span>
               </div>
             )}
           </div>
