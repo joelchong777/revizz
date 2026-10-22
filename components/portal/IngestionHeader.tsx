@@ -48,6 +48,7 @@ export interface IngestionHeaderProps {
   lifecycleState?: PaperLifecycleState;
   showPdfViewer?: boolean;
   onTogglePdfViewer?: () => void;
+  activePdfPage?: number;
 
   // Undo / Redo controls
   onUndo?: () => void;
@@ -140,6 +141,7 @@ export default function IngestionHeader({
   markSchemeStatus = "unverified",
   showLivePreview = false,
   onTogglePreview,
+  activePdfPage,
 }: IngestionHeaderProps) {
   const [archiveState, setArchiveState] = useState<"idle" | "archiving" | "archived" | "error">("idle");
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -304,7 +306,7 @@ export default function IngestionHeader({
   // -------------------------------------------------------------
   return (
     <>
-      <header className="w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 sm:p-3.5 shadow-[2px_2px_0_#201e1d] flex flex-col xl:flex-row xl:items-center justify-between gap-3 font-body">
+      <header className="w-full bg-[#fbf7ee] border-2 border-[#201e1d] rounded-2xl p-3 sm:p-3.5 shadow-[3px_3px_0_#201e1d] flex flex-col xl:flex-row xl:items-center justify-between gap-3 font-body">
         {/* Left Section: Paper Identity Pill + Total Count + Validation Indicators */}
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Paper Identity Pill */}
@@ -312,14 +314,16 @@ export default function IngestionHeader({
             <span className="flex items-center justify-center shrink-0">
               {renderSubjectIcon(subjectIconRaw)}
             </span>
-            <div className="flex items-center gap-1.5 text-xs text-[#201e1d]">
-              <span className="font-adminHeading font-bold text-sm text-[#201e1d]">
+            <div className="flex items-center gap-2 text-xs text-[#201e1d]">
+              <span className="font-mono font-bold text-xs sm:text-sm bg-[#ffe1d0] text-[#201e1d] px-2 py-0.5 rounded-md border border-[#201e1d]/30 tracking-tight">
                 {subjectCode} / {paperCode}
               </span>
-              <span className="text-[#82796a]">·</span>
-              <span className="text-[#201e1d] font-bold">{subjectName}</span>
+              <span className="text-[#82796a] font-bold">·</span>
+              <span className="text-[#201e1d] font-adminHeading font-bold text-xs sm:text-sm truncate max-w-[150px] sm:max-w-[220px]">
+                {subjectName}
+              </span>
               {(seriesName || fullYear) && (
-                <span className="text-[#645c50] font-mono text-[11px] font-semibold">
+                <span className="bg-[#f0ece1] text-[#474238] border border-[#201e1d]/20 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold">
                   {seriesName} {fullYear}
                 </span>
               )}
@@ -339,15 +343,16 @@ export default function IngestionHeader({
           </div>
 
           {/* Total Questions Count Badge */}
-          <span className="px-3 py-1 rounded-full bg-white border-2 border-[#201e1d] text-[#201e1d] text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d]">
-            {totalCount} Questions
+          <span className="px-3 py-1.5 rounded-full bg-white border-2 border-[#201e1d] text-[#201e1d] text-xs font-mono font-bold shadow-[2px_2px_0_#201e1d] flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#c67139]" />
+            <span>{totalCount} Questions</span>
           </span>
 
           {/* Validation Counters */}
           {totalCount > 0 && (
             <div className="flex items-center gap-1.5">
               <span
-                className={`px-2.5 py-1 rounded-full border-2 border-[#201e1d] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d] ${
+                className={`px-3 py-1 rounded-full border-2 border-[#201e1d] text-xs font-mono font-bold flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] ${
                   validCount === totalCount
                     ? "bg-[#d1fae5] text-[#065f46]"
                     : "bg-[#fef3c7] text-[#92400e]"
@@ -366,7 +371,7 @@ export default function IngestionHeader({
 
               {reviewCount > 0 && (
                 <span
-                  className="px-2.5 py-1 rounded-full bg-[#fef3c7] border-2 border-[#201e1d] text-[#92400e] text-xs font-mono font-bold flex items-center gap-1 shadow-[2px_2px_0_#201e1d]"
+                  className="px-3 py-1 rounded-full bg-[#fef3c7] border-2 border-[#201e1d] text-[#92400e] text-xs font-mono font-bold flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d]"
                   title={`${reviewCount} questions require curator review before publishing`}
                 >
                   <AlertTriangle className="w-3.5 h-3.5 text-[#92400e]" />
@@ -384,7 +389,7 @@ export default function IngestionHeader({
             <button
               type="button"
               onClick={onTogglePdfViewer}
-              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-adminHeading font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
                 showPdfViewer
                   ? "bg-[#ffe1d0] text-[#c67139]"
                   : "bg-white text-[#201e1d] hover:bg-[#eee7db]"
@@ -393,6 +398,11 @@ export default function IngestionHeader({
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>{showPdfViewer ? "Hide PDF" : "Show PDF"}</span>
+              {activePdfPage ? (
+                <span className="px-1.5 py-0.2 rounded-md bg-[#201e1d] text-[#fbf7ee] text-[10px] font-mono font-bold">
+                  P.{activePdfPage}
+                </span>
+              ) : null}
             </button>
           )}
 
@@ -401,7 +411,7 @@ export default function IngestionHeader({
             <button
               type="button"
               onClick={onTogglePreview}
-              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-adminHeading font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
                 showLivePreview
                   ? "bg-[#0284c7] text-white"
                   : "bg-[#e0f2fe] text-[#0369a1] hover:bg-[#bae6fd]"
@@ -413,25 +423,12 @@ export default function IngestionHeader({
             </button>
           )}
 
-          {/* 7-Point Quality Gate Audit Drawer Button */}
-          {onOpenAudit && (
-            <button
-              type="button"
-              onClick={onOpenAudit}
-              className="px-3 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
-              title="Open 7-Point Quality Gate Audit Drawer"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#201e1d]" />
-              <span>Audit</span>
-            </button>
-          )}
-
           {/* Cambridge Mark Scheme Verification Button */}
           {onOpenMarkSchemeModal && (
             <button
               type="button"
               onClick={onOpenMarkSchemeModal}
-              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
+              className={`px-3 py-1.5 rounded-full border-2 border-[#201e1d] text-xs font-adminHeading font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none ${
                 markSchemeStatus === "perfect_match"
                   ? "bg-[#dcfce7] text-[#166534] hover:bg-[#bbf7d0]"
                   : markSchemeStatus === "mismatches_found"
@@ -450,27 +447,61 @@ export default function IngestionHeader({
                 }`}
               />
               <span>Verify MS</span>
-              {markSchemeStatus === "perfect_match" && (
-                <span className="w-2 h-2 rounded-full bg-[#16a34a]" />
-              )}
-              {markSchemeStatus === "mismatches_found" && (
-                <span className="w-2 h-2 rounded-full bg-[#d97706]" />
-              )}
+              <span
+                className={`w-2 h-2 rounded-full border border-[#201e1d] ${
+                  markSchemeStatus === "perfect_match"
+                    ? "bg-[#22c55e]"
+                    : markSchemeStatus === "mismatches_found"
+                    ? "bg-[#f59e0b]"
+                    : "bg-[#9ca3af]"
+                }`}
+              />
             </button>
           )}
 
+          {/* Undo / Redo Tactile Controls with Shortcut Labels */}
+          {(onUndo || onRedo) && (
+            <div className="flex items-center bg-white border-2 border-[#201e1d] rounded-full p-0.5 shadow-[2px_2px_0_#201e1d]">
+              {onUndo && (
+                <button
+                  type="button"
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                  title="Undo edit (Ctrl+Z / ⌘Z)"
+                  aria-label="Undo edit"
+                  className="px-2 py-1 rounded-full text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-mono font-semibold text-[#82796a] hidden md:inline">⌘Z</span>
+                </button>
+              )}
+              <div className="w-[1px] h-4 bg-[#201e1d]/20 my-auto" />
+              {onRedo && (
+                <button
+                  type="button"
+                  onClick={onRedo}
+                  disabled={!canRedo}
+                  title="Redo edit (Ctrl+Y / ⌘Y)"
+                  aria-label="Redo edit"
+                  className="px-2 py-1 rounded-full text-xs font-bold text-[#201e1d] hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Redo2 className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-mono font-semibold text-[#82796a] hidden md:inline">⌘Y</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Switch Paper / Upload New */}
           {onSwitchPaper && (
             <button
               type="button"
               onClick={onSwitchPaper}
-              className="px-3 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
+              className="px-3 py-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none text-xs font-adminHeading font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[2px_2px_0_#201e1d]"
               title="Switch paper or upload a new PDF"
             >
               <FileUp className="w-3.5 h-3.5 text-[#201e1d]" />
-              <span className="hidden sm:inline">Switch Paper</span>
-              <span className="sm:hidden">Switch</span>
+              <span className="hidden sm:inline">Switch</span>
             </button>
           )}
 
@@ -480,54 +511,18 @@ export default function IngestionHeader({
               type="button"
               onClick={() => setIsMoreMenuOpen((prev) => !prev)}
               aria-label="More studio actions"
-              title="More actions (Undo, Redo, Settings, Payloads, Audit, Delete)"
-              className="p-1.5 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none flex items-center justify-center"
+              title="More actions (Settings, Payloads, Audit, Delete)"
+              className="w-8 h-8 rounded-full border-2 border-[#201e1d] bg-white hover:bg-[#eee7db] text-[#201e1d] transition-all cursor-pointer shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none flex items-center justify-center"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
 
             {isMoreMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-52 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl shadow-[4px_4px_0_#201e1d] z-50 py-1.5 animate-in fade-in zoom-in-95 font-body">
-                {/* Undo / Redo Row */}
-                {(onUndo || onRedo) && (
-                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#dcd3c4]">
-                    <span className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider">
-                      History
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {onUndo && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onUndo();
-                            setIsMoreMenuOpen(false);
-                          }}
-                          disabled={!canUndo}
-                          title="Undo edit (Ctrl+Z)"
-                          className="p-1 rounded-lg border border-[#dcd3c4] bg-white hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] cursor-pointer"
-                        >
-                          <Undo2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {onRedo && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onRedo();
-                            setIsMoreMenuOpen(false);
-                          }}
-                          disabled={!canRedo}
-                          title="Redo edit (Ctrl+Y)"
-                          className="p-1 rounded-lg border border-[#dcd3c4] bg-white hover:bg-[#eee7db] disabled:opacity-30 disabled:cursor-not-allowed text-[#201e1d] cursor-pointer"
-                        >
-                          <Redo2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Settings Item */}
+              <div className="absolute right-0 top-full mt-2 w-56 bg-[#fbf7ee] border-2 border-[#201e1d] rounded-2xl shadow-[4px_4px_0_#201e1d] z-50 p-1.5 animate-in fade-in zoom-in-95 font-body">
+                {/* Configuration Section */}
+                <div className="px-2.5 py-1 text-[10px] font-mono font-bold text-[#82796a] uppercase tracking-wider">
+                  Configuration
+                </div>
                 {onOpenSettings && (
                   <button
                     type="button"
@@ -535,14 +530,12 @@ export default function IngestionHeader({
                       onOpenSettings();
                       setIsMoreMenuOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
+                    className="w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
                   >
                     <Settings className="w-3.5 h-3.5 text-[#645c50]" />
-                    <span>Paper Settings</span>
+                    <span>Paper Metadata</span>
                   </button>
                 )}
-
-                {/* Payloads Inspector Item */}
                 {onOpenPayloads && (
                   <button
                     type="button"
@@ -550,32 +543,41 @@ export default function IngestionHeader({
                       onOpenPayloads();
                       setIsMoreMenuOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
+                    className="w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
                   >
                     <FileCode className="w-3.5 h-3.5 text-[#645c50]" />
-                    <span>Inspect JSON</span>
+                    <span>Inspect Raw JSON</span>
                   </button>
                 )}
 
-                {/* Audit Drawer Item */}
+                {/* Quality Assurance Section */}
                 {onOpenAudit && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onOpenAudit();
-                      setIsMoreMenuOpen(false);
-                    }}
-                    className="w-full px-3 py-2 text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
-                  >
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#645c50]" />
-                    <span>Ingestion Audit</span>
-                  </button>
+                  <>
+                    <div className="my-1 border-t border-[#dcd3c4]" />
+                    <div className="px-2.5 py-1 text-[10px] font-mono font-bold text-[#82796a] uppercase tracking-wider">
+                      Quality Assurance
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenAudit();
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-[#645c50]" />
+                      <span>7-Point Quality Audit</span>
+                    </button>
+                  </>
                 )}
 
-                {/* Delete Staged Paper Item */}
+                {/* Danger Zone Section */}
                 {paper && (
                   <>
                     <div className="my-1 border-t border-[#dcd3c4]" />
+                    <div className="px-2.5 py-1 text-[10px] font-mono font-bold text-[#b91c1c] uppercase tracking-wider">
+                      Danger Zone
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -583,7 +585,7 @@ export default function IngestionHeader({
                         setShowDeleteConfirm(true);
                       }}
                       disabled={deleteState === "deleting"}
-                      className="w-full px-3 py-2 text-left text-xs font-semibold text-[#b91c1c] hover:bg-[#fee2e2] flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+                      className="w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-semibold text-[#b91c1c] hover:bg-[#fee2e2] flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-[#b91c1c]" />
                       <span>Delete Staged Paper</span>
@@ -614,7 +616,7 @@ export default function IngestionHeader({
                   type="button"
                   onClick={() => setShowArchiveConfirm(true)}
                   disabled={archiveState === "archiving"}
-                  className="px-2.5 py-0.5 rounded-full bg-[#065f46] text-[#f9f4ed] hover:bg-[#044e39] text-xs font-adminHeading font-bold transition-all cursor-pointer shadow-[1px_1px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-2.5 py-0.5 rounded-full bg-[#065f46] text-[#f9f4ed] hover:bg-[#044e39] text-xs font-adminHeading font-bold transition-all cursor-pointer shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 flex items-center gap-1.5"
                   title="Archive staged paper so it no longer appears in uncurated staging list"
                 >
                   {archiveState === "archiving" ? (
@@ -637,7 +639,7 @@ export default function IngestionHeader({
               )}
             </div>
           ) : (
-            /* Primary Neobrutalist [Upsert to Supabase] Action */
+            /* Primary Neobrutalist Mechanical 3D Button */
             <motion.button
               type="button"
               onClick={onPublish}
@@ -650,7 +652,7 @@ export default function IngestionHeader({
                   ? `${reviewCount} questions require curator review before upsert`
                   : "Upsert all verified questions to Supabase"
               }
-              className={`px-4 py-2 rounded-full border-2 border-[#201e1d] font-adminHeading font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+              className={`px-4 py-2 rounded-full border-2 border-[#201e1d] font-adminHeading font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[3px_3px_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
                 publishStatus === "success"
                   ? "bg-[#065f46] text-[#f9f4ed]"
                   : "bg-[#c67139] text-[#f9f4ed] hover:bg-[#b2622d]"

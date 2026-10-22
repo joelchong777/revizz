@@ -56,28 +56,30 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
   const activeDiagQuestion = diagnosticQuestions[selectedDiagQuestionIdx] || diagnosticQuestions[0] || null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* HEADER ROW */}
-      <div className="flex flex-wrap items-center gap-3">
-        {headerStart && <div className="w-full sm:w-auto max-w-full">{headerStart}</div>}
-        <h2 className="flex-1 min-w-0 text-lg font-black font-heading tracking-tight text-[#201e1d]">
-          Ingestion diagnostics
-          <span className="ml-2 text-xs font-mono font-bold text-[#645c50]">
-            KaTeX sanitizer, currency isolator &amp; OCR validator
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#201e1d]/15 pb-2.5 sm:pb-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap min-w-0">
+          {headerStart && <div className="shrink-0">{headerStart}</div>}
+          <h2 className="text-base sm:text-lg font-black font-adminHeading tracking-tight text-[#201e1d] whitespace-nowrap">
+            Ingestion Diagnostics
+          </h2>
+          <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#f0eade] border border-[#201e1d] text-[#645c50] rounded-full text-[11px] font-mono font-bold shadow-[1px_1px_0_#201e1d]">
+            KaTeX, Currency &amp; AST Engine
           </span>
-        </h2>
-        <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#201e1d] shadow-[3px_3px_0px_#201e1d] flex items-center gap-1.5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-800" />
+        </div>
+        <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#201e1d] shadow-[2px_2px_0_#201e1d] flex items-center gap-1.5 shrink-0">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-800" />
           OCR Engine Active
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_#201e1d] space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sigma className="w-5 h-5 text-[#201e1d]" />
-              <h3 className="font-heading font-black text-base text-[#201e1d]">
+              <Sigma className="w-4 h-4 text-[#201e1d]" />
+              <h3 className="font-adminHeading font-black text-sm sm:text-base text-[#201e1d]">
                 Live KaTeX Equation Validator
               </h3>
             </div>
@@ -88,11 +90,11 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
           <textarea
             value={testEquationInput}
             onChange={(e) => setTestEquationInput(e.target.value)}
-            rows={3}
-            className="w-full p-3 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-mono text-xs text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] resize-none"
+            rows={2}
+            className="w-full p-2.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-mono text-xs text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] resize-none"
             placeholder="Enter LaTeX formula e.g. \frac{a}{b}"
           />
-          <div className="p-3 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] min-h-[52px] flex items-center justify-center">
+          <div className="p-2.5 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] min-h-[44px] flex items-center justify-center">
             <div className="text-sm font-medium text-[#201e1d]">
               <span className="font-mono text-xs text-[#645c50]">Input: </span>
               <code className="text-xs bg-white/60 px-1 py-0.5 rounded">{testEquationInput}</code>
@@ -100,12 +102,12 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
           </div>
         </div>
 
-        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-3">
+        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3.5 sm:p-4 shadow-[3px_3px_0_#201e1d] space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Code2 className="w-5 h-5 text-[#201e1d]" />
-              <h3 className="font-heading font-black text-base text-[#201e1d]">
-                Currency & Regex Sanitizer
+              <Code2 className="w-4 h-4 text-[#201e1d]" />
+              <h3 className="font-adminHeading font-black text-sm sm:text-base text-[#201e1d]">
+                Currency &amp; Regex Sanitizer
               </h3>
             </div>
             <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238]">
@@ -115,11 +117,11 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
           <textarea
             value={testCurrencyInput}
             onChange={(e) => setTestCurrencyInput(e.target.value)}
-            rows={3}
-            className="w-full p-3 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-mono text-xs text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] resize-none"
+            rows={2}
+            className="w-full p-2.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-mono text-xs text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ffe1d0] resize-none"
             placeholder="Enter text with dollar currency e.g. $100"
           />
-          <div className="p-3 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] min-h-[52px] flex flex-col justify-center text-xs">
+          <div className="p-2.5 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] min-h-[44px] flex flex-col justify-center text-xs">
             <span className="text-[10px] font-black uppercase tracking-wider text-[#645c50]">
               Sanitized Result:
             </span>
@@ -130,11 +132,11 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
         </div>
       </div>
 
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-[#dcd3c4] pb-4">
+      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-4 sm:p-5 shadow-[3px_3px_0_#201e1d] space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b-2 border-[#201e1d]/15 pb-3">
           <div>
-            <h3 className="font-heading font-black text-lg text-[#201e1d]">
-              Question AST & Bounding Box Diagnostics
+            <h3 className="font-adminHeading font-black text-base sm:text-lg text-[#201e1d]">
+              Question AST &amp; Bounding Box Diagnostics
             </h3>
             <p className="text-xs text-[#645c50]">
               Run automated 6-point verification on question payload (KaTeX, OCR crops, distractor schema, Cambridge metadata).
@@ -147,7 +149,7 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
               <select
                 value={selectedDiagQuestionIdx}
                 onChange={(e) => setSelectedDiagQuestionIdx(Number(e.target.value))}
-                className="px-3 py-1.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-bold text-xs text-[#201e1d] focus:outline-none cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] font-bold text-xs text-[#201e1d] shadow-[1.5px_1.5px_0_#201e1d] focus:outline-none cursor-pointer"
               >
                 {diagnosticQuestions.map((q, idx) => (
                   <option key={idx} value={idx}>
@@ -162,7 +164,7 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
         {questionsLoading ? (
           <div className="py-12 px-4 text-center flex flex-col items-center justify-center space-y-3 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5] animate-pulse">
             <div className="w-8 h-8 rounded-full border-2 border-[#201e1d] border-t-transparent animate-spin" />
-            <div className="font-heading text-sm font-black text-[#201e1d]">
+            <div className="font-adminHeading text-sm font-black text-[#201e1d]">
               Loading Live Questions for AST Diagnostics...
             </div>
             <p className="text-xs text-[#645c50]">Fetching active items from Supabase</p>
@@ -170,7 +172,7 @@ export default function IngestionDiagnosticsLab({ headerStart }: IngestionDiagno
         ) : diagnosticQuestions.length === 0 || !activeDiagQuestion ? (
           <div className="py-12 px-4 text-center flex flex-col items-center justify-center space-y-2 rounded-2xl bg-[#eee7db]/40 border-2 border-dashed border-[#c0b6a5]">
             <div className="text-3xl">🔬</div>
-            <div className="font-heading text-sm font-black text-[#201e1d]">
+            <div className="font-adminHeading text-sm font-black text-[#201e1d]">
               No Questions Available for Diagnostics
             </div>
             <p className="text-xs font-medium text-[#645c50] max-w-sm">

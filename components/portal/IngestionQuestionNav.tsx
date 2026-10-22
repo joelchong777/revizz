@@ -238,7 +238,7 @@ export function IngestionQuestionNav({
     if (viewMode === "strip") {
       const el = buttonRefs.current.get(selectedIdx);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
       }
     }
   }, [selectedIdx, viewMode]);
@@ -367,26 +367,26 @@ export function IngestionQuestionNav({
   return (
     <nav
       aria-label="Question Navigation Toolbar & Strip"
-      className={`w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 sm:p-3.5 shadow-[2px_2px_0_#201e1d] flex flex-col gap-2.5 font-body text-[#201e1d] select-none ${className}`}
+      className={`w-full bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 sm:p-3.5 shadow-[3px_3px_0_#201e1d] flex flex-col gap-3 font-body text-[#201e1d] select-none ${className}`}
     >
       {/* Row 1: Filters (Left) + Search, Stepper, View Toggle & New (Right) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-        {/* Left: Segmented Filter Tabs */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left: Tactile Segmented Filter Tabs */}
         <div className="flex items-center gap-1.5 flex-wrap text-xs">
           {/* All Tab */}
           <button
             type="button"
             onClick={() => setFilterTab("all")}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+            className={`px-3 py-1.5 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1.5 cursor-pointer border-2 border-[#201e1d] ${
               filterTab === "all"
-                ? "bg-[#201e1d] text-[#f9f4ed] border-[#201e1d] shadow-[1px_1px_0_#201e1d]"
-                : "bg-white border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]"
+                ? "bg-[#201e1d] text-[#f9f4ed] shadow-[2px_2px_0_#201e1d] -translate-y-0.5"
+                : "bg-white text-[#474238] shadow-[1.5px_1.5px_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none"
             }`}
           >
             <span>All</span>
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                filterTab === "all" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#eee7db] text-[#474238]"
+                filterTab === "all" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#eee7db] text-[#201e1d]"
               }`}
             >
               {totalQuestions}
@@ -397,17 +397,17 @@ export function IngestionQuestionNav({
           <button
             type="button"
             onClick={() => setFilterTab("valid")}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+            className={`px-3 py-1.5 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1.5 cursor-pointer border-2 border-[#201e1d] ${
               filterTab === "valid"
-                ? "bg-[#728157] text-[#f9f4ed] border-[#56633f] shadow-[1px_1px_0_#201e1d]"
-                : "bg-white border-[#dcd3c4] text-[#3d472b] hover:bg-[#f0fae1]"
+                ? "bg-[#728157] text-[#f9f4ed] shadow-[2px_2px_0_#201e1d] -translate-y-0.5"
+                : "bg-white text-[#3d472b] shadow-[1.5px_1.5px_0_#201e1d] hover:bg-[#f0fae1] active:translate-y-0.5 active:shadow-none"
             }`}
           >
-            <CheckCircle2 className="w-3 h-3 text-[#56633f]" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-current" />
             <span>Valid</span>
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                filterTab === "valid" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#f0fae1] text-[#3d472b]"
+                filterTab === "valid" ? "bg-white/25 text-[#f9f4ed]" : "bg-[#f0fae1] text-[#3d472b]"
               }`}
             >
               {validCount}
@@ -418,17 +418,17 @@ export function IngestionQuestionNav({
           <button
             type="button"
             onClick={() => setFilterTab("review")}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+            className={`px-3 py-1.5 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1.5 cursor-pointer border-2 border-[#201e1d] ${
               filterTab === "review"
-                ? "bg-[#c67139] text-[#f9f4ed] border-[#8c491a] shadow-[1px_1px_0_#201e1d]"
-                : "bg-white border-[#dcd3c4] text-[#c67139] hover:bg-[#ffe1d0]"
+                ? "bg-[#c67139] text-[#f9f4ed] shadow-[2px_2px_0_#201e1d] -translate-y-0.5"
+                : "bg-white text-[#c67139] shadow-[1.5px_1.5px_0_#201e1d] hover:bg-[#ffe1d0] active:translate-y-0.5 active:shadow-none"
             }`}
           >
-            <AlertTriangle className="w-3 h-3 text-[#c67139]" />
+            <AlertTriangle className="w-3.5 h-3.5 text-current" />
             <span>Review</span>
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                filterTab === "review" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#ffe1d0] text-[#c67139]"
+                filterTab === "review" ? "bg-white/25 text-[#f9f4ed]" : "bg-[#ffe1d0] text-[#c67139]"
               }`}
             >
               {reviewCount}
@@ -439,17 +439,17 @@ export function IngestionQuestionNav({
           <button
             type="button"
             onClick={() => setFilterTab("diagrams")}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+            className={`px-3 py-1.5 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1.5 cursor-pointer border-2 border-[#201e1d] ${
               filterTab === "diagrams"
-                ? "bg-[#645c50] text-[#f9f4ed] border-[#383431] shadow-[1px_1px_0_#201e1d]"
-                : "bg-white border-[#dcd3c4] text-[#645c50] hover:bg-[#eee7db]"
+                ? "bg-[#645c50] text-[#f9f4ed] shadow-[2px_2px_0_#201e1d] -translate-y-0.5"
+                : "bg-white text-[#645c50] shadow-[1.5px_1.5px_0_#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 active:shadow-none"
             }`}
           >
-            <Camera className="w-3 h-3 text-[#645c50]" />
+            <Camera className="w-3.5 h-3.5 text-current" />
             <span>Diagrams</span>
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                filterTab === "diagrams" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#eee7db] text-[#474238]"
+                filterTab === "diagrams" ? "bg-white/25 text-[#f9f4ed]" : "bg-[#eee7db] text-[#474238]"
               }`}
             >
               {diagramCount}
@@ -461,17 +461,17 @@ export function IngestionQuestionNav({
             <button
               type="button"
               onClick={() => setFilterTab("errors")}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+              className={`px-3 py-1.5 rounded-full text-xs font-adminHeading font-bold transition-all flex items-center gap-1.5 cursor-pointer border-2 border-[#201e1d] ${
                 filterTab === "errors"
-                  ? "bg-[#b91c1c] text-[#f9f4ed] border-[#7f1d1d] shadow-[1px_1px_0_#201e1d]"
-                  : "bg-white border-[#b91c1c]/40 text-[#b91c1c] hover:bg-[#fee2e2]"
+                  ? "bg-[#b91c1c] text-[#f9f4ed] shadow-[2px_2px_0_#201e1d] -translate-y-0.5"
+                  : "bg-white text-[#b91c1c] shadow-[1.5px_1.5px_0_#201e1d] hover:bg-[#fee2e2] active:translate-y-0.5 active:shadow-none"
               }`}
             >
-              <AlertCircle className="w-3 h-3 text-[#b91c1c]" />
+              <AlertCircle className="w-3.5 h-3.5 text-current" />
               <span>Errors</span>
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                  filterTab === "errors" ? "bg-white/20 text-[#f9f4ed]" : "bg-[#fee2e2] text-[#b91c1c]"
+                  filterTab === "errors" ? "bg-white/25 text-[#f9f4ed]" : "bg-[#fee2e2] text-[#b91c1c]"
                 }`}
               >
                 {errorCount}
@@ -479,17 +479,17 @@ export function IngestionQuestionNav({
             </button>
           )}
 
-          {/* Next Issue (⚠) Quick-Jump Button */}
+          {/* Next Issue (Alt+N) Quick-Jump Button */}
           {(reviewCount > 0 || errorCount > 0) && (
             <button
               type="button"
               onClick={handleJumpNextIssue}
-              className="bg-[#fef3c7] hover:bg-[#fde68a] text-[#92400e] border-2 border-[#201e1d] rounded-full px-2.5 py-1 text-xs font-bold shadow-[1px_1px_0_#201e1d] active:translate-y-0.5 flex items-center gap-1 cursor-pointer transition-colors"
+              className="bg-[#fef3c7] hover:bg-[#fde68a] text-[#92400e] border-2 border-[#201e1d] rounded-full px-3 py-1.5 text-xs font-adminHeading font-bold shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5 cursor-pointer transition-all ml-1"
               title="Jump to next issue (Alt+N)"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-[#92400e]" />
               <span>Next Issue</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-[#fde68a] text-[#92400e] border border-[#d97706]/30">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#fde68a] text-[#92400e] border border-[#d97706]/40 leading-none">
                 {reviewCount + errorCount}
               </span>
             </button>
@@ -502,18 +502,18 @@ export function IngestionQuestionNav({
                 setSearchQuery("");
                 setFilterTab("all");
               }}
-              className="text-xs font-bold text-[#c67139] hover:underline cursor-pointer ml-1"
+              className="text-xs font-bold text-[#c67139] hover:underline cursor-pointer ml-1 font-mono"
             >
-              Reset
+              Clear filters
             </button>
           )}
         </div>
 
-        {/* Right: Quick Search + Stepper + View Mode Toggle + Add Question */}
+        {/* Right: Search, Stepper, View Mode Toggle & Add Question */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* Keyboard Shortcut Hint */}
           <span
-            className="text-[10px] font-mono text-[#82796a] hidden xl:inline-flex items-center gap-1 bg-white/70 border border-[#dcd3c4] px-2.5 py-1 rounded-full select-none"
+            className="text-[10px] font-mono text-[#82796a] hidden xl:inline-flex items-center gap-1 bg-white border-2 border-[#dcd3c4] px-2.5 py-1 rounded-full select-none shadow-[1px_1px_0_#201e1d]"
             title="Keyboard shortcuts: Left/Right arrows to navigate questions, Alt+N to jump to next issue"
           >
             ←/→ Nav · Alt+N Next Issue
@@ -521,19 +521,19 @@ export function IngestionQuestionNav({
 
           {/* Search Input */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#82796a] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-[#82796a] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Find Q..."
-              className="pl-7 pr-6 py-1 rounded-full bg-white border-2 border-[#dcd3c4] text-xs text-[#201e1d] placeholder-[#82796a] outline-none focus:border-[#c67139] w-24 sm:w-28 transition-all font-mono"
+              className="pl-8 pr-7 py-1.5 rounded-full bg-white border-2 border-[#201e1d] text-xs text-[#201e1d] placeholder-[#82796a] outline-none focus:border-[#c67139] shadow-[1.5px_1.5px_0_#201e1d] w-28 sm:w-32 transition-all font-mono font-bold"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d]"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#82796a] hover:text-[#201e1d] cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -541,7 +541,7 @@ export function IngestionQuestionNav({
           </div>
 
           {/* Stepper Controls */}
-          <div className="flex items-center border-2 border-[#201e1d] rounded-full bg-white px-1 py-0.5 shadow-[1.5px_1.5px_0_#201e1d]">
+          <div className="flex items-center border-2 border-[#201e1d] rounded-full bg-white px-1 py-0.5 shadow-[2px_2px_0_#201e1d]">
             <button
               type="button"
               onClick={() => handleSelect(selectedIdx - 1)}
@@ -568,7 +568,7 @@ export function IngestionQuestionNav({
           </div>
 
           {/* View Mode Toggle: Strip vs Grid Matrix */}
-          <div className="flex items-center border-2 border-[#201e1d] rounded-full bg-white overflow-hidden shadow-[1.5px_1.5px_0_#201e1d]">
+          <div className="flex items-center border-2 border-[#201e1d] rounded-full bg-white overflow-hidden shadow-[2px_2px_0_#201e1d]">
             <button
               type="button"
               onClick={() => setViewMode("strip")}
@@ -602,11 +602,11 @@ export function IngestionQuestionNav({
             <button
               type="button"
               onClick={onAddQuestion}
-              className="px-3 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-adminHeading font-bold hover:bg-[#b2622d] transition-all flex items-center gap-1 shadow-[1.5px_1.5px_0_#201e1d] border-2 border-[#201e1d] active:translate-y-0.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-[#c67139] text-[#f9f4ed] text-xs font-adminHeading font-bold hover:bg-[#b2622d] transition-all flex items-center gap-1.5 shadow-[2px_2px_0_#201e1d] border-2 border-[#201e1d] active:translate-y-0.5 active:shadow-none cursor-pointer"
               title="Add a new blank question"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>New</span>
+              <span>+ Add Question</span>
             </button>
           )}
         </div>
@@ -614,32 +614,32 @@ export function IngestionQuestionNav({
 
       {/* Row 2: Question Navigator (Strip View or Grid Matrix) */}
       {totalQuestions === 0 ? (
-        <div className="p-4 text-center border-2 border-dashed border-[#dcd3c4] rounded-xl bg-white flex items-center justify-center gap-2">
+        <div className="p-6 text-center border-2 border-dashed border-[#201e1d] rounded-xl bg-white flex items-center justify-center gap-2.5 shadow-[2px_2px_0_#201e1d]">
           <FileQuestion className="w-5 h-5 text-[#82796a]" />
-          <p className="text-xs font-bold text-[#645c50]">No questions staged in this paper.</p>
+          <p className="text-xs font-adminHeading font-bold text-[#645c50]">No questions staged in this paper.</p>
         </div>
       ) : viewMode === "grid" ? (
         /* Full Grid Matrix Mode: see all questions at a glance */
-        <div className="flex flex-col gap-2 p-3 bg-white border-2 border-[#201e1d] rounded-xl shadow-inner">
+        <div className="flex flex-col gap-2.5 p-3.5 bg-white border-2 border-[#201e1d] rounded-xl shadow-[2px_2px_0_#201e1d]">
           {/* Grid Mode Ergonomics Header Bar */}
-          <div className="flex items-center justify-between gap-2 px-1 pb-2 border-b border-[#dcd3c4] flex-wrap">
-            <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center justify-between gap-2 px-1 pb-2.5 border-b-2 border-[#201e1d]/15 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="font-adminHeading font-bold text-xs text-[#201e1d]">
                 Question Matrix ({matchingIndices.length}/{totalQuestions})
               </span>
               {/* Status legend pills */}
-              <div className="hidden sm:flex items-center gap-2.5 text-[10px] font-mono text-[#645c50]">
+              <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-[#645c50]">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#728157]" /> Valid
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#059669]" /> Valid
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#c67139]" /> Review
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#c67139]" /> Review
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#b91c1c]" /> Error
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#b91c1c]" /> Error
                 </span>
                 <span className="flex items-center gap-1">
-                  <Camera className="w-2.5 h-2.5 text-[#645c50]" /> Diagram
+                  <Camera className="w-3 h-3 text-[#645c50]" /> Diagram
                 </span>
               </div>
             </div>
@@ -647,15 +647,15 @@ export function IngestionQuestionNav({
             <button
               type="button"
               onClick={() => setViewMode("strip")}
-              className="px-2.5 py-1 rounded-full border border-[#201e1d] bg-[#f9f4ed] hover:bg-[#ffe1d0] hover:text-[#c67139] text-[11px] font-bold text-[#201e1d] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:translate-y-0.5"
+              className="px-3 py-1 rounded-full border-2 border-[#201e1d] bg-[#f9f4ed] hover:bg-[#ffe1d0] hover:text-[#c67139] text-xs font-adminHeading font-bold text-[#201e1d] flex items-center gap-1.5 transition-all cursor-pointer shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
               title="Collapse grid drawer and switch to strip view"
             >
-              <Rows className="w-3 h-3 text-[#c67139]" />
+              <Rows className="w-3.5 h-3.5 text-[#c67139]" />
               <span>Collapse Grid</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 max-h-56 overflow-y-auto pr-0.5">
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-60 overflow-y-auto pr-1">
             {questions.map((q, idx) => {
               const status = questionStatuses[idx];
               const isSelected = selectedIdx === idx;
@@ -677,30 +677,38 @@ export function IngestionQuestionNav({
                   }${status.hasDiagram ? " · Has Diagram" : ""}${
                     status.correctKey ? ` · Key ${status.correctKey}` : ""
                   }`}
-                  className={`relative rounded-lg p-1.5 transition-all flex flex-col items-center justify-center cursor-pointer select-none ${
+                  className={`relative rounded-xl p-2 transition-all flex flex-col items-center justify-between gap-1 cursor-pointer select-none border-2 ${
                     isSelected
-                      ? "bg-[#ffe1d0] border-2 border-[#c67139] text-[#201e1d] shadow-[2px_2px_0_#c67139] font-bold scale-[1.04] z-10"
-                      : "bg-[#fcfaf6] border border-[#dcd3c4] hover:border-[#201e1d] hover:bg-[#eee7db] text-[#474238]"
+                      ? "bg-[#ffe1d0] border-[#c67139] text-[#201e1d] shadow-[3px_3px_0_#c67139] font-bold scale-[1.04] z-10 -translate-y-0.5"
+                      : "bg-[#fcfaf6] border-[#201e1d] hover:bg-white hover:-translate-y-0.5 shadow-[2px_2px_0_#201e1d] text-[#201e1d]"
                   } ${!isMatch && hasActiveFilters ? "opacity-30 grayscale" : "opacity-100"}`}
                 >
-                  <div className="w-full flex items-center justify-between gap-1 leading-none mb-0.5">
+                  <div className="w-full flex items-center justify-between gap-1 leading-none">
                     {status.hasDiagram ? (
                       <Camera className="w-2.5 h-2.5 text-[#645c50]" />
                     ) : (
                       <span className="w-2.5 h-2.5" />
                     )}
                     {status.isError ? (
-                      <span className="w-2 h-2 rounded-full bg-[#b91c1c]" />
+                      <span className="w-2 h-2 rounded-full bg-[#b91c1c] ring-2 ring-[#fee2e2]" />
                     ) : status.isWarning ? (
-                      <span className="w-2 h-2 rounded-full bg-[#c67139]" />
+                      <span className="w-2 h-2 rounded-full bg-[#c67139] ring-2 ring-[#ffe1d0]" />
                     ) : (
-                      <span className="w-2 h-2 rounded-full bg-[#728157]" />
+                      <span className="w-2 h-2 rounded-full bg-[#059669] ring-2 ring-[#d1fae5]" />
                     )}
                   </div>
-                  <span className="text-xs font-adminHeading font-bold text-[#201e1d] leading-tight">
-                    {qNum}
+                  <span className="font-adminHeading text-xs font-black text-[#201e1d] leading-none">
+                    Q{qNum}
                   </span>
-                  <span className="text-[9px] font-mono font-bold uppercase text-[#645c50] leading-none mt-0.5">
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-black uppercase leading-none ${
+                      isSelected
+                        ? "bg-[#c67139] text-[#f9f4ed]"
+                        : status.correctKey
+                        ? "bg-[#f0eade] text-[#201e1d] border border-[#dcd3c4]"
+                        : "bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]"
+                    }`}
+                  >
                     {status.correctKey ? status.correctKey : "—"}
                   </span>
                 </button>
@@ -712,7 +720,7 @@ export function IngestionQuestionNav({
         /* Strip View Mode: Sleek horizontal scroll strip */
         <div
           ref={navScrollRef}
-          className="flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 scrollbar-thin scrollbar-thumb-[#dcd3c4] scrollbar-track-transparent"
+          className="flex items-center gap-2 overflow-x-auto py-1 px-0.5 scrollbar-thin scrollbar-thumb-[#dcd3c4] scrollbar-track-transparent"
         >
           {questions.map((q, idx) => {
             const status = questionStatuses[idx];
@@ -739,17 +747,17 @@ export function IngestionQuestionNav({
                 }${status.hasDiagram ? " · Has Diagram" : ""}${
                   status.correctKey ? ` · Key ${status.correctKey}` : ""
                 }`}
-                className={`relative shrink-0 min-w-[54px] h-12 rounded-xl transition-all flex flex-col items-center justify-center px-2 py-1 select-none cursor-pointer ${
+                className={`relative shrink-0 min-w-[58px] h-14 rounded-xl transition-all flex flex-col items-center justify-between p-1.5 select-none cursor-pointer border-2 ${
                   isSelected
-                    ? "bg-[#ffe1d0] border-2 border-[#c67139] text-[#201e1d] font-bold shadow-[2px_2px_0_#c67139] scale-[1.02] z-10"
-                    : "bg-white border-2 border-[#dcd3c4] hover:border-[#201e1d] hover:bg-[#eee7db] text-[#474238]"
+                    ? "bg-[#ffe1d0] border-[#c67139] text-[#201e1d] font-bold shadow-[3px_3px_0_#c67139] -translate-y-0.5 scale-[1.03] z-10"
+                    : "bg-white border-[#201e1d] hover:bg-[#fcfaf6] hover:-translate-y-0.5 shadow-[2px_2px_0_#201e1d] text-[#201e1d]"
                 } ${
                   !isMatch && hasActiveFilters
                     ? "opacity-30 grayscale"
                     : "opacity-100"
                 }`}
               >
-                {/* Top: Status indicator & Diagram icon */}
+                {/* Top Row: Camera icon (or spacer) + Status Pip */}
                 <div className="w-full flex items-center justify-between gap-1 leading-none">
                   {status.hasDiagram ? (
                     <Camera className="w-2.5 h-2.5 text-[#645c50]" />
@@ -757,23 +765,31 @@ export function IngestionQuestionNav({
                     <span className="w-2.5 h-2.5" />
                   )}
 
-                  {/* Dot */}
+                  {/* Glowing Status Pip */}
                   {status.isError ? (
-                    <span className="w-2 h-2 rounded-full bg-[#b91c1c]" />
+                    <span className="w-2 h-2 rounded-full bg-[#b91c1c] ring-2 ring-[#fee2e2]" />
                   ) : status.isWarning ? (
-                    <span className="w-2 h-2 rounded-full bg-[#c67139]" />
+                    <span className="w-2 h-2 rounded-full bg-[#c67139] ring-2 ring-[#ffe1d0]" />
                   ) : (
-                    <span className="w-2 h-2 rounded-full bg-[#728157]" />
+                    <span className="w-2 h-2 rounded-full bg-[#059669] ring-2 ring-[#d1fae5]" />
                   )}
                 </div>
 
-                {/* Question Number */}
-                <span className="text-xs font-adminHeading font-bold leading-tight text-[#201e1d]">
-                  {qNum}
+                {/* Middle: Q# Badge */}
+                <span className="font-adminHeading text-xs font-black text-[#201e1d] leading-none">
+                  Q{qNum}
                 </span>
 
-                {/* Key Badge */}
-                <span className="text-[9px] font-mono font-bold uppercase text-[#645c50] leading-none">
+                {/* Bottom: Answer Letter Pill */}
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-black uppercase leading-none ${
+                    isSelected
+                      ? "bg-[#c67139] text-[#f9f4ed]"
+                      : status.correctKey
+                      ? "bg-[#f0eade] text-[#201e1d] border border-[#dcd3c4]"
+                      : "bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]"
+                  }`}
+                >
                   {status.correctKey ? status.correctKey : "—"}
                 </span>
               </button>

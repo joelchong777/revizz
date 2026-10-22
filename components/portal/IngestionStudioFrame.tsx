@@ -29,7 +29,7 @@ export function IngestionStudioFrame({
 
   return (
     <main
-      className={`bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[4px_4px_0_#201e1d] rounded-3xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-5 font-body w-full max-w-[1720px] mx-auto relative ${className}`}
+      className={`bg-[#fbf7ee] border-2 border-[#201e1d] shadow-[4px_4px_0_#201e1d] rounded-3xl p-3 sm:p-5 md:p-6 flex flex-col gap-3.5 sm:gap-4 md:gap-5 font-body w-full max-w-[1720px] mx-auto relative transition-all duration-200 ${className}`}
       data-testid="ingestion-studio-frame"
     >
       {/* Docked Header Shelf */}
@@ -39,7 +39,7 @@ export function IngestionStudioFrame({
       {hasShelf && (
         <section
           aria-label="Extraction & Status Shelf"
-          className="w-full flex flex-col gap-3 transition-all duration-300"
+          className="w-full flex flex-col gap-2.5 sm:gap-3 transition-all duration-300"
         >
           {progressShelf}
           {statusShelf}

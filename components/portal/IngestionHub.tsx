@@ -18,6 +18,10 @@ import {
   AlertCircle,
   Loader2,
   X,
+  Sparkles,
+  History,
+  Activity,
+  RotateCcw,
 } from "lucide-react";
 
 import IngestionSetupWizard from "./IngestionSetupWizard";
@@ -45,10 +49,10 @@ export interface IngestionHubProps {
   onOpenEditor?: (questionId: string) => void;
 }
 
-const STUDIO_TABS: { id: StudioSetupView; label: string }[] = [
-  { id: "new", label: "New paper" },
-  { id: "history", label: "History" },
-  { id: "diagnostics", label: "Diagnostics" },
+const STUDIO_TABS: { id: StudioSetupView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "new", label: "New paper", icon: Sparkles },
+  { id: "history", label: "History", icon: History },
+  { id: "diagnostics", label: "Diagnostics", icon: Activity },
 ];
 
 export default function IngestionHub({
@@ -369,37 +373,42 @@ export default function IngestionHub({
   // Studio mode management: 'setup' | 'workspace'
   // Mode starts purely in 'setup' when paper is null or has no questions loaded
   const studioTabs = (
-            <div
-              role="tablist"
-              aria-label="Ingestion Studio"
-              className="inline-flex gap-2 p-1 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl shadow-[3px_3px_0px_#201e1d]"
-            >
-              {STUDIO_TABS.map((t, idx) => {
-                const selected = setupView === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    ref={(el) => { tabRefs.current[t.id] = el; }}
-                    type="button"
-                    role="tab"
-                    id={`studio-tab-${t.id}`}
-                    data-testid={`studio-tab-${t.id}`}
-                    aria-selected={selected}
-                    aria-controls="studio-tabpanel"
-                    tabIndex={selected ? 0 : -1}
-                    onClick={() => changeSetupView(t.id)}
-                    onKeyDown={(e) => handleTabKeyDown(e, idx)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      selected
-                        ? "bg-[#ffe1d0] text-[#201e1d] border-2 border-[#c67139]"
-                        : "text-[#645c50] border-2 border-transparent hover:bg-[#ffe1d0]/60"
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
+    <div
+      role="tablist"
+      aria-label="Ingestion Studio"
+      className="inline-flex items-center gap-1.5 p-1 bg-[#fbf7ee] border-2 border-[#201e1d] rounded-xl shadow-[2px_2px_0_#201e1d]"
+    >
+      {STUDIO_TABS.map((t, idx) => {
+        const selected = setupView === t.id;
+        const IconComponent = t.icon;
+        return (
+          <button
+            key={t.id}
+            ref={(el) => { tabRefs.current[t.id] = el; }}
+            type="button"
+            role="tab"
+            id={`studio-tab-${t.id}`}
+            data-testid={`studio-tab-${t.id}`}
+            aria-selected={selected}
+            aria-controls="studio-tabpanel"
+            tabIndex={selected ? 0 : -1}
+            onClick={() => changeSetupView(t.id)}
+            onKeyDown={(e) => handleTabKeyDown(e, idx)}
+            className={`px-3 py-1 rounded-lg text-xs font-adminHeading font-bold flex items-center gap-1.5 transition-all cursor-pointer relative ${
+              selected
+                ? "bg-white text-[#201e1d] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5"
+                : "text-[#645c50] hover:text-[#201e1d] hover:bg-[#eee7db] border-2 border-transparent"
+            }`}
+          >
+            <IconComponent className={`w-3.5 h-3.5 ${selected ? "text-[#c67139]" : "text-[#82796a]"}`} />
+            <span>{t.label}</span>
+            {selected && (
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c67139] inline-block ml-0.5" />
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
 
   const mode: "setup" | "workspace" =
@@ -437,6 +446,7 @@ export default function IngestionHub({
               onDeleteStagedPaper={deleteStagedPaper}
               onOpenMarkSchemeModal={() => setIsMarkSchemeModalOpen(true)}
               markSchemeStatus={markSchemeReport?.status || "unverified"}
+              activePdfPage={activePdfPage}
             />
           ) : null
         }
@@ -446,58 +456,60 @@ export default function IngestionHub({
               const isRetrying = extractionProgress.stage === "retrying";
               return (
                 <div
-                  className={`p-4 sm:p-5 border-[1.5px] rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 font-body animate-pulse ${
+                  className={`p-3.5 sm:p-4.5 border-2 border-[#201e1d] rounded-2xl shadow-[3px_3px_0_#201e1d] flex flex-col md:flex-row items-center justify-between gap-4 font-body transition-all duration-300 ${
                     isRetrying
-                      ? "bg-[#fef3c7] border-[#d97706] text-[#78350f]"
-                      : "bg-[#e0e7ff] border-[#312e81] text-[#1e1b4b]"
+                      ? "bg-[#fffbeb] text-[#78350f]"
+                      : "bg-[#f0f4ff] text-[#1e1b4b]"
                   }`}
                 >
                   <div className="flex items-center gap-3.5 w-full md:w-auto">
                     <div
-                      className={`w-10 h-10 rounded-xl text-white flex items-center justify-center shrink-0 border shadow-xs ${
-                        isRetrying
-                          ? "bg-[#d97706] border-[#b45309]"
-                          : "bg-[#4f46e5] border-[#312e81]"
+                      className={`w-11 h-11 rounded-xl text-white flex items-center justify-center shrink-0 border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] ${
+                        isRetrying ? "bg-[#d97706]" : "bg-[#4f46e5]"
                       }`}
                     >
                       <Loader2 className="w-5 h-5 animate-spin" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
-                          className={`text-xs font-black uppercase tracking-wider ${
+                          className={`text-[11px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
                             isRetrying ? "text-[#b45309]" : "text-[#4f46e5]"
                           }`}
                         >
+                          <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-ping inline-block" />
                           {isRetrying
-                            ? "Google API Capacity Spike (Auto-Retrying)"
-                            : "Gemini Live Extraction"}
+                            ? "API Capacity Spike (Auto-Retrying)"
+                            : "Cambridge Digitizing Console"}
                         </span>
-                        <span className="px-2 py-0.2 bg-white border border-current rounded-full text-[10px] font-black">
+                        <span className="px-2 py-0.5 bg-white border-2 border-[#201e1d] rounded-full text-[11px] font-mono font-black shadow-[1.5px_1.5px_0_#201e1d] text-[#201e1d]">
                           {extractionProgress.percent}%
                         </span>
                       </div>
-                      <h4 className="font-heading text-sm sm:text-base font-black">
+                      <h4 className="font-adminHeading text-sm sm:text-base font-bold text-[#201e1d] truncate mt-0.5">
                         {extractionProgress.currentBatch || "Streaming Cambridge questions..."}
                       </h4>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                    <div className="w-48 bg-white border border-current rounded-full h-3 overflow-hidden hidden sm:block">
+                    <div className="flex-1 md:w-56 bg-white border-2 border-[#201e1d] rounded-full h-4 overflow-hidden p-0.5 shadow-inner">
                       <div
-                        className={`h-full transition-all duration-300 ${
-                          isRetrying ? "bg-[#d97706]" : "bg-[#4f46e5]"
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          isRetrying
+                            ? "bg-gradient-to-r from-[#d97706] to-[#f59e0b]"
+                            : "bg-gradient-to-r from-[#4f46e5] to-[#c67139]"
                         }`}
-                        style={{ width: `${extractionProgress.percent}%` }}
+                        style={{ width: `${Math.max(extractionProgress.percent, 3)}%` }}
                       />
                     </div>
                     <button
                       type="button"
                       onClick={cancelExtraction}
-                      className="px-3 py-1.5 bg-white hover:bg-rose-100 border border-current rounded-full text-xs font-bold text-[#b91c1c] active:translate-y-0.5 cursor-pointer shadow-xs transition-colors"
+                      className="px-3.5 py-1.5 bg-white hover:bg-[#fee2e2] border-2 border-[#201e1d] rounded-full text-xs font-adminHeading font-bold text-[#b91c1c] active:translate-y-0.5 active:shadow-none cursor-pointer shadow-[2px_2px_0_#201e1d] transition-colors flex items-center gap-1 shrink-0"
                     >
-                      Cancel Extraction
+                      <X className="w-3.5 h-3.5" />
+                      <span>Cancel</span>
                     </button>
                   </div>
                 </div>
@@ -513,26 +525,29 @@ export default function IngestionHub({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ type: "tween", duration: 0.2 }}
-                className="py-2.5 px-4 border-2 rounded-2xl font-body font-semibold text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[2px_2px_0_#b91c1c] bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]"
+                className="py-3 px-4 border-2 border-[#b91c1c] rounded-2xl font-body font-semibold text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[3px_3px_0_#201e1d] bg-[#fff5f5] text-[#b91c1c]"
               >
                 <div className="flex items-center gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-[#b91c1c] shrink-0" />
-                  <span className="whitespace-pre-line">{extractionError}</span>
+                  <div className="w-7 h-7 rounded-lg bg-[#fee2e2] border border-[#b91c1c] flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-4 h-4 text-[#b91c1c]" />
+                  </div>
+                  <span className="whitespace-pre-line text-[#991b1b] font-medium leading-relaxed">{extractionError}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   {questions.length > 0 && questions.length < 40 && (
                     <button
                       type="button"
                       onClick={() => resumeExtraction()}
-                      className="px-3 py-1 rounded-full bg-[#c67139] text-[#f9f4ed] border border-[#201e1d] hover:bg-[#b2622d] font-adminHeading font-bold text-xs active:translate-y-0.5 shadow-xs transition-colors cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full bg-[#c67139] hover:bg-[#b2622d] text-[#f9f4ed] border-2 border-[#201e1d] font-adminHeading font-bold text-xs active:translate-y-0.5 active:shadow-none shadow-[2px_2px_0_#201e1d] transition-colors cursor-pointer flex items-center gap-1.5"
                     >
-                      Resume Extraction (from Q{Math.max(...questions.map((q) => q.question_number || 0)) + 1})
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Resume Extraction (from Q{Math.max(...questions.map((q) => q.question_number || 0)) + 1})</span>
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => setError(null)}
-                    className="p-1 rounded-full hover:bg-black/10 transition-colors cursor-pointer"
+                    className="p-1 rounded-full border border-[#b91c1c] hover:bg-[#fee2e2] transition-colors cursor-pointer text-[#b91c1c]"
                     title="Dismiss error"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -546,12 +561,12 @@ export default function IngestionHub({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ type: "tween", duration: 0.2 }}
-                className={`py-2 px-3.5 border-2 rounded-full font-body font-semibold text-xs flex items-center justify-between gap-3 shadow-[1.5px_1.5px_0_#201e1d] self-start max-w-full ${
+                className={`py-2 px-3.5 border-2 border-[#201e1d] rounded-full font-body font-semibold text-xs flex items-center justify-between gap-3 shadow-[2px_2px_0_#201e1d] self-start max-w-full ${
                   publishStatus === "validating" || publishStatus === "publishing"
-                    ? "bg-[#ffe1d0] text-[#c67139] border-[#c67139]"
+                    ? "bg-[#ffe1d0] text-[#c67139]"
                     : publishStatus === "success"
-                    ? "bg-[#f0fae1] text-[#065f46] border-[#065f46]"
-                    : "bg-[#fee2e2] text-[#b91c1c] border-[#b91c1c]"
+                    ? "bg-[#d1fae5] text-[#065f46]"
+                    : "bg-[#fee2e2] text-[#b91c1c]"
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
@@ -573,7 +588,7 @@ export default function IngestionHub({
                           window.location.href = "/admin?tab=bank";
                         }
                       }}
-                      className="px-3 py-1 rounded-full bg-[#065f46] hover:bg-[#044e39] text-[#f9f4ed] border border-[#201e1d] font-adminHeading font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                      className="px-3 py-1 rounded-full bg-[#065f46] hover:bg-[#044e39] text-[#f9f4ed] border-2 border-[#201e1d] font-adminHeading font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer shadow-[1.5px_1.5px_0_#201e1d] active:translate-y-0.5 active:shadow-none"
                     >
                       <span>View in Question Bank →</span>
                     </button>
@@ -596,7 +611,6 @@ export default function IngestionHub({
       >
         {mode === "setup" ? (
           <div>
-            {setupView === "new" && <div className="mb-4">{studioTabs}</div>}
             <div role="tabpanel" id="studio-tabpanel" aria-labelledby={`studio-tab-${setupView}`}>
             {setupView === "history" ? (
               <IngestionHistoryHub
@@ -613,6 +627,7 @@ export default function IngestionHub({
             ) : (
           /* Step 1: Cambridge Paper Setup & PDF Ingestion Wizard */
           <IngestionSetupWizard
+            headerStart={studioTabs}
             onStartExtraction={handleStartExtraction}
             onResumeExtraction={resumeExtraction}
             onUploadJson={handleFileUpload}

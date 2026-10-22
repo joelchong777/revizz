@@ -4,6 +4,7 @@ import { authFetch } from '../../lib/authFetch';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Calendar,
+  Clock,
   FileText,
   CheckCircle2,
   AlertTriangle,
@@ -525,16 +526,18 @@ export default function IngestionHistoryHub({
   }, [activeExpandedPaper]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* HEADER ROW */}
-      <div className="flex flex-wrap items-center gap-3">
-        {headerStart && <div className="w-full sm:w-auto max-w-full">{headerStart}</div>}
-        <h2 className="flex-1 min-w-0 text-lg font-black font-heading tracking-tight text-[#201e1d]">
-          Ingestion history
-          <span className="ml-2 text-xs font-mono font-bold text-[#645c50]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#201e1d]/15 pb-2.5 sm:pb-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap min-w-0">
+          {headerStart && <div className="shrink-0">{headerStart}</div>}
+          <h2 className="text-base sm:text-lg font-black font-adminHeading tracking-tight text-[#201e1d] whitespace-nowrap" data-title="Ingestion history">
+            Ingestion History
+          </h2>
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#f0eade] border border-[#201e1d] text-[#645c50] rounded-full text-[11px] font-mono font-bold shadow-[1px_1px_0_#201e1d]">
             {papers.length} {papers.length === 1 ? 'paper' : 'papers'}
           </span>
-        </h2>
+        </div>
         <button
           type="button"
           onClick={() => {
@@ -542,7 +545,7 @@ export default function IngestionHistoryHub({
             refetchLiveQuestions();
           }}
           disabled={isRefreshing || loading}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f5ead8] hover:bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] transition-colors disabled:opacity-50 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#ffe1d0] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
           title="Refresh with latest disk & cloud state"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -560,15 +563,15 @@ export default function IngestionHistoryHub({
         ].map((s) => (
           <div
             key={s.label}
-            className="px-3.5 py-2.5 min-w-0 border-[#201e1d]/20 border-r [&:nth-child(2)]:border-r-0 sm:[&:nth-child(2)]:border-r [&:nth-child(4)]:border-r-0 [&:nth-child(-n+2)]:border-b sm:[&:nth-child(-n+2)]:border-b-0"
+            className="px-3 py-2 min-w-0 border-[#201e1d]/20 border-r [&:nth-child(2)]:border-r-0 sm:[&:nth-child(2)]:border-r [&:nth-child(4)]:border-r-0 [&:nth-child(-n+2)]:border-b sm:[&:nth-child(-n+2)]:border-b-0"
           >
             <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#645c50]">{s.label}</div>
             <div
-              className={`font-black font-heading text-[#201e1d] ${s.isText ? 'text-sm leading-snug pt-1 break-words' : 'text-lg leading-tight'}`}
+              className={`font-black font-adminHeading text-[#201e1d] ${s.isText ? 'text-xs sm:text-sm leading-snug pt-0.5 break-words truncate' : 'text-base sm:text-lg leading-tight'}`}
             >
               {s.value}
             </div>
-            <div className="text-[11px] font-medium text-[#645c50]">{s.sub}</div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-[#645c50] truncate">{s.sub}</div>
           </div>
         ))}
       </div>
@@ -583,7 +586,7 @@ export default function IngestionHistoryHub({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search paper, subject, session or topic..."
-            className="w-full pl-9 pr-8 py-2 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-medium text-[#201e1d] placeholder:text-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d]"
+            className="w-full pl-9 pr-8 py-1.5 bg-white border-2 border-[#201e1d] rounded-xl text-xs font-medium text-[#201e1d] placeholder:text-[#8c8273] focus:outline-none focus:ring-2 focus:ring-[#201e1d] shadow-[1.5px_1.5px_0_#201e1d]"
           />
           {searchQuery && (
             <button
@@ -598,7 +601,7 @@ export default function IngestionHistoryHub({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex flex-wrap border-2 border-[#201e1d] rounded-xl overflow-hidden bg-white" role="group" aria-label="Status filter">
+          <div className="inline-flex flex-wrap border-2 border-[#201e1d] rounded-xl overflow-hidden bg-white shadow-[1.5px_1.5px_0_#201e1d]" role="group" aria-label="Status filter">
             {(
               [
                 { key: 'all', label: 'All', count: statusCounts.all },
@@ -615,11 +618,11 @@ export default function IngestionHistoryHub({
                   onClick={() => setStatusFilter(tab.key)}
                   aria-pressed={isActive}
                   className={`px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors cursor-pointer border-r border-[#201e1d]/20 last:border-r-0 ${
-                    isActive ? 'bg-[#201e1d] text-white font-bold' : 'bg-white text-[#474238] hover:bg-[#f5ead8] font-medium'
+                    isActive ? 'bg-[#201e1d] text-white font-bold shadow-xs' : 'bg-white text-[#474238] hover:bg-[#f5ead8] font-medium'
                   }`}
                 >
                   {tab.label}
-                  <span className={`ml-1 text-[10px] font-mono ${isActive ? 'text-white/70' : 'text-[#645c50]'}`}>{tab.count}</span>
+                  <span className={`ml-1 text-[10px] font-mono ${isActive ? 'text-white/75' : 'text-[#645c50]'}`}>{tab.count}</span>
                 </button>
               );
             })}
@@ -630,7 +633,7 @@ export default function IngestionHistoryHub({
               value={subjectFilter}
               onChange={(e) => setSubjectFilter(e.target.value)}
               aria-label="Subject filter"
-              className="appearance-none bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer max-w-[180px]"
+              className="appearance-none bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer max-w-[180px] shadow-[1.5px_1.5px_0_#201e1d]"
             >
               <option value="all">All subjects ({papers.length})</option>
               {uniqueSubjects.map((sub) => (
@@ -647,7 +650,7 @@ export default function IngestionHistoryHub({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
               aria-label="Sort papers"
-              className="appearance-none bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer"
+              className="appearance-none bg-white border-2 border-[#201e1d] rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#201e1d] cursor-pointer shadow-[1.5px_1.5px_0_#201e1d]"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
@@ -728,24 +731,24 @@ export default function IngestionHistoryHub({
                 }`}
               >
                 {/* PAPER ROW SUMMARY BAR */}
-                <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                      <h3 className="text-base font-black font-heading text-[#201e1d] tracking-tight lg:whitespace-nowrap">
+                      <h3 className="text-sm sm:text-base font-black font-adminHeading text-[#201e1d] tracking-tight lg:whitespace-nowrap">
                         {seriesFormatted} {yearStr} · Paper {paperCodeStr}
                       </h3>
                       {paper.is_published ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d]/40 font-mono text-[10px] font-bold whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ccdbb2] text-[#201e1d] border border-[#201e1d]/40 font-mono text-[10px] font-bold whitespace-nowrap shadow-[1px_1px_0_#201e1d]">
                           <CheckCircle2 className="w-3 h-3 text-emerald-700" />
                           PUBLISHED LIVE
                         </span>
                       ) : paper.is_archived ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-200 text-[#474238] border border-[#201e1d]/30 font-mono text-[10px] font-bold whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-200 text-[#474238] border border-[#201e1d]/30 font-mono text-[10px] font-bold whitespace-nowrap shadow-[1px_1px_0_#201e1d]">
                           <Archive className="w-3 h-3 text-neutral-600" />
                           ARCHIVED
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fde68a] text-[#201e1d] border border-[#201e1d]/40 font-mono text-[10px] font-bold whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fde68a] text-[#201e1d] border border-[#201e1d]/40 font-mono text-[10px] font-bold whitespace-nowrap shadow-[1px_1px_0_#201e1d]">
                           <AlertTriangle className="w-3 h-3 text-amber-700" />
                           STAGED REVIEW
                         </span>
@@ -756,11 +759,19 @@ export default function IngestionHistoryHub({
                       {sCode} · {sName} · {paper.source_qp_filename || `${paper.id}.json`}{yearStr ? ` · ${yearStr}` : ''}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] font-bold text-[#201e1d]">
-                      <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3 text-[#645c50]" />{questionsCount} Qs</span>
-                      <span className="inline-flex items-center gap-1"><ImageIcon className="w-3 h-3 text-[#645c50]" />{diagramsCount} diagrams</span>
-                      <span className="inline-flex items-center gap-1"><BookOpen className="w-3 h-3 text-[#645c50]" />{topicsCount} topics</span>
-                      <span className="font-medium text-[#645c50]" title={timeStr}>{relTime}</span>
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-mono text-[11px] font-bold text-[#201e1d]">
+                      <span className="inline-flex items-center gap-1 bg-[#f9f4ed] border border-[#201e1d]/15 rounded-md px-2 py-0.5">
+                        <FileText className="w-3 h-3 text-[#645c50]" />{questionsCount} Qs
+                      </span>
+                      <span className="inline-flex items-center gap-1 bg-[#f9f4ed] border border-[#201e1d]/15 rounded-md px-2 py-0.5">
+                        <ImageIcon className="w-3 h-3 text-[#645c50]" />{diagramsCount} diagrams
+                      </span>
+                      <span className="inline-flex items-center gap-1 bg-[#f9f4ed] border border-[#201e1d]/15 rounded-md px-2 py-0.5">
+                        <BookOpen className="w-3 h-3 text-[#645c50]" />{topicsCount} topics
+                      </span>
+                      <span className="inline-flex items-center gap-1 bg-[#f9f4ed] border border-[#201e1d]/15 rounded-md px-2 py-0.5 font-medium text-[#645c50]" title={timeStr}>
+                        <Clock className="w-3 h-3 text-[#645c50]" />{relTime}
+                      </span>
                     </div>
                   </div>
 
@@ -768,7 +779,7 @@ export default function IngestionHistoryHub({
                     <button
                       type="button"
                       onClick={() => handleOpenInStudio(paper.id)}
-                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#201e1d] hover:bg-[#3a3735] border-2 border-[#201e1d] text-xs font-bold text-white transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#201e1d] hover:bg-[#3a3735] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none text-xs font-bold text-white transition-all cursor-pointer"
                       title="Open this paper directly in Ingestion Studio"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -780,7 +791,7 @@ export default function IngestionHistoryHub({
                       data-testid="inspect-ingest-btn"
                       onClick={() => handleToggleExpand(paper.id)}
                       aria-expanded={isExpanded}
-                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#f5ead8] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#f5ead8] border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none text-xs font-bold text-[#201e1d] transition-all cursor-pointer"
                     >
                       <span>Inspect</span>
                       <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -791,7 +802,7 @@ export default function IngestionHistoryHub({
                         type="button"
                         onClick={() => handleDeletePaper(paper.id)}
                         disabled={deletingPaperId === paper.id}
-                        className="inline-flex items-center justify-center p-2 rounded-xl bg-white hover:bg-red-50 border-2 border-[#201e1d]/30 hover:border-red-600 text-red-600 hover:text-red-700 transition-colors cursor-pointer disabled:opacity-50"
+                        className="inline-flex items-center justify-center p-1.5 rounded-xl bg-white hover:bg-red-50 border-2 border-[#201e1d] shadow-[2px_2px_0_#201e1d] active:translate-y-0.5 active:shadow-none text-red-600 hover:text-red-700 transition-all cursor-pointer disabled:opacity-50"
                         title="Delete this paper from staging"
                         aria-label={`Delete paper ${paper.id}`}
                       >
