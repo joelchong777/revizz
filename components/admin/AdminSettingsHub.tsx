@@ -58,13 +58,13 @@ interface EducatorSeat {
   status: 'Active' | 'Invited';
 }
 
-const TABS: { id: SettingsSubTab; label: string; icon: React.ElementType; badge: string }[] = [
-  { id: 'school', label: 'School & Licences', icon: Building2, badge: 'Cohorts' },
-  { id: 'system', label: 'System & Telemetry', icon: Activity, badge: 'Online' },
-  { id: 'ingestion', label: 'Ingestion & AI Engine', icon: Sparkles, badge: 'v2.5 Flash' },
-  { id: 'gameplay', label: 'Curriculum & Quiz Rules', icon: Sliders, badge: '2-Try Active' },
-  { id: 'auth', label: 'Auth & Security', icon: ShieldCheck, badge: 'Secured' },
-  { id: 'portal-menu', label: 'Portal Menu Manager', icon: Menu, badge: 'Nav Editor' },
+const TABS: { id: SettingsSubTab; label: string; icon: React.ElementType }[] = [
+  { id: 'school', label: 'School & Licences', icon: Building2 },
+  { id: 'system', label: 'System & Telemetry', icon: Activity },
+  { id: 'ingestion', label: 'Ingestion & AI Engine', icon: Sparkles },
+  { id: 'gameplay', label: 'Curriculum & Quiz Rules', icon: Sliders },
+  { id: 'auth', label: 'Auth & Security', icon: ShieldCheck },
+  { id: 'portal-menu', label: 'Portal Menu Manager', icon: Menu },
 ];
 
 export default function AdminSettingsHub({
@@ -371,24 +371,15 @@ export default function AdminSettingsHub({
                     tabIndex={isActive ? 0 : -1}
                     onClick={() => handleTabChange(tab.id)}
                     onKeyDown={(e) => handleTabKeyDown(e, index)}
-                    className={`snap-start shrink-0 lg:shrink min-w-[10.5rem] lg:min-w-0 px-3 py-2 rounded-xl border-2 motion-safe:transition-colors flex flex-col items-start gap-1 text-left cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] ${
+                    className={`snap-start shrink-0 lg:shrink min-w-[10.5rem] lg:min-w-0 px-3 py-2.5 rounded-xl border-2 motion-safe:transition-colors flex items-center gap-2 text-left cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] ${
                       isActive
                         ? 'bg-[#ffe1d0] text-[#201e1d] border-[#201e1d] shadow-offset-2'
                         : 'bg-transparent text-[#645c50] border-[#201e1d]/20 hover:border-[#201e1d] hover:text-[#201e1d] hover:bg-[#eee7db]'
                     }`}
                   >
-                    <span className="flex items-start gap-2 min-w-0 w-full">
-                      <Icon className="w-4 h-4 shrink-0 mt-px" aria-hidden="true" />
-                      <span className="text-xs font-heading font-black leading-tight min-w-0 break-words">
-                        {tab.label}
-                      </span>
-                    </span>
-                    <span
-                      className={`block w-full truncate text-[10px] font-mono font-bold uppercase tracking-wide ${
-                        isActive ? 'text-[#201e1d]' : 'text-[#645c50]/80'
-                      }`}
-                    >
-                      {tab.badge}
+                    <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span className="text-xs font-heading font-black leading-tight min-w-0 break-words">
+                      {tab.label}
                     </span>
                   </button>
                 );
