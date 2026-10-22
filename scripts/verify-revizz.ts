@@ -4768,6 +4768,72 @@ async function runSuite25() {
   });
 }
 
+async function runSuite26() {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (f: string) => fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  // --- quiz answer latency ---
+  await testAsync('Quiz answer latency: vercel.json pins region sin1', async () => {
+    const cfg = JSON.parse(read('vercel.json'));
+    assert(Array.isArray(cfg.regions) && cfg.regions.length === 1 && cfg.regions[0] === 'sin1', 'regions is ["sin1"]');
+  });
+
+  await testAsync('Quiz answer latency: answer route uses getCallerUserId and parallel phases', async () => {
+    const src = strip(read('app/api/quiz/answer/route.ts'));
+    assert(!/getCaller\s*\(/.test(src), 'route no longer calls getCaller(');
+    assert(/getCallerUserId\s*\(/.test(src), 'route calls getCallerUserId(');
+    const n = (src.match(/Promise\.all\s*\(/g) || []).length;
+    assert(n >= 3, `Promise.all used at least 3 times (found ${n})`);
+    assert(/total_xp/.test(src) && /current_streak/.test(src) && /scoring/.test(src), 'scoring response fields still present');
+    assert(/xpCooldownActive/.test(src), 'XP cooldown still applied');
+  });
+
+  await testAsync('Quiz answer latency: getCallerUserId exists, getUser only, never selects role', async () => {
+    const src = strip(read('lib/apiAuth.ts'));
+    const i = src.indexOf('export async function getCallerUserId');
+    assert(i > -1, 'getCallerUserId exported');
+    const rest = src.slice(i + 10);
+    const j = rest.search(/\nexport /);
+    const body = j === -1 ? rest : rest.slice(0, j);
+    assert(/getUser\s*\(/.test(body), 'uses auth.getUser');
+    assert(!/\.from\s*\(/.test(body), 'does no table query');
+    assert(!/['"`]role['"`]|select\([^)]*role/.test(body), 'never selects role');
+    assert(/export async function getCaller\b/.test(src), 'getCaller still exported for other routes');
+  });
+
+  await testAsync('Quiz answer latency: nextQuestion give-up is not awaited', async () => {
+    const src = strip(read('hooks/useQuizGame.ts'));
+    assert(!/await\s+submitAnswer\s*\(\s*\{[^}]*give-up/.test(src), 'no `await submitAnswer` with give-up');
+    const k = src.indexOf("'give-up'");
+    assert(k > -1, 'give-up event still sent');
+    const before = src.slice(Math.max(0, k - 200), k);
+    assert(!/await\s+submitAnswer[\s\S]*$/.test(before), 'give-up submitAnswer call is not awaited');
+    assert(/missedDetails/.test(src) && /missedQuestions/.test(src) && /reviewPile/i.test(src), 'revealed question still patched into missed lists and pile');
+  });
+
+  await testAsync('Quiz answer latency: pendingOptionId flows hook -> page -> QuestionCard', async () => {
+    const hook = read('hooks/useQuizGame.ts');
+    const ret = hook.slice(hook.lastIndexOf('return {'));
+    assert(/pendingOptionId/.test(ret), 'hook returns pendingOptionId');
+    assert(/pendingOptionId/.test(read('app/page.tsx')), 'page.tsx passes pendingOptionId');
+    assert(/pendingOptionId/.test(read('components/QuestionCard.tsx')), 'QuestionCard consumes pendingOptionId');
+  });
+
+  await testAsync('Quiz answer latency: QuestionCard keeps boundary (S12), aria-busy, radiogroup, a11y', async () => {
+    const src = read('components/QuestionCard.tsx');
+    assert(/MarkdownErrorBoundary/.test(src), 'MarkdownErrorBoundary referenced');
+    assert(/aria-busy/.test(src), 'aria-busy present');
+    assert(/role="radiogroup"/.test(src), 'radiogroup retained');
+    assert(/role="radio"/.test(src), 'radio buttons retained');
+    assert(/aria-live="polite"/.test(src), 'live region retained');
+    // Markdown rendering must sit inside a boundary: every boundary open count >= 1 and Markdown used
+    const mdUses = (src.match(/<(ReactMarkdown|Markdown\w*|MemoMarkdown\w*)\b/g) || []).length;
+    assert(mdUses >= 1, 'markdown component rendered');
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
@@ -4776,6 +4842,7 @@ async function main() {
   await runSuite23();
   await runSuite24();
   await runSuite25();
+  await runSuite26();
 
   // Summary Output
   const duration = ((Date.now() - startMs) / 1000).toFixed(2);

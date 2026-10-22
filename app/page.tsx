@@ -437,6 +437,7 @@ export default function HomePage() {
           totalQuestions={game.totalQuestions}
           status={game.status}
           isChecking={game.isChecking}
+          pendingOptionId={game.pendingOptionId}
           timeLeft={game.timeLeft}
           isTimed={game.config?.isTimed || false}
           onAnswer={game.handleAnswer}

@@ -34,7 +34,27 @@ interface QuestionCardProps {
   totalXP: number;
   subject?: string;
   isChecking?: boolean;
+  pendingOptionId?: string | null;
 }
+
+// Memoised so the 1s timer tick and status changes don't re-run ReactMarkdown/KaTeX.
+const MemoMarkdown = React.memo(function MemoMarkdown({
+  text,
+  withTableComponents = false,
+}: {
+  text: string;
+  withTableComponents?: boolean;
+}) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath, remarkGfm]}
+      rehypePlugins={safeRehypePlugins}
+      components={withTableComponents ? cambridgeTableComponents : undefined}
+    >
+      {text}
+    </ReactMarkdown>
+  );
+});
 
 export function QuestionCard({
   question,
@@ -53,6 +73,7 @@ export function QuestionCard({
   totalXP,
   subject,
   isChecking = false,
+  pendingOptionId = null,
 }: QuestionCardProps) {
   const shouldReduceMotion = useReducedMotion();
   const sanitizedStem = useMemo(() => sanitizeKaTeX(question.stem_markdown || ''), [question.stem_markdown]);
@@ -426,13 +447,7 @@ export function QuestionCard({
 
         <div className="text-[17px] leading-relaxed font-semibold text-text break-words overflow-hidden min-h-[48px]">
           <MarkdownErrorBoundary fallbackText={question.stem_markdown}>
-            <ReactMarkdown
-              remarkPlugins={[remarkMath, remarkGfm]}
-              rehypePlugins={safeRehypePlugins}
-              components={cambridgeTableComponents}
-            >
-              {sanitizedStem}
-            </ReactMarkdown>
+            <MemoMarkdown text={sanitizedStem} withTableComponents />
           </MarkdownErrorBoundary>
         </div>
 
@@ -491,7 +506,7 @@ export function QuestionCard({
       </div>
 
       {/* Fifth Row: Options List (Tactile Rounded-2xl Cards) */}
-      <div className="flex flex-col gap-3" role="radiogroup" aria-label="Answer options">
+      <div className="flex flex-col gap-3" role="radiogroup" aria-label="Answer options" aria-busy={isChecking}>
         {question.options.map((opt, i) => {
           const isCorrect = isRevealed && opt.id === question.correct_option_id;
           const isPicked = selectedOptionId === opt.id;
@@ -505,7 +520,11 @@ export function QuestionCard({
           let cardStyles = 'bg-neutral-100 shadow-offset-3 hover:bg-neutral-50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none cursor-pointer';
           let chipBg = 'bg-white text-text';
 
-          if (showCheck) {
+          const isPending = isChecking && pendingOptionId === opt.id && !isResolved;
+
+          if (isPending) {
+            cardStyles = 'bg-neutral-200 shadow-none translate-x-[2px] translate-y-[2px] cursor-wait';
+          } else if (showCheck) {
             if (isCorrectPick) {
               cardStyles = 'bg-accent-2-300 ring-4 ring-accent-2-500/40 shadow-none translate-x-[2px] translate-y-[2px] font-black text-text cursor-default';
             } else {
@@ -551,12 +570,7 @@ export function QuestionCard({
               {/* Option Text Markdown */}
               <span className="flex-1 text-sm sm:text-base font-semibold text-text break-words min-w-0 pt-0.5 leading-snug">
                 <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
-                  <ReactMarkdown
-                    remarkPlugins={[remarkMath, remarkGfm]}
-                    rehypePlugins={safeRehypePlugins}
-                  >
-                    {sanitizeKaTeX(formatTableOptionText(opt.text_markdown))}
-                  </ReactMarkdown>
+                  <MemoMarkdown text={sanitizeKaTeX(formatTableOptionText(opt.text_markdown))} />
                 </MarkdownErrorBoundary>
               </span>
 
@@ -611,6 +625,11 @@ export function QuestionCard({
                     <path d="m15 9-6 6" />
                     <path d="m9 9 6 6" />
                   </svg>
+                ) : isPending ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-text/70" data-testid="checking-indicator">
+                    <span aria-hidden="true" className="w-4 h-4 rounded-full border-2 border-text border-t-transparent animate-spin motion-reduce:animate-none" />
+                    <span className="hidden sm:inline">Checking…</span>
+                  </span>
                 ) : !isResolved ? (
                   <span className="hidden sm:inline-flex px-2 py-0.5 rounded-lg border-[1.5px] border-neutral-400 text-neutral-600 text-xs font-bold font-mono">
                     {i + 1}

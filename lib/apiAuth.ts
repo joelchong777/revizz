@@ -63,6 +63,21 @@ export function getServiceClient(): SupabaseClient {
   return createClient(getSupabaseUrl(), getAnonKey());
 }
 
+/** Identity only: one auth round trip, no profiles.role lookup. Never throws. */
+export async function getCallerUserId(req: Request): Promise<string | null> {
+  try {
+    if (isDevBypassEnabled()) return 'dev-bypass';
+    const token = parseBearerToken(req.headers.get('authorization'));
+    if (!token) return null;
+    const anon = createClient(getSupabaseUrl(), getAnonKey());
+    const { data, error } = await anon.auth.getUser(token);
+    if (error || !data?.user) return null;
+    return data.user.id;
+  } catch {
+    return null;
+  }
+}
+
 export async function getCaller(req: Request): Promise<Caller | null> {
   try {
     if (isDevBypassEnabled()) {

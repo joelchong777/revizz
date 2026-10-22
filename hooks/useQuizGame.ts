@@ -107,7 +107,10 @@ export function useQuizGame() {
   const hasQueuedMistakeRef = useRef(false);
   const hasRecordedRoundRef = useRef(false);
   const isCheckingRef = useRef(false);
+  // In-flight background give-up; later submits wait on it so the server scores events in order.
+  const pendingGiveUpRef = useRef<Promise<void> | null>(null);
   const [isChecking, setIsChecking] = useState(false);
+  const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
 
   const startRound = (newConfig: QuizRoundConfig, initialQuestions: Question[]) => {
     setConfig(newConfig);
@@ -186,6 +189,22 @@ export function useQuizGame() {
     });
   }, []);
 
+  // Swap in the server-revealed copy of a question everywhere recordMissed's dedupe kept a stale one.
+  const replaceMissedCopy = useCallback((q: Question) => {
+    setMissedDetails(prev => prev.map(item => (item.question.id === q.id ? { ...item, question: q } : item)));
+    setMissedQuestions(prev => prev.map(item => (item.id === q.id ? q : item)));
+    setReviewPile(prev => prev.map(item => (item.id === q.id ? q : item)));
+  }, []);
+
+  useEffect(() => {
+    const next = questions[currentQuestionIndex + 1];
+    const url = next?.diagram?.image_url ?? next?.image_url;
+    if (url && typeof window !== 'undefined') {
+      const img = new Image();
+      img.src = url;
+    }
+  }, [questions, currentQuestionIndex]);
+
   const handleTimeout = useCallback(() => {
     if (isCheckingRef.current) return;
     const currentQ = questions[currentQuestionIndex];
@@ -209,6 +228,7 @@ export function useQuizGame() {
 
     (async () => {
       let recorded = currentQ;
+      await pendingGiveUpRef.current;
       try {
         const resp = await submitAnswer({
           questionId: currentQ.id,
@@ -291,6 +311,8 @@ export function useQuizGame() {
 
     isCheckingRef.current = true;
     setIsChecking(true);
+    setPendingOptionId(optionId);
+    await pendingGiveUpRef.current;
     let resp: QuizAnswerResponse;
     try {
       resp = await submitAnswer({
@@ -305,6 +327,7 @@ export function useQuizGame() {
       console.error('Failed to submit answer:', e);
       isCheckingRef.current = false;
       setIsChecking(false);
+      setPendingOptionId(null);
       return;
     }
 
@@ -369,6 +392,7 @@ export function useQuizGame() {
     } finally {
       isCheckingRef.current = false;
       setIsChecking(false);
+      setPendingOptionId(null);
     }
   };
 
@@ -382,28 +406,27 @@ export function useQuizGame() {
       if (currentQ) {
         setWrongCount(prev => prev + 1);
         effectiveWrongCount = wrongCount + 1;
-        isCheckingRef.current = true;
-        setIsChecking(true);
-        let recorded = currentQ;
-        try {
-          const resp = await submitAnswer({
-            questionId: currentQ.id,
-            event: 'give-up',
-            attempt: 2,
-            timeSpentMs: Date.now() - questionStartTime,
-          });
-          recorded = revealInState(currentQ, resp);
-          if (resp.scoring) {
-            setCurrentStreak(resp.scoring.streak);
-            applyServerScoring(resp.scoring);
-          }
-        } catch (e) {
-          console.error('Failed to record give-up:', e);
-        } finally {
-          isCheckingRef.current = false;
-          setIsChecking(false);
-        }
+        const recorded = currentQ;
         recordMissed(recorded, 'wrong', currentQuestionIndex + 1);
+        const giveUpTimeMs = Date.now() - questionStartTime;
+        // Fire and forget: the next question is tappable at once; the reveal lands when the server answers.
+        pendingGiveUpRef.current = submitAnswer({
+          questionId: currentQ.id,
+          event: 'give-up',
+          attempt: 2,
+          timeSpentMs: giveUpTimeMs,
+        })
+          .then(resp => {
+            const revealed = revealInState(currentQ, resp);
+            if (revealed !== currentQ) replaceMissedCopy(revealed);
+            if (resp.scoring) {
+              setCurrentStreak(resp.scoring.streak);
+              applyServerScoring(resp.scoring);
+            }
+          })
+          .catch(e => {
+            console.error('Failed to record give-up:', e);
+          });
       }
     }
 
@@ -467,6 +490,7 @@ export function useQuizGame() {
     totalQuestions: questions.length,
     status,
     isChecking,
+    pendingOptionId,
     timeLeft,
     totalXP,
     currentStreak,
