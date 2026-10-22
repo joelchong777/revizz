@@ -544,7 +544,7 @@ function PortalContent() {
                   </div>
                   <div className="divide-y divide-[#eee7db]">
                     {leaderboard.map((student, idx) => (
-                      <div key={student.id || idx} className="py-2.5 flex items-center justify-between text-sm">
+                      <div key={student.rank} className="py-2.5 flex items-center justify-between text-sm">
                         <div className="flex items-center gap-3">
                           <span className="w-6 text-center font-black text-xs text-[#645c50]">#{student.rank ?? idx + 1}</span>
                           <span className="font-bold text-[#201e1d]">{student.display_name}</span>

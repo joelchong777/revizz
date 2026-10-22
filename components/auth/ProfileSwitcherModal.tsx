@@ -255,7 +255,7 @@ export function ProfileSwitcherModal({
   const defaultProfiles: UserProfile[] = [
     DEFAULT_DEMO_STUDENT_PROFILE,
     DEFAULT_GUEST_EDUCATOR_PROFILE,
-    DEFAULT_DEMO_ADMIN_PROFILE,
+    ...(process.env.NODE_ENV !== 'production' ? [DEFAULT_DEMO_ADMIN_PROFILE] : []),
   ];
 
   return (

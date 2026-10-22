@@ -4,8 +4,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
+import { safeRehypePlugins } from '@/lib/markdownSanitize';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { escapeCurrencyDollars } from '@/lib/ingestion/katexSanitizer';
@@ -119,7 +118,7 @@ export function RichMarkdown({
       <ReactMarkdown
         className={className}
         remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]}
+        rehypePlugins={safeRehypePlugins}
         components={mergedComponents}
       >
         {sanitizedContent}

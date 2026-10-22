@@ -299,7 +299,7 @@ export default function LeaderboardModal({
                 ) : leaderboard.length > 0 ? (
                   leaderboard.map((entry, idx) => (
                     <div
-                      key={entry.id}
+                      key={entry.rank}
                       className={`flex items-center justify-between p-3 rounded-2xl border-2 border-[#201e1d] transition-all overflow-hidden ${
                         idx === 0
                           ? 'bg-[#FEF08A] shadow-[3px_3px_0_0_#201e1d]'
@@ -307,7 +307,7 @@ export default function LeaderboardModal({
                             ? 'bg-[#F3F4F6] shadow-[2px_2px_0_0_#201e1d]'
                             : idx === 2
                               ? 'bg-[#FED7AA] shadow-[2px_2px_0_0_#201e1d]'
-                              : entry.id === userProfile?.id
+                              : entry.is_me
                                 ? 'bg-amber-50 shadow-[2px_2px_0_0_#201e1d] ring-2 ring-[#201e1d]'
                                 : 'bg-white shadow-[2px_2px_0_0_#201e1d]'
                       }`}
@@ -319,7 +319,7 @@ export default function LeaderboardModal({
                         <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d] truncate">
                           {entry.display_name} {entry.is_school_account && '🎓'}
                         </span>
-                        {entry.id === userProfile?.id && (
+                        {entry.is_me && (
                           <span className="text-[10px] font-black uppercase tracking-wider bg-[#201e1d] text-white px-2 py-0.5 rounded-md shadow-[1px_1px_0_0_#201e1d] shrink-0 whitespace-nowrap">
                             You
                           </span>

@@ -6,8 +6,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
+import { safeRehypePlugins } from '@/lib/markdownSanitize';
 import 'katex/dist/katex.min.css';
 import { Question, resolveDiagramUrl } from '@/lib/questions';
 import { formatTableOptionText } from '../lib/compilerFilters';
@@ -427,7 +426,7 @@ export function QuestionCard({
           <MarkdownErrorBoundary fallbackText={question.stem_markdown}>
             <ReactMarkdown
               remarkPlugins={[remarkMath, remarkGfm]}
-              rehypePlugins={[rehypeRaw, rehypeKatex]}
+              rehypePlugins={safeRehypePlugins}
               components={cambridgeTableComponents}
             >
               {sanitizedStem}
@@ -551,7 +550,7 @@ export function QuestionCard({
                 <MarkdownErrorBoundary fallbackText={opt.text_markdown}>
                   <ReactMarkdown
                     remarkPlugins={[remarkMath, remarkGfm]}
-                    rehypePlugins={[rehypeRaw, rehypeKatex]}
+                    rehypePlugins={safeRehypePlugins}
                   >
                     {sanitizeKaTeX(formatTableOptionText(opt.text_markdown))}
                   </ReactMarkdown>

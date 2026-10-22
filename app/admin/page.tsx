@@ -43,6 +43,7 @@ function AdminContent() {
 
   // Dev & Guest overrides
   const isDev = process.env.NODE_ENV === 'development';
+  const showDemoAdmin = process.env.NODE_ENV !== 'production';
   const [devOverride, setDevOverride] = useState(false);
   const [guestMode, setGuestMode] = useState(false);
 
@@ -224,6 +225,7 @@ function AdminContent() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
 
+            {showDemoAdmin && (
             <button
               type="button"
               onClick={() => {
@@ -235,6 +237,7 @@ function AdminContent() {
               <span>🛠️</span>
               <span>Preview as Demo App Admin</span>
             </button>
+            )}
 
             <button
               type="button"
@@ -307,6 +310,7 @@ function AdminContent() {
                 </div>
               </div>
 
+              {showDemoAdmin && (
               <button
                 type="button"
                 onClick={() => {
@@ -318,6 +322,7 @@ function AdminContent() {
               >
                 <span>🛠️</span> Enter as Demo App Admin
               </button>
+              )}
 
               <div className="pt-2 border-t-[1.5px] border-[#dcd3c4]">
                 <button
@@ -379,7 +384,7 @@ function AdminContent() {
           )}
 
           <div className="space-y-3 pt-2 border-t-2 border-[#dcd3c4]">
-            {!authError && (
+            {showDemoAdmin && !authError && (
               <button
                 type="button"
                 onClick={() => {
@@ -549,7 +554,7 @@ function AdminContent() {
               : "p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1"
           }
         >
-          {guestMode && !userProfile && (
+          {showDemoAdmin && guestMode && !userProfile && (
             <div className="mb-6 p-3 px-4 rounded-2xl bg-[#fff2eb] border-2 border-[#201e1d] shadow-offset-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-[#201e1d]">
               <div className="flex items-center gap-2">
                 <span className="text-base">🛠️</span>

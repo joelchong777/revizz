@@ -6,8 +6,7 @@ import confetti from 'canvas-confetti';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
+import { safeRehypePlugins } from '@/lib/markdownSanitize';
 import 'katex/dist/katex.min.css';
 import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import { cambridgeTableComponents } from '@/components/ui/RichMarkdown';
@@ -247,7 +246,7 @@ export function RoundSummary({
                           <MarkdownErrorBoundary fallbackText={item.question.stem_markdown}>
                             <ReactMarkdown
                               remarkPlugins={[remarkMath, remarkGfm]}
-                              rehypePlugins={[rehypeRaw, rehypeKatex]}
+                              rehypePlugins={safeRehypePlugins}
                               components={cambridgeTableComponents}
                             >
                               {sanitizeKaTeX(item.question.stem_markdown)}
@@ -260,7 +259,7 @@ export function RoundSummary({
                           <MarkdownErrorBoundary fallbackText={correctOption?.text_markdown || ''}>
                             <ReactMarkdown
                               remarkPlugins={[remarkMath, remarkGfm]}
-                              rehypePlugins={[rehypeRaw, rehypeKatex]}
+                              rehypePlugins={safeRehypePlugins}
                               components={{
                                 p: ({ node, ...props }) => <span {...props} />,
                               }}
