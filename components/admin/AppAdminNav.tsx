@@ -15,7 +15,6 @@ import {
   Sliders,
   Megaphone,
   Users,
-  ArrowRightLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,7 +28,6 @@ export interface AppAdminNavProps {
   flaggedCount?: number;
   questionCount?: number;
   questionsLoading?: boolean;
-  onOpenProfileSwitcher?: () => void;
 }
 
 export default function AppAdminNav({
@@ -42,7 +40,6 @@ export default function AppAdminNav({
   flaggedCount = 0,
   questionCount,
   questionsLoading = false,
-  onOpenProfileSwitcher,
 }: AppAdminNavProps) {
   const handleNavClick = (tabKey: string) => {
     if (onSelectTab) {
@@ -281,21 +278,8 @@ export default function AppAdminNav({
 
       {/* Footer Profile & Security Pill */}
       <div className={`pt-3 border-t-2 border-[#201e1d]/15 flex ${compact ? 'flex-col items-center justify-center gap-2' : 'items-center justify-between gap-2'}`}>
-        <div
-          onClick={onOpenProfileSwitcher}
-          className={`flex items-center gap-2 min-w-0 ${onOpenProfileSwitcher ? 'cursor-pointer group' : ''}`}
-          title={onOpenProfileSwitcher ? 'Switch Profile & Role' : undefined}
-          role={onOpenProfileSwitcher ? 'button' : undefined}
-          tabIndex={onOpenProfileSwitcher ? 0 : undefined}
-          onKeyDown={
-            onOpenProfileSwitcher
-              ? (e) => {
-                  if (e.key === 'Enter' || e.key === ' ') onOpenProfileSwitcher();
-                }
-              : undefined
-          }
-        >
-          <div className="w-7 h-7 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2 group-hover:scale-105 transition-transform">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-7 h-7 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] flex items-center justify-center font-heading font-black text-xs text-[#201e1d] shrink-0 shadow-offset-2">
             {(() => {
               const trimmed = (userDisplayName || '').trim();
               if (!trimmed) return 'AD';
@@ -308,7 +292,7 @@ export default function AppAdminNav({
           </div>
           {!compact && (
             <div className="flex flex-col min-w-0">
-              <span className="text-[11px] font-bold text-[#201e1d] truncate group-hover:text-[#c67139] transition-colors">
+              <span className="text-[11px] font-bold text-[#201e1d] truncate">
                 {userDisplayName}
               </span>
               <span className="text-[9px] font-bold text-[#645c50] truncate flex items-center gap-1">
@@ -318,22 +302,6 @@ export default function AppAdminNav({
             </div>
           )}
         </div>
-
-        {onOpenProfileSwitcher && (
-          <button
-            type="button"
-            onClick={onOpenProfileSwitcher}
-            title="Switch profile & role"
-            aria-label="Switch profile"
-            className={compact
-              ? "w-8 h-8 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center justify-center shrink-0"
-              : "px-1.5 py-1 rounded-xl bg-white hover:bg-amber-100 text-[#201e1d] border-2 border-[#201e1d] shadow-[1px_1px_0_0_#201e1d] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold shrink-0"
-            }
-          >
-            <ArrowRightLeft className="w-3 h-3 text-[#c67139] shrink-0" />
-            {!compact && <span>Switch</span>}
-          </button>
-        )}
       </div>
     </aside>
   );

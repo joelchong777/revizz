@@ -277,7 +277,6 @@ export const DEFAULT_DEMO_ADMIN_PROFILE: UserProfile = {
 };
 
 export const ACTIVE_CUSTOM_SESSION_KEY = 'revizz_active_custom_profile';
-export const CUSTOM_PROFILES_STORAGE_KEY = 'revizz_custom_test_profiles_v1';
 
 const getStorage = (): Storage | null => {
   if (typeof window !== 'undefined' && window.localStorage) {
@@ -471,91 +470,12 @@ export const clearActiveLocalSession = (): void => {
   }
 };
 
-export const getCustomTestProfiles = (): UserProfile[] => {
-  const storage = getStorage();
-  if (!storage) return [];
-  try {
-    const raw = storage.getItem(CUSTOM_PROFILES_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.warn('Failed to parse custom test profiles from storage:', e);
-    return [];
-  }
-};
-
-export const saveCustomTestProfile = (profile: UserProfile): void => {
-  const storage = getStorage();
-  if (!storage) return;
-  try {
-    const profiles = getCustomTestProfiles();
-    const existingIndex = profiles.findIndex((p) => p.id === profile.id);
-    if (existingIndex >= 0) {
-      profiles[existingIndex] = profile;
-    } else {
-      profiles.push(profile);
-    }
-    storage.setItem(CUSTOM_PROFILES_STORAGE_KEY, JSON.stringify(profiles));
-  } catch (e) {
-    console.warn('Failed to save custom test profile to storage:', e);
-  }
-};
-
-export const deleteCustomTestProfile = (id: string): void => {
-  const storage = getStorage();
-  if (!storage) return;
-  try {
-    const profiles = getCustomTestProfiles().filter((p) => p.id !== id);
-    storage.setItem(CUSTOM_PROFILES_STORAGE_KEY, JSON.stringify(profiles));
-
-    const active = getActiveLocalSession();
-    if (active && active.id === id) {
-      clearActiveLocalSession();
-    }
-  } catch (e) {
-    console.warn('Failed to delete custom test profile from storage:', e);
-  }
-};
-
-export const switchActiveProfile = (profile: UserProfile): void => {
-  if (profile.id === 'demo-student-local') {
-    signInAsDemoStudent(profile);
-  } else if (profile.id === 'guest-educator-local') {
-    signInAsGuestEducator(profile);
-  } else if (profile.id === 'demo-admin-local') {
-    signInAsDemoAdmin(profile);
-  } else {
-    setActiveLocalSession(profile);
-  }
-};
-
 export const signInAsDemoAdmin = (customProfile?: Partial<UserProfile>): UserProfile => {
   const profile: UserProfile = {
     ...DEFAULT_DEMO_ADMIN_PROFILE,
     ...customProfile,
   };
   setActiveLocalSession(profile);
-  return profile;
-};
-
-export const createAndSwitchTestProfile = (
-  data: Partial<UserProfile> & { display_name: string; role: 'student' | 'teacher' | 'admin' }
-): UserProfile => {
-  const id = data.id || `custom-test-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-  const profile: UserProfile = {
-    ...data,
-    id,
-    display_name: data.display_name.trim(),
-    email: data.email ?? `${data.display_name.toLowerCase().replace(/[^a-z0-9]/g, '.')}@test.local`,
-    is_school_account: data.is_school_account ?? (data.role !== 'student'),
-    total_xp: data.total_xp ?? 0,
-    current_streak: data.current_streak ?? 0,
-    opt_in_leaderboard: data.opt_in_leaderboard ?? false,
-    role: data.role,
-  };
-  saveCustomTestProfile(profile);
-  switchActiveProfile(profile);
   return profile;
 };
 
@@ -721,11 +641,6 @@ export const useAuth = () => {
     signInAsDemo: signInAsDemoStudent,
     signInAsGuestEducator,
     signInAsDemoAdmin,
-    switchActiveProfile,
-    getCustomTestProfiles,
-    saveCustomTestProfile,
-    deleteCustomTestProfile,
-    createAndSwitchTestProfile,
     signOut,
   };
 };

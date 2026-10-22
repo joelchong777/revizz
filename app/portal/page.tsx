@@ -4,8 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useAuth, signInWithGoogle } from '@/lib/auth';
 import { useSearchParams } from 'next/navigation';
-import { Menu, ArrowRightLeft, ChevronDown, ChevronUp, Copy, Check, ExternalLink } from 'lucide-react';
-import ProfileSwitcherModal from '@/components/auth/ProfileSwitcherModal';
+import { Menu, ChevronDown, ChevronUp, Copy, Check, ExternalLink } from 'lucide-react';
 import AdminNav from '@/components/portal/AdminNav';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
@@ -55,7 +54,6 @@ function PortalContent() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | undefined>(undefined);
   const [assignPrefill, setAssignPrefill] = useState<string | undefined>(undefined);
-  const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false);
 
   const activeLabel = NAV_LABELS[activeNav] || getPortalNavItems().find((i) => i.id === activeNav)?.label || 'Overview';
 
@@ -317,15 +315,6 @@ function PortalContent() {
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => setIsProfileSwitcherOpen(true)}
-              className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffd2b8] transition-all active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
-            >
-              <ArrowRightLeft className="w-4 h-4" />
-              <span>Switch Profile / Log In</span>
-            </button>
-
             {!userProfile ? (
               <button
                 type="button"
@@ -366,15 +355,6 @@ function PortalContent() {
             </Link>
           </div>
         </div>
-
-        <ProfileSwitcherModal
-          isOpen={isProfileSwitcherOpen}
-          onClose={() => setIsProfileSwitcherOpen(false)}
-          currentRole="teacher"
-          onProfileSwitched={(p) => {
-            /* profile switched */
-          }}
-        />
       </div>
     );
   }
@@ -779,7 +759,6 @@ function PortalContent() {
           active={activeNav}
           onSelect={handleSelectNav}
           onToggleRole={handleToggleRole}
-          onOpenProfileSwitcher={() => setIsProfileSwitcherOpen(true)}
           userDisplayName={userProfile?.display_name || 'Guest Educator'}
           isAdmin={isAdmin}
         />
@@ -802,7 +781,6 @@ function PortalContent() {
               onSelect={handleSelectNav}
               onToggleRole={handleToggleRole}
               onClose={() => setMobileNavOpen(false)}
-              onOpenProfileSwitcher={() => setIsProfileSwitcherOpen(true)}
               userDisplayName={userProfile?.display_name || 'Guest Educator'}
               isAdmin={isAdmin}
             />
@@ -833,14 +811,6 @@ function PortalContent() {
               </span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsProfileSwitcherOpen(true)}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-[#ffe1d0] rounded-xl border-2 border-[#201e1d] shadow-offset-1 text-xs font-bold hover:bg-[#ffd2b8] transition-all cursor-pointer active:translate-y-0.5 shrink-0"
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5" />
-            <span>Switch Profile</span>
-          </button>
         </header>
 
         {/* Desktop Sticky Top Header */}
@@ -854,14 +824,6 @@ function PortalContent() {
               {activeLabel}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsProfileSwitcherOpen(true)}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-[#ffe1d0] rounded-xl border-2 border-[#201e1d] shadow-offset-1 text-xs font-bold hover:bg-[#ffd2b8] transition-all cursor-pointer active:translate-y-0.5 shrink-0"
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5" />
-            <span>Switch Profile</span>
-          </button>
         </header>
 
         {/* Scrollable Main Content Area */}
@@ -1013,15 +975,6 @@ function PortalContent() {
           {renderContent()}
         </main>
       </div>
-
-      <ProfileSwitcherModal
-        isOpen={isProfileSwitcherOpen}
-        onClose={() => setIsProfileSwitcherOpen(false)}
-        currentRole="teacher"
-        onProfileSwitched={(p) => {
-          /* profile switched */
-        }}
-      />
     </div>
   );
 }

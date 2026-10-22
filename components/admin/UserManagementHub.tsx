@@ -25,7 +25,6 @@ import {
   Check,
   Sliders,
   User,
-  UserCheck,
   UserX,
   Mail,
   ExternalLink,
@@ -43,7 +42,6 @@ import {
   deleteRosterInvite,
   RosterInvite,
 } from '@/lib/roster';
-import { switchActiveProfile } from '@/lib/auth';
 import type { UserProfile } from '@/types';
 
 export type UserRole = 'student' | 'teacher' | 'admin';
@@ -1546,31 +1544,6 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                       {/* 6. Actions */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {user.status === 'active' && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const profile: UserProfile = {
-                                  id: user.id,
-                                  display_name: user.name,
-                                  email: user.email,
-                                  role: user.role,
-                                  is_school_account: user.is_school_account,
-                                  total_xp: user.total_xp,
-                                  current_streak: user.current_streak,
-                                  opt_in_leaderboard: false,
-                                };
-                                switchActiveProfile(profile);
-                                showFeedback(`Switched to active profile: ${user.name} (${user.role})`);
-                              }}
-                              className="p-1.5 rounded-lg border-2 border-[#201e1d] bg-white text-[#201e1d] hover:bg-amber-100 shadow-offset-1 transition-all cursor-pointer inline-flex items-center justify-center"
-                              title="Switch active session to this user profile"
-                              aria-label={`Switch active session to ${user.name}`}
-                            >
-                              <UserCheck className="w-3.5 h-3.5 text-[#c67139]" />
-                            </button>
-                          )}
-
                           {isPendingInvite && user.email && (
                             <>
                               {/* Dedicated Copy Invite Link button */}
