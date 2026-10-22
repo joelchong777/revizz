@@ -909,53 +909,6 @@ export function StartFlow({
         </div>
       </div>
 
-      {/* 4. Topic Mastery Card Trigger */}
-      <button
-        type="button"
-        onClick={() => {
-          playPop();
-          setIsMasteryOpen(true);
-        }}
-        className="flex items-center gap-3 p-4 rounded-2xl bg-surface border-2 border-text shadow-offset-3 cursor-pointer text-left transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:brightness-[0.98]"
-      >
-        <span className="flex flex-col gap-2 flex-1 min-w-0">
-          <span className="font-heading text-[17px] text-text leading-tight truncate">
-            Topic mastery · {currentSubject.name}
-          </span>
-          {effectiveTopics.length === 0 ? (
-            <span className="text-xs font-semibold text-neutral-600">
-              No topics available
-            </span>
-          ) : (
-            <span className="flex gap-2 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-accent-2-300 border-2 border-text font-bold text-xs text-text">
-                👑 {tierCounts.master} Master
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-accent-300 border-2 border-text font-bold text-xs text-text">
-                ⚡ {tierCounts.proficient} Proficient
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-neutral-200 border-2 border-text font-bold text-xs text-text">
-                🌱 {tierCounts.novice} Novice
-              </span>
-            </span>
-          )}
-        </span>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-text flex-shrink-0"
-        >
-          <path d="M5 12h14" />
-          <path d="m12 5 7 7-7 7" />
-        </svg>
-      </button>
-
       {/* 5. Hero CTA: START ROUND */}
       <button
         type="button"
