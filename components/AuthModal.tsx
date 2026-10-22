@@ -12,6 +12,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Mail, Lock, User, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
 
+const GOOGLE_LOGIN_ENABLED = false;
+
 export interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -218,6 +220,8 @@ export function AuthModal({
             </div>
           )}
 
+          {GOOGLE_LOGIN_ENABLED && (
+            <>
           {/* 1-Click Google OAuth Button */}
           <button
             type="button"
@@ -259,6 +263,8 @@ export function AuthModal({
               {mode === 'signin' ? 'or with Email / Gmail' : 'or register with Email'}
             </span>
           </div>
+            </>
+          )}
 
           {/* Form */}
           <form

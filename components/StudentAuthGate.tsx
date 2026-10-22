@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { signInWithGoogle, signInAsDemoStudent, isProviderNotEnabledError } from '@/lib/auth';
 import { AuthModal } from './AuthModal';
 
+const GOOGLE_LOGIN_ENABLED = false;
+
 interface StudentAuthGateProps {
   onSuccess?: () => void;
   initialEmail?: string;
@@ -158,6 +160,8 @@ export function StudentAuthGate({
             </div>
           </button>
 
+          {GOOGLE_LOGIN_ENABLED && (
+            <>
           {/* Option 2: Log In with Google (Alternative option) */}
           <button
             type="button"
@@ -197,6 +201,8 @@ export function StudentAuthGate({
               </span>
             </div>
           </button>
+            </>
+          )}
 
           {/* Option 3: Demo Mode */}
           <button
@@ -239,7 +245,7 @@ export function StudentAuthGate({
 
         {/* Clean Privacy Note */}
         <p className="text-[12px] text-neutral-600 font-medium leading-relaxed m-0">
-          Zero tracking cookies. Switch to Google anytime from your profile.
+          Zero tracking cookies.
         </p>
       </div>
 

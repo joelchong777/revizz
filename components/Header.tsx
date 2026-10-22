@@ -109,16 +109,23 @@ export function Header({
     };
   }, []);
 
+  const syncedUserIdRef = useRef<string | null>(null);
+  const syncUserId = userProfile?.id ?? null;
+  const syncIsDemo = Boolean(
+    userProfile &&
+      (userProfile.id === 'demo-student-local' ||
+        userProfile.display_name === 'Demo Student' ||
+        userProfile.id.startsWith('demo-') ||
+        !userProfile.email)
+  );
   useEffect(() => {
-    if (userProfile) {
-      syncGuestDataToUser(userProfile.id, userProfile).then((updatedProfile) => {
-        if (updatedProfile && updatedProfile.total_xp !== userProfile.total_xp) {
-          setSyncToastMessage('Guest progress saved to your account! 🎉');
-          setUserProfile(updatedProfile);
-        }
-      });
-    }
-  }, [userProfile, setUserProfile]);
+    if (!userProfile || !syncUserId || syncIsDemo) return;
+    if (syncedUserIdRef.current === syncUserId) return;
+    syncedUserIdRef.current = syncUserId;
+    syncGuestDataToUser(syncUserId, userProfile);
+    // Run once per user id, not on every profile object change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncUserId, syncIsDemo]);
 
   const displayXp = userProfile ? Math.max(userProfile.total_xp, liveXp) : liveXp;
   const displayStreak = userProfile ? Math.max(userProfile.current_streak, liveStreak) : liveStreak;

@@ -131,6 +131,8 @@ export function QuestionCard({
   // Keyboard Hotkeys: 1-4, A-D, Enter / Space, Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
       if (e.key === 'Escape' && isZoomOpen) {
         e.preventDefault();
         setIsZoomOpen(false);
@@ -526,6 +528,7 @@ export function QuestionCard({
               key={opt.id}
               type="button"
               role="radio"
+              aria-label={`Option ${letters[i]}: ${opt.text_markdown.replace(/\$+/g, '').replace(/[*_`#>|~\\]/g, '').replace(/\s+/g, ' ').trim()}`}
               aria-checked={selectedOptionId === opt.id}
               aria-disabled={isDisabled}
               disabled={isDisabled}

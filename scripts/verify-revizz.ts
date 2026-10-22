@@ -4686,6 +4686,88 @@ async function runSuite24() {
   });
 }
 
+async function runSuite25() {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (f: string) => fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
+
+  await testAsync('Beta audit: sync.ts local-data ownership helper and no unconditional wipe', async () => {
+    const src = read('lib/sync.ts');
+    assert(src.includes('revizz_local_data_owner'), 'sync.ts uses revizz_local_data_owner key');
+    assert(/decideLocalDataAction/.test(src), 'sync.ts defines decideLocalDataAction');
+    assert(!/removeItem\(\s*['"]revizz_first_try_correct_ids['"]\s*\)\s*;?\s*\n\s*\n?\s*const guestReviewPileStr/.test(src), 'no unconditional first-try wipe at top');
+    assert(!src.includes('JSON.parse(guestReviewPileStr)'), 'old review_pile array parse/upsert removed');
+    assert(!/from\(['"]review_pile['"]\)\s*\n?\s*\.upsert/.test(src), 'no review_pile upsert from guest array');
+    assert(src.includes('user_attempts'), 'sync unions first-try ids from user_attempts');
+    // every removeItem on the pile key must be inside a conditional (clear branch)
+    const lines = src.split('\n');
+    lines.forEach((l: string, i: number) => {
+      if (/removeItem\([^)]*(revizz_guest_review_pile|revizz_first_try_correct_ids)/.test(l)) {
+        const ctx = lines.slice(Math.max(0, i - 6), i + 1).join('\n');
+        assert(/if\s*\(|case\s|clear/.test(ctx), `removeItem at sync.ts:${i + 1} is conditional on 'clear'`);
+      }
+    });
+  });
+
+  await testAsync('Beta audit: decideLocalDataAction pure helper (adopt/keep/clear)', async () => {
+    let fn: any = null;
+    try { fn = require('../lib/sync').decideLocalDataAction; } catch (e: any) {
+      console.log('NOTE: lib/sync import failed under tsx: ' + (e && e.message));
+    }
+    if (!fn) { assert(false, 'decideLocalDataAction exported from lib/sync and importable'); return; }
+    assert(fn(null, 'u1') === 'adopt', 'null owner -> adopt');
+    assert(fn('u1', 'u1') === 'keep', 'same owner -> keep');
+    assert(fn('u2', 'u1') === 'clear', 'different owner -> clear');
+  });
+
+  await testAsync('Beta audit: Header syncs once per user id, skips Demo Student', async () => {
+    const src = read('components/Header.tsx');
+    const i = src.indexOf('syncGuestDataToUser(');
+    assert(i > -1, 'Header calls syncGuestDataToUser');
+    const rest = src.slice(i);
+    const m = rest.match(/\},\s*\[([^\]]*)\]\s*\)/);
+    assert(!!m, 'found effect dependency array after sync call');
+    const deps = m ? m[1] : '';
+    assert(!/(^|[\s,])userProfile([\s,]|$)/.test(deps), `effect deps do not include whole userProfile (got [${deps.trim()}])`);
+    assert(/[uU]serId/.test(deps), 'effect depends on a user id value');
+    const before = src.slice(Math.max(0, i - 600), i);
+    assert(/demo/i.test(before), 'sync skipped for demo student');
+  });
+
+  await testAsync('Beta audit: Google login buttons hidden in StudentAuthGate and AuthModal', async () => {
+    for (const f of ['components/StudentAuthGate.tsx', 'components/AuthModal.tsx']) {
+      const src = read(f);
+      const stripped = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      const hasGoogle = /signInWithGoogle|with Google/i.test(stripped);
+      if (hasGoogle) {
+        assert(/GOOGLE_LOGIN_ENABLED\s*=\s*false/.test(stripped), `${f}: Google control gated by GOOGLE_LOGIN_ENABLED = false`);
+        assert(/GOOGLE_LOGIN_ENABLED\s*&&/.test(stripped), `${f}: Google control rendered only behind the flag`);
+      }
+    }
+  });
+
+  await testAsync('Beta audit: signUpWithEmail passes emailRedirectTo', async () => {
+    const src = read('lib/auth.ts');
+    const i = src.indexOf('signUpWithEmail');
+    assert(i > -1, 'signUpWithEmail exists');
+    const body = src.slice(i, i + 1500);
+    assert(/emailRedirectTo/.test(body), 'emailRedirectTo passed');
+    assert(/window\.location\.origin/.test(body), 'uses window.location.origin');
+    assert(/typeof window/.test(body), 'guards window for SSR');
+  });
+
+  await testAsync('Beta audit: QuestionCard radio options have accessible name; hotkeys ignore modifiers', async () => {
+    const src = read('components/QuestionCard.tsx');
+    const i = src.indexOf('role="radio"');
+    assert(i > -1, 'QuestionCard has role="radio"');
+    const around = src.slice(Math.max(0, i - 600), i + 900);
+    assert(/aria-labelledby|aria-label/.test(around), 'radio option has aria-labelledby or aria-label');
+    assert(/Option\s/.test(src), 'accessible name mentions "Option X"');
+    assert(/metaKey/.test(src) && /ctrlKey/.test(src) && /altKey/.test(src), 'hotkey handler checks metaKey/ctrlKey/altKey');
+    assert(/(e|event)\.metaKey\s*\|\|\s*(e|event)\.ctrlKey\s*\|\|\s*(e|event)\.altKey[\s\S]{0,40}return/.test(src), 'returns early on modifier keys');
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
@@ -4693,6 +4775,7 @@ async function main() {
   await runSuite22();
   await runSuite23();
   await runSuite24();
+  await runSuite25();
 
   // Summary Output
   const duration = ((Date.now() - startMs) / 1000).toFixed(2);

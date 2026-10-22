@@ -168,6 +168,7 @@ export const signUpWithEmail = async (email: string, password: string, displayNa
       password,
       options: {
         data: displayName ? { full_name: displayName.trim() } : undefined,
+        emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
       },
     });
 
@@ -226,6 +227,7 @@ export const signInWithOtp = async (email: string, displayName?: string) => {
       email,
       options: {
         data: displayName ? { full_name: displayName.trim() } : undefined,
+        emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
       },
     });
 
