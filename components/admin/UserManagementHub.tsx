@@ -990,51 +990,46 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       )}
 
       {/* Header Banner */}
-      <div className="p-6 rounded-3xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-2">
+      <div className="px-4 py-3 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3">
+        <div className="flex flex-col md:flex-row md:items-center gap-x-3 gap-y-1.5 min-w-0">
+          <h1 className="text-xl font-heading font-black tracking-tight text-[#201e1d] whitespace-nowrap leading-tight">
+            User Management 👥
+          </h1>
           {/* Neobrutalist Badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-[#201e1d] text-[#f9f4ed] font-mono text-[11px] font-bold tracking-wider">
+          <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 min-w-0">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#201e1d] text-[#f9f4ed] font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">
               USER OPERATIONS · ACCESS CONTROL
             </span>
-            <span className="px-3 py-1 rounded-full bg-[#ffe1d0] border border-[#201e1d] font-mono text-[11px] font-bold text-[#201e1d]">
+            <span className="hidden lg:inline-block px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d] font-mono text-[10px] font-bold text-[#201e1d] whitespace-nowrap">
               Role &amp; Identity Management
             </span>
-            <span className="px-3 py-1 rounded-full bg-[#dcfce7] border border-[#15803d] font-mono text-[11px] font-bold text-[#15803d] flex items-center gap-1.5 shadow-sm">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#dcfce7] border border-[#15803d] font-mono text-[10px] font-bold text-[#15803d] flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-              <span>🟢 Live Database Connected</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-[#15803d] text-white text-[10px]">
+              <span>Live Database Connected</span>
+              <span className="px-1.5 rounded-full bg-[#15803d] text-white text-[10px]">
                 {metrics.totalUsers} Total
               </span>
             </span>
           </div>
-
-          <h1 className="text-2xl sm:text-3xl font-heading font-black tracking-tight flex items-center gap-2 text-[#201e1d]">
-            User Management 👥
-          </h1>
-          <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-2xl">
-            Manage user accounts, role permissions (Student, Teacher, Admin), institutional
-            school status, and pending roster invitations with instant real-time synchronization.
-          </p>
         </div>
 
         {/* Header Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0 w-full sm:w-auto">
+        <div className="grid grid-cols-2 md:flex md:flex-nowrap items-stretch md:items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={loadDirectoryData}
             disabled={loading}
-            className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#eee7db] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            title="Sync with Supabase / Refresh directory"
+            className="px-3 py-1.5 rounded-xl bg-white border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#eee7db] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+            title="↻ Sync with Supabase / Refresh directory"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>↻ Sync with Supabase</span>
+            <span>Sync with Supabase</span>
           </button>
 
           <button
             type="button"
             onClick={handleExportCSV}
-            className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#e0d6c5] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#e0d6c5] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
             title="Export directory data to CSV format"
           >
             <Download className="w-3.5 h-3.5" />
@@ -1048,10 +1043,10 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
               setInviteError(null);
               setIsInviteModalOpen(true);
             }}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#272e1b] font-heading font-black text-xs shadow-offset-2 hover:bg-[#b8c99d] active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-[#ccdbb2] border-2 border-[#201e1d] text-[#272e1b] font-heading font-black text-xs shadow-offset-1 hover:bg-[#b8c99d] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>+ Invite User</span>
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>Invite User</span>
           </button>
 
           <button
@@ -1061,10 +1056,10 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
               setCreateUserError(null);
               setIsCreateUserModalOpen(true);
             }}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#bfdbfe] border-2 border-[#201e1d] text-[#1e3a8a] font-heading font-black text-xs shadow-offset-2 hover:bg-[#93c5fd] active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-[#bfdbfe] border-2 border-[#201e1d] text-[#1e3a8a] font-heading font-black text-xs shadow-offset-1 hover:bg-[#93c5fd] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
-            <UserPlus className="w-4 h-4 stroke-[3]" />
-            <span>+ Add User</span>
+            <UserPlus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>Add User</span>
           </button>
         </div>
       </div>
