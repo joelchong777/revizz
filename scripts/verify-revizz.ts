@@ -4668,6 +4668,22 @@ async function runSuite24() {
     assert(page.includes('print:h-auto'), 'print:h-auto escape');
     assert(page.includes("'papers'") || page.includes('"papers"'), "references 'papers' tab");
   });
+
+  test('Topic Practice Picker: search capability, neobrutalist styling, filtering and empty state', () => {
+    const startFlow = fs.readFileSync(path.resolve(process.cwd(), 'components/StartFlow.tsx'), 'utf8');
+    assert(startFlow.includes('topicSearchQuery'), 'StartFlow.tsx has topicSearchQuery state');
+    assert(startFlow.includes('setTopicSearchQuery'), 'StartFlow.tsx updates topicSearchQuery');
+    assert(startFlow.includes('Search'), 'StartFlow.tsx imports and renders Search icon');
+    assert(startFlow.includes('X'), 'StartFlow.tsx imports and renders X clear button');
+    assert(startFlow.includes('data-testid="topic-search-input"'), 'StartFlow.tsx has topic-search-input test id');
+    assert(startFlow.includes('data-testid="topic-search-clear"'), 'StartFlow.tsx has topic-search-clear test id');
+    assert(startFlow.includes('placeholder="Search topics or tags..."'), 'StartFlow.tsx has placeholder');
+    assert(startFlow.includes('aria-label="Search topics or tags"'), 'StartFlow.tsx has aria-label');
+    assert(startFlow.includes('data-testid="no-topics-found"'), 'StartFlow.tsx has no-topics-found empty state');
+    assert(startFlow.includes('data-testid="clear-topic-search"'), 'StartFlow.tsx has clear-topic-search button');
+    assert(startFlow.includes('border-2 border-text rounded-2xl bg-surface px-3 py-2 flex items-center gap-2 shadow-offset-2 focus-within:ring-2 focus-within:ring-accent'), 'StartFlow.tsx search bar has neobrutalist styling');
+    assert(startFlow.includes('filteredTopics'), 'StartFlow.tsx filters topics via filteredTopics memo');
+  });
 }
 
 async function main() {
