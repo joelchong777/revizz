@@ -861,6 +861,11 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        throw new Error(
+          'You are not signed in with a real admin account (Demo App Admin has no login). Sign out, then sign in with your admin account and try again.'
+        );
+      }
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Failed to create user account.');
       }
