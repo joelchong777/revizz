@@ -96,12 +96,13 @@ export default function AppAdminNav({
               <span className="font-heading font-black text-sm text-[#201e1d]">R</span>
             </Link>
             {!compact && (
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-heading font-black text-base tracking-tight leading-none text-[#201e1d]">
-                    REVIZZ
-                  </span>
-                </div>
+              <div className="flex flex-col leading-none">
+                <span className="font-heading font-black text-base tracking-tight leading-none text-[#201e1d]">
+                  REVIZZ
+                </span>
+                <span className="inline-block mt-0.5 px-1 py-0.2 rounded-full bg-[#ffe1d0] text-[#c67139] text-[8px] font-black uppercase tracking-wider border border-[#201e1d]/20 w-fit">
+                  ADMIN
+                </span>
               </div>
             )}
           </div>
