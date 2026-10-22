@@ -822,152 +822,156 @@ export default function AdminSettingsHub({
       {/* TAB 2: SYSTEM & TELEMETRY */}
       {/* ========================================================================= */}
       {activeSubTab === 'system' && (
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Real-time Status Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Database Sync</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-0.5 min-w-0">
+              <div className="flex items-center justify-between gap-2 text-[#645c50]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">Database Sync</span>
+                <span className="w-2.5 h-2.5 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
               </div>
-              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d]">
+              <div className="text-base font-black font-heading text-[#201e1d] leading-tight truncate">
                 Synchronized
               </div>
-              <p className="text-[11px] font-bold text-emerald-800">
+              <p className="text-[11px] font-bold text-emerald-800 leading-tight truncate">
                 Supabase PostgreSQL Live
               </p>
             </div>
 
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">OCR Pipeline</span>
-                <Cpu className="w-4 h-4 text-emerald-700" />
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-0.5 min-w-0">
+              <div className="flex items-center justify-between gap-2 text-[#645c50]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">OCR Pipeline</span>
+                <Cpu className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
               </div>
-              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d] truncate">
+              <div className="text-base font-black font-heading text-[#201e1d] leading-tight truncate">
                 Gemini 2.5 Flash
               </div>
-              <p className="text-[11px] font-bold text-emerald-800">
+              <p className="text-[11px] font-bold text-emerald-800 leading-tight truncate">
                 Multimodal OCR + KaTeX
               </p>
             </div>
 
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Question Bank Health</span>
-                <BookOpen className="w-4 h-4 text-[#201e1d]" />
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-0.5 min-w-0">
+              <div className="flex items-center justify-between gap-2 text-[#645c50]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">Question Bank Health</span>
+                <BookOpen className="w-3.5 h-3.5 shrink-0 text-[#201e1d]" />
               </div>
-              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d]">
+              <div className="text-base font-black font-heading text-[#201e1d] leading-tight truncate">
                 {questionsLoading ? 'Syncing...' : `${questions.length} Items Live`}
               </div>
-              <p className="text-[11px] font-bold text-[#645c50]">
+              <p className="text-[11px] font-bold text-[#645c50] leading-tight truncate">
                 Cambridge 40/40 Ready
               </p>
             </div>
 
-            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-3 space-y-2">
-              <div className="flex items-center justify-between text-[#645c50]">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Platform Health</span>
-                <Activity className="w-4 h-4 text-emerald-700" />
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-2.5 shadow-offset-3 space-y-0.5 min-w-0">
+              <div className="flex items-center justify-between gap-2 text-[#645c50]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">Platform Health</span>
+                <Activity className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
               </div>
-              <div className="text-xl sm:text-2xl font-black font-heading text-[#201e1d]">
+              <div className="text-base font-black font-heading text-[#201e1d] leading-tight truncate">
                 {healthStatus}
               </div>
-              <p className="text-[11px] font-bold text-emerald-800">
+              <p className="text-[11px] font-bold text-emerald-800 leading-tight truncate">
                 Turbopack Ready
               </p>
             </div>
           </div>
 
-          {/* Quick Action Telemetry Buttons */}
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading font-black text-lg text-[#201e1d]">
-                Platform Telemetry &amp; Quick Actions
+          <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] items-stretch gap-3">
+            {/* Quick Action Telemetry Buttons */}
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-3 space-y-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                  <h3 className="font-heading font-black text-base text-[#201e1d]">
+                    Platform Telemetry &amp; Quick Actions
+                  </h3>
+                  {cacheClearedMessage && (
+                    <span className="inline-block text-[10px] font-mono font-bold text-emerald-800 bg-[#ccdbb2] px-2 py-0.5 rounded border border-[#201e1d]">
+                      ✓ Cache Cleared!
+                    </span>
+                  )}
+                  {pingStatus && (
+                    <span className="inline-block text-[10px] font-mono font-bold text-emerald-800 bg-[#ccdbb2] px-2 py-0.5 rounded border border-[#201e1d]">
+                      {pingStatus}
+                    </span>
+                  )}
+                </div>
+                <span className="font-mono text-[10px] text-[#645c50] font-bold">
+                  OPERATIONAL CONTROLS
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleClearCache}
+                  className="p-2.5 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 cursor-pointer active:translate-y-0.5 group"
+                >
+                  <div className="flex items-center gap-2 sm:w-44 shrink-0">
+                    <RefreshCw className="w-4 h-4 shrink-0 text-[#201e1d]" />
+                    <span className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139]">
+                      Clear Local Cache
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-snug font-medium text-[#645c50]">
+                    Evict staged browser items and refresh Question Bank indexes.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePing}
+                  disabled={isPinging}
+                  className="p-2.5 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 cursor-pointer active:translate-y-0.5 group"
+                >
+                  <div className="flex items-center gap-2 sm:w-44 shrink-0">
+                    <Zap className="w-4 h-4 shrink-0 text-[#201e1d]" />
+                    <span className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139]">
+                      {isPinging ? 'Pinging DB...' : 'Test DB Ping'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-snug font-medium text-[#645c50]">
+                    Send an echo check to the Supabase Edge Gateway.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleHealthCheck}
+                  className="p-2.5 rounded-xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 cursor-pointer active:translate-y-0.5 group"
+                >
+                  <div className="flex items-center gap-2 sm:w-44 shrink-0">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-700" />
+                    <span className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139]">
+                      Trigger Health Check
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-snug font-medium text-[#645c50]">
+                    Run full diagnostic audit on OCR, KaTeX, and question schemas.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* Operational Checklist */}
+            <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-3 space-y-2 font-body min-w-0">
+              <h3 className="font-heading font-black text-base text-[#201e1d]">
+                Telemetry Diagnostic Log
               </h3>
-              <span className="font-mono text-xs text-[#645c50] font-bold">
-                OPERATIONAL CONTROLS
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={handleClearCache}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-2 cursor-pointer active:translate-y-0.5 group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139]">
-                    Clear Local Cache
-                  </span>
-                  <RefreshCw className="w-4 h-4 text-[#201e1d]" />
+              <div className="space-y-1.5 text-[11px] font-mono">
+                <div className="px-2.5 py-1.5 rounded-lg bg-white border border-[#201e1d] flex items-start justify-between gap-3">
+                  <span className="text-[#201e1d]">✓ Supabase Connection: Verified Direct Session</span>
+                  <span className="text-emerald-700 font-bold shrink-0">200 OK</span>
                 </div>
-                <p className="text-xs font-medium text-[#645c50]">
-                  Evict staged browser items and refresh Question Bank indexes.
-                </p>
-                {cacheClearedMessage && (
-                  <span className="inline-block text-[10px] font-mono font-bold text-emerald-800 bg-[#ccdbb2] px-2 py-0.5 rounded border border-[#201e1d]">
-                    ✓ Cache Cleared!
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handlePing}
-                disabled={isPinging}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-2 cursor-pointer active:translate-y-0.5 group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139]">
-                    {isPinging ? 'Pinging DB...' : 'Test DB Ping'}
-                  </span>
-                  <Zap className="w-4 h-4 text-[#201e1d]" />
+                <div className="px-2.5 py-1.5 rounded-lg bg-white border border-[#201e1d] flex items-start justify-between gap-3">
+                  <span className="text-[#201e1d]">✓ KaTeX AST Sanitizer: Regex Currency Escaper Active</span>
+                  <span className="text-emerald-700 font-bold shrink-0">PASS</span>
                 </div>
-                <p className="text-xs font-medium text-[#645c50]">
-                  Send an echo check to the Supabase Edge Gateway.
-                </p>
-                {pingStatus && (
-                  <span className="inline-block text-[10px] font-mono font-bold text-emerald-800 bg-[#ccdbb2] px-2 py-0.5 rounded border border-[#201e1d]">
-                    {pingStatus}
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleHealthCheck}
-                className="p-4 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffe1d0] transition-all text-left space-y-2 cursor-pointer active:translate-y-0.5 group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-heading font-black text-sm text-[#201e1d] group-hover:text-[#c67139]">
-                    Trigger Health Check
-                  </span>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                <div className="px-2.5 py-1.5 rounded-lg bg-white border border-[#201e1d] flex items-start justify-between gap-3">
+                  <span className="text-[#201e1d]">✓ Gemini Multimodal Vision API: Google AI Logic Provisioned</span>
+                  <span className="text-emerald-700 font-bold shrink-0">ONLINE</span>
                 </div>
-                <p className="text-xs font-medium text-[#645c50]">
-                  Run full diagnostic audit on OCR, KaTeX, and question schemas.
-                </p>
-              </button>
-            </div>
-          </div>
-
-          {/* Operational Checklist */}
-          <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-3 font-body">
-            <h3 className="font-heading font-black text-base text-[#201e1d]">
-              Telemetry Diagnostic Log
-            </h3>
-            <div className="space-y-2 text-xs font-mono">
-              <div className="p-2.5 rounded-xl bg-white border border-[#201e1d] flex items-center justify-between">
-                <span className="text-[#201e1d]">✓ Supabase Connection: Verified Direct Session</span>
-                <span className="text-emerald-700 font-bold">200 OK</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white border border-[#201e1d] flex items-center justify-between">
-                <span className="text-[#201e1d]">✓ KaTeX AST Sanitizer: Regex Currency Escaper Active</span>
-                <span className="text-emerald-700 font-bold">PASS</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white border border-[#201e1d] flex items-center justify-between">
-                <span className="text-[#201e1d]">✓ Gemini Multimodal Vision API: Google AI Logic Provisioned</span>
-                <span className="text-emerald-700 font-bold">ONLINE</span>
               </div>
             </div>
           </div>
