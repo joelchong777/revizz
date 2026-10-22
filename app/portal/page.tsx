@@ -51,12 +51,12 @@ function PortalContent() {
 
   // Navigation & Role states
   const [role, setRole] = useState<'teacher' | 'content'>('teacher');
-  const [activeNav, setActiveNav] = useState<string>('overview');
+  const [activeNav, setActiveNav] = useState<string>('compiler');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | undefined>(undefined);
   const [assignPrefill, setAssignPrefill] = useState<string | undefined>(undefined);
 
-  const activeLabel = NAV_LABELS[activeNav] || getPortalNavItems().find((i) => i.id === activeNav)?.label || 'Overview';
+  const activeLabel = NAV_LABELS[activeNav] || getPortalNavItems().find((i) => i.id === activeNav)?.label || 'Test compiler';
 
   // Auth & error states
   const [authError, setAuthError] = useState<string | null>(null);

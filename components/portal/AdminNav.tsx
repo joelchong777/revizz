@@ -43,7 +43,7 @@ export interface AdminNavProps {
 
 export default function AdminNav({
   role = 'teacher',
-  active = 'overview',
+  active = 'compiler',
   onSelectTab,
   onSelect,
   onSwitchRole,
