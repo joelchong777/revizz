@@ -46,6 +46,7 @@ import {
   signUpWithEmail,
   signInWithEmail,
   signInWithOtp,
+  resolveLoginIdentifier,
 } from '../lib/auth';
 
 import {
@@ -625,6 +626,15 @@ test('Production Security: only verified teacher and admin roles are granted acc
 
   const studentAccess = evaluateEducatorAccess({ role: 'student', display_name: 'Bart S.' }, false, false, false);
   assertEqual(studentAccess, false, 'Student user denied educator access');
+});
+
+test('resolveLoginIdentifier: admin shortcut, emails pass through, other names rejected', () => {
+  assertEqual(resolveLoginIdentifier('admin'), 'admin@revizz.app', 'admin resolves to admin email');
+  assertEqual(resolveLoginIdentifier('  Admin '), 'admin@revizz.app', 'admin is trimmed and case-insensitive');
+  assertEqual(resolveLoginIdentifier(' Teacher@School.edu '), 'Teacher@School.edu', 'emails are trimmed and kept');
+  let message = '';
+  try { resolveLoginIdentifier('bob'); } catch (e: any) { message = e.message; }
+  assertEqual(message, 'Enter your email address', 'other usernames are rejected');
 });
 
 test('Development Mode: devOverride is permitted only when isDev is true', () => {

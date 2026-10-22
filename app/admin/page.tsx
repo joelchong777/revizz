@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth, signInWithGoogle } from '@/lib/auth';
+import { useAuth, signInWithGoogle, signInWithEmail, resolveLoginIdentifier } from '@/lib/auth';
 import { Menu, ArrowRight, GraduationCap, ChevronDown, ChevronUp, Copy, Check, ArrowRightLeft } from 'lucide-react';
 import AppAdminNav from '@/components/admin/AppAdminNav';
 import AppAdminHub from '@/components/admin/AppAdminHub';
@@ -168,6 +168,38 @@ function AdminContent() {
       setAuthError(rawMsg);
     } finally {
       setIsSigningIn(false);
+    }
+  };
+
+  // Email / password sign-in (admin gate)
+  const [emailLogin, setEmailLogin] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [isEmailSigningIn, setIsEmailSigningIn] = useState(false);
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEmailSigningIn) return;
+    setEmailError(null);
+    let email: string;
+    try {
+      email = resolveLoginIdentifier(emailLogin);
+    } catch (err: any) {
+      setEmailError(err?.message || 'Enter your email address');
+      return;
+    }
+    if (!emailPassword) {
+      setEmailError('Enter your password');
+      return;
+    }
+    setIsEmailSigningIn(true);
+    try {
+      await signInWithEmail(email, emailPassword);
+      setEmailPassword('');
+    } catch (err: any) {
+      setEmailError(err?.message || (typeof err === 'string' ? err : 'Sign in failed'));
+    } finally {
+      setIsEmailSigningIn(false);
     }
   };
 
@@ -382,6 +414,69 @@ function AdminContent() {
               </div>
             </div>
           )}
+
+          <form onSubmit={handleEmailSignIn} noValidate className="space-y-3 pt-2 border-t-2 border-[#dcd3c4]" aria-label="Sign in with email and password">
+            <div className="space-y-1">
+              <label htmlFor="admin-login-identifier" className="block text-[11px] font-black text-[#645c50] uppercase tracking-wider">
+                Email or username
+              </label>
+              <input
+                id="admin-login-identifier"
+                type="text"
+                name="username"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={emailLogin}
+                onChange={(e) => setEmailLogin(e.target.value)}
+                disabled={isEmailSigningIn}
+                aria-invalid={emailError ? true : undefined}
+                aria-describedby={emailError ? 'admin-login-error' : undefined}
+                className="w-full px-3 py-2 bg-white text-[#201e1d] text-sm font-medium rounded-xl border-2 border-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ccdbb2] disabled:opacity-60"
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="admin-login-password" className="block text-[11px] font-black text-[#645c50] uppercase tracking-wider">
+                Password
+              </label>
+              <input
+                id="admin-login-password"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                value={emailPassword}
+                onChange={(e) => setEmailPassword(e.target.value)}
+                disabled={isEmailSigningIn}
+                aria-invalid={emailError ? true : undefined}
+                aria-describedby={emailError ? 'admin-login-error' : undefined}
+                className="w-full px-3 py-2 bg-white text-[#201e1d] text-sm font-medium rounded-xl border-2 border-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#ccdbb2] disabled:opacity-60"
+              />
+            </div>
+            {emailError && (
+              <div
+                id="admin-login-error"
+                role="alert"
+                className="p-1.5 px-2 bg-[#eee7db] rounded-lg border border-[#dcd3c4] font-mono text-[11px] text-[#8c491a] break-words"
+              >
+                Error: {emailError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={isEmailSigningIn}
+              className="w-full py-2.5 bg-[#ccdbb2] text-[#201e1d] font-heading font-black text-sm rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all active:translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+            >
+              {isEmailSigningIn ? (
+                <>
+                  <span className="inline-block animate-spin">⏳</span>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <span>Sign in</span>
+              )}
+            </button>
+          </form>
 
           <div className="space-y-3 pt-2 border-t-2 border-[#dcd3c4]">
             {showDemoAdmin && !authError && (

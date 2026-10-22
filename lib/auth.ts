@@ -182,6 +182,22 @@ export const signUpWithEmail = async (email: string, password: string, displayNa
 };
 
 /**
+ * Maps the "email or username" field of a sign-in form to an email address.
+ * The word `admin` (any case, surrounding spaces ignored) resolves to the
+ * admin account's email; anything else must already contain an "@".
+ * Throws "Enter your email address" for any other input without "@".
+ */
+export const resolveLoginIdentifier = (input: string): string => {
+  const trimmed = (input ?? '').trim();
+  const lowered = trimmed.toLowerCase();
+  if (!lowered.includes('@')) {
+    if (lowered === 'admin') return 'admin@revizz.app';
+    throw new Error('Enter your email address');
+  }
+  return trimmed;
+};
+
+/**
  * Signs in an existing user with email and password.
  */
 export const signInWithEmail = async (email: string, password: string) => {
