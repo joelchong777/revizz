@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCaller, requireRole } from '@/lib/apiAuth';
+import { getCaller, getServiceClient, requireRole } from '@/lib/apiAuth';
 import fs from 'fs';
 import path from 'path';
 import { validateStagingPaper, StagedPaperSummary, StagingPaper } from '@/types/ingestion';
@@ -457,13 +457,46 @@ function stripAnswersDeep(node: any): any {
   return out;
 }
 
+/** Rebuilt DB papers have no ids; fill q.id / opt.id from the DB so answers can be graded. Never throws. */
+async function attachDbIds(body: any): Promise<any> {
+  try {
+    const paperId = body?.published_exam_paper_id;
+    const questions = body?.paper?.questions;
+    if (typeof paperId !== 'string' || !/^[0-9a-f-]{36}$/i.test(paperId) || !Array.isArray(questions)) return body;
+    const { data, error } = await getServiceClient()
+      .from('questions')
+      .select('id, question_number, question_options(id, label)')
+      .eq('paper_id', paperId);
+    if (error || !data) return body;
+    const byNumber = new Map<number, any>();
+    for (const row of data as any[]) byNumber.set(Number(row.question_number), row);
+    for (const q of questions) {
+      const row = byNumber.get(Number(q?.question_number));
+      if (!row) continue;
+      if (!q.id) q.id = row.id;
+      if (Array.isArray(q.options)) {
+        const byLabel = new Map<string, string>();
+        for (const o of row.question_options ?? []) byLabel.set(String(o.label).toUpperCase(), o.id);
+        q.options.forEach((opt: any, i: number) => {
+          if (!opt || opt.id) return;
+          const id = byLabel.get(String(opt.label ?? 'ABCD'[i] ?? '').toUpperCase());
+          if (id) opt.id = id;
+        });
+      }
+    }
+    return body;
+  } catch {
+    return body;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const res = await getInner(request);
   const caller = await getCaller(request);
-  if (caller?.role === 'teacher' || caller?.role === 'admin') return res;
+  const isStaff = caller?.role === 'teacher' || caller?.role === 'admin';
   try {
-    const body = await res.clone().json();
-    return NextResponse.json(stripAnswersDeep(body), { status: res.status });
+    const body = await attachDbIds(await res.clone().json());
+    return NextResponse.json(isStaff ? body : stripAnswersDeep(body), { status: res.status });
   } catch {
     return res;
   }
