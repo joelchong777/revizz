@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Building2,
   Activity,
@@ -74,6 +74,7 @@ export default function AdminSettingsHub({
 }: AdminSettingsHubProps) {
   const { questions, loading: questionsLoading } = useQuestions();
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>(initialSubTab);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // Sync with prop changes
   useEffect(() => {
@@ -290,35 +291,51 @@ export default function AdminSettingsHub({
     setTimeout(() => setAuthSaveFeedback(false), 3000);
   };
 
+  // Keep the active tab visible in the scrollable (below lg) tab bar
+  useEffect(() => {
+    tabRefs.current[activeSubTab]?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  }, [activeSubTab]);
+
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (index + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (index - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    const nextTab = TABS[next];
+    handleTabChange(nextTab.id);
+    tabRefs.current[nextTab.id]?.focus();
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-4 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="px-3 py-1 rounded-full bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-mono font-bold uppercase tracking-wider text-[#201e1d]">
-              ADMIN CONSOLE · UNIFIED SETTINGS
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#ccdbb2] border border-[#201e1d] text-[11px] font-mono font-black text-[#272e1b] flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Interactive Hub
-            </span>
-          </div>
+      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-4 sm:p-6 shadow-offset-3 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#645c50]">
+            Admin console · Settings
+          </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => onSelectParentTab && onSelectParentTab('diagnostics')}
-              className="px-3 py-1.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] text-xs font-black text-[#201e1d] shadow-offset-1 hover:bg-[#dcd3c4] transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-transparent border-2 border-[#201e1d]/30 text-xs font-bold text-[#201e1d] hover:border-[#201e1d] hover:bg-[#eee7db] motion-safe:transition-colors cursor-pointer"
             >
-              Diagnostics Lab →
+              <Activity className="w-3.5 h-3.5" aria-hidden="true" />
+              Diagnostics Lab
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={() => onSelectParentTab && onSelectParentTab('ingestion')}
-              className="px-3 py-1.5 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-black text-[#201e1d] shadow-offset-1 hover:bg-[#ffc6a5] transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-transparent border-2 border-[#201e1d]/30 text-xs font-bold text-[#201e1d] hover:border-[#201e1d] hover:bg-[#eee7db] motion-safe:transition-colors cursor-pointer"
             >
-              Ingestion Studio →
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+              Ingestion Studio
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -326,41 +343,57 @@ export default function AdminSettingsHub({
         <h1 className="text-2xl sm:text-3xl font-black text-[#201e1d] font-heading tracking-tight">
           Platform Settings &amp; Administration
         </h1>
-        <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-3xl">
-          Unified configuration center for institutional seat allocations, multimodal AI models, KaTeX parsing rules, 2-try Leitner gamification parameters, and OAuth security gates.
+        <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-xl">
+          Seats, AI models, quiz rules and sign-in security in one place.
         </p>
 
-        {/* Tab Navigation Bar (Horizontal Scrollable Pills) */}
+        {/* Tab Navigation Bar: segmented grid at lg+, snap-scroll with edge fade below */}
         <div className="pt-3 border-t-2 border-[#201e1d]/10">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeSubTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`px-3.5 py-2.5 rounded-xl border-2 transition-all flex items-center gap-2.5 whitespace-nowrap cursor-pointer text-xs font-heading font-black select-none ${
-                    isActive
-                      ? 'bg-[#ffe1d0] text-[#201e1d] border-[#201e1d] shadow-offset-2 translate-y-[-1px]'
-                      : 'bg-[#f5ead8]/60 text-[#645c50] border-[#201e1d]/20 hover:border-[#201e1d] hover:text-[#201e1d] hover:bg-[#f5ead8]'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#201e1d]' : 'text-[#645c50]'}`} />
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+          <div className="relative">
+            <div
+              role="tablist"
+              aria-label="Settings sections"
+              className="flex lg:grid lg:grid-cols-6 items-stretch gap-2 overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none pb-1 pr-8 lg:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] lg:[mask-image:none]"
+            >
+              {TABS.map((tab, index) => {
+                const Icon = tab.icon;
+                const isActive = activeSubTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    ref={(el) => {
+                      tabRefs.current[tab.id] = el;
+                    }}
+                    id={`settings-tab-${tab.id}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    onClick={() => handleTabChange(tab.id)}
+                    onKeyDown={(e) => handleTabKeyDown(e, index)}
+                    className={`snap-start shrink-0 lg:shrink min-w-[10.5rem] lg:min-w-0 px-3 py-2 rounded-xl border-2 motion-safe:transition-colors flex flex-col items-start gap-1 text-left cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#201e1d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f4ed] ${
                       isActive
-                        ? 'bg-white border-[#201e1d] text-[#201e1d]'
-                        : 'bg-[#eee7db] border-[#201e1d]/20 text-[#645c50]'
+                        ? 'bg-[#ffe1d0] text-[#201e1d] border-[#201e1d] shadow-offset-2'
+                        : 'bg-transparent text-[#645c50] border-[#201e1d]/20 hover:border-[#201e1d] hover:text-[#201e1d] hover:bg-[#eee7db]'
                     }`}
                   >
-                    {tab.badge}
-                  </span>
-                </button>
-              );
-            })}
+                    <span className="flex items-start gap-2 min-w-0 w-full">
+                      <Icon className="w-4 h-4 shrink-0 mt-px" aria-hidden="true" />
+                      <span className="text-xs font-heading font-black leading-tight min-w-0 break-words">
+                        {tab.label}
+                      </span>
+                    </span>
+                    <span
+                      className={`block w-full truncate text-[10px] font-mono font-bold uppercase tracking-wide ${
+                        isActive ? 'text-[#201e1d]' : 'text-[#645c50]/80'
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
