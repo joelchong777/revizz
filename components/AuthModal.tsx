@@ -6,6 +6,7 @@ import {
   signInWithEmail,
   signInWithOtp,
   signUpWithEmail,
+  requestPasswordReset,
   signInAsDemoStudent,
   isProviderNotEnabledError,
 } from '@/lib/auth';
@@ -32,7 +33,7 @@ export function AuthModal({
   onSuccess,
 }: AuthModalProps) {
   // Unconditional React hook declarations (React Error #310 Defense)
-  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(initialMode);
   const [email, setEmail] = useState(initialEmail || '');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -41,6 +42,8 @@ export function AuthModal({
   const [loadingOtp, setLoadingOtp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [loadingReset, setLoadingReset] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -50,6 +53,7 @@ export function AuthModal({
       }
       setErrorMessage(null);
       setSuccessMessage(null);
+      setAgreedToTerms(false);
     }
   }, [isOpen, initialMode, initialEmail]);
 
@@ -58,7 +62,7 @@ export function AuthModal({
     setSuccessMessage(null);
   };
 
-  const handleTabChange = (newMode: 'signin' | 'signup') => {
+  const handleTabChange = (newMode: 'signin' | 'signup' | 'forgot') => {
     setMode(newMode);
     resetFormFeedback();
   };
@@ -102,8 +106,12 @@ export function AuthModal({
       setErrorMessage('Please enter your email and choose a password.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
+      return;
+    }
+    if (!agreedToTerms) {
+      setErrorMessage('Please confirm you are 13 or older and agree to the Terms and Privacy Policy.');
       return;
     }
 
@@ -126,6 +134,26 @@ export function AuthModal({
       setErrorMessage(msg);
     } finally {
       setLoadingSubmit(false);
+    }
+  };
+
+  // Forgot password: always show the same message so we never reveal which emails have accounts
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      setErrorMessage('Please enter your email address.');
+      return;
+    }
+    try {
+      setLoadingReset(true);
+      resetFormFeedback();
+      await requestPasswordReset(email.trim());
+      setSuccessMessage("If an account exists for that email, we've sent a reset link. Check your inbox.");
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+      setErrorMessage(err?.message || 'Could not send the reset link. Please try again.');
+    } finally {
+      setLoadingReset(false);
     }
   };
 
@@ -157,11 +185,12 @@ export function AuthModal({
         <DialogHeader className="p-4 sm:p-5 bg-amber-50/80 border-b-2 border-[#201e1d] flex flex-row items-center justify-between pr-12 space-y-0">
           <DialogTitle className="text-base sm:text-lg font-heading font-black text-[#201e1d] flex items-center gap-2">
             <span>⚡</span>
-            <span>{mode === 'signin' ? 'Sign In to Revizz' : 'Create Your Revizz Account'}</span>
+            <span>{mode === 'signin' ? 'Sign In to Revizz' : mode === 'forgot' ? 'Reset Your Password' : 'Create Your Revizz Account'}</span>
           </DialogTitle>
         </DialogHeader>
 
-        {/* Tactile 2-Tab Segmented Control */}
+        {/* Tactile 2-Tab Segmented Control (hidden while resetting a password) */}
+        {mode !== 'forgot' && (
         <div className="px-4 sm:px-6 pt-3 pb-2 bg-[#f9f4ed] border-b border-[#201e1d]/15 flex items-center gap-2 shrink-0">
           <button
             type="button"
@@ -188,6 +217,7 @@ export function AuthModal({
             <span>Create Account</span>
           </button>
         </div>
+        )}
 
         {/* Modal Scrollable Body */}
         <div className="p-5 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)] flex flex-col gap-4">
@@ -267,6 +297,53 @@ export function AuthModal({
           )}
 
           {/* Form */}
+          {mode === 'forgot' ? (
+          <form onSubmit={handleForgotPassword} className="flex flex-col gap-3.5">
+            <p className="text-xs font-semibold text-[#645c50] m-0">
+              Enter your account email and we&apos;ll send you a link to choose a new password.
+            </p>
+            <div>
+              <label className="block text-[11px] font-black uppercase tracking-wider text-[#201e1d] mb-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#82796a]" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. yourname@gmail.com"
+                  autoComplete="email"
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-base sm:text-sm font-semibold text-[#201e1d] placeholder:text-[#a19786] focus:outline-none focus:ring-2 focus:ring-[#c67139]"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={loadingReset}
+              className="w-full mt-1 py-3 px-4 min-h-[44px] rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 font-heading font-black text-xs sm:text-sm cursor-pointer disabled:opacity-60"
+            >
+              {loadingReset ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <>
+                  <span>Send reset link</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => handleTabChange('signin')}
+                className="min-h-[44px] px-2 text-xs font-bold text-[#c67139] hover:text-[#9e4e1e] hover:underline cursor-pointer"
+              >
+                Back to sign in
+              </button>
+            </div>
+          </form>
+          ) : (
           <form
             onSubmit={mode === 'signin' ? handleSignIn : handleSignUp}
             className="flex flex-col gap-3.5"
@@ -316,7 +393,7 @@ export function AuthModal({
                   Password
                 </label>
                 {mode === 'signup' && (
-                  <span className="text-[10px] font-bold text-[#82796a]">Min 6 characters</span>
+                  <span className="text-[10px] font-bold text-[#82796a]">At least 8 characters</span>
                 )}
               </div>
               <div className="relative">
@@ -324,19 +401,54 @@ export function AuthModal({
                 <input
                   type="password"
                   required
-                  minLength={mode === 'signup' ? 6 : undefined}
+                  minLength={mode === 'signup' ? 8 : undefined}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'signup' ? '•••••••• (min 6 characters)' : '••••••••'}
+                  placeholder={mode === 'signup' ? '•••••••• (min 8 characters)' : '••••••••'}
                   className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] text-xs sm:text-sm font-semibold text-[#201e1d] placeholder:text-[#a19786] focus:outline-none focus:ring-2 focus:ring-[#c67139]"
                 />
               </div>
+              {mode === 'signin' && (
+                <div className="mt-1 text-right">
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('forgot')}
+                    className="min-h-[44px] px-1 text-xs font-bold text-[#c67139] hover:text-[#9e4e1e] hover:underline cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Age + consent (Sign Up mode only) */}
+            {mode === 'signup' && (
+              <label className="flex items-start gap-3 min-h-[44px] cursor-pointer text-xs font-semibold text-[#201e1d] leading-snug">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  required
+                  className="mt-0.5 w-5 h-5 shrink-0 accent-[#c67139] cursor-pointer"
+                />
+                <span>
+                  I&apos;m 13 or older and agree to the{' '}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-black text-[#c67139] underline">
+                    Terms
+                  </a>{' '}
+                  and{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-black text-[#c67139] underline">
+                    Privacy Policy
+                  </a>
+                </span>
+              </label>
+            )}
 
             {/* Submit Action Button */}
             <button
               type="submit"
-              disabled={loadingSubmit || loadingGoogle || loadingOtp}
+              disabled={loadingSubmit || loadingGoogle || loadingOtp || (mode === 'signup' && !agreedToTerms)}
               className="w-full mt-1 py-3 px-4 rounded-xl bg-[#c67139] hover:bg-[#b2622d] text-white border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 font-heading font-black text-xs sm:text-sm cursor-pointer disabled:opacity-60"
             >
               {loadingSubmit ? (
@@ -349,6 +461,7 @@ export function AuthModal({
               )}
             </button>
           </form>
+          )}
 
           {/* 1-Click Magic Link Option (Sign In Mode) */}
           {mode === 'signin' && (

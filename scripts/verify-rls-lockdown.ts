@@ -10,6 +10,8 @@ const root = process.cwd();
 const FIXTURE = path.resolve(root, 'supabase/tests/rls-fixture-before.sql');
 const MIGRATION = path.resolve(root, 'supabase/migrations/20261022_auth_lockdown.sql');
 const ROLLBACK = path.resolve(root, 'supabase/rollback/20261022_auth_lockdown_down.sql');
+const INVITE_MIGRATION = path.resolve(root, 'supabase/migrations/20261027_invite_role_on_confirm.sql');
+const INVITE_ROLLBACK = path.resolve(root, 'supabase/rollback/20261027_invite_role_on_confirm_down.sql');
 
 const ADMIN = '00000000-0000-0000-0000-0000000000a1';
 const TEACHER = '00000000-0000-0000-0000-0000000000b1';
@@ -213,6 +215,42 @@ async function main() {
     const p = (await su(`select display_name,role from public.profiles where id='${uid}'`)).rows[0];
     ok(p && p.display_name === 'Newbie' && p.role === 'student', `got ${JSON.stringify(p)}`);
   });
+
+  // 20261027: invited role is applied only after the email is confirmed.
+  if (fs.existsSync(INVITE_MIGRATION)) {
+    const INV_UNCONF = '00000000-0000-0000-0000-0000000000e1';
+    await t('20261027: unconfirmed signup with a teacher invite gets student; invite stays pending', async () => {
+      await db.exec(fs.readFileSync(INVITE_MIGRATION, 'utf8'));
+      await su(`insert into public.roster_invites (email,role,status) values ('inv-teacher@x.test','teacher','pending')`);
+      await su(`insert into auth.users (id,email,email_confirmed_at) values ('${INV_UNCONF}','Inv-Teacher@x.test',null)`);
+      ok((await su(`select role from public.profiles where id='${INV_UNCONF}'`)).rows[0].role === 'student', 'invite role applied before confirmation');
+      ok((await su(`select status from public.roster_invites where email='inv-teacher@x.test'`)).rows[0].status === 'pending', 'invite claimed at sign-up');
+      const r = await as({ uid: INV_UNCONF }, `select public.claim_roster_invite() r`);
+      ok(r.rows[0].r == null, 'claim worked for unconfirmed email');
+      ok((await su(`select role from public.profiles where id='${INV_UNCONF}'`)).rows[0].role === 'student', 'claim changed role while unconfirmed');
+    });
+    await t('20261027: after email confirmation, claim_roster_invite applies the teacher role', async () => {
+      await su(`update auth.users set email_confirmed_at = now() where id='${INV_UNCONF}'`);
+      await as({ uid: INV_UNCONF }, `select public.claim_roster_invite()`);
+      ok((await su(`select role from public.profiles where id='${INV_UNCONF}'`)).rows[0].role === 'teacher', 'role not applied after confirmation');
+      ok((await su(`select status from public.roster_invites where email='inv-teacher@x.test'`)).rows[0].status === 'claimed', 'invite not marked claimed');
+    });
+    await t('20261027: handle_new_user does not read roster_invites; still not executable by anon/student', async () => {
+      const def = (await su(`select pg_get_functiondef(oid) d from pg_proc where proname='handle_new_user'`)).rows[0].d as string;
+      ok(!/roster_invites/.test(def), 'handle_new_user still references roster_invites');
+      ok(await denied('anon', `select public.handle_new_user()`), 'anon executed handle_new_user');
+      ok(await denied({ uid: STUDENT }, `select public.handle_new_user()`), 'student executed handle_new_user');
+    });
+    if (fs.existsSync(INVITE_ROLLBACK)) {
+      await t('20261027 rollback restores invite-role-at-signup', async () => {
+        await db.exec(fs.readFileSync(INVITE_ROLLBACK, 'utf8'));
+        await su(`insert into public.roster_invites (email,role,status) values ('inv-back@x.test','teacher','pending')`);
+        await su(`insert into auth.users (id,email,email_confirmed_at) values ('00000000-0000-0000-0000-0000000000e2','inv-back@x.test',null)`);
+        ok((await su(`select role from public.profiles where id='00000000-0000-0000-0000-0000000000e2'`)).rows[0].role === 'teacher', 'rollback did not restore old behaviour');
+        await db.exec(fs.readFileSync(INVITE_MIGRATION, 'utf8'));
+      });
+    }
+  }
 
   await t('storage: anon cannot write question-diagrams; admin can', async () => {
     ok(await denied('anon', `insert into storage.objects (bucket_id,name) values ('question-diagrams','x.png')`), 'anon wrote storage');

@@ -8,7 +8,8 @@ import { clearRoundHistory, clearBookmarkedQuestions } from '@/lib/studentProfil
 import { clearReviewPile } from '@/lib/mastery';
 import { isSoundEnabled, setSoundEnabled } from '@/lib/audio';
 import { toggleLeaderboardOptIn } from '@/lib/leaderboard';
-import { signOut } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
+import { signOut, updatePassword, deleteMyAccount } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import {
   User,
@@ -26,6 +27,7 @@ import {
   AlertTriangle,
   Layers,
   Flame,
+  Lock,
 } from 'lucide-react';
 
 export interface StudentSettingsPanelProps {
@@ -77,6 +79,21 @@ export function StudentSettingsPanel({
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState<boolean>(false);
+  const router = useRouter();
+  // Account management is for real signed-in users only (not guests or Demo Student)
+  const canManageAccount =
+    !!userProfile && !isDemoSession && !userProfile.id?.startsWith('demo-');
+  const isAdminAccount = userProfile?.role === 'admin';
+  const [showPasswordForm, setShowPasswordForm] = useState<boolean>(false);
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [savingPassword, setSavingPassword] = useState<boolean>(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const [deleteTyped, setDeleteTyped] = useState<string>('');
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setDisplayNameInput(preferences.displayNameOverride || userProfile?.display_name || '');
@@ -165,6 +182,45 @@ export function StudentSettingsPanel({
     } catch (err) {
       console.error('Error signing out:', err);
       setSigningOut(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      setPasswordError('Your password needs at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('The two passwords do not match.');
+      return;
+    }
+    setPasswordError(null);
+    setSavingPassword(true);
+    try {
+      await updatePassword(newPassword);
+      setPasswordSuccess(true);
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordForm(false);
+      setTimeout(() => setPasswordSuccess(false), 5000);
+    } catch (err: any) {
+      setPasswordError(err?.message || 'Could not update your password. Please try again.');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteTyped !== 'DELETE') return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteMyAccount();
+      router.push('/');
+    } catch (err: any) {
+      setDeleteError(err?.message || 'Could not delete your account. Please try again.');
+      setDeleting(false);
     }
   };
 
@@ -305,6 +361,106 @@ export function StudentSettingsPanel({
             </button>
           )}
         </div>
+
+        {/* Change Password (signed-in, non-demo users only) */}
+        {canManageAccount && (
+          <div className="mt-4 p-4 rounded-2xl bg-[#F9F4ED] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#201e1d] flex items-center justify-center text-[#201e1d] shadow-[1px_1px_0_0_#201e1d] shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="font-heading font-black text-sm sm:text-base text-[#201e1d]">Password</span>
+                  <p className="text-xs text-neutral-500 font-bold mt-0.5">Choose a new password for signing in.</p>
+                </div>
+              </div>
+              {!showPasswordForm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordForm(true);
+                    setPasswordSuccess(false);
+                    setPasswordError(null);
+                  }}
+                  className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2 min-h-[44px] rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  Change password
+                </button>
+              )}
+            </div>
+
+            {passwordSuccess && (
+              <p role="status" className="mt-3 text-xs font-bold text-emerald-950 bg-[#DCFCE7] border-2 border-[#201e1d] rounded-xl px-3 py-2 flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                Password updated.
+              </p>
+            )}
+
+            {showPasswordForm && (
+              <form onSubmit={handleChangePassword} className="mt-4 flex flex-col gap-3">
+                <div>
+                  <label htmlFor="student-new-password" className="block text-xs font-black uppercase tracking-wider text-neutral-500 mb-1.5">
+                    New password
+                  </label>
+                  <input
+                    id="student-new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    className="w-full px-4 py-3 min-h-[44px] rounded-2xl border-2 border-[#201e1d] bg-white font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#FEF08A] shadow-[2px_2px_0_0_#201e1d] text-base"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="student-confirm-password" className="block text-xs font-black uppercase tracking-wider text-neutral-500 mb-1.5">
+                    Confirm new password
+                  </label>
+                  <input
+                    id="student-confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    className="w-full px-4 py-3 min-h-[44px] rounded-2xl border-2 border-[#201e1d] bg-white font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-[#FEF08A] shadow-[2px_2px_0_0_#201e1d] text-base"
+                  />
+                </div>
+                <p className="text-xs text-neutral-500 font-bold">At least 8 characters.</p>
+                {passwordError && (
+                  <p role="alert" className="text-xs font-bold text-rose-900 bg-[#FFF1F2] border-2 border-[#201e1d] rounded-xl px-3 py-2">
+                    {passwordError}
+                  </p>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2.5">
+                  <button
+                    type="submit"
+                    disabled={savingPassword}
+                    className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] rounded-xl bg-[#FEF08A] hover:bg-[#FDE047] text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingPassword ? 'Saving...' : 'Save password'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingPassword}
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setNewPassword('');
+                      setConfirmPassword('');
+                      setPasswordError(null);
+                    }}
+                    className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] rounded-xl bg-white hover:bg-neutral-50 text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
       </section>
 
       {/* 2. Cambridge Study Target & Exam Countdown Config */}
@@ -709,6 +865,90 @@ export function StudentSettingsPanel({
               <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>
             </button>
           </div>
+
+          {/* Delete Account (signed-in, non-demo users only) */}
+          {canManageAccount && (
+            <div className="mt-4 p-4 rounded-2xl bg-[#FFF1F2] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] overflow-hidden">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="font-heading font-black text-sm text-rose-900 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    Delete account
+                  </span>
+                  <p className="text-xs font-bold text-rose-900/80 mt-0.5">
+                    {isAdminAccount
+                      ? "Admin accounts can't be deleted here."
+                      : 'Permanently remove your account and everything saved to it.'}
+                  </p>
+                </div>
+                {!showDeleteConfirm && (
+                  <button
+                    type="button"
+                    disabled={isAdminAccount}
+                    onClick={() => {
+                      setShowDeleteConfirm(true);
+                      setDeleteTyped('');
+                      setDeleteError(null);
+                    }}
+                    className="w-full sm:w-auto shrink-0 whitespace-nowrap px-4 py-2.5 min-h-[44px] rounded-xl bg-white hover:bg-rose-100 text-rose-800 font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-600" />
+                    <span>Delete account</span>
+                  </button>
+                )}
+              </div>
+
+              {showDeleteConfirm && !isAdminAccount && (
+                <div className="mt-4 flex flex-col gap-3">
+                  <p className="text-xs font-bold text-rose-950 leading-snug">
+                    This permanently deletes your quiz progress, XP, review pile and your account. This cannot be undone.
+                  </p>
+                  <div>
+                    <label htmlFor="student-delete-confirm" className="block text-xs font-black uppercase tracking-wider text-rose-900 mb-1.5">
+                      Type DELETE to confirm
+                    </label>
+                    <input
+                      id="student-delete-confirm"
+                      type="text"
+                      value={deleteTyped}
+                      onChange={(e) => setDeleteTyped(e.target.value)}
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                      className="w-full px-4 py-3 min-h-[44px] rounded-2xl border-2 border-[#201e1d] bg-white font-bold text-[#201e1d] focus:outline-none focus:ring-2 focus:ring-rose-300 shadow-[2px_2px_0_0_#201e1d] text-base"
+                    />
+                  </div>
+                  {deleteError && (
+                    <p role="alert" className="text-xs font-bold text-rose-900 bg-white border-2 border-[#201e1d] rounded-xl px-3 py-2">
+                      {deleteError}
+                    </p>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={deleteTyped !== 'DELETE' || deleting}
+                      className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deleting ? 'Deleting...' : 'Delete my account'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deleting}
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setDeleteTyped('');
+                        setDeleteError(null);
+                      }}
+                      className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] rounded-xl bg-white hover:bg-neutral-50 text-[#201e1d] font-heading font-black text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] cursor-pointer disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
     </div>

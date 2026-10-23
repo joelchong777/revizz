@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
+import { authFetch } from './authFetch';
 import { UserProfile } from '../types';
 
 export const PROVIDER_NOT_ENABLED_CODE = 'PROVIDER_NOT_ENABLED';
@@ -196,6 +197,73 @@ export const resolveLoginIdentifier = (input: string): string => {
     throw new Error('Enter your email address');
   }
   return trimmed;
+};
+
+/**
+ * Sends a password-reset email. Resolves the same way whether or not an account
+ * exists, so the form can never be used to discover registered emails.
+ * Throws only for an invalid email, a rate limit or a network error.
+ */
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  const trimmed = resolveLoginIdentifier(email);
+  let error: any = null;
+  try {
+    const res = await supabase.auth.resetPasswordForEmail(trimmed, {
+      redirectTo: `${window.location.origin}/auth/reset`,
+    });
+    error = res?.error ?? null;
+  } catch (err) {
+    error = err ?? new Error('network');
+  }
+  if (!error) return;
+  const text = `${error?.code ?? ''} ${error?.message ?? ''}`.toLowerCase();
+  if (error?.status === 429 || text.includes('rate') || text.includes('too many')) {
+    throw new Error('Too many reset requests. Wait a few minutes and try again.');
+  }
+  if (error?.status === 0 || error?.name === 'AuthRetryableFetchError' || text.includes('fetch') || text.includes('network')) {
+    throw new Error('Could not reach the server. Check your connection and try again.');
+  }
+  // Anything else could reveal account state; treat as sent.
+};
+
+/** Sets a new password for the signed-in (or recovery-session) user. */
+export const updatePassword = async (newPassword: string): Promise<void> => {
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    throw new Error('Password must be at least 8 characters');
+  }
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+    data: { needs_password: false },
+  });
+  if (error) {
+    const text = String((error as any)?.message ?? '').trim();
+    throw new Error(text || 'Could not update your password. Try again.');
+  }
+};
+
+/**
+ * Permanently deletes the signed-in user's account (server route), clears this
+ * device's revizz_ data, then signs out. Admins are refused by the server.
+ */
+export const deleteMyAccount = async (): Promise<void> => {
+  const res = await authFetch('/api/account/delete', { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error || 'Could not delete your account');
+  }
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('revizz_')) keys.push(k);
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // Storage unavailable; the account is already gone.
+    }
+  }
+  await signOut();
 };
 
 /**
@@ -509,6 +577,7 @@ export const useAuth = () => {
     return getActiveLocalSession();
   });
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -614,7 +683,12 @@ export const useAuth = () => {
 
     handleAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        if (mounted) setIsPasswordRecovery(true);
+      } else if (event === 'SIGNED_OUT') {
+        if (mounted) setIsPasswordRecovery(false);
+      }
       if (session?.user) {
         handleAuth();
       } else {
@@ -644,6 +718,7 @@ export const useAuth = () => {
     signInAsGuestEducator,
     signInAsDemoAdmin,
     signOut,
+    isPasswordRecovery,
   };
 };
 

@@ -4974,6 +4974,170 @@ async function runSuiteLaunchHardening() {
   });
 }
 
+async function runSuiteLaunchAccounts() {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (f: string) => fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const fnBody = (src: string, startRe: RegExp) => {
+    const m = startRe.exec(src);
+    assert(!!m, `${startRe} found`);
+    const rest = src.slice(m!.index + 10);
+    const j = rest.search(/\nexport /);
+    return j === -1 ? rest : rest.slice(0, j);
+  };
+
+  // --- account delete route ---
+  await testAsync('Account delete: route uses getCaller, 401 without caller, 403 for admin', async () => {
+    const src = strip(read('app/api/account/delete/route.ts'));
+    assert(/export\s+async\s+function\s+POST/.test(src), 'POST exported');
+    assert(/getCaller\s*\(\s*req\s*\)/.test(src), 'uses getCaller(req)');
+    assert(/status:\s*401/.test(src), '401 when no caller');
+    assert(/role\s*===\s*['"]admin['"]/.test(src) && /status:\s*403/.test(src), '403 for admin');
+    assert(/Admin accounts can't be deleted from the app\. Ask another admin\./.test(src), 'admin message');
+    assert(src.indexOf('403') < src.indexOf('deleteUser'), 'admin check runs before deleteUser');
+  });
+
+  await testAsync('Account delete: removes roster_invites then auth user, errors via serverErrorResponse', async () => {
+    const src = strip(read('app/api/account/delete/route.ts'));
+    assert(/getServiceClient\s*\(\s*\)/.test(src), 'service client used');
+    assert(/from\(\s*['"]roster_invites['"]\s*\)[\s\S]*\.delete\(\)/.test(src), 'deletes roster_invites');
+    assert(/ilike\(\s*['"]email['"]/.test(src), 'matches invite email case-insensitively');
+    assert(/auth\.admin\.deleteUser\s*\(\s*caller\.id\s*\)/.test(src), 'calls auth.admin.deleteUser(caller.id)');
+    assert(src.indexOf('roster_invites') < src.indexOf('deleteUser'), 'invites deleted before the user');
+    assert(/ok:\s*true/.test(src), 'returns { ok: true }');
+    assert(/serverErrorResponse\s*\(/.test(src), 'errors via serverErrorResponse');
+    assert(!/SUPABASE_SERVICE_ROLE_KEY\s*=|eyJ/.test(src), 'no hard-coded keys');
+  });
+
+  // --- lib/auth.ts helpers ---
+  await testAsync('Password reset: requestPasswordReset redirects to /auth/reset and validates email', async () => {
+    const src = strip(read('lib/auth.ts'));
+    assert(/export\s+const\s+requestPasswordReset\s*=\s*async\s*\(\s*email:\s*string\s*\)\s*:\s*Promise<void>/.test(src), 'signature');
+    const body = fnBody(src, /export\s+const\s+requestPasswordReset/);
+    assert(/resetPasswordForEmail\s*\(/.test(body), 'calls resetPasswordForEmail');
+    assert(/redirectTo:\s*`\$\{window\.location\.origin\}\/auth\/reset`/.test(body), 'redirectTo /auth/reset');
+    assert(/resolveLoginIdentifier\s*\(/.test(body), 'reuses the email validator');
+  });
+
+  await testAsync('Password reset: updatePassword enforces 8 characters and clears needs_password', async () => {
+    const src = strip(read('lib/auth.ts'));
+    assert(/export\s+const\s+updatePassword\s*=\s*async\s*\(\s*newPassword:\s*string\s*\)\s*:\s*Promise<void>/.test(src), 'signature');
+    const body = fnBody(src, /export\s+const\s+updatePassword/);
+    assert(/length\s*<\s*8/.test(body), 'length < 8 check');
+    assert(/Password must be at least 8 characters/.test(body), 'message');
+    assert(/auth\.updateUser\s*\(/.test(body) && /needs_password:\s*false/.test(body), 'updateUser with needs_password false');
+    assert(body.indexOf('length') < body.indexOf('updateUser'), 'length checked before updateUser');
+  });
+
+  await testAsync('Account delete: deleteMyAccount posts via authFetch, clears revizz_ keys, signs out', async () => {
+    const src = strip(read('lib/auth.ts'));
+    assert(/export\s+const\s+deleteMyAccount\s*=\s*async\s*\(\s*\)\s*:\s*Promise<void>/.test(src), 'signature');
+    const body = fnBody(src, /export\s+const\s+deleteMyAccount/);
+    assert(/authFetch\s*\(\s*['"]\/api\/account\/delete['"][\s\S]*POST/.test(body), 'POST /api/account/delete via authFetch');
+    assert(/Could not delete your account/.test(body), 'fallback error text');
+    assert(/startsWith\(\s*['"]revizz_['"]\s*\)/.test(body), 'removes revizz_ keys');
+    assert(/await\s+signOut\s*\(\s*\)/.test(body), 'signs out');
+    assert(body.indexOf('res.ok') < body.indexOf('removeItem'), 'keys cleared only after success');
+  });
+
+  await testAsync('Password reset: useAuth exposes isPasswordRecovery and handles PASSWORD_RECOVERY', async () => {
+    const src = strip(read('lib/auth.ts'));
+    assert(/PASSWORD_RECOVERY/.test(src), 'PASSWORD_RECOVERY handled');
+    assert(/SIGNED_OUT/.test(src), 'reset on SIGNED_OUT');
+    const ret = src.slice(src.lastIndexOf('return {', src.indexOf('export const completeFirstLoginPassword')));
+    assert(/isPasswordRecovery/.test(ret), 'useAuth returns isPasswordRecovery');
+    for (const f of ['userProfile', 'loading', 'setUserProfile', 'isDemo', 'signInAsDemo', 'signInAsGuestEducator', 'signInAsDemoAdmin', 'signOut']) {
+      assert(new RegExp(`\\b${f}\\b`).test(ret), `existing field ${f} kept`);
+    }
+  });
+
+  // --- invite role on confirm ---
+  await testAsync('Invite role on confirm: new handle_new_user ignores roster_invites, keeps definer/search_path/revoke', async () => {
+    const sql = read('supabase/migrations/20261027_invite_role_on_confirm.sql');
+    const code = sql.replace(/^\s*--.*$/gm, '');
+    assert(/create or replace function public\.handle_new_user\(\)/i.test(code), 'replaces handle_new_user');
+    assert(/security definer/i.test(code) && /set search_path = public/i.test(code), 'definer + search_path');
+    assert(!/roster_invites/i.test(code), 'does not reference roster_invites');
+    assert(/'student'\)/.test(code), "inserts role 'student'");
+    assert(/role = public\.profiles\.role/.test(code), 'on conflict keeps existing role');
+    assert(/%frontier%/.test(code), 'frontier school rule kept');
+    assert(/revoke execute on function public\.handle_new_user\(\) from anon, authenticated, public/i.test(code), 'revoke restated');
+    assert(/APPLY ONLY WITH JOEL'S APPROVAL/.test(sql), 'approval header');
+  });
+
+  await testAsync('Invite role on confirm: rollback restores the old body; claim still requires confirmed email', async () => {
+    const down = read('supabase/rollback/20261027_invite_role_on_confirm_down.sql');
+    assert(/from public\.roster_invites where lower\(email\) = lower\(new\.email\)/.test(down), 'old invite lookup restored');
+    assert(/set status = 'claimed'/.test(down), 'old claimed update restored');
+    const lock = read('supabase/migrations/20261022_auth_lockdown.sql');
+    const claim = lock.slice(lock.indexOf('function public.claim_roster_invite'));
+    assert(/email_confirmed_at is not null/.test(claim), 'claim_roster_invite requires email_confirmed_at');
+    assert(/claim_roster_invite/.test(read('lib/auth.ts')), 'client still claims at session load');
+  });
+  // --- accounts UI (static) ---
+  await testAsync('Accounts UI: AuthModal has Forgot password? and imports requestPasswordReset', async () => {
+    const src = read('components/AuthModal.tsx');
+    assert(/Forgot password\?/.test(src), 'Forgot password? link');
+    assert(/import\s*\{[^}]*\brequestPasswordReset\b[^}]*\}\s*from/.test(src), 'imports requestPasswordReset');
+  });
+
+  await testAsync('Accounts UI: AuthModal reset confirmation never reveals whether the account exists', async () => {
+    const src = read('components/AuthModal.tsx');
+    assert(src.includes("If an account exists for that email, we've sent a reset link. Check your inbox."), 'generic reset message');
+  });
+
+  await testAsync('Accounts UI: AuthModal links /terms and /privacy in new tabs with the 13 or older text', async () => {
+    const src = read('components/AuthModal.tsx');
+    assert(/href="\/terms"[^>]*target="_blank"/.test(src), '/terms opens in a new tab');
+    assert(/href="\/privacy"[^>]*target="_blank"/.test(src), '/privacy opens in a new tab');
+    assert(/13 or older/.test(src), '13 or older text');
+  });
+
+  await testAsync('Accounts UI: AuthModal sign-up enforces 8 characters, no 6-character text left', async () => {
+    const src = read('components/AuthModal.tsx');
+    assert(/password\.length\s*<\s*8/.test(src), 'password.length < 8');
+    assert(/minLength=\{[^}]*8[^}]*\}/.test(src), 'minLength 8');
+    assert(!/6 characters/.test(src), 'no "6 characters" string');
+  });
+
+  await testAsync('Accounts UI: AuthModal sign-up submit is disabled until terms are agreed', async () => {
+    const src = read('components/AuthModal.tsx');
+    assert(/disabled=\{[^}]*!agreedToTerms[^}]*\}/.test(src), 'submit disabled when !agreedToTerms');
+    assert(/if\s*\(\s*!agreedToTerms\s*\)/.test(src), 'handler also blocks without agreement');
+  });
+
+  await testAsync('Accounts UI: reset page exists, is a client component, uses updatePassword and useAuth', async () => {
+    const src = read('app/auth/reset/page.tsx');
+    assert(/^\s*['"]use client['"]/.test(src), "'use client'");
+    assert(/import\s*\{[^}]*\bupdatePassword\b[^}]*\}\s*from/.test(src), 'imports updatePassword');
+    assert(/import\s*\{[^}]*\buseAuth\b[^}]*\}\s*from/.test(src), 'imports useAuth');
+  });
+
+  await testAsync('Accounts UI: reset page shows expired-link and success states from isPasswordRecovery', async () => {
+    const src = read('app/auth/reset/page.tsx');
+    assert(/expired or was already used/.test(src), 'expired link state');
+    assert(/Password updated/.test(src), 'success state');
+    assert(/isPasswordRecovery/.test(src), 'reads isPasswordRecovery');
+  });
+
+  await testAsync('Accounts UI: StudentSettingsPanel delete flow is typed-confirm, redirects home, refuses admins', async () => {
+    const src = read('components/profile/StudentSettingsPanel.tsx');
+    assert(/import\s*\{[^}]*\bupdatePassword\b[^}]*\}\s*from\s*'@\/lib\/auth'/.test(src), 'imports updatePassword');
+    assert(/import\s*\{[^}]*\bdeleteMyAccount\b[^}]*\}\s*from\s*'@\/lib\/auth'/.test(src), 'imports deleteMyAccount');
+    assert(/!==\s*'DELETE'/.test(src), "gated on typing 'DELETE'");
+    assert(/router\.push\(\s*'\/'\s*\)/.test(src), "router.push('/') after delete");
+    assert(src.includes("Admin accounts can't be deleted here."), 'admin message');
+  });
+
+  await testAsync('Accounts UI: StudentSettingsPanel gates both account rows on canManageAccount', async () => {
+    const src = read('components/profile/StudentSettingsPanel.tsx');
+    const n = (src.match(/\{canManageAccount\s*&&/g) || []).length;
+    assert(n >= 2, `canManageAccount gates at least 2 rows (found ${n})`);
+    assert(/const\s+canManageAccount\s*=/.test(src), 'canManageAccount defined');
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
@@ -4985,6 +5149,7 @@ async function main() {
   await runSuite26();
   await runSuiteLaunchLegal();
   await runSuiteLaunchHardening();
+  await runSuiteLaunchAccounts();
 
   // Summary Output
   const duration = ((Date.now() - startMs) / 1000).toFixed(2);
