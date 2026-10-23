@@ -227,7 +227,7 @@ export default function AdminNav({
         </div>
 
         {/* Navigation Sections */}
-        <div className="flex flex-col gap-4 overflow-y-auto pr-0.5 no-scrollbar">
+        <div className="flex flex-col gap-4 overflow-y-auto px-0.5 pt-0.5 pb-2 no-scrollbar">
           {/* Teaching Section */}
           {isTeacher && (['overview', 'bank', 'roster', 'assign', 'compiler'].some(isEnabled)) && (
             <div className="flex flex-col gap-1">
