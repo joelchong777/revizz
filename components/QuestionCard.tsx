@@ -505,6 +505,39 @@ export function QuestionCard({
         )}
       </div>
 
+      {/* Retry notice between the question and the options */}
+      {isRetry && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+          className="flex items-center gap-3 p-4 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-4"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-text flex-shrink-0"
+          >
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <div className="flex flex-col gap-1 leading-tight">
+            <span className="font-heading text-base text-text">
+              1 retry left · 50% XP
+            </span>
+            <span className="text-xs font-semibold text-text">
+              Streak reset. Pick another option or skip to next question.
+            </span>
+          </div>
+        </motion.div>
+      )}
+
       {/* Fifth Row: Options List (Tactile Rounded-2xl Cards) */}
       <div className="flex flex-col gap-3" role="radiogroup" aria-label="Answer options" aria-busy={isChecking}>
         {question.options.map((opt, i) => {
@@ -640,39 +673,6 @@ export function QuestionCard({
           );
         })}
       </div>
-
-      {/* Feedback below the options so they never jump */}
-      {isRetry && (
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          className="flex items-center gap-3 p-4 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-4"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-text flex-shrink-0"
-          >
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-          </svg>
-          <div className="flex flex-col gap-1 leading-tight">
-            <span className="font-heading text-base text-text">
-              1 retry left · 50% XP
-            </span>
-            <span className="text-xs font-semibold text-text">
-              Streak reset. Pick another option or skip to next question.
-            </span>
-          </div>
-        </motion.div>
-      )}
 
       {/* Feedback Panel on Answer / Timeout */}
       {isResolved && (
