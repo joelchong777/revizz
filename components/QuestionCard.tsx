@@ -513,25 +513,28 @@ export function QuestionCard({
           transition={{ type: 'spring', stiffness: 500, damping: 20 }}
           className="flex items-center gap-3 p-4 rounded-2xl bg-accent-300 border-2 border-text shadow-offset-4"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-text flex-shrink-0"
+          <span
+            aria-hidden="true"
+            className="w-9 h-9 rounded-full bg-accent-600 text-neutral-100 border-2 border-text flex items-center justify-center flex-shrink-0"
           >
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-          </svg>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </span>
           <div className="flex flex-col gap-1 leading-tight">
-            <span className="font-bold text-xs uppercase tracking-wider text-text">
+            <span className="font-heading text-lg uppercase tracking-wide text-text">
               Wrong answer
             </span>
-            <span className="font-heading text-base text-text">
+            <span className="font-bold text-sm text-text">
               1 retry left · 50% XP
             </span>
             <span className="text-xs font-semibold text-text">
