@@ -50,7 +50,10 @@ async function main() {
   const db = new PGlite();
   const migrationSql = fs.readFileSync(MIGRATION, 'utf8');
   await db.exec(fs.readFileSync(FIXTURE, 'utf8'));
-  await db.exec(`alter table public.questions add column if not exists question_number int;
+  await db.exec(`alter table public.papers add column if not exists series text;
+                 alter table public.papers add column if not exists paper_code text;
+                 alter table public.papers add column if not exists year int;
+                 alter table public.questions add column if not exists question_number int;
                  alter table public.questions add column if not exists stem_markdown text;
                  alter table public.question_options add column if not exists content_markdown text;
                  alter default privileges in schema public grant all on tables to anon, authenticated, service_role;`);
@@ -132,7 +135,7 @@ async function main() {
     insert into auth.users (id,email,email_confirmed_at) values
       ('${TEACHER}','teacher@x.test',now()),('${STUDENT}','student@x.test',now()),('${STUDENT2}','student2@x.test',now());
     update public.profiles set role='teacher' where id='${TEACHER}';
-    insert into public.papers (id,title) values ('${PAPER}','0455/12 Feb 2024');
+    insert into public.papers (id,paper_code,series,year) values ('${PAPER}','0455/12','Feb/Mar',2024);
     insert into public.topics (id,name) values ('${TOPIC}','Money');
     insert into public.questions (id,paper_id,topic_id,stem,question_number) values ('${QK}','${PAPER}','${TOPIC}','k',7),('${QR}','${PAPER}','${TOPIC}','r',8);
     insert into public.question_options (question_id,label,text,is_correct) values
@@ -259,7 +262,9 @@ async function main() {
     ok(q, 'QK missing from hardest/slowest (min 5 attempts)');
     eq(q.possibleKeyIssue, true, 'possibleKeyIssue');
     eq([q.correctLabel, q.topWrongLabel], ['A', 'B'], 'labels');
-    ok(q.attempts >= 5 && /Q7/.test(q.label), `label/attempts ${q.label}/${q.attempts}`);
+    ok(q.attempts >= 5 && q.label === '0455/12 Feb/Mar 2024 · Q7', `label/attempts ${q.label}/${q.attempts}`);
+    const pp = (s.papers ?? []).find((x: any) => x.paperId === PAPER);
+    if (pp) eq(pp.title, '0455/12 Feb/Mar 2024', 'papers[].title from paper_code/series/year');
   });
   await t('summary: question with fewer than 5 attempts is not listed; QR has no key issue', async () => {
     const s = await summary();

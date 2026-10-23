@@ -326,12 +326,12 @@ begin
   v_papers := coalesce((
     select jsonb_agg(jsonb_build_object('paperId', paper_id, 'title', title, 'sessions', n, 'completed', c) order by n desc)
     from (
-      select s.source_ref paper_id, coalesce(p.title, s.source_ref) title, count(*) n,
+      select s.source_ref paper_id, coalesce(nullif(concat_ws(' ', p.paper_code, p.series, p.year::text), ''), s.source_ref) title, count(*) n,
              count(*) filter (where s.completed_at is not null and not s.ended_early) c
         from _aa_s s
         left join papers p on p.id::text = s.source_ref
        where s.mode = 'paper' and s.source_ref is not null
-       group by s.source_ref, p.title
+       group by s.source_ref, p.paper_code, p.series, p.year
        order by count(*) desc limit 10
     ) pp
   ), '[]'::jsonb);
@@ -352,7 +352,7 @@ begin
   insert into _aa_qs
     select z.*, 0 from (
       select a.question_id,
-             coalesce(p.title || ' · Q' || q.question_number::text, a.question_id) label,
+             coalesce(nullif(concat_ws(' ', p.paper_code, p.series, p.year::text), '') || ' · Q' || q.question_number::text, a.question_id) label,
              tp.name topic, a.attempts,
              round(a.first_correct::numeric / a.attempts, 4) acc,
              round(a.total_time_ms::numeric / a.attempts / 1000, 1) avg_sec,
@@ -365,7 +365,7 @@ begin
         left join questions q on q.id::text = a.question_id
         left join papers p on p.id = q.paper_id
         left join topics tp on tp.id = q.topic_id
-        left join lateral (select upper(o.label) label from question_options o where o.question_id = q.id and o.is_correct limit 1) co on true
+        left join lateral (select upper(rtrim(o.label::text)) label from question_options o where o.question_id = q.id and o.is_correct limit 1) co on true
         left join lateral (
           select v.lbl, v.n from (values ('A', a.pick_a), ('B', a.pick_b), ('C', a.pick_c), ('D', a.pick_d)) v(lbl, n)
            where v.lbl is distinct from co.label and v.n > 0 order by v.n desc, v.lbl limit 1
