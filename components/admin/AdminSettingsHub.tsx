@@ -24,7 +24,6 @@ import {
   Lock,
   Layers,
   BookOpen,
-  ArrowRight,
   Menu,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
@@ -213,39 +212,9 @@ export default function AdminSettingsHub({
     <div className="space-y-6">
       {/* Page Header */}
       <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-4 sm:p-6 shadow-offset-3 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#645c50]">
-            Admin console · Settings
-          </p>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onSelectParentTab && onSelectParentTab('diagnostics')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-transparent border-2 border-[#201e1d]/30 text-xs font-bold text-[#201e1d] hover:border-[#201e1d] hover:bg-[#eee7db] motion-safe:transition-colors cursor-pointer"
-            >
-              <Activity className="w-3.5 h-3.5" aria-hidden="true" />
-              Diagnostics Lab
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onSelectParentTab && onSelectParentTab('ingestion')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-transparent border-2 border-[#201e1d]/30 text-xs font-bold text-[#201e1d] hover:border-[#201e1d] hover:bg-[#eee7db] motion-safe:transition-colors cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-              Ingestion Studio
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
         <h1 className="text-2xl sm:text-3xl font-black text-[#201e1d] font-heading tracking-tight">
           Platform Settings &amp; Administration
         </h1>
-        <p className="text-xs sm:text-sm font-medium text-[#645c50] max-w-xl">
-          Seats, AI models, quiz rules and sign-in security in one place.
-        </p>
 
         {/* Tab Navigation Bar: segmented grid at lg+, snap-scroll with edge fade below */}
         <div className="pt-3 border-t-2 border-[#201e1d]/10">
