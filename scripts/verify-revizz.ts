@@ -4834,6 +4834,60 @@ async function runSuite26() {
   });
 }
 
+async function runSuiteLaunchLegal() {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (f: string) => fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
+
+  for (const route of ['privacy', 'terms']) {
+    await testAsync(`Launch legal: /${route} page exists with age, contact placeholder and Draft line`, async () => {
+      const src = read(`app/${route}/page.tsx`);
+      assert(src.includes('13'), 'mentions age 13');
+      assert(src.includes('mailto:joel.chong.777@gmail.com'), 'has the contact email');
+      assert(src.includes('Draft'), 'has Draft line');
+      assert(src.includes('href="/"'), 'links back to /');
+    });
+  }
+
+  await testAsync('Launch legal: app/error.tsx calls reset and console.error', async () => {
+    const src = read('app/error.tsx');
+    assert(src.includes("'use client'"), 'is a client component');
+    assert(/reset\(\)/.test(src), 'calls reset()');
+    assert(src.includes('console.error('), 'logs with console.error');
+  });
+
+  await testAsync('Launch legal: app/global-error.tsx renders its own <html> and logs', async () => {
+    const src = read('app/global-error.tsx');
+    assert(src.includes('<html'), 'renders <html>');
+    assert(src.includes('<body'), 'renders <body>');
+    assert(src.includes('console.error('), 'logs with console.error');
+  });
+
+  await testAsync('Launch legal: StudentAuthGate and Header link to /privacy and /terms', async () => {
+    for (const f of ['components/StudentAuthGate.tsx', 'components/Header.tsx']) {
+      const src = read(f);
+      assert(src.includes('href="/privacy"'), `${f} links to /privacy`);
+      assert(src.includes('href="/terms"'), `${f} links to /terms`);
+    }
+  });
+
+  await testAsync('Launch legal: portal ReactMarkdown renders sit inside MarkdownErrorBoundary', async () => {
+    const files = [
+      'components/portal/IngestionLivePreview.tsx',
+      'components/portal/IngestionMediaPanel.tsx',
+      'components/portal/IngestionQuestionEditor.tsx',
+      'components/portal/staged/StagedPaperAuditor.tsx',
+    ];
+    for (const f of files) {
+      const src = read(f);
+      assert(/import \{ MarkdownErrorBoundary \}/.test(src), `${f} imports MarkdownErrorBoundary`);
+      const md = (src.match(/<ReactMarkdown\b/g) || []).length;
+      const boundary = (src.match(/<MarkdownErrorBoundary\b/g) || []).length;
+      assert(boundary >= md, `${f}: ${boundary} boundaries for ${md} ReactMarkdown`);
+    }
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
@@ -4843,6 +4897,7 @@ async function main() {
   await runSuite24();
   await runSuite25();
   await runSuite26();
+  await runSuiteLaunchLegal();
 
   // Summary Output
   const duration = ((Date.now() - startMs) / 1000).toFixed(2);

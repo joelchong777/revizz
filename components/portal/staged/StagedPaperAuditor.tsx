@@ -27,6 +27,7 @@ import 'katex/dist/katex.min.css';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
 import { playPop, playChime, playBuzzer } from '@/lib/audio';
 import { resolveDiagramUrl } from '@/lib/resolveDiagramUrl';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 
 export interface StagedPaperAuditorProps {
   paperId: string;
@@ -493,9 +494,11 @@ export function StagedPaperAuditor({
                   />
                 ) : (
                   <div className="text-sm font-medium leading-relaxed">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {sanitizeKaTeX(currentQuestion.stem_markdown)}
-                    </ReactMarkdown>
+                    <MarkdownErrorBoundary fallbackText={currentQuestion.stem_markdown}>
+                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                        {sanitizeKaTeX(currentQuestion.stem_markdown)}
+                      </ReactMarkdown>
+                    </MarkdownErrorBoundary>
                   </div>
                 )}
               </div>
@@ -552,9 +555,11 @@ export function StagedPaperAuditor({
                           )}
                         </div>
                         <div className="text-xs font-medium leading-relaxed">
-                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                            {sanitizeKaTeX(opt.content_markdown)}
-                          </ReactMarkdown>
+                          <MarkdownErrorBoundary fallbackText={opt.content_markdown}>
+                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                              {sanitizeKaTeX(opt.content_markdown)}
+                            </ReactMarkdown>
+                          </MarkdownErrorBoundary>
                         </div>
                       </div>
                     </button>
@@ -590,9 +595,11 @@ export function StagedPaperAuditor({
                   />
                 ) : currentQuestion.explanation_markdown ? (
                   <div className="text-xs font-medium leading-relaxed text-[#474238]">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {sanitizeKaTeX(currentQuestion.explanation_markdown)}
-                    </ReactMarkdown>
+                    <MarkdownErrorBoundary fallbackText={currentQuestion.explanation_markdown}>
+                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                        {sanitizeKaTeX(currentQuestion.explanation_markdown)}
+                      </ReactMarkdown>
+                    </MarkdownErrorBoundary>
                   </div>
                 ) : (
                   <p className="text-xs text-[#82796a] italic">No explanation provided for this question.</p>

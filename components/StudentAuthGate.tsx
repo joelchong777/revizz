@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { signInWithGoogle, signInAsDemoStudent, isProviderNotEnabledError } from '@/lib/auth';
 import { AuthModal } from './AuthModal';
 
@@ -245,7 +246,14 @@ export function StudentAuthGate({
 
         {/* Clean Privacy Note */}
         <p className="text-[12px] text-neutral-600 font-medium leading-relaxed m-0">
-          Zero tracking cookies.
+          Zero tracking cookies.{' '}
+          <Link href="/privacy" className="font-bold underline underline-offset-2 hover:text-text">
+            Privacy
+          </Link>
+          {' · '}
+          <Link href="/terms" className="font-bold underline underline-offset-2 hover:text-text">
+            Terms
+          </Link>
         </p>
       </div>
 

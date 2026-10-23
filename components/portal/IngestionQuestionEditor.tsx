@@ -10,6 +10,7 @@ import { Question, QuestionStatus } from '@/hooks/useQuizGame';
 import { IngestionOptionsEditor } from './IngestionOptionsEditor';
 import { IngestionLivePreview } from './IngestionLivePreview';
 import { IngestionDiagnostics } from './IngestionDiagnostics';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 
 export interface IngestionQuestionEditorProps {
   question: StagingQuestion;
@@ -178,9 +179,11 @@ export function IngestionQuestionEditor({
             className="w-full min-h-[120px] p-4 rounded-2xl border-2 border-text bg-white shadow-offset-2 outline-none focus:border-accent resize-y font-mono text-sm"
           />
           <div className="p-4 rounded-2xl border-2 border-text bg-neutral-200 mt-2 min-h-[48px]">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-              {question.stem_markdown || '*Preview will appear here*'}
-            </ReactMarkdown>
+            <MarkdownErrorBoundary fallbackText={question.stem_markdown}>
+              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                {question.stem_markdown || '*Preview will appear here*'}
+              </ReactMarkdown>
+            </MarkdownErrorBoundary>
           </div>
         </div>
 

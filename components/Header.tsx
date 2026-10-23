@@ -372,6 +372,24 @@ export function Header({
                     <LogOut className="w-4 h-4 text-rose-700 shrink-0" />
                     <span>Log Out</span>
                   </button>
+
+                  {/* Legal links */}
+                  <div className="flex items-center gap-1 pt-1">
+                    <Link
+                      href="/privacy"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex-1 px-2.5 py-1 text-[11px] font-bold text-text/70 rounded-xl hover:bg-neutral-100 transition-colors text-center"
+                    >
+                      Privacy
+                    </Link>
+                    <Link
+                      href="/terms"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex-1 px-2.5 py-1 text-[11px] font-bold text-text/70 rounded-xl hover:bg-neutral-100 transition-colors text-center"
+                    >
+                      Terms
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

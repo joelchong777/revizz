@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sanitizeKaTeX } from "@/lib/ingestion/katexSanitizer";
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 import type { BoundingBox } from "@/types/ingestion";
 
 export interface IngestionMediaPanelProps {
@@ -801,12 +802,14 @@ export function IngestionMediaPanel({
                   <div className="min-h-[36px] text-xs sm:text-sm leading-relaxed text-[#201e1d] overflow-x-auto">
                     {explanationMarkdown?.trim() ? (
                       <div className="prose prose-sm max-w-none break-words text-[#201e1d]">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkMath]}
-                          rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
-                        >
-                          {sanitizeKaTeX(explanationMarkdown)}
-                        </ReactMarkdown>
+                        <MarkdownErrorBoundary fallbackText={explanationMarkdown}>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkMath]}
+                            rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: '#c67139' }]]}
+                          >
+                            {sanitizeKaTeX(explanationMarkdown)}
+                          </ReactMarkdown>
+                        </MarkdownErrorBoundary>
                       </div>
                     ) : (
                       <p className="text-xs italic text-[#82796a]">

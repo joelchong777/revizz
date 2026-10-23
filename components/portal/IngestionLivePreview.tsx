@@ -28,6 +28,7 @@ import type { StagingQuestion } from '@/types/ingestion';
 import { playChime, playBuzzer, playFanfare, playPop } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { sanitizeKaTeX } from '@/lib/ingestion/katexSanitizer';
+import { MarkdownErrorBoundary } from '@/components/ui/MarkdownErrorBoundary';
 
 export interface IngestionLivePreviewProps {
   question: StagingQuestion;
@@ -379,26 +380,28 @@ export function IngestionLivePreview({
           {/* Question Stem: Live KaTeX Typography */}
           <div className="text-slate-900 text-base sm:text-lg font-medium leading-relaxed font-body">
             {question.stem_markdown ? (
-              <ReactMarkdown
-                remarkPlugins={[remarkMath]}
-                rehypePlugins={[[rehypeKatex, { throwOnError: false }]]}
-                components={{
-                  p: ({ ...props }) => (
-                    <p className="mb-2 last:mb-0 leading-relaxed text-slate-900" {...props} />
-                  ),
-                  strong: ({ ...props }) => (
-                    <strong className="font-bold text-slate-900" {...props} />
-                  ),
-                  code: ({ ...props }) => (
-                    <code
-                      className="font-mono text-xs bg-slate-200 px-1 py-0.5 rounded border border-slate-300"
-                      {...props}
-                    />
-                  ),
-                }}
-              >
-                {question.stem_markdown}
-              </ReactMarkdown>
+              <MarkdownErrorBoundary fallbackText={question.stem_markdown}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkMath]}
+                  rehypePlugins={[[rehypeKatex, { throwOnError: false }]]}
+                  components={{
+                    p: ({ ...props }) => (
+                      <p className="mb-2 last:mb-0 leading-relaxed text-slate-900" {...props} />
+                    ),
+                    strong: ({ ...props }) => (
+                      <strong className="font-bold text-slate-900" {...props} />
+                    ),
+                    code: ({ ...props }) => (
+                      <code
+                        className="font-mono text-xs bg-slate-200 px-1 py-0.5 rounded border border-slate-300"
+                        {...props}
+                      />
+                    ),
+                  }}
+                >
+                  {question.stem_markdown}
+                </ReactMarkdown>
+              </MarkdownErrorBoundary>
             ) : (
               <div className="text-slate-400 italic text-sm py-4 text-center">
                 *Question stem content will appear here*
@@ -483,12 +486,14 @@ export function IngestionLivePreview({
 
                   {/* Rendered Option Text with KaTeX */}
                   <div className="flex-1 min-w-0 pt-0.5 text-slate-900 font-sans">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { throwOnError: false }]]}
-                    >
-                      {sanitizeKaTeX(opt.content_markdown || '')}
-                    </ReactMarkdown>
+                    <MarkdownErrorBoundary fallbackText={opt.content_markdown}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[[rehypeKatex, { throwOnError: false }]]}
+                      >
+                        {sanitizeKaTeX(opt.content_markdown || '')}
+                      </ReactMarkdown>
+                    </MarkdownErrorBoundary>
                   </div>
 
                   {/* Visual Checkmark / Cross cue */}
@@ -560,9 +565,11 @@ export function IngestionLivePreview({
                   </div>
                   <div className="text-sm text-slate-800 leading-relaxed font-body bg-white p-3 rounded-xl border border-slate-200">
                     {question.explanation_markdown ? (
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {question.explanation_markdown}
-                      </ReactMarkdown>
+                      <MarkdownErrorBoundary fallbackText={question.explanation_markdown}>
+                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          {question.explanation_markdown}
+                        </ReactMarkdown>
+                      </MarkdownErrorBoundary>
                     ) : (
                       <span className="text-slate-400 italic text-xs">
                         No written explanation provided for this question.
