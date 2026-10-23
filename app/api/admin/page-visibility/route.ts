@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient, requireRole, serverErrorResponse } from '@/lib/apiAuth';
-import { isKnownPageId } from '@/lib/pageVisibility';
+import { isKnownPageId } from '@/lib/pageVisibilityCore';
 
 export const dynamic = 'force-dynamic';
 
