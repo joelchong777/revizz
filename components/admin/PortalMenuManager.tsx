@@ -34,6 +34,12 @@ import {
   resetPortalNavToDefaults,
   PORTAL_NAV_CHANGE_EVENT,
 } from '@/lib/portal/menuConfig';
+import {
+  PAGE_REGISTRY,
+  setPageEnabled,
+  resetPageVisibility,
+  usePageVisibility,
+} from '@/lib/pageVisibility';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutGrid,
@@ -71,6 +77,45 @@ export default function PortalMenuManager() {
   const [mounted, setMounted] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const pageVisibility = usePageVisibility();
+  // Optimistic overrides (id -> enabled) while a server write is in flight
+  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({});
+  const [resettingAll, setResettingAll] = useState(false);
+
+  const isPageOn = (id: string) =>
+    id in optimistic ? optimistic[id] : !pageVisibility.isHidden(id);
+  const isOn = (item: PortalNavItem) => (item.isCustom ? item.enabled : isPageOn(item.id));
+
+  const togglePage = async (id: string, label: string, audienceLabel: string) => {
+    const next = !isPageOn(id);
+    setOptimistic((prev) => ({ ...prev, [id]: next }));
+    try {
+      await setPageEnabled(id, next);
+      await pageVisibility.refresh();
+      showFeedback('success', `"${label}" is now ${next ? 'visible to' : 'hidden from'} ${audienceLabel}.`);
+    } catch (err: any) {
+      showFeedback('error', err?.message || 'Failed to update page visibility');
+    } finally {
+      setOptimistic((prev) => {
+        const { [id]: _drop, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleShowAll = async () => {
+    if (typeof window !== 'undefined' && !window.confirm('Show all student and teacher pages again?')) return;
+    setResettingAll(true);
+    try {
+      await resetPageVisibility();
+      await pageVisibility.refresh();
+      showFeedback('success', 'All pages are visible again.');
+    } catch (err: any) {
+      showFeedback('error', err?.message || 'Failed to reset page visibility');
+    } finally {
+      setResettingAll(false);
+    }
+  };
 
   // New item form state
   const [newLabel, setNewLabel] = useState('');
@@ -105,6 +150,11 @@ export default function PortalMenuManager() {
   };
 
   const handleToggle = (id: string) => {
+    const target = items.find((i) => i.id === id);
+    if (target && !target.isCustom) {
+      void togglePage(id, target.label, 'teachers');
+      return;
+    }
     try {
       const updated = togglePortalMenuItem(id);
       setItems(updated);
@@ -121,7 +171,7 @@ export default function PortalMenuManager() {
   const handleReset = () => {
     if (typeof window !== 'undefined') {
       const confirmed = window.confirm(
-        'Reset navigation to default settings? All custom links will be removed and standard modules re-enabled.'
+        'Reset navigation to default settings? All custom links will be removed. Use "Show all pages" to re-enable hidden pages.'
       );
       if (!confirmed) return;
     }
@@ -129,7 +179,7 @@ export default function PortalMenuManager() {
     try {
       const defaults = resetPortalNavToDefaults();
       setItems(defaults);
-      showFeedback('success', 'Educator Portal navigation successfully reset to defaults.');
+      showFeedback('success', 'Educator Portal navigation reset to defaults (custom links removed).');
     } catch (err: any) {
       showFeedback('error', err?.message || 'Failed to reset navigation.');
     }
@@ -192,9 +242,10 @@ export default function PortalMenuManager() {
     );
   }
 
-  const activeCount = items.filter((i) => i.enabled).length;
+  const activeCount = items.filter(isOn).length;
   const customCount = items.filter((i) => i.isCustom).length;
 
+  const studentPages = PAGE_REGISTRY.filter((p) => p.audience === 'student');
   const sections: PortalNavSection[] = ['teaching', 'analytics', 'verification', 'school', 'custom'];
 
   return (
@@ -208,19 +259,30 @@ export default function PortalMenuManager() {
                 PORTAL CONFIGURATION
               </span>
               <span className="text-xs font-mono font-bold text-[#645c50]">
-                Educator Sidebar Navigation Manager
+                Page &amp; Navigation Manager
               </span>
             </div>
             <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
-              Educator Portal Menu Management
+              Page Visibility &amp; Menu Management
             </h1>
             <p className="text-sm text-[#474238] mt-1 max-w-2xl font-medium">
-              Control which sections and feature modules are visible in the Educator Portal sidebar.
-              Enable or disable standard tools, add custom department links, and maintain portal ergonomics.
+              Control which teacher portal modules and student pages users can see. Hidden pages are
+              blocked for everyone except admins. Custom links are stored on this device.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleShowAll}
+              disabled={resettingAll}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#dbeafe] border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#bfdbfe] text-xs font-bold text-[#201e1d] transition-transform active:translate-y-0.5 disabled:opacity-60"
+              title="Make every student and teacher page visible again"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>{resettingAll ? 'Resetting...' : 'Show all pages'}</span>
+            </button>
+
             <button
               type="button"
               onClick={handleReset}
@@ -407,7 +469,7 @@ export default function PortalMenuManager() {
                     {SECTION_LABELS[sectionKey]}
                   </span>
                   <span className="text-xs font-mono text-[#645c50]">
-                    ({sectionItems.filter((i) => i.enabled).length}/{sectionItems.length} active)
+                    ({sectionItems.filter(isOn).length}/{sectionItems.length} active)
                   </span>
                 </div>
               </div>
@@ -420,12 +482,13 @@ export default function PortalMenuManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {sectionItems.map((item) => {
                     const IconComponent = ICON_MAP[item.iconName] || LayoutGrid;
+                    const on = isOn(item);
 
                     return (
                       <div
                         key={item.id}
                         className={`p-3.5 rounded-2xl border-2 border-[#201e1d] flex items-center justify-between gap-3 transition-all ${
-                          item.enabled
+                          on
                             ? 'bg-white shadow-offset-2'
                             : 'bg-[#f5ead8]/60 opacity-60 border-dashed'
                         }`}
@@ -433,7 +496,7 @@ export default function PortalMenuManager() {
                         <div className="flex items-center gap-3 min-w-0">
                           <span
                             className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border border-[#201e1d]/20 ${
-                              item.enabled
+                              on
                                 ? 'bg-[#ffe1d0] text-[#201e1d]'
                                 : 'bg-[#e5dcd1] text-[#78716c]'
                             }`}
@@ -483,13 +546,13 @@ export default function PortalMenuManager() {
                             type="button"
                             onClick={() => handleToggle(item.id)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-[#201e1d] font-bold text-xs transition-transform active:translate-y-0.5 ${
-                              item.enabled
+                              on
                                 ? 'bg-[#ccdbb2] text-[#201e1d] hover:bg-[#b8c99d] shadow-offset-2'
                                 : 'bg-[#f5ead8] text-[#645c50] hover:bg-[#ffe1d0]'
                             }`}
-                            title={item.enabled ? 'Click to hide this module' : 'Click to show this module'}
+                            title={on ? 'Click to hide this module' : 'Click to show this module'}
                           >
-                            {item.enabled ? (
+                            {on ? (
                               <>
                                 <Eye className="w-3.5 h-3.5 text-emerald-800" />
                                 <span>Active</span>
@@ -522,6 +585,67 @@ export default function PortalMenuManager() {
             </div>
           );
         })}
+      </div>
+
+      {/* Student pages */}
+      <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-5 shadow-offset-2 space-y-3" data-testid="student-pages-section">
+        <div className="flex items-center gap-2 px-1">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border border-[#201e1d] bg-[#fef08a] text-[#201e1d]">
+            Student pages
+          </span>
+          <span className="text-xs font-mono text-[#645c50]">
+            {pageVisibility.loaded
+              ? `(${studentPages.filter((p) => isPageOn(p.id)).length}/${studentPages.length} visible)`
+              : '(loading...)'}
+          </span>
+        </div>
+
+        {!pageVisibility.loaded ? (
+          <div className="p-4 rounded-xl bg-[#f5ead8]/50 border border-dashed border-[#201e1d]/20 text-center text-xs text-[#645c50] font-medium">
+            Loading page visibility...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {studentPages.map((page) => {
+              const on = isPageOn(page.id);
+              return (
+                <div
+                  key={page.id}
+                  className={`p-3.5 rounded-2xl border-2 border-[#201e1d] flex items-center justify-between gap-3 transition-all ${
+                    on ? 'bg-white shadow-offset-2' : 'bg-[#f5ead8]/60 opacity-60 border-dashed'
+                  }`}
+                >
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-sm text-[#201e1d] truncate">{page.label}</span>
+                    <span className="text-[11px] text-[#645c50] font-mono truncate">{page.description}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => togglePage(page.id, page.label, 'students')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-[#201e1d] font-bold text-xs shrink-0 transition-transform active:translate-y-0.5 ${
+                      on
+                        ? 'bg-[#ccdbb2] text-[#201e1d] hover:bg-[#b8c99d] shadow-offset-2'
+                        : 'bg-[#f5ead8] text-[#645c50] hover:bg-[#ffe1d0]'
+                    }`}
+                    title={on ? 'Click to hide this page from students' : 'Click to show this page to students'}
+                  >
+                    {on ? (
+                      <>
+                        <Eye className="w-3.5 h-3.5 text-emerald-800" />
+                        <span>Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5 text-[#645c50]" />
+                        <span>Hidden</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

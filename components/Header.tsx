@@ -10,6 +10,7 @@ import { isSoundEnabled, setSoundEnabled, playPop, subscribeSoundState } from '@
 import LeaderboardModal from './LeaderboardModal';
 import { AuthModal } from './AuthModal';
 import { User, Trophy, LogOut } from 'lucide-react';
+import { usePageAccess } from './PageGate';
 
 interface HeaderProps {
   currentXp?: number;
@@ -23,6 +24,9 @@ export function Header({
   className,
 }: HeaderProps) {
   const { userProfile, loading, setUserProfile } = useAuth();
+  const pageAccess = usePageAccess();
+  const showProfileLink = !pageAccess.isBlocked('profile');
+  const showLeaderboardLink = !pageAccess.isBlocked('leaderboard');
   const [isLeaderboardOpen, setLeaderboardOpen] = useState(false);
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -325,6 +329,7 @@ export function Header({
                   </div>
 
                   {/* Profile & Stats Link */}
+                  {showProfileLink && (
                   <Link
                     href="/profile"
                     onClick={() => setIsMenuOpen(false)}
@@ -333,8 +338,10 @@ export function Header({
                     <User className="w-4 h-4 text-text/80 shrink-0" />
                     <span>Profile & Stats</span>
                   </Link>
+                  )}
 
                   {/* Leaderboard Button */}
+                  {showLeaderboardLink && (
                   <button
                     type="button"
                     onClick={() => {
@@ -347,6 +354,7 @@ export function Header({
                     <Trophy className="w-4 h-4 text-text/80 shrink-0" />
                     <span>Leaderboard</span>
                   </button>
+                  )}
 
                   {/* Log Out Button */}
                   <button

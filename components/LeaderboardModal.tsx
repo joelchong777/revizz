@@ -8,6 +8,7 @@ import { UserProfile } from '../types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
 import AuthModal from './AuthModal';
+import { usePageAccess } from './PageGate';
 
 interface LeaderboardModalProps {
   isOpen: boolean;
@@ -24,7 +25,10 @@ export default function LeaderboardModal({
   onProfileUpdate,
   initialTab = 'account',
 }: LeaderboardModalProps) {
-  const [activeTab, setActiveTab] = useState<'account' | 'leaderboard'>(initialTab || 'account');
+  const pageAccess = usePageAccess();
+  const [activeTabState, setActiveTab] = useState<'account' | 'leaderboard'>(initialTab || 'account');
+  const leaderboardBlocked = pageAccess.isBlocked('leaderboard');
+  const activeTab: 'account' | 'leaderboard' = leaderboardBlocked ? 'account' : activeTabState;
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
@@ -106,6 +110,7 @@ export default function LeaderboardModal({
               <span>👤</span>
               <span>My Account</span>
             </button>
+            {!leaderboardBlocked && (
             <button
               type="button"
               onClick={() => setActiveTab('leaderboard')}
@@ -118,6 +123,7 @@ export default function LeaderboardModal({
               <span>🏆</span>
               <span>Leaderboard</span>
             </button>
+            )}
           </div>
 
           {/* Modal Scrollable Body */}
@@ -180,7 +186,8 @@ export default function LeaderboardModal({
 
                 {/* Student Profile Hub Navigation Card */}
                 <div className="bg-[#F9F4ED] border-2 border-[#201e1d] rounded-2xl p-3.5 shadow-[3px_3px_0_0_#201e1d] space-y-2.5 overflow-hidden">
-                  <Link
+                  {!pageAccess.isBlocked('profile') && (
+<Link
                     href="/profile"
                     onClick={onClose}
                     data-testid="open-profile-hub-btn"
@@ -189,42 +196,53 @@ export default function LeaderboardModal({
                     <span>🏠 Open Full Student Profile Hub</span>
                     <span aria-hidden="true">→</span>
                   </Link>
+)}
                   <div className="grid grid-cols-2 gap-2">
-                    <Link
+                    {!pageAccess.isBlocked('homework') && (
+<Link
                       href="/homework"
                       onClick={onClose}
                       className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all col-span-2"
                     >
                       📝 Assigned Homework
                     </Link>
-                    <Link
+)}
+                    {!pageAccess.isBlocked('stats') && (
+<Link
                       href="/profile?tab=stats"
                       onClick={onClose}
                       className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       📊 Stats & Mastery
                     </Link>
-                    <Link
+)}
+                    {!pageAccess.isBlocked('review') && (
+<Link
                       href="/profile?tab=review"
                       onClick={onClose}
                       className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       🧠 Questions to Review
                     </Link>
-                    <Link
+)}
+                    {!pageAccess.isBlocked('achievements') && (
+<Link
                       href="/profile?tab=achievements"
                       onClick={onClose}
                       className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       🏅 Badges & Activity
                     </Link>
-                    <Link
+)}
+                    {!pageAccess.isBlocked('student-settings') && (
+<Link
                       href="/profile?tab=settings"
                       onClick={onClose}
                       className="shrink-0 whitespace-nowrap p-2.5 rounded-xl border-2 border-[#201e1d] bg-white hover:bg-[#FEF08A] text-[#201e1d] font-heading font-black text-[11px] text-center shadow-[2px_2px_0_0_#201e1d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                       ⚙️ Profile Settings
                     </Link>
+)}
                   </div>
                 </div>
 

@@ -6,6 +6,7 @@ import { useAuth, signInWithGoogle, signOut } from '@/lib/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Menu, ChevronDown, ChevronUp, Copy, Check, ExternalLink, LogOut } from 'lucide-react';
 import AdminNav from '@/components/portal/AdminNav';
+import { usePageVisibility } from '@/lib/pageVisibility';
 import AdminCMS from '@/components/portal/AdminCMS';
 import AdminTools from '@/components/portal/AdminTools';
 import AssignedHomeworkHub from '@/components/portal/AssignedHomeworkHub';
@@ -48,6 +49,7 @@ function PortalContent() {
   const router = useRouter();
   const { userProfile, loading } = useAuth();
   const searchParams = useSearchParams();
+  const pageVisibility = usePageVisibility();
 
   // Navigation & Role states
   const [role, setRole] = useState<'teacher' | 'content'>('teacher');
@@ -361,6 +363,18 @@ function PortalContent() {
   }
 
   const renderContent = () => {
+    // Page visibility: non-admins see a friendly panel for sections turned off by an admin
+    if (!isAdmin && pageVisibility.loaded && pageVisibility.isHidden(activeNav)) {
+      return (
+        <div className="max-w-md mx-auto mt-10 bg-[#f9f4ed] border-2 border-[#201e1d] rounded-[24px] p-6 shadow-offset-3 text-center space-y-3" data-testid="portal-page-unavailable">
+          <div className="text-4xl">🔒</div>
+          <h2 className="text-lg font-black font-heading text-[#201e1d]">This page has been turned off by your administrator</h2>
+          <p className="text-xs font-medium text-[#645c50]">
+            Pick another section from the sidebar, or ask your school admin to turn it back on.
+          </p>
+        </div>
+      );
+    }
     switch (activeNav) {
       case 'overview':
         return (

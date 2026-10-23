@@ -24,6 +24,7 @@ import {
 } from '@/lib/portal/menuConfig';
 import { cn } from '@/lib/utils';
 import { signOut } from '@/lib/auth';
+import { usePageVisibility } from '@/lib/pageVisibility';
 
 export interface AdminNavProps {
   role?: 'teacher' | 'content';
@@ -88,7 +89,11 @@ export default function AdminNav({
     }
   }, []);
 
+  const pageVisibility = usePageVisibility();
+
   const isEnabled = (id: string) => {
+    // Server-side page visibility: admins are never hidden-from
+    if (!isAdmin && pageVisibility.loaded && pageVisibility.isHidden(id)) return false;
     if (navConfig.length === 0) return true;
     const item = navConfig.find((i) => i.id === id);
     return item ? item.enabled : true;
@@ -224,7 +229,7 @@ export default function AdminNav({
         {/* Navigation Sections */}
         <div className="flex flex-col gap-4 overflow-y-auto pr-0.5 no-scrollbar">
           {/* Teaching Section */}
-          {isTeacher && (
+          {isTeacher && (['overview', 'bank', 'roster', 'assign', 'compiler'].some(isEnabled)) && (
             <div className="flex flex-col gap-1">
               {!compact && (
                 <span className="px-2 pb-0.5 font-mono text-[10px] uppercase tracking-widest text-[#645c50] font-bold">

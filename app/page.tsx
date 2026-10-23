@@ -20,8 +20,9 @@ import {
 import { getReviewPileIds } from '../lib/mastery';
 import { findHomeworkByIdAnyTeacher, getAssignedHomeworkByCode } from '@/lib/portal/assignedHomework';
 import { listOnlineAssignments } from '@/lib/testCompiler';
+import { PageGate } from '@/components/PageGate';
 
-export default function HomePage() {
+function HomePageContent() {
   const { userProfile, loading: authLoading, isDemo } = useAuth();
   const isDemoSession = Boolean(
     isDemo ||
@@ -473,4 +474,12 @@ export default function HomePage() {
   }
 
   return null;
+}
+
+export default function HomePage() {
+  return (
+    <PageGate pageId="quiz">
+      <HomePageContent />
+    </PageGate>
+  );
 }

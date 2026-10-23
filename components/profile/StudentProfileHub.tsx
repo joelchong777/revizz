@@ -8,6 +8,7 @@ import { fetchQuestionsFromDb, fetchTopicsFromDb } from '@/lib/questions';
 import { useAuth, setDemoStudentSession, signOut } from '@/lib/auth';
 import type { UserProfile } from '@/types';
 import { StudentAuthGate } from '@/components/StudentAuthGate';
+import { PageUnavailableCard, usePageAccess } from '@/components/PageGate';
 import { AuthModal } from '@/components/AuthModal';
 import {
   StudentProfileTab,
@@ -63,6 +64,15 @@ export interface StudentProfileHubProps {
   initialTab?: StudentProfileTab;
 }
 
+const TAB_PAGE_ID: Record<StudentProfileTab, string> = {
+  overview: 'profile',
+  homework: 'homework',
+  stats: 'stats',
+  review: 'review',
+  achievements: 'achievements',
+  settings: 'student-settings',
+};
+
 const TAB_CONFIG: Array<{
   key: StudentProfileTab;
   label: string;
@@ -98,7 +108,8 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
       ? tabFromQuery
       : initialTab || 'overview';
 
-  const [activeTab, setActiveTab] = useState<StudentProfileTab>(validTab);
+  const pageAccess = usePageAccess();
+  const [activeTabState, setActiveTab] = useState<StudentProfileTab>(validTab);
   const [preferences, setPreferences] = useState<StudentPreferences>(() => getStudentPreferences());
   const [roundHistory, setRoundHistory] = useState<CompletedRoundRecord[]>(() => getRoundHistory());
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -277,6 +288,19 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
   const recentRounds = roundHistory.slice(0, 3);
   const recommendedTopic = statsSummary.weakestTopics?.[0] || statsSummary.topicStats?.[0];
 
+  // Page visibility: hide blocked tabs, fall back to the first visible one
+  const visibleTabs = TAB_CONFIG.filter((t) => !pageAccess.isBlocked(TAB_PAGE_ID[t.key]));
+  if (visibleTabs.length === 0) {
+    return (
+      <main className="w-full mx-auto py-3 px-3">
+        <PageUnavailableCard href="/" label="Back to Quiz Arena" />
+      </main>
+    );
+  }
+  const activeTab: StudentProfileTab = visibleTabs.some((t) => t.key === activeTabState)
+    ? activeTabState
+    : visibleTabs[0].key;
+
   return (
     <main className={`w-full ${activeTab === 'homework' ? 'max-w-4xl' : 'max-w-[560px]'} mx-auto py-3 pb-16 flex flex-col gap-4 sm:gap-5 select-none px-3 sm:px-4 transition-all duration-150`}>
       {/* Top Bar: Back to Quiz Arena + Page Title + Quick Start Practice */}
@@ -332,7 +356,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
         className="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-1.5 p-1.5 rounded-2xl bg-[#FFFDF7] border-2 border-[#201e1d] shadow-[3px_3px_0_0_#201e1d]"
         aria-label="Student profile sections"
       >
-        {TAB_CONFIG.map((tab) => {
+        {visibleTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
           return (

@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { PageGate } from '@/components/PageGate';
 import { StudentProfileHub } from '@/components/profile/StudentProfileHub';
 
 export const metadata: Metadata = {
@@ -26,7 +27,9 @@ function HomeworkLoadingFallback() {
 export default function HomeworkPage() {
   return (
     <Suspense fallback={<HomeworkLoadingFallback />}>
-      <StudentProfileHub initialTab="homework" />
+      <PageGate pageId="homework" fallbackHref="/profile" fallbackLabel="Back to Profile">
+        <StudentProfileHub initialTab="homework" />
+      </PageGate>
     </Suspense>
   );
 }
