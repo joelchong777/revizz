@@ -100,7 +100,7 @@ export default function AppAdminNav({
                 <span className="font-heading font-black text-base tracking-tight leading-none text-[#201e1d]">
                   REVIZZ
                 </span>
-                <span className="inline-block mt-0.5 px-1 py-0.2 rounded-full bg-[#ffe1d0] text-[#c67139] text-[8px] font-black uppercase tracking-wider border border-[#201e1d]/20 w-fit">
+                <span className="inline-block mt-0.5 pl-1 pr-1.5 py-0.5 rounded-r-full rounded-l-none bg-[#ffe1d0] text-[#c67139] text-[8.5px] font-black uppercase tracking-wider border border-[#201e1d]/20 w-fit">
                   ADMIN
                 </span>
               </div>
@@ -128,14 +128,14 @@ export default function AppAdminNav({
             className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#ffe1d0] border-[1.5px] border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all text-[12px] font-bold text-[#201e1d] group cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${
               compact ? 'justify-center px-1' : ''
             }`}
-            title="Open Teacher Classroom Portal"
+            title="Open Educator Classroom Portal"
           >
             <span className="w-6.5 h-6.5 rounded-lg bg-[#201e1d] text-[#f9f4ed] flex items-center justify-center shrink-0 group-hover:rotate-6 transition-transform">
               <GraduationCap className="w-3.5 h-3.5" />
             </span>
             {!compact && (
               <>
-                <span className="flex-1 min-w-0 truncate font-bold text-[12px] text-[#201e1d]">Teacher Portal</span>
+                <span className="flex-1 min-w-0 truncate font-bold text-[12px] text-[#201e1d]">Educator Portal</span>
                 <span className="text-xs shrink-0">🎓</span>
               </>
             )}

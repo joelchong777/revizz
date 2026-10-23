@@ -111,7 +111,7 @@ export default function PortalMenuManager() {
       const item = updated.find((i) => i.id === id);
       showFeedback(
         'success',
-        `"${item?.label}" is now ${item?.enabled ? 'visible in' : 'hidden from'} the Teacher Portal.`
+        `"${item?.label}" is now ${item?.enabled ? 'visible in' : 'hidden from'} the Educator Portal.`
       );
     } catch (err: any) {
       showFeedback('error', err?.message || 'Failed to toggle menu item');
@@ -129,7 +129,7 @@ export default function PortalMenuManager() {
     try {
       const defaults = resetPortalNavToDefaults();
       setItems(defaults);
-      showFeedback('success', 'Teacher Portal navigation successfully reset to defaults.');
+      showFeedback('success', 'Educator Portal navigation successfully reset to defaults.');
     } catch (err: any) {
       showFeedback('error', err?.message || 'Failed to reset navigation.');
     }
@@ -171,7 +171,7 @@ export default function PortalMenuManager() {
 
   const handleRemove = (id: string, label: string) => {
     if (typeof window !== 'undefined') {
-      const confirmed = window.confirm(`Permanently remove "${label}" from the Teacher Portal?`);
+      const confirmed = window.confirm(`Permanently remove "${label}" from the Educator Portal?`);
       if (!confirmed) return;
     }
 
@@ -187,7 +187,7 @@ export default function PortalMenuManager() {
   if (!mounted) {
     return (
       <div className="p-8 text-center font-mono text-sm text-[#645c50]">
-        Loading Teacher Portal navigation configuration...
+        Loading Educator Portal navigation configuration...
       </div>
     );
   }
@@ -208,14 +208,14 @@ export default function PortalMenuManager() {
                 PORTAL CONFIGURATION
               </span>
               <span className="text-xs font-mono font-bold text-[#645c50]">
-                Teacher Sidebar Navigation Manager
+                Educator Sidebar Navigation Manager
               </span>
             </div>
             <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
-              Teacher Portal Menu Management
+              Educator Portal Menu Management
             </h1>
             <p className="text-sm text-[#474238] mt-1 max-w-2xl font-medium">
-              Control which sections and feature modules are visible in the Teacher Educator Portal sidebar.
+              Control which sections and feature modules are visible in the Educator Portal sidebar.
               Enable or disable standard tools, add custom department links, and maintain portal ergonomics.
             </p>
           </div>

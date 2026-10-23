@@ -812,7 +812,7 @@ function PortalContent() {
             </button>
             <div className="flex items-center gap-1.5 truncate">
               <span className="font-heading text-sm font-black text-[#201e1d]">
-                Teacher Portal
+                Educator Portal
               </span>
               <span className="text-[#645c50] text-xs font-mono">/</span>
               <span className="text-xs font-bold text-[#645c50] truncate">
@@ -838,7 +838,7 @@ function PortalContent() {
         <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-[1.5px] border-[#dcd3c4] px-8 py-3 items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
             <span className="font-heading font-black text-lg text-[#201e1d]">
-              Teacher Portal
+              Educator Portal
             </span>
             <span className="text-[#645c50] font-mono text-base">/</span>
             <span className="font-heading font-bold text-base text-[#201e1d]">

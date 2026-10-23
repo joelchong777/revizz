@@ -157,10 +157,10 @@ export default function AdminNav({
 
             {!compact && (
               <div className="flex flex-col leading-none">
-                <span className="font-heading font-black tracking-tight text-base text-[#201e1d]">
+                <span className="font-heading font-black text-base tracking-tight leading-none text-[#201e1d]">
                   REVIZZ
                 </span>
-                <span className="inline-block mt-0.5 px-1 py-0.2 rounded-full bg-[#ffe1d0] text-[#c67139] text-[8px] font-black uppercase tracking-wider border border-[#201e1d]/20 w-fit">
+                <span className="inline-block mt-0.5 pl-1 pr-1.5 py-0.5 rounded-r-full rounded-l-none bg-[#ffe1d0] text-[#c67139] text-[8.5px] font-black uppercase tracking-wider border border-[#201e1d]/20 w-fit">
                   EDUCATOR
                 </span>
               </div>

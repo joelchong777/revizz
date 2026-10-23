@@ -234,10 +234,10 @@ function AdminContent() {
                 RESTRICTED ACCESS · APP OPS
               </span>
               <h1 className="text-2xl font-black text-[#201e1d] font-heading tracking-tight mt-1">
-                App Admin Operations Console
+                Admin Console
               </h1>
               <p className="text-xs sm:text-sm font-medium text-[#645c50] leading-relaxed">
-                This operations deck is restricted to platform administrators for managing exam ingestion pipelines and system telemetry. For classroom assignments and test compilation, visit the Teacher Portal.
+                This operations deck is restricted to platform administrators for managing exam ingestion pipelines and system telemetry. For classroom assignments and test compilation, visit the Educator Portal.
               </p>
             </div>
           </div>
@@ -252,7 +252,7 @@ function AdminContent() {
               className="w-full py-3.5 px-4 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm sm:text-base rounded-2xl border-2 border-[#201e1d] shadow-offset-3 hover:bg-[#ffc6a5] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
             >
               <GraduationCap className="w-5 h-5" />
-              <span>Teacher Portal 🎓</span>
+              <span>Educator Portal 🎓</span>
               <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
 
@@ -300,7 +300,7 @@ function AdminContent() {
                 Revizz App Administration Console
               </h1>
               <p className="text-[#645c50] font-medium text-xs sm:text-sm leading-relaxed">
-                Platform operations dashboard for exam paper OCR ingestion, diagnostics verification, and database synchronization. Teachers managing classes should use the Teacher Portal.
+                Platform operations dashboard for exam paper OCR ingestion, diagnostics verification, and database synchronization. Teachers managing classes should use the Educator Portal.
               </p>
             </div>
           </div>
@@ -481,7 +481,7 @@ function AdminContent() {
               className="w-full py-3 bg-[#ffe1d0] text-[#201e1d] font-heading font-black text-sm rounded-xl border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] transition-all active:translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer"
             >
               <GraduationCap className="w-4 h-4" />
-              <span>Go to Teacher Portal 🎓</span>
+              <span>Go to Educator Portal 🎓</span>
             </Link>
 
             <button
@@ -571,7 +571,7 @@ function AdminContent() {
             </button>
             <div className="flex items-center gap-1.5 truncate">
               <span className="font-heading text-sm font-black text-[#201e1d]">
-                App Admin
+                Admin Console
               </span>
               <span className="text-[#645c50] text-xs font-mono">/</span>
               <span className="text-xs font-bold text-[#645c50] truncate">
@@ -597,7 +597,7 @@ function AdminContent() {
         <header className="hidden lg:flex sticky top-0 z-20 bg-[#ebddc5]/95 backdrop-blur-xs border-b-2 border-[#201e1d] px-8 py-3 items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
             <span className="font-heading font-black text-lg text-[#201e1d]">
-              App Admin Console
+              Admin Console
             </span>
             <span className="text-[#645c50] font-mono text-base">/</span>
             <span className="font-heading font-bold text-base text-[#201e1d]">
