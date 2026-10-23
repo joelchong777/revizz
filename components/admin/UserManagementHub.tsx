@@ -991,16 +991,16 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
       {/* Header Banner */}
       <div className="px-4 py-3 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3">
-        <div className="flex flex-col md:flex-row md:items-center gap-x-3 gap-y-1.5 min-w-0">
+        <div className="flex flex-col md:flex-row md:items-center gap-x-3 gap-y-1.5 min-w-0 md:flex-1">
           <h1 className="text-xl font-heading font-black tracking-tight text-[#201e1d] whitespace-nowrap leading-tight">
             User Management 👥
           </h1>
           {/* Neobrutalist Badges */}
-          <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 min-w-0">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#201e1d] text-[#f9f4ed] font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            <span className="md:hidden xl:inline-block px-2.5 py-0.5 rounded-full bg-[#201e1d] text-[#f9f4ed] font-mono text-[10px] font-bold tracking-wider whitespace-nowrap">
               USER OPERATIONS · ACCESS CONTROL
             </span>
-            <span className="hidden lg:inline-block px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d] font-mono text-[10px] font-bold text-[#201e1d] whitespace-nowrap">
+            <span className="hidden 2xl:inline-block px-2.5 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d] font-mono text-[10px] font-bold text-[#201e1d] whitespace-nowrap">
               Role &amp; Identity Management
             </span>
             <span className="px-2.5 py-0.5 rounded-full bg-[#dcfce7] border border-[#15803d] font-mono text-[10px] font-bold text-[#15803d] flex items-center gap-1.5 whitespace-nowrap">
