@@ -21,6 +21,7 @@ const TAB_TITLES: Record<string, string> = {
   'portal-menu': 'Menu Manager',
   ads: 'Ads & Monetization',
   users: 'User Management',
+  analytics: 'App Analytics',
 };
 
 function AdminContent() {
@@ -97,7 +98,7 @@ function AdminContent() {
       } else if (normalized === 'portal-menu') {
         setActiveTab('settings');
         setSubTab('portal-menu');
-      } else if (['ingestion', 'papers', 'bank', 'flagged', 'editor', 'settings', 'ads', 'users'].includes(normalized)) {
+      } else if (['ingestion', 'papers', 'bank', 'flagged', 'editor', 'settings', 'ads', 'users', 'analytics'].includes(normalized)) {
         setActiveTab(normalized);
       }
     }

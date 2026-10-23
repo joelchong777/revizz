@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import type { QuizSessionMode } from '../types/analytics';
 import { StartFlow } from '../components/StartFlow';
 import { QuestionCard } from '../components/QuestionCard';
 import { RoundSummary } from '../components/RoundSummary';
@@ -93,17 +94,17 @@ function HomePageContent() {
   const [lastRoundConfig, setLastRoundConfig] = useState<QuizRoundConfig | null>(null);
   const [lastRoundQuestions, setLastRoundQuestions] = useState<Question[]>([]);
 
-  const handleStartRound = (config: QuizRoundConfig, questionsToStart: Question[]) => {
+  const handleStartRound = (config: QuizRoundConfig, questionsToStart: Question[], mode?: QuizSessionMode) => {
     setLastRoundConfig(config);
     setLastRoundQuestions(questionsToStart);
-    game.startRound(config, questionsToStart);
+    game.startRound(config, questionsToStart, mode);
   };
 
   const handleStartStandard = async (config: QuizRoundConfig, customQuestions?: Question[]) => {
     // If customQuestions provided (e.g. from whole paper mode), start round directly
     // Preserves exact Cambridge exam paper question order (no shuffling!)
     if (customQuestions && customQuestions.length > 0) {
-      handleStartRound(config, customQuestions);
+      handleStartRound(config, customQuestions, config.sourceType === 'paper' ? 'paper' : 'custom');
       return;
     }
 
@@ -164,7 +165,7 @@ function HomePageContent() {
       isTimed: false,
     };
 
-    handleStartRound(reviewConfig, reviewQuestions);
+    handleStartRound(reviewConfig, reviewQuestions, 'review');
   };
 
   const handlePracticeTopic = (topicId: string, topicName: string) => {
@@ -180,7 +181,7 @@ function HomePageContent() {
       isTimed: true,
     };
 
-    handleStartRound(topicConfig, topicQuestions);
+    handleStartRound(topicConfig, topicQuestions, 'drill');
   };
 
   const handleReviewMissed = () => {
@@ -195,7 +196,7 @@ function HomePageContent() {
       isTimed: false,
     };
 
-    handleStartRound(reviewConfig, missed);
+    handleStartRound(reviewConfig, missed, 'mistakes');
   };
 
   const handlePlayAgain = () => {
@@ -211,7 +212,7 @@ function HomePageContent() {
         });
         return;
       }
-      handleStartRound(lastRoundConfig, lastRoundQuestions);
+      handleStartRound(lastRoundConfig, lastRoundQuestions, 'replay');
     } else {
       handleStartStandard({
         subject: 'Economics 0455',
@@ -249,7 +250,7 @@ function HomePageContent() {
             roundLength: paperQuestions.length,
             isTimed: true,
           };
-          handleStartRound(paperConfig, paperQuestions);
+          handleStartRound(paperConfig, paperQuestions, 'paper');
         }
       }).catch((err) => {
         console.warn('Failed to load deep-linked paper:', err);
@@ -300,7 +301,7 @@ function HomePageContent() {
           isTimed: homework?.timerMode === 'Exam',
         };
 
-        handleStartRound(assignmentConfig, matchedQuestions);
+        handleStartRound(assignmentConfig, matchedQuestions, 'homework');
         return;
       }
     }
@@ -328,7 +329,7 @@ function HomePageContent() {
             roundLength: Math.min(30, Math.max(3, matchedQuestions.length)) as 3 | 5 | 10 | 30 | 'endless',
             isTimed: false,
           };
-          handleStartRound(customConfig, matchedQuestions);
+          handleStartRound(customConfig, matchedQuestions, 'drill');
         }
       }
     } else if (drill === 'topic') {

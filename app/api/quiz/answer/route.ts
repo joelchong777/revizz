@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { getCallerUserId, getServiceClient, serverErrorResponse } from '@/lib/apiAuth';
 import { calculateAttemptScore } from '@/lib/scoring';
 import { getAnswerKeys, isUuid, labelForOption, normalizeLabel } from '@/lib/server/answerKeys';
@@ -111,6 +111,30 @@ export async function POST(req: NextRequest) {
     const decision = decideAttempt(history, body, now, isCorrect);
     if ('error' in decision) return bad(decision.error, 409);
 
+    // Analytics (aggregate, anonymous). Never affects grading: errors are logged and swallowed.
+    const sessionId = typeof raw?.sessionId === 'string' && isUuid(raw.sessionId) ? raw.sessionId : null;
+    const deviceId = typeof raw?.deviceId === 'string' && isUuid(raw.deviceId) ? raw.deviceId : null;
+    const analyticsWrite: Promise<void> = !(sessionId && (deviceId || signedIn))
+      ? Promise.resolve()
+      : (async () => {
+      try {
+        const { error: aErr } = await getServiceClient().rpc('analytics_record_answer', {
+          p_session_id: sessionId,
+          p_user_id: signedIn ? userId : null,
+          p_device_id: deviceId,
+          p_question_id: questionId,
+          p_attempt: decision.attempt,
+          p_option: optionLabel ?? null,
+          p_outcome: decision.outcome,
+          p_is_final: decision.final,
+          p_time_ms: timeSpentMs,
+        });
+        if (aErr) console.warn('[quiz/answer] analytics skipped:', aErr.message);
+      } catch (e) {
+        console.warn('[quiz/answer] analytics skipped:', (e as Error)?.message);
+      }
+    })();
+
     let scoring: QuizScoring | null = null;
     if (signedIn && db) {
       const curXp = Number(profile?.total_xp) || 0;
@@ -200,6 +224,9 @@ export async function POST(req: NextRequest) {
       }
       await Promise.all(writes);
     }
+
+    // Finish the analytics write after the response so it never adds answer latency.
+    after(analyticsWrite);
 
     const res: QuizAnswerResponse = {
       success: true,

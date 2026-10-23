@@ -10,6 +10,8 @@ import { calculateAttemptScore } from '../lib/scoring';
 import { submitAnswer, applyReveal, labelOf } from '../lib/quizApi';
 import type { QuizAnswerResponse, QuizScoring } from '../types/quiz';
 import { useAuth } from '../lib/auth';
+import { getDeviceId, startQuizSession, endQuizSession } from '../lib/analytics';
+import type { QuizSessionMode } from '../types/analytics';
 import { recordCompletedRound } from '../lib/studentProfile';
 
 export type Question = {
@@ -109,10 +111,35 @@ export function useQuizGame() {
   const isCheckingRef = useRef(false);
   // In-flight background give-up; later submits wait on it so the server scores events in order.
   const pendingGiveUpRef = useRef<Promise<void> | null>(null);
+  // Analytics session (null for the demo session or when tracking is unavailable).
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionEndedRef = useRef(false);
+  const endSession = (endedEarly: boolean) => {
+    const id = sessionIdRef.current;
+    if (!id || sessionEndedRef.current) return;
+    sessionEndedRef.current = true;
+    endQuizSession(id, endedEarly);
+  };
+  const trackingIds = () => {
+    const sessionId = sessionIdRef.current;
+    return sessionId ? { sessionId, deviceId: getDeviceId() } : {};
+  };
   const [isChecking, setIsChecking] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
 
-  const startRound = (newConfig: QuizRoundConfig, initialQuestions: Question[]) => {
+  const startRound = (newConfig: QuizRoundConfig, initialQuestions: Question[], mode?: QuizSessionMode) => {
+    // A new round abandons any session still open (the server marks it abandoned).
+    sessionIdRef.current = null;
+    sessionEndedRef.current = false;
+    if (!isDemoSession) {
+      sessionIdRef.current = startQuizSession({
+        mode: mode ?? newConfig.sourceType,
+        subject: newConfig.subject,
+        sourceRef: newConfig.sourceValue || undefined,
+        plannedLength: newConfig.roundLength === 'endless' ? null : newConfig.roundLength,
+        isTimed: Boolean(newConfig.isTimed),
+      });
+    }
     setConfig(newConfig);
     setQuestions(initialQuestions);
     setGameState('playing');
@@ -235,6 +262,7 @@ export function useQuizGame() {
           event: 'timeout',
           attempt: firstWrongOptionId ? 2 : 1,
           timeSpentMs,
+          ...trackingIds(),
         });
         recorded = revealInState(currentQ, resp);
         if (resp.scoring) {
@@ -321,6 +349,7 @@ export function useQuizGame() {
         event: 'answer',
         attempt: wasRetry ? 2 : 1,
         timeSpentMs: Date.now() - questionStartTime,
+        ...trackingIds(),
       });
     } catch (e) {
       // Network or server error: nothing is revealed, status is unchanged so the student can tap again.
@@ -415,6 +444,7 @@ export function useQuizGame() {
           event: 'give-up',
           attempt: 2,
           timeSpentMs: giveUpTimeMs,
+          ...trackingIds(),
         })
           .then(resp => {
             const revealed = revealInState(currentQ, resp);
@@ -450,6 +480,7 @@ export function useQuizGame() {
           isTimed: Boolean(config?.isTimed),
         });
       }
+      endSession(false);
       setGameState('finished');
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -475,6 +506,7 @@ export function useQuizGame() {
         isTimed: Boolean(config?.isTimed),
       });
     }
+    endSession(config?.roundLength !== 'endless');
     setGameState('finished');
   };
 

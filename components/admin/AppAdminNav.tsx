@@ -15,6 +15,7 @@ import {
   Sliders,
   Megaphone,
   Users,
+  BarChart3,
   LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -248,6 +249,18 @@ export default function AppAdminNav({
                 {renderIcon(Users, 'users')}
                 {!compact && (
                   <span className="flex-1 min-w-0 truncate">User Management</span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleNavClick('analytics')}
+                className={navItemClass('analytics')}
+                title="Analytics"
+              >
+                {renderIcon(BarChart3, 'analytics')}
+                {!compact && (
+                  <span className="flex-1 min-w-0 truncate">Analytics</span>
                 )}
               </button>
 

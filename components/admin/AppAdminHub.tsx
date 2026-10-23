@@ -10,6 +10,7 @@ import AdminSettingsHub, { SettingsSubTab } from '@/components/admin/AdminSettin
 import AdsManagerHub from '@/components/admin/AdsManagerHub';
 import WholePaperViewer from '@/components/admin/WholePaperViewer';
 import UserManagementHub from '@/components/admin/UserManagementHub';
+import AppAnalyticsHub from '@/components/admin/analytics/AppAnalyticsHub';
 import { useQuestions } from '@/lib/questions';
 import {
   BookOpen,
@@ -200,6 +201,9 @@ export default function AppAdminHub({
 
     case 'users':
       return <UserManagementHub onSelectTab={onSelectTab} />;
+
+    case 'analytics':
+      return <AppAnalyticsHub />;
 
     default:
       return renderIngestion();
