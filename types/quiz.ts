@@ -92,6 +92,8 @@ export interface QuizAnswerRequest {
   event: 'answer' | 'timeout' | 'give-up';
   attempt: 1 | 2; // trusted for guests only; signed-in attempts come from answer_events
   timeSpentMs?: number;
+  sessionId?: string; // analytics quiz session (types/analytics.ts); never affects grading
+  deviceId?: string;
 }
 
 export interface QuizScoring {
