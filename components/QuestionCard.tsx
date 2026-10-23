@@ -528,6 +528,9 @@ export function QuestionCard({
             <path d="M3 3v5h5" />
           </svg>
           <div className="flex flex-col gap-1 leading-tight">
+            <span className="font-bold text-xs uppercase tracking-wider text-text">
+              Wrong answer
+            </span>
             <span className="font-heading text-base text-text">
               1 retry left · 50% XP
             </span>
