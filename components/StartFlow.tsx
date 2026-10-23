@@ -407,6 +407,7 @@ export function StartFlow({
       if (!selectedPaper && availablePapers.length > 0) {
         setSelectedPaper(availablePapers[0]);
       }
+      setIsPaperModalOpen(true);
     }
   };
 
