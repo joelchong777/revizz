@@ -1329,7 +1329,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                   : `No users match the search query "${searchQuery}" with the selected role or account filters.`}
               </p>
             </div>
-            <div className="pt-2 flex items-center justify-center gap-2">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 [&>button]:whitespace-nowrap">
               {searchQuery || activeRoleFilter !== 'all' || accountTypeFilter !== 'all' ? (
                 <button
                   type="button"
@@ -1354,6 +1354,15 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
                 <span>+ Invite User</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsBulkUploadOpen(true)}
+                className="px-4 py-2 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] font-heading font-black text-xs text-[#201e1d] shadow-offset-2 hover:bg-[#e0d6c5] active:translate-y-0.5 cursor-pointer flex items-center gap-1.5"
+              >
+                <Upload className="w-4 h-4 stroke-[3]" />
+                <span>+ Bulk Upload</span>
               </button>
 
               <button
