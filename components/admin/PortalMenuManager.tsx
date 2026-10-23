@@ -325,7 +325,7 @@ export default function PortalMenuManager() {
   };
 
   return (
-    <div className="space-y-3 max-w-5xl">
+    <div className="space-y-3 w-full">
       {/* Compact toolbar */}
       <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl px-3 py-2 shadow-offset-3 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
