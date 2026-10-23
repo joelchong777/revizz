@@ -9,7 +9,7 @@ export type PageAudience = 'student' | 'teacher';
 
 export const PAGE_REGISTRY = [
   // Teacher portal (ids match DEFAULT_PORTAL_NAV_ITEMS in lib/portal/menuConfig.ts)
-  { id: 'overview', label: 'Overview', audience: 'teacher', description: 'Teacher portal home' },
+  { id: 'overview', label: 'Overview', audience: 'teacher', description: 'Educator portal home' },
   { id: 'roster', label: 'Classes', audience: 'teacher', description: 'Class rosters and invites' },
   { id: 'assign', label: 'Assign rounds', audience: 'teacher', description: 'Set homework for classes' },
   { id: 'compiler', label: 'Test compiler', audience: 'teacher', description: 'Build and print papers' },
