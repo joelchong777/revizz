@@ -4888,6 +4888,92 @@ async function runSuiteLaunchLegal() {
   });
 }
 
+async function runSuiteLaunchHardening() {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (f: string) => fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const handlerBody = (src: string, name: string) => {
+    const m = new RegExp(`export async function ${name}\\s*\\(([^)]*)\\)\\s*\\{([\\s\\S]*?)(?=\\nexport async function |$)`).exec(src);
+    return m ? { args: m[1], body: m[2] } : null;
+  };
+
+  // --- launch hardening: ads admin lock (B4) ---
+  await testAsync('Launch hardening: ads config POST and DELETE require admin, GET stays public', async () => {
+    const src = strip(read('app/api/ads/config/route.ts'));
+    for (const fn of ['POST', 'DELETE']) {
+      const h = handlerBody(src, fn);
+      assert(!!h, `${fn} handler exists`);
+      assert(/req\s*:\s*NextRequest/.test(h!.args), `${fn} takes req: NextRequest`);
+      assert(/requireRole\(\s*req\s*,\s*\['admin'\]\s*\)/.test(h!.body), `${fn} calls requireRole(req, ['admin'])`);
+      assert(/if\s*\(\s*!auth\.ok\s*\)\s*return auth\.response/.test(h!.body), `${fn} returns auth.response on failure`);
+    }
+    const get = handlerBody(src, 'GET');
+    assert(!!get, 'GET handler exists');
+    assert(!/requireRole|auth\./.test(get!.body), 'GET stays public');
+  });
+
+  await testAsync('Launch hardening: saveAdsConfig sends the bearer token and reports the result', async () => {
+    const src = strip(read('lib/ads.ts'));
+    const i = src.indexOf('export async function pushAdsConfigToServer');
+    assert(i > -1, 'pushAdsConfigToServer exported');
+    const body = src.slice(i, src.indexOf('export function saveAdsConfig'));
+    assert(/authFetch\(\s*'\/api\/ads\/config'/.test(body), 'POST goes through authFetch');
+    assert(!/[^h]fetch\(\s*'\/api\/ads\/config'[^]*method:\s*'POST'/.test(body), 'no plain fetch POST');
+    assert(/ok:\s*false/.test(body) && /ok:\s*true/.test(body), 'returns { ok } result');
+    assert(/pushAdsConfigToServer\(config\)/.test(src.slice(src.indexOf('export function saveAdsConfig'))), 'saveAdsConfig pushes to the server');
+    assert(/typeof window !== 'undefined'/.test(src.slice(src.indexOf('export function saveAdsConfig'))), 'saveAdsConfig stays SSR-safe');
+    assert(/reportSaveResult/.test(read('components/admin/AdsManagerHub.tsx')), 'AdsManagerHub surfaces failed saves');
+  });
+
+  await testAsync('Launch hardening: ad impression and click telemetry save locally only', async () => {
+    const src = strip(read('lib/ads.ts'));
+    for (const fn of ['recordAdImpression', 'recordAdClick']) {
+      const i = src.indexOf(`export function ${fn}`);
+      assert(i > -1, `${fn} exists`);
+      const rest = src.slice(i + 10);
+      const j = rest.search(/\nexport /);
+      const body = j === -1 ? rest : rest.slice(0, j);
+      assert(/saveAdsConfig\(\s*config\s*,\s*undefined\s*,\s*\{\s*pushToServer:\s*false\s*\}\s*\)/.test(body), `${fn} passes pushToServer: false`);
+    }
+  });
+
+  // --- launch hardening: client Gemini key (B11) ---
+  await testAsync('Launch hardening: extract route ignores x-gemini-api-key in production', async () => {
+    const src = strip(read('app/api/ingest/extract/route.ts'));
+    assert(/allowClientKey\s*=\s*process\.env\.NODE_ENV\s*!==\s*'production'/.test(src), 'allowClientKey gated on NODE_ENV');
+    assert(/allowClientKey\s*\?\s*request\.headers\.get\('x-gemini-api-key'\)\s*:\s*null/.test(src), 'header only read when allowed');
+    const prodMsg = src.slice(src.indexOf(': \'GEMINI_API_KEY is not configured'));
+    assert(/:\s*'GEMINI_API_KEY is not configured on the server\. Please set GEMINI_API_KEY in your environment\.'/.test(prodMsg), 'production 500 message does not mention the header');
+  });
+
+  // --- launch hardening: exactly one correct answer ---
+  await testAsync('Launch hardening: validateStagingPaper requires exactly one correct option', async () => {
+    const { validateStagingQuestion } = require('../types/ingestion');
+    const base = JSON.parse(read('staging/0455_s24_12.json'));
+    const mk = (flags: boolean[]) => {
+      const q = JSON.parse(JSON.stringify(base.questions[0]));
+      q.options = q.options.map((o: any, i: number) => ({ ...o, is_correct: flags[i] }));
+      return q;
+    };
+    const paperWith = (flags: boolean[]) => ({ ...base, questions: [mk(flags)] });
+
+    const ok = validateStagingPaper(paperWith([false, true, false, false]), { allowPartialBatch: true });
+    assertEqual(ok.success, true, 'exactly one correct option is accepted');
+
+    const two = validateStagingPaper(paperWith([true, true, false, false]), { allowPartialBatch: true });
+    assertEqual(two.success, false, 'two correct options are rejected');
+    assert((two.errors || []).some((e: string) => /Exactly one option must be marked as correct \(found 2\)/.test(e)), 'two-correct message names the count');
+
+    const none = validateStagingPaper(paperWith([false, false, false, false]), { allowPartialBatch: true });
+    assertEqual(none.success, false, 'zero correct options are rejected');
+    assert((none.errors || []).some((e: string) => /At least one option must be marked as correct/.test(e)), 'zero-correct message kept');
+
+    assertEqual(validateStagingQuestion(mk([false, false, true, false])).success, true, 'per-question: one correct accepted');
+    assertEqual(validateStagingQuestion(mk([true, false, true, false])).success, false, 'per-question: two correct rejected');
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
@@ -4898,6 +4984,7 @@ async function main() {
   await runSuite25();
   await runSuite26();
   await runSuiteLaunchLegal();
+  await runSuiteLaunchHardening();
 
   // Summary Output
   const duration = ((Date.now() - startMs) / 1000).toFixed(2);

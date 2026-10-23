@@ -1,3 +1,5 @@
+import { authFetch } from './authFetch';
+
 /**
  * Revizz Ads & Monetization Engine
  * 
@@ -439,21 +441,46 @@ export function loadAdsConfig(): AdsSystemConfig {
   }
 }
 
+export type AdsSaveResult = { ok: boolean; error?: string };
+
+/**
+ * Pushes the config to the server with the admin's bearer token. Never throws.
+ * Resolves { ok: false, error } on 401/403 (not an admin) or a network failure.
+ */
+export async function pushAdsConfigToServer(config: AdsSystemConfig): Promise<AdsSaveResult> {
+  try {
+    const res = await authFetch('/api/ads/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    if (res.ok) return { ok: true };
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, error: 'Not saved to the server: sign in as an admin to change ads.' };
+    }
+    return { ok: false, error: `Not saved to the server (HTTP ${res.status}).` };
+  } catch {
+    return { ok: false, error: 'Not saved to the server: network error.' };
+  }
+}
+
 /**
  * Persists AdsSystemConfig to localStorage, dispatches change notification event,
- * and asynchronously syncs state to server-side API storage.
+ * and syncs state to the server. Returns the config synchronously (many callers chain on it).
+ * Pass options.pushToServer=false to save locally only (student telemetry). Pass onServerResult to learn whether the server save worked; it is not called during SSR.
  */
-export function saveAdsConfig(config: AdsSystemConfig): AdsSystemConfig {
+export function saveAdsConfig(
+  config: AdsSystemConfig,
+  onServerResult?: (result: AdsSaveResult) => void,
+  options?: { pushToServer?: boolean }
+): AdsSystemConfig {
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       window.localStorage.setItem(ADS_CONFIG_STORAGE_KEY, JSON.stringify(config));
       window.dispatchEvent(new CustomEvent(ADS_CONFIG_CHANGE_EVENT, { detail: config }));
-      // Non-blocking sync to server persistence
-      fetch('/api/ads/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
-      }).catch(() => {});
+      if (options?.pushToServer !== false) {
+        void pushAdsConfigToServer(config).then((result) => onServerResult?.(result));
+      }
     } catch (err) {
       console.error('[Revizz Ads Engine] Failed to save config to localStorage:', err);
     }
@@ -809,7 +836,7 @@ export function recordAdImpression(campaignId: string, slotId: AdPlacementSlotId
     const campaign = config.campaigns.find(c => c.id === campaignId);
     if (campaign) {
       campaign.impressions = (campaign.impressions || 0) + 1;
-      saveAdsConfig(config);
+      saveAdsConfig(config, undefined, { pushToServer: false });
     }
   } catch (err) {
     console.debug('[Revizz Ads Engine] Could not record impression:', err);
@@ -827,7 +854,7 @@ export function recordAdClick(campaignId: string, slotId: AdPlacementSlotId): vo
     const campaign = config.campaigns.find(c => c.id === campaignId);
     if (campaign) {
       campaign.clicks = (campaign.clicks || 0) + 1;
-      saveAdsConfig(config);
+      saveAdsConfig(config, undefined, { pushToServer: false });
     }
   } catch (err) {
     console.debug('[Revizz Ads Engine] Could not record click:', err);

@@ -53,6 +53,7 @@ import {
   getSuggestedPlacements,
   loadAdsConfig,
   saveAdsConfig,
+  type AdsSaveResult,
   resetAdsConfigToDefaults,
   subscribeAdsConfig,
   applySuggestedPlacement,
@@ -116,7 +117,7 @@ export default function AdsManagerHub() {
   // All hooks must be unconditional at the top
   const [config, setConfig] = useState<AdsSystemConfig>(getDefaultAdsConfig());
   const [activeSubTab, setActiveSubTab] = useState<AdsManagerSubTab>('suggestions');
-  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   // Campaign management state
   const [campaignFilter, setCampaignFilter] = useState<'all' | AdCampaignStatus>('all');
@@ -151,11 +152,16 @@ export default function AdsManagerHub() {
   const suggestions = useMemo(() => getSuggestedPlacements(), []);
 
   // Auto-clear feedback toast
-  const showFeedback = (message: string, type: 'success' | 'info' = 'success') => {
+  const showFeedback = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     setFeedback({ message, type });
     setTimeout(() => {
       setFeedback((current) => (current?.message === message ? null : current));
     }, 3500);
+  };
+
+  // Server save outcome (the local save always happens; a failed server save is shown)
+  const reportSaveResult = (result: AdsSaveResult) => {
+    if (!result.ok) showFeedback(result.error || 'Not saved to the server', 'error');
   };
 
   // Preset handlers
@@ -184,7 +190,7 @@ export default function AdsManagerHub() {
       ...patch,
     };
     setConfig(updated);
-    saveAdsConfig(updated);
+    saveAdsConfig(updated, reportSaveResult);
     showFeedback('Global settings updated');
   };
 
@@ -215,7 +221,7 @@ export default function AdsManagerHub() {
       },
     };
     setConfig(updated);
-    saveAdsConfig(updated);
+    saveAdsConfig(updated, reportSaveResult);
     showFeedback(`Updated ${SLOT_DISPLAY_INFO[slotId].name} settings`);
   };
 
@@ -342,7 +348,7 @@ export default function AdsManagerHub() {
       campaigns: updatedCampaigns,
     };
     setConfig(updatedConfig);
-    saveAdsConfig(updatedConfig);
+    saveAdsConfig(updatedConfig, reportSaveResult);
     setIsCreatingCampaign(false);
     setEditingCampaignId(null);
     showFeedback(editingCampaignId ? 'Campaign saved successfully' : 'Created new campaign');
@@ -358,7 +364,7 @@ export default function AdsManagerHub() {
       campaigns: updatedCampaigns,
     };
     setConfig(updatedConfig);
-    saveAdsConfig(updatedConfig);
+    saveAdsConfig(updatedConfig, reportSaveResult);
     showFeedback(`Campaign status: ${nextStatus}`);
   };
 
@@ -376,7 +382,7 @@ export default function AdsManagerHub() {
       campaigns: [cloned, ...config.campaigns],
     };
     setConfig(updatedConfig);
-    saveAdsConfig(updatedConfig);
+    saveAdsConfig(updatedConfig, reportSaveResult);
     showFeedback(`Duplicated "${campaign.title}"`);
   };
 
@@ -389,7 +395,7 @@ export default function AdsManagerHub() {
       campaigns: config.campaigns.filter((c) => c.id !== campaignId),
     };
     setConfig(updatedConfig);
-    saveAdsConfig(updatedConfig);
+    saveAdsConfig(updatedConfig, reportSaveResult);
     showFeedback('Campaign deleted');
   };
 
@@ -429,7 +435,7 @@ export default function AdsManagerHub() {
       campaigns: mergedCampaigns,
     };
     setConfig(updatedConfig);
-    saveAdsConfig(updatedConfig);
+    saveAdsConfig(updatedConfig, reportSaveResult);
     showFeedback('Restored 3 Cambridge reference example campaigns');
   };
 
@@ -455,8 +461,8 @@ export default function AdsManagerHub() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 font-body text-[#201e1d]">
       {/* Toast Feedback Notification */}
       {feedback && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-[#201e1d] text-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-2 animate-in fade-in slide-in-from-top-2 duration-150">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl text-[#f9f4ed] border-2 border-[#201e1d] shadow-offset-2 animate-in fade-in slide-in-from-top-2 duration-150 ${feedback.type === 'error' ? 'bg-[#9b2c1f]' : 'bg-[#201e1d]'}`}>
+          <CheckCircle2 className={`w-4 h-4 shrink-0 ${feedback.type === 'error' ? 'text-[#ffd2c9]' : 'text-emerald-400'}`} />
           <span className="text-xs font-bold">{feedback.message}</span>
         </div>
       )}
@@ -498,7 +504,7 @@ export default function AdsManagerHub() {
             <button
               type="button"
               onClick={() => {
-                saveAdsConfig(config);
+                saveAdsConfig(config, reportSaveResult);
                 showFeedback('All changes saved to persistent storage');
               }}
               className="px-4 py-2 rounded-xl bg-[#ffe1d0] border-2 border-[#201e1d] text-xs font-black text-[#201e1d] shadow-offset-2 hover:bg-[#ffc6a5] active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"

@@ -128,9 +128,17 @@ async function main() {
     assert(/published/i.test(s), 'published filter');
   });
 
-  await test('app/api/ads untouched (no requireRole)', () => {
+  await test('app/api/ads/config: POST and DELETE require admin, GET stays public', () => {
     const s = read('app/api/ads/config/route.ts');
-    assert(!/requireRole|apiAuth/.test(s), 'ads route should be unchanged');
+    const body = (name: string) => {
+      const m = new RegExp(`export async function ${name}\\s*\\(([^)]*)\\)\\s*\\{([\\s\\S]*?)(?=\\nexport async function |$)`).exec(s);
+      assert(!!m, `${name} handler missing`);
+      return m![2];
+    };
+    for (const fn of ['POST', 'DELETE']) {
+      assert(/requireRole\(\s*req\s*,\s*\['admin'\]\s*\)/.test(body(fn)), `${fn} must call requireRole(req, ['admin'])`);
+    }
+    assert(!/requireRole/.test(body('GET')), 'GET must stay public');
   });
 
   await test('lib/authFetch.ts adds bearer from session', () => {

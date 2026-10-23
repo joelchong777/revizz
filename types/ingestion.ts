@@ -194,7 +194,7 @@ export interface ValidationResult<T> {
  * Ensures:
  * - Exact Zod schema conformity
  * - Exactly 4 options (A, B, C, D)
- * - At least one option marked correct
+ * - Exactly one option marked correct
  */
 export function validateStagingQuestion(data: unknown): ValidationResult<StagingQuestion> {
   const result = StagingQuestionSchema.safeParse(data);
@@ -225,10 +225,12 @@ export function validateStagingQuestion(data: unknown): ValidationResult<Staging
     );
   }
 
-  // 3. At least one option is marked correct
+  // 3. Exactly one option is marked correct
   const correctCount = q.options.filter((o) => o.is_correct).length;
   if (correctCount === 0) {
     errors.push(`Question ${qNum}: At least one option must be marked as correct.`);
+  } else if (correctCount > 1) {
+    errors.push(`Question ${qNum}: Exactly one option must be marked as correct (found ${correctCount}).`);
   }
 
   if (errors.length > 0) {
@@ -296,10 +298,12 @@ export function validateStagingPaper(
       );
     }
 
-    // Check at least one correct option
+    // Check exactly one correct option
     const correctCount = q.options.filter((o) => o.is_correct).length;
     if (correctCount === 0) {
       errors.push(`Question ${qNum}: At least one option must be marked as correct.`);
+    } else if (correctCount > 1) {
+      errors.push(`Question ${qNum}: Exactly one option must be marked as correct (found ${correctCount}).`);
     }
   }
 

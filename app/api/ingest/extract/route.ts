@@ -47,9 +47,11 @@ export async function POST(request: NextRequest) {
   const auth = await requireRole(request, ['admin']);
   if (!auth.ok) return auth.response;
   try {
+    // The x-gemini-api-key header is a local-dev convenience only; production must use the server env key.
+    const allowClientKey = process.env.NODE_ENV !== 'production';
     const apiKey =
       process.env.GEMINI_API_KEY ||
-      request.headers.get('x-gemini-api-key') ||
+      (allowClientKey ? request.headers.get('x-gemini-api-key') : null) ||
       '';
 
     if (!apiKey) {
@@ -57,7 +59,9 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error:
-            'GEMINI_API_KEY is not configured on the server. Please set GEMINI_API_KEY in your environment or provide x-gemini-api-key header.',
+            allowClientKey
+              ? 'GEMINI_API_KEY is not configured on the server. Please set GEMINI_API_KEY in your environment or provide x-gemini-api-key header.'
+              : 'GEMINI_API_KEY is not configured on the server. Please set GEMINI_API_KEY in your environment.',
         },
         { status: 500 }
       );

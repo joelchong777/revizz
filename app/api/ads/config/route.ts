@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { requireRole } from '@/lib/apiAuth';
 import { getDefaultAdsConfig, AdsSystemConfig, ALL_PLACEMENT_SLOT_IDS } from '@/lib/ads';
 
 const STATE_FILE_PATH = path.join(process.cwd(), '.agent/state/ads-config.json');
@@ -69,6 +70,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     let body: any;
     try {
@@ -114,7 +117,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) return auth.response;
   try {
     const defaults = getDefaultAdsConfig();
     await writePersistedConfig(defaults);
