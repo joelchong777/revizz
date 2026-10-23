@@ -34,6 +34,7 @@ import {
   Flame,
   Zap,
   Link as LinkIcon,
+  Upload,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import {
@@ -43,6 +44,7 @@ import {
   RosterInvite,
 } from '@/lib/roster';
 import type { UserProfile } from '@/types';
+import { BulkUploadModal } from './BulkUploadModal';
 
 export type UserRole = 'student' | 'teacher' | 'admin';
 export type UserStatus = 'active' | 'invited' | 'suspended';
@@ -214,6 +216,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
 
   // Modal states
   const [isInviteModalOpen, setIsInviteModalOpen] = useState<boolean>(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [inviteName, setInviteName] = useState<string>('');
   const [inviteEmail, setInviteEmail] = useState<string>('');
   const [inviteRole, setInviteRole] = useState<UserRole>('student');
@@ -990,7 +993,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       )}
 
       {/* Header Banner */}
-      <div className="px-4 py-3 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3">
+      <div className="px-4 py-3 rounded-2xl bg-[#f5ead8] border-2 border-[#201e1d] shadow-offset-3 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-2.5 md:gap-3">
         <div className="flex flex-col md:flex-row md:items-center gap-x-3 gap-y-1.5 min-w-0 md:flex-1">
           <h1 className="text-xl font-heading font-black tracking-tight text-[#201e1d] whitespace-nowrap leading-tight">
             User Management 👥
@@ -1047,6 +1050,16 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
           >
             <Plus className="w-3.5 h-3.5 stroke-[3]" />
             <span>Invite User</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsBulkUploadOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-[#eee7db] border-2 border-[#201e1d] text-xs font-bold text-[#201e1d] shadow-offset-1 hover:bg-[#e0d6c5] active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+            title="Invite many people at once from a CSV file"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Bulk Upload</span>
           </button>
 
           <button
@@ -1531,7 +1544,7 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
                           }`}
                         >
                           <option value="active">Active</option>
-                          <option value="invited">Invited</option>
+                          <option value="invited">Draft</option>
                           <option value="suspended">Suspended</option>
                         </select>
                       </td>
@@ -1598,6 +1611,12 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
           </div>
         )}
       </div>
+
+      <BulkUploadModal
+        open={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        onComplete={loadDirectoryData}
+      />
 
       {/* "+ Invite User" Modal */}
       {isInviteModalOpen && (

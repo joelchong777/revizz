@@ -284,6 +284,7 @@ async function sendSupabaseInvite(
         role: params.role,
         cohort: params.cohort,
         display_name: params.name,
+        needs_password: true,
       },
       redirectTo: params.inviteLink,
     });

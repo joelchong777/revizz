@@ -7,7 +7,8 @@ import { QuestionCard } from '../components/QuestionCard';
 import { RoundSummary } from '../components/RoundSummary';
 import { StudentAuthGate } from '../components/StudentAuthGate';
 import { AdSlotBanner } from '@/components/ads/AdSlotBanner';
-import { useAuth, clearDemoStudentSession } from '@/lib/auth';
+import { useAuth, clearDemoStudentSession, userNeedsPassword } from '@/lib/auth';
+import { SetPasswordScreen } from '../components/SetPasswordScreen';
 import { useQuizGame, Question, QuizRoundConfig } from '../hooks/useQuizGame';
 import {
   fetchQuestionsFromDb,
@@ -344,6 +345,22 @@ function HomePageContent() {
     }
   }, [loading, questions, game.gameState]);
 
+  // First-login password: invited users must choose one before using the app
+  const [needsPassword, setNeedsPassword] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!userProfile?.id || isDemoSession) {
+      setNeedsPassword(null);
+      return;
+    }
+    let cancelled = false;
+    userNeedsPassword().then((v) => {
+      if (!cancelled) setNeedsPassword(v);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userProfile?.id, isDemoSession]);
+
   // 1. Sleek loading skeleton while checking auth session
   if (authLoading && !userProfile) {
     return (
@@ -372,6 +389,14 @@ function HomePageContent() {
           initialEmail={emailParam}
           autoOpenAuthModal={Boolean(inviteParam || emailParam)}
         />
+      </main>
+    );
+  }
+
+  if (needsPassword === true && !isDemoSession) {
+    return (
+      <main className="min-h-screen flex flex-col justify-center items-center px-4 py-8">
+        <SetPasswordScreen onDone={() => window.location.reload()} />
       </main>
     );
   }

@@ -646,3 +646,18 @@ export const useAuth = () => {
     signOut,
   };
 };
+
+/** First-login password for invited users (Supabase-invite path). Clears the needs_password flag. */
+export const completeFirstLoginPassword = async (password: string) =>
+  supabase.auth.updateUser({ password, data: { needs_password: false } });
+
+/** True when the signed-in Supabase user still has to choose a password. False on any error. */
+export const userNeedsPassword = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) return false;
+    return data.user.user_metadata?.needs_password === true;
+  } catch {
+    return false;
+  }
+};
