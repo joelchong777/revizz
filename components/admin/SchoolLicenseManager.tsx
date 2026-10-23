@@ -460,6 +460,9 @@ export default function SchoolLicenseManager() {
     let totalSeatQuota = 0;
     let totalEducators = 0;
     let totalEducatorSlots = 0;
+    let totalCohorts = 0;
+    let schoolsWithCohorts = 0;
+    const uniqueSyllabi = new Set<string>();
     let activeCount = 0;
     let expiringCount = 0;
     let trialCount = 0;
@@ -471,6 +474,12 @@ export default function SchoolLicenseManager() {
       totalSeatQuota += lic.studentSeatQuota || 0;
       totalEducators += lic.educators.length;
       totalEducatorSlots += lic.educatorSlotLimit || 0;
+      totalCohorts += lic.cohorts.length;
+      if (lic.cohorts.length > 0) schoolsWithCohorts++;
+
+      lic.cohorts.forEach((c) => {
+        if (c.subjectCode) uniqueSyllabi.add(c.subjectCode);
+      });
 
       const eff = getEffectiveStatus(lic);
       if (eff === 'Active') activeCount++;
@@ -481,6 +490,7 @@ export default function SchoolLicenseManager() {
 
     const seatPercent = totalSeatQuota > 0 ? Math.round((totalUtilizedSeats / totalSeatQuota) * 100) : 0;
     const educatorPercent = totalEducatorSlots > 0 ? Math.round((totalEducators / totalEducatorSlots) * 100) : 0;
+    const avgCohortSize = totalCohorts > 0 ? Math.round(totalUtilizedSeats / totalCohorts) : 0;
 
     return {
       totalSchools,
@@ -490,6 +500,10 @@ export default function SchoolLicenseManager() {
       totalEducators,
       totalEducatorSlots,
       educatorPercent,
+      totalCohorts,
+      schoolsWithCohorts,
+      uniqueSyllabiCount: uniqueSyllabi.size,
+      avgCohortSize,
       activeCount,
       expiringCount,
       trialCount,
@@ -694,34 +708,40 @@ export default function SchoolLicenseManager() {
           </div>
         </div>
 
-        {/* Card 4: Quick Actions */}
-        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-3 flex flex-col justify-between">
+        {/* Card 4: Class Cohorts */}
+        <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-2xl p-3 shadow-offset-3 space-y-1.5">
           <div className="flex items-center justify-between text-[#645c50]">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider">
-              Licensing Controls
+              Class Cohorts
             </span>
-            <ShieldCheck className="w-4 h-4 text-[#201e1d]" />
+            <BookOpen className="w-4 h-4 text-[#201e1d]" />
           </div>
-          <div className="flex flex-col gap-1.5 my-1">
-            <button
-              type="button"
-              onClick={openCreateModal}
-              className="w-full py-1.5 px-3 rounded-xl bg-[#ccdbb2] text-[#272e1b] font-black font-heading text-xs border-2 border-[#201e1d] shadow-offset-1 hover:bg-[#b8c99d] transition-all cursor-pointer flex items-center justify-center gap-1.5 active:translate-y-0.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Issue New License</span>
-            </button>
-            {licenses.length > 0 && (
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="w-full py-1 px-2 rounded-[6px] bg-[#fde8e8] text-[#e0533c] font-bold text-[10px] border border-[#201e1d] hover:bg-[#fca5a5] transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                title="Clear all registered licenses"
-              >
-                <Trash2 className="w-3 h-3" />
-                <span>Clear All Licenses</span>
-              </button>
-            )}
+          <div className="text-2xl font-black font-heading text-[#201e1d]">
+            {stats.totalCohorts}
+            <span className="text-xs font-bold text-[#645c50] ml-1.5">
+              Active {stats.totalCohorts === 1 ? 'Class' : 'Classes'}
+            </span>
+          </div>
+          <div className="w-full bg-[#eee7db] rounded-full h-2 border border-[#201e1d] overflow-hidden">
+            <div
+              className="bg-[#d7e6fa] border-r border-[#201e1d] h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${Math.min(
+                  100,
+                  stats.totalSchools > 0
+                    ? Math.round((stats.schoolsWithCohorts / stats.totalSchools) * 100)
+                    : 0
+                )}%`,
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[11px] font-bold text-[#645c50]">
+            <span>
+              {stats.totalCohorts > 0 ? `Avg. ${stats.avgCohortSize} students / class` : 'No cohorts enrolled'}
+            </span>
+            <span className="text-[#201e1d] font-black">
+              {stats.uniqueSyllabiCount} {stats.uniqueSyllabiCount === 1 ? 'Syllabus' : 'Syllabi'}
+            </span>
           </div>
         </div>
       </div>
@@ -750,15 +770,28 @@ export default function SchoolLicenseManager() {
             )}
           </div>
 
-          {/* Quick Issue Button */}
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="shrink-0 px-4 py-1.5 rounded-xl bg-[#ccdbb2] text-[#272e1b] font-black font-heading text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all cursor-pointer flex items-center gap-1.5 active:translate-y-0.5"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Issue New License</span>
-          </button>
+          {/* Quick Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {licenses.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="px-3 py-1.5 rounded-xl bg-[#fde8e8] text-[#e0533c] font-bold text-xs border-2 border-[#201e1d] shadow-offset-1 hover:bg-[#fca5a5] transition-all cursor-pointer flex items-center gap-1 active:translate-y-0.5"
+                title="Clear all registered licenses"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Clear All</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="px-4 py-1.5 rounded-xl bg-[#ccdbb2] text-[#272e1b] font-black font-heading text-xs border-2 border-[#201e1d] shadow-offset-2 hover:bg-[#b8c99d] transition-all cursor-pointer flex items-center gap-1.5 active:translate-y-0.5"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Issue New License</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter Pills */}
