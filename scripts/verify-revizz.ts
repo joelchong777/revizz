@@ -36,6 +36,7 @@ import {
   isFirstTryCorrect,
   REVIEW_PILE_KEY,
   FIRST_TRY_CORRECT_KEY,
+  mergeReviewPile,
 } from '../lib/mastery';
 
 import {
@@ -5138,6 +5139,82 @@ async function runSuiteLaunchAccounts() {
   });
 }
 
+async function runSuiteLaunchLearning() {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (f: string) => fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  // --- mergeReviewPile (behavioural) ---
+  await testAsync('Launch learning: mergeReviewPile unions local and remote ids', async () => {
+    const out = mergeReviewPile({ a: { mistakeCount: 1, lastMistakeAt: 10 } }, [{ questionId: 'b', mistakeCount: 2, lastMistakeAt: 20 }]);
+    assertEqual(Object.keys(out).sort().join(','), 'a,b', 'union of ids');
+    assertEqual(out.b.mistakeCount, 2, 'remote-only entry keeps its count');
+    assertEqual(out.b.lastMistakeAt, 20, 'remote-only entry keeps its time');
+  });
+
+  await testAsync('Launch learning: mergeReviewPile keeps the higher mistake count', async () => {
+    const hi = mergeReviewPile({ a: { mistakeCount: 5, lastMistakeAt: 10 } }, [{ questionId: 'a', mistakeCount: 2 }]);
+    assertEqual(hi.a.mistakeCount, 5, 'local higher wins');
+    const lo = mergeReviewPile({ a: { mistakeCount: 1, lastMistakeAt: 10 } }, [{ questionId: 'a', mistakeCount: 4 }]);
+    assertEqual(lo.a.mistakeCount, 4, 'remote higher wins');
+  });
+
+  await testAsync('Launch learning: mergeReviewPile keeps the later date', async () => {
+    const out = mergeReviewPile({ a: { mistakeCount: 1, lastMistakeAt: 100 } }, [{ questionId: 'a', mistakeCount: 1, lastMistakeAt: 50 }]);
+    assertEqual(out.a.lastMistakeAt, 100, 'local later wins');
+    const out2 = mergeReviewPile({ a: { mistakeCount: 1, lastMistakeAt: 100 } }, [{ questionId: 'a', mistakeCount: 1, lastMistakeAt: 300 }]);
+    assertEqual(out2.a.lastMistakeAt, 300, 'remote later wins');
+    const out3 = mergeReviewPile({ a: { mistakeCount: 1, lastMistakeAt: 100 } }, [{ questionId: 'a', mistakeCount: 1 }]);
+    assertEqual(out3.a.lastMistakeAt, 100, 'missing remote time keeps local');
+  });
+
+  await testAsync('Launch learning: mergeReviewPile handles empty inputs and does not mutate', async () => {
+    assertEqual(Object.keys(mergeReviewPile({}, [])).length, 0, 'both empty');
+    const local = { a: { mistakeCount: 1, lastMistakeAt: 1 } };
+    assertEqual(Object.keys(mergeReviewPile(local, [])).join(','), 'a', 'empty remote keeps local');
+    assertEqual(Object.keys(mergeReviewPile({}, [{ questionId: 'z', mistakeCount: 3 }])).join(','), 'z', 'empty local takes remote');
+    mergeReviewPile(local, [{ questionId: 'b', mistakeCount: 1 }]);
+    assertEqual(Object.keys(local).join(','), 'a', 'input map not mutated');
+  });
+
+  // --- static contracts ---
+  await testAsync('Launch learning: QuestionCard prefers explanation_markdown and distractor_reasoning with template fallback', async () => {
+    const src = strip(read('components/QuestionCard.tsx'));
+    assert(/question\.explanation_markdown/.test(src), 'reads explanation_markdown');
+    assert(/distractor_reasoning/.test(src), 'reads distractor_reasoning');
+    assert(/realExplanation\s*\?/.test(src) && /explanationSteps\.map/.test(src), 'explanation ternary keeps the template steps');
+    assert(/item\.reasoning\s*\?/.test(src) && /item\.text/.test(src), 'distractor ternary keeps the template sentence');
+    assert(/Distractor Traps/.test(src) && /is Correct/.test(src), 'headings kept');
+    assert(/sanitizeKaTeX\(realExplanation\)/.test(src) && /sanitizeKaTeX\(item\.reasoning\)/.test(src), 'sanitised before render');
+  });
+
+  await testAsync('Launch learning: RoundSummary prefers explanation_markdown with template fallback', async () => {
+    const src = strip(read('components/RoundSummary.tsx'));
+    assert(/item\.question\.explanation_markdown/.test(src), 'reads explanation_markdown');
+    assert(/realExplanation\s*\?/.test(src) && /steps\.map/.test(src), 'template steps remain as fallback');
+    assert(/distractor_reasoning/.test(src), 'reads distractor_reasoning');
+    assert(/sanitizeKaTeX\(realExplanation\)/.test(src), 'sanitised before render');
+  });
+
+  await testAsync('Launch learning: page.tsx reads saved custom drill ids and clears them', async () => {
+    const src = strip(read('app/page.tsx'));
+    assert(/getItem\(\s*'revizz_custom_drill_ids'\s*\)/.test(src), 'reads revizz_custom_drill_ids');
+    assert(/removeItem\(\s*'revizz_custom_drill_ids'\s*\)/.test(src), 'removes revizz_custom_drill_ids');
+    assert(/removeItem\(\s*'revizz_custom_drill_label'\s*\)/.test(src), 'removes revizz_custom_drill_label');
+    assert(/aren't available right now/.test(src), 'empty custom drill shows a notice');
+    assert(/Nothing to review yet/.test(src), 'empty review pile shows a notice');
+  });
+
+  await testAsync('Launch learning: sync.ts hydrates the review pile from the server, download only', async () => {
+    const src = strip(read('lib/sync.ts'));
+    assert(/\.from\(\s*'review_pile'\s*\)/.test(src), 'selects from review_pile');
+    assert(/\.is\(\s*'resolved_at'\s*,\s*null\s*\)/.test(src), 'filters resolved_at is null');
+    assert(/mergeReviewPile/.test(src) && /revizz_review_pile_changed/.test(src), 'merges and notifies');
+    assert(!/\.from\(\s*'review_pile'\s*\)\s*\.(insert|upsert|update|delete)/.test(src), 'uploads nothing');
+  });
+}
+
 async function main() {
   await runSuite13();
   await runSuite20();
@@ -5150,6 +5227,7 @@ async function main() {
   await runSuiteLaunchLegal();
   await runSuiteLaunchHardening();
   await runSuiteLaunchAccounts();
+  await runSuiteLaunchLearning();
 
   // Summary Output
   const duration = ((Date.now() - startMs) / 1000).toFixed(2);

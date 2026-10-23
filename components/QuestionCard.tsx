@@ -303,6 +303,9 @@ export function QuestionCard({
     `Verify against alternatives to ensure distractors are eliminated.`,
   ];
 
+  // Real explanation from the server reveal (only present once the answer is final)
+  const realExplanation = isRevealed ? (question.explanation_markdown || '').trim() : '';
+
   // Distractor breakdown
   const distractorBreakdown = !isRevealed ? [] : question.options
     .filter((opt) => opt.id !== question.correct_option_id)
@@ -311,6 +314,8 @@ export function QuestionCard({
       return {
         letter: letters[idx],
         text: `"${opt.text_markdown.replace(/[*#$]/g, '')}" represents a common distractor or addresses an unrelated syllabus mechanism.`,
+        // Real per-option note from the server reveal; falls back to the template sentence above.
+        reasoning: (opt.distractor_reasoning || '').trim(),
       };
     });
 
@@ -723,16 +728,24 @@ export function QuestionCard({
             <h6 className="font-bold text-xs uppercase tracking-wider text-accent-2-900 m-0">
               Why Option {correctLetter} is Correct
             </h6>
-            {explanationSteps.map((step, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <span className="w-5 h-5 flex-none rounded-full bg-accent-2-300 border-[1.5px] border-text flex items-center justify-center text-xs font-bold text-text">
-                  {idx + 1}
-                </span>
-                <span className="text-xs sm:text-sm leading-relaxed text-text">
-                  {step}
-                </span>
+            {realExplanation ? (
+              <div className="text-xs sm:text-sm leading-relaxed text-text break-words overflow-x-auto">
+                <MarkdownErrorBoundary fallbackText={realExplanation}>
+                  <MemoMarkdown text={sanitizeKaTeX(realExplanation)} withTableComponents />
+                </MarkdownErrorBoundary>
               </div>
-            ))}
+            ) : (
+              explanationSteps.map((step, idx) => (
+                <div key={idx} className="flex gap-2 items-start">
+                  <span className="w-5 h-5 flex-none rounded-full bg-accent-2-300 border-[1.5px] border-text flex items-center justify-center text-xs font-bold text-text">
+                    {idx + 1}
+                  </span>
+                  <span className="text-xs sm:text-sm leading-relaxed text-text">
+                    {step}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
           )}
 
@@ -747,9 +760,17 @@ export function QuestionCard({
                   <span className="w-5 h-5 flex-none rounded-full bg-accent-200 border-[1.5px] border-text flex items-center justify-center text-xs font-heading text-text">
                     {item.letter}
                   </span>
-                  <span className="text-xs sm:text-sm leading-relaxed text-text">
-                    {item.text}
-                  </span>
+                  {item.reasoning ? (
+                    <div className="min-w-0 flex-1 text-xs sm:text-sm leading-relaxed text-text break-words overflow-x-auto">
+                      <MarkdownErrorBoundary fallbackText={item.reasoning}>
+                        <MemoMarkdown text={sanitizeKaTeX(item.reasoning)} />
+                      </MarkdownErrorBoundary>
+                    </div>
+                  ) : (
+                    <span className="text-xs sm:text-sm leading-relaxed text-text">
+                      {item.text}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

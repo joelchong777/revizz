@@ -94,6 +94,8 @@ function HomePageContent() {
   // Keep track of the last configured round for "Play Again"
   const [lastRoundConfig, setLastRoundConfig] = useState<QuizRoundConfig | null>(null);
   const [lastRoundQuestions, setLastRoundQuestions] = useState<Question[]>([]);
+  // Notice shown on the start screen when a deep link (drill these / review pile) has nothing to play
+  const [startNotice, setStartNotice] = useState<string | null>(null);
 
   const handleStartRound = (config: QuizRoundConfig, questionsToStart: Question[], mode?: QuizSessionMode) => {
     setLastRoundConfig(config);
@@ -156,7 +158,10 @@ function HomePageContent() {
     if (isDemoSession || questions.length === 0) return;
     const pileIds = new Set(getReviewPileIds());
     const reviewQuestions = questions.filter((q) => pileIds.has(q.id));
-    if (reviewQuestions.length === 0) return;
+    if (reviewQuestions.length === 0) {
+      setStartNotice('Nothing to review yet. Questions you miss will show up here.');
+      return;
+    }
 
     const reviewConfig: QuizRoundConfig = {
       subject: 'Economics 0455',
@@ -312,26 +317,44 @@ function HomePageContent() {
     if (!drill) return;
 
     if (drill === 'custom') {
+      // "Drill these" from the profile saves ids in sessionStorage; ?ids= still works for shared links.
+      let idList: string[] = [];
       const idsParam = searchParams.get('ids');
       if (idsParam) {
-        const targetIds = new Set(
-          idsParam
-            .split(',')
-            .map((id) => id.trim())
-            .filter(Boolean)
-        );
-        const matchedQuestions = questions.filter((q) => targetIds.has(q.id));
-        if (matchedQuestions.length > 0) {
-          window.history.replaceState({}, '', '/');
-          const customConfig: QuizRoundConfig = {
-            subject: 'Economics 0455',
-            sourceType: 'review',
-            sourceValue: 'custom_drill',
-            roundLength: Math.min(30, Math.max(3, matchedQuestions.length)) as 3 | 5 | 10 | 30 | 'endless',
-            isTimed: false,
-          };
-          handleStartRound(customConfig, matchedQuestions, 'drill');
+        idList = idsParam.split(',');
+      } else {
+        try {
+          const stored = window.sessionStorage.getItem('revizz_custom_drill_ids');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) idList = parsed.map((id) => String(id));
+          }
+        } catch (e) {
+          console.warn('Failed to read custom drill from sessionStorage:', e);
         }
+      }
+      // Clear the saved drill and the URL so a reload doesn't repeat it
+      try {
+        window.sessionStorage.removeItem('revizz_custom_drill_ids');
+        window.sessionStorage.removeItem('revizz_custom_drill_label');
+      } catch {
+        /* storage unavailable */
+      }
+      window.history.replaceState({}, '', '/');
+
+      const targetIds = new Set(idList.map((id) => id.trim()).filter(Boolean));
+      const matchedQuestions = questions.filter((q) => targetIds.has(q.id));
+      if (matchedQuestions.length > 0) {
+        const customConfig: QuizRoundConfig = {
+          subject: 'Economics 0455',
+          sourceType: 'review',
+          sourceValue: 'custom_drill',
+          roundLength: Math.min(30, Math.max(3, matchedQuestions.length)) as 3 | 5 | 10 | 30 | 'endless',
+          isTimed: false,
+        };
+        handleStartRound(customConfig, matchedQuestions, 'drill');
+      } else {
+        setStartNotice("Those questions aren't available right now.");
       }
     } else if (drill === 'topic') {
       const topicId = searchParams.get('topicId');
@@ -436,6 +459,24 @@ function HomePageContent() {
   if (game.gameState === 'setup') {
     return (
       <main className="min-h-screen flex flex-col justify-center">
+        {startNotice && (
+          <div
+            role="status"
+            className="w-full max-w-[480px] mx-auto mt-4 px-4"
+          >
+            <div className="flex items-start gap-3 bg-[#ffe1d0] border-4 border-[#201e1d] shadow-offset-6 rounded-2xl p-4">
+              <p className="flex-1 text-sm font-bold text-[#201e1d] leading-relaxed m-0">{startNotice}</p>
+              <button
+                type="button"
+                onClick={() => setStartNotice(null)}
+                aria-label="Dismiss"
+                className="flex-none w-7 h-7 rounded-full bg-neutral-100 border-2 border-[#201e1d] font-black text-sm leading-none cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
         <StartFlow
           onStart={handleStartStandard}
           onStartReview={handleStartReviewPile}

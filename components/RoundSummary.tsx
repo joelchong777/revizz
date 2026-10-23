@@ -199,6 +199,12 @@ export function RoundSummary({
                   `This question has been queued to your Review Pile for spaced repetition practice.`,
                 ];
 
+                // Real explanation / per-option notes from the server reveal; template steps are the fallback.
+                const realExplanation = (item.question.explanation_markdown || '').trim();
+                const realDistractors = item.question.options
+                  .map((opt, oi) => ({ letter: letters[oi], text: (opt.distractor_reasoning || '').trim(), isCorrect: opt.id === item.question.correct_option_id }))
+                  .filter((d) => !d.isCorrect && d.text);
+
                 return (
                   <div
                     key={item.question.id}
@@ -269,16 +275,50 @@ export function RoundSummary({
                           </MarkdownErrorBoundary>
                         </div>
 
-                        <div className="flex flex-col gap-2 mt-1">
-                          {steps.map((st, stepIdx) => (
-                            <span
-                              key={stepIdx}
-                              className="text-xs sm:text-sm leading-relaxed text-text font-medium"
-                            >
-                              {stepIdx + 1}. {st}
-                            </span>
-                          ))}
-                        </div>
+                        {realExplanation ? (
+                          <div className="text-xs sm:text-sm leading-relaxed text-text font-medium break-words overflow-x-auto mt-1">
+                            <MarkdownErrorBoundary fallbackText={realExplanation}>
+                              <ReactMarkdown
+                                remarkPlugins={[remarkMath, remarkGfm]}
+                                rehypePlugins={safeRehypePlugins}
+                                components={cambridgeTableComponents}
+                              >
+                                {sanitizeKaTeX(realExplanation)}
+                              </ReactMarkdown>
+                            </MarkdownErrorBoundary>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-2 mt-1">
+                            {steps.map((st, stepIdx) => (
+                              <span
+                                key={stepIdx}
+                                className="text-xs sm:text-sm leading-relaxed text-text font-medium"
+                              >
+                                {stepIdx + 1}. {st}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {realDistractors.length > 0 && (
+                          <div className="flex flex-col gap-1.5 mt-1">
+                            {realDistractors.map((d) => (
+                              <div key={d.letter} className="flex gap-2 items-start text-xs sm:text-sm leading-relaxed text-text">
+                                <span className="font-bold flex-none">{d.letter}.</span>
+                                <div className="min-w-0 flex-1 break-words overflow-x-auto">
+                                  <MarkdownErrorBoundary fallbackText={d.text}>
+                                    <ReactMarkdown
+                                      remarkPlugins={[remarkMath, remarkGfm]}
+                                      rehypePlugins={safeRehypePlugins}
+                                    >
+                                      {sanitizeKaTeX(d.text)}
+                                    </ReactMarkdown>
+                                  </MarkdownErrorBoundary>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

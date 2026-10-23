@@ -130,6 +130,31 @@ export function getReviewPile(): ReviewPileMap {
 }
 
 /**
+ * Merges review-pile rows from the server into the local pile (pure).
+ * Union by question id; keeps the higher mistake count and the later lastMistakeAt.
+ * A remote row without a timestamp keeps the local time, or 0 when it is new to this device.
+ */
+export function mergeReviewPile(
+  local: ReviewPileMap,
+  remote: Array<{ questionId: string; mistakeCount: number; lastMistakeAt?: number }>
+): ReviewPileMap {
+  const merged: ReviewPileMap = { ...(local || {}) };
+  for (const row of remote || []) {
+    if (!row || !row.questionId) continue;
+    const count = Number(row.mistakeCount) || 0;
+    const at = Number(row.lastMistakeAt) || 0;
+    const existing = merged[row.questionId];
+    merged[row.questionId] = existing
+      ? {
+          mistakeCount: Math.max(existing.mistakeCount || 0, count),
+          lastMistakeAt: Math.max(existing.lastMistakeAt || 0, at),
+        }
+      : { mistakeCount: Math.max(1, count), lastMistakeAt: at };
+  }
+  return merged;
+}
+
+/**
  * Returns array of question IDs currently in the review pile.
  */
 export function getReviewPileIds(): string[] {

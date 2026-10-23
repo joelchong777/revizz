@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 import { UserProfile } from '../types';
-import { REVIEW_PILE_KEY, FIRST_TRY_CORRECT_KEY, getFirstTryCorrectIds } from './mastery';
+import { REVIEW_PILE_KEY, FIRST_TRY_CORRECT_KEY, getFirstTryCorrectIds, getReviewPile, mergeReviewPile } from './mastery';
 
 export const LOCAL_DATA_OWNER_KEY = 'revizz_local_data_owner';
 
@@ -55,6 +55,33 @@ export const syncGuestDataToUser = async (userId: string, currentProfile: UserPr
       }
     } catch (e) {
       console.error('Failed to hydrate first-try mastery:', e);
+    }
+
+    // Cross-device review pile: union the server's open mistakes into the local pile (download only).
+    // A failed select leaves local data untouched.
+    try {
+      const { data, error } = await supabase
+        .from('review_pile')
+        .select('question_id, mistakes_count')
+        .eq('user_id', userId)
+        .is('resolved_at', null);
+      if (error) throw error;
+      if (data && data.length > 0) {
+        const local = getReviewPile();
+        const merged = mergeReviewPile(
+          local,
+          (data as { question_id: string; mistakes_count: number | null }[]).map((row) => ({
+            questionId: row.question_id,
+            mistakeCount: Number(row.mistakes_count) || 1,
+          }))
+        );
+        if (JSON.stringify(merged) !== JSON.stringify(local)) {
+          localStorage.setItem(REVIEW_PILE_KEY, JSON.stringify(merged));
+          window.dispatchEvent(new CustomEvent('revizz_review_pile_changed'));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to hydrate review pile:', e);
     }
 
     return currentProfile;
