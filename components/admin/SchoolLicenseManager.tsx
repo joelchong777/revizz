@@ -85,7 +85,8 @@ export interface SchoolLicense {
   updatedAt: string;
 }
 
-const STORAGE_KEY = 'revizz_admin_school_licenses_v1';
+const STORAGE_KEY = 'revizz_admin_school_licenses_v2';
+const LEGACY_STORAGE_KEY = 'revizz_admin_school_licenses_v1';
 
 export function generateLicenseNumber(): string {
   const year = new Date().getFullYear();
@@ -109,292 +110,6 @@ export function getEffectiveStatus(license: SchoolLicense): LicenseStatus {
   if (days <= 30 && license.status !== 'Trial') return 'Expiring Soon';
   return license.status;
 }
-
-const INITIAL_SEEDED_LICENSES: SchoolLicense[] = [
-  {
-    id: 'lic-oakridge-01',
-    name: 'Oakridge International College',
-    contactEmail: 'admin@oakridgecollege.org',
-    departmentScope: 'Senior Campus & Cambridge Centre',
-    licenseNumber: 'RVZ-2026-88412',
-    tier: 'Enterprise Campus',
-    studentSeatQuota: 500,
-    educatorSlotLimit: 25,
-    status: 'Active',
-    startDate: '2026-01-01',
-    endDate: '2027-06-30',
-    notes: 'Purchase Order #PO-2026-OKRDG. Includes Cambridge Physics & Economics syllabi.',
-    cohorts: [
-      {
-        id: 'coh-oak-01',
-        name: '12A Pure Mathematics',
-        subjectCode: '0580',
-        department: 'Mathematics',
-        studentCount: 28,
-        assignedTeacher: 'H. Sterling',
-        term: '2026-2027 Session',
-      },
-      {
-        id: 'coh-oak-02',
-        name: '11B Physics Mechanics',
-        subjectCode: '0625',
-        department: 'Physics',
-        studentCount: 24,
-        assignedTeacher: 'E. Thorne',
-        term: '2026-2027 Session',
-      },
-      {
-        id: 'coh-oak-03',
-        name: '10C Organic Chemistry',
-        subjectCode: '0620',
-        department: 'Chemistry',
-        studentCount: 26,
-        assignedTeacher: 'R. Kovacs',
-        term: '2026-2027 Session',
-      },
-      {
-        id: 'coh-oak-04',
-        name: '12B Microeconomics',
-        subjectCode: '0455',
-        department: 'Economics',
-        studentCount: 22,
-        assignedTeacher: 'L. Chen',
-        term: '2026-2027 Session',
-      },
-    ],
-    educators: [
-      {
-        id: 'ed-oak-01',
-        name: 'H. Sterling',
-        email: 'h.sterling@oakridgecollege.org',
-        department: 'Mathematics',
-        role: 'Department Head',
-        status: 'Active',
-      },
-      {
-        id: 'ed-oak-02',
-        name: 'E. Thorne',
-        email: 'e.thorne@oakridgecollege.org',
-        department: 'Physics',
-        role: 'Teacher (Read-Only Bank)',
-        status: 'Active',
-      },
-      {
-        id: 'ed-oak-03',
-        name: 'R. Kovacs',
-        email: 'r.kovacs@oakridgecollege.org',
-        department: 'Chemistry',
-        role: 'Teacher (Read-Only Bank)',
-        status: 'Active',
-      },
-      {
-        id: 'ed-oak-04',
-        name: 'L. Chen',
-        email: 'l.chen@oakridgecollege.org',
-        department: 'Economics',
-        role: 'Teacher (Read-Only Bank)',
-        status: 'Active',
-      },
-      {
-        id: 'ed-oak-05',
-        name: 'C. Bennett',
-        email: 'c.bennett@oakridgecollege.org',
-        department: 'Academic Affairs',
-        role: 'App Admin (Full Edit)',
-        status: 'Active',
-      },
-    ],
-    createdAt: '2026-01-01T08:00:00Z',
-    updatedAt: '2026-01-15T10:30:00Z',
-  },
-  {
-    id: 'lic-westlake-02',
-    name: 'Westlake Science Academy',
-    contactEmail: 'headmaster@westlakescience.edu.sg',
-    departmentScope: 'Secondary STEM Division',
-    licenseNumber: 'RVZ-2026-31904',
-    tier: 'Department Pro',
-    studentSeatQuota: 300,
-    educatorSlotLimit: 15,
-    status: 'Active',
-    startDate: '2026-01-10',
-    endDate: '2026-12-31',
-    notes: 'Contract Ref #SG-WSTLK-991. Accelerated science track.',
-    cohorts: [
-      {
-        id: 'coh-wst-01',
-        name: 'Sec 4 Accelerated Physics',
-        subjectCode: '0625',
-        department: 'Physics',
-        studentCount: 30,
-        assignedTeacher: 'K. Arisawa',
-        term: '2026 Academic Year',
-      },
-      {
-        id: 'coh-wst-02',
-        name: 'Sec 3 Advanced Chemistry',
-        subjectCode: '0620',
-        department: 'Chemistry',
-        studentCount: 28,
-        assignedTeacher: 'P. Nair',
-        term: '2026 Academic Year',
-      },
-      {
-        id: 'coh-wst-03',
-        name: 'Sec 4 Molecular Biology',
-        subjectCode: '0610',
-        department: 'Biology',
-        studentCount: 26,
-        assignedTeacher: 'J. Holloway',
-        term: '2026 Academic Year',
-      },
-    ],
-    educators: [
-      {
-        id: 'ed-wst-01',
-        name: 'K. Arisawa',
-        email: 'k.arisawa@westlakescience.edu.sg',
-        department: 'Physics',
-        role: 'Department Head',
-        status: 'Active',
-      },
-      {
-        id: 'ed-wst-02',
-        name: 'P. Nair',
-        email: 'p.nair@westlakescience.edu.sg',
-        department: 'Chemistry',
-        role: 'Teacher (Read-Only Bank)',
-        status: 'Active',
-      },
-      {
-        id: 'ed-wst-03',
-        name: 'J. Holloway',
-        email: 'j.holloway@westlakescience.edu.sg',
-        department: 'Biology',
-        role: 'Teacher (Read-Only Bank)',
-        status: 'Active',
-      },
-    ],
-    createdAt: '2026-01-10T09:15:00Z',
-    updatedAt: '2026-02-01T14:20:00Z',
-  },
-  {
-    id: 'lic-augustine-03',
-    name: 'St. Augustine Collegiate',
-    contactEmail: 'registry@staugustinecollegiate.ac.uk',
-    departmentScope: 'Sixth Form College',
-    licenseNumber: 'RVZ-2026-10492',
-    tier: 'Standard Educator',
-    studentSeatQuota: 150,
-    educatorSlotLimit: 8,
-    status: 'Expiring Soon',
-    startDate: '2025-11-15',
-    endDate: '2026-11-15',
-    notes: 'Renewal discussions in progress with bursar office.',
-    cohorts: [
-      {
-        id: 'coh-aug-01',
-        name: 'Year 12 Economics Core',
-        subjectCode: '0455',
-        department: 'Economics',
-        studentCount: 35,
-        assignedTeacher: 'T. Al-Mansoor',
-        term: 'Michaelmas Term 2026',
-      },
-      {
-        id: 'coh-aug-02',
-        name: 'Year 13 Applied Mechanics',
-        subjectCode: '0625',
-        department: 'Physics',
-        studentCount: 28,
-        assignedTeacher: 'F. Dubois',
-        term: 'Michaelmas Term 2026',
-      },
-    ],
-    educators: [
-      {
-        id: 'ed-aug-01',
-        name: 'T. Al-Mansoor',
-        email: 't.mansoor@staugustinecollegiate.ac.uk',
-        department: 'Economics',
-        role: 'App Admin (Full Edit)',
-        status: 'Active',
-      },
-      {
-        id: 'ed-aug-02',
-        name: 'F. Dubois',
-        email: 'f.dubois@staugustinecollegiate.ac.uk',
-        department: 'Physics',
-        role: 'Teacher (Read-Only Bank)',
-        status: 'Active',
-      },
-    ],
-    createdAt: '2025-11-15T11:00:00Z',
-    updatedAt: '2026-03-01T08:00:00Z',
-  },
-  {
-    id: 'lic-apex-04',
-    name: 'Apex STEM Institute',
-    contactEmail: 'director@apexsteminstitute.org',
-    departmentScope: 'Regional Innovation Campus',
-    licenseNumber: 'RVZ-2026-75199',
-    tier: 'Institution Unlimited',
-    studentSeatQuota: 1000,
-    educatorSlotLimit: 50,
-    status: 'Active',
-    startDate: '2026-02-01',
-    endDate: '2028-08-31',
-    notes: 'Multi-year enterprise grant. Full Cambridge IGCSE bank access.',
-    cohorts: [
-      {
-        id: 'coh-apx-01',
-        name: 'Batch Alpha Robotics & Physics',
-        subjectCode: '0625',
-        department: 'Engineering',
-        studentCount: 42,
-        assignedTeacher: "B. O'Connor",
-        term: 'Fall Cohort 2026',
-      },
-      {
-        id: 'coh-apx-02',
-        name: 'Batch Beta Quantitative Econ',
-        subjectCode: '0455',
-        department: 'Economics',
-        studentCount: 38,
-        assignedTeacher: 'N. Gupta',
-        term: 'Fall Cohort 2026',
-      },
-    ],
-    educators: [
-      {
-        id: 'ed-apx-01',
-        name: "B. O'Connor",
-        email: 'b.oconnor@apexsteminstitute.org',
-        department: 'Engineering',
-        role: 'Department Head',
-        status: 'Active',
-      },
-      {
-        id: 'ed-apx-02',
-        name: 'N. Gupta',
-        email: 'n.gupta@apexsteminstitute.org',
-        department: 'Economics',
-        role: 'Teacher (Read-Only Bank)',
-        status: 'Active',
-      },
-      {
-        id: 'ed-apx-03',
-        name: 'S. Lindqvist',
-        email: 's.lindqvist@apexsteminstitute.org',
-        department: 'Technology',
-        role: 'App Admin (Full Edit)',
-        status: 'Active',
-      },
-    ],
-    createdAt: '2026-02-01T12:00:00Z',
-    updatedAt: '2026-02-15T16:00:00Z',
-  },
-];
 
 export default function SchoolLicenseManager() {
   const [licenses, setLicenses] = useState<SchoolLicense[]>([]);
@@ -442,20 +157,31 @@ export default function SchoolLicenseManager() {
   // Load from LocalStorage
   useEffect(() => {
     try {
+      // Purge legacy storage from previous mock versions
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setLicenses(parsed);
+        if (Array.isArray(parsed)) {
+          // Filter out any mock/seed IDs if they ever got stored
+          const filtered = parsed.filter(
+            (p: SchoolLicense) =>
+              p.id &&
+              !p.id.startsWith('lic-oakridge') &&
+              !p.id.startsWith('lic-westlake') &&
+              !p.id.startsWith('lic-augustine') &&
+              !p.id.startsWith('lic-apex')
+          );
+          setLicenses(filtered);
           setIsLoaded(true);
           return;
         }
       }
-      // If empty or invalid, seed with clean realistic data
-      setLicenses(INITIAL_SEEDED_LICENSES);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEEDED_LICENSES));
+      setLicenses([]);
     } catch {
-      setLicenses(INITIAL_SEEDED_LICENSES);
+      setLicenses([]);
     } finally {
       setIsLoaded(true);
     }
@@ -627,13 +353,14 @@ export default function SchoolLicenseManager() {
     showToast(`✓ License renewed for 1 year! Valid until ${newEndStr}`);
   };
 
-  const handleResetData = () => {
-    if (typeof window !== 'undefined' && !window.confirm('Reset all school licenses to default certified institutions?')) {
+  const handleClearAll = () => {
+    if (licenses.length === 0) return;
+    if (typeof window !== 'undefined' && !window.confirm('Delete all school and organization licenses? This cannot be undone.')) {
       return;
     }
-    persistLicenses(INITIAL_SEEDED_LICENSES);
+    persistLicenses([]);
     setSelectedSchool(null);
-    showToast('Reset school licenses to default seed data.');
+    showToast('All licenses cleared.');
   };
 
   // Cohort Management inside Drill-Down
@@ -984,15 +711,17 @@ export default function SchoolLicenseManager() {
               <Plus className="w-3.5 h-3.5" />
               <span>+ Issue New License</span>
             </button>
-            <button
-              type="button"
-              onClick={handleResetData}
-              className="w-full py-1 px-2 rounded-[6px] bg-[#eee7db] text-[#645c50] font-bold text-[10px] border border-[#201e1d] hover:bg-[#e4dcce] transition-colors flex items-center justify-center gap-1 cursor-pointer"
-              title="Reset to default seeded colleges"
-            >
-              <RefreshCw className="w-3 h-3" />
-              <span>Reset Sample Data</span>
-            </button>
+            {licenses.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="w-full py-1 px-2 rounded-[6px] bg-[#fde8e8] text-[#e0533c] font-bold text-[10px] border border-[#201e1d] hover:bg-[#fca5a5] transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                title="Clear all registered licenses"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>Clear All Licenses</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1090,10 +819,14 @@ export default function SchoolLicenseManager() {
           <div className="bg-white border-2 border-dashed border-[#201e1d]/40 rounded-xl p-8 text-center space-y-2">
             <Building2 className="w-8 h-8 text-[#645c50] mx-auto" />
             <div className="font-heading font-black text-sm text-[#201e1d]">
-              No matching school licenses found
+              {licenses.length === 0
+                ? 'No School or Organization Licenses Registered'
+                : 'No matching school licenses found'}
             </div>
             <p className="text-xs text-[#645c50]">
-              Try adjusting your search terms or filter pills, or issue a new license.
+              {licenses.length === 0
+                ? 'Get started by issuing your first institutional campus license.'
+                : 'Try adjusting your search terms or filter pills, or issue a new license.'}
             </p>
             <button
               type="button"
