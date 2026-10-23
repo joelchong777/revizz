@@ -18,7 +18,7 @@ const TAB_TITLES: Record<string, string> = {
   settings: 'Settings',
   system: 'System Overview',
   school: 'School Licences',
-  'portal-menu': 'Portal Menu Manager',
+  'portal-menu': 'Menu Manager',
   ads: 'Ads & Monetization',
   users: 'User Management',
 };

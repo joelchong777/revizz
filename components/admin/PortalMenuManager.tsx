@@ -331,7 +331,7 @@ export default function PortalMenuManager() {
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex items-center gap-2 min-w-0">
             <h1 className="text-base font-black text-[#201e1d] font-heading tracking-tight truncate">
-              Page Visibility &amp; Menus
+              Menu Manager
             </h1>
             <span
               className="px-2 py-0.5 rounded-full bg-[#ffe1d0] border border-[#201e1d] text-[10px] font-mono font-bold text-[#201e1d] whitespace-nowrap"

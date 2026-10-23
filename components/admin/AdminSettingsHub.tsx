@@ -45,7 +45,7 @@ const TABS: { id: SettingsSubTab; label: string; icon: React.ElementType }[] = [
   { id: 'ingestion', label: 'Ingestion & AI Engine', icon: Sparkles },
   { id: 'gameplay', label: 'Curriculum & Quiz Rules', icon: Sliders },
   { id: 'auth', label: 'Auth & Security', icon: ShieldCheck },
-  { id: 'portal-menu', label: 'Portal Menu Manager', icon: Menu },
+  { id: 'portal-menu', label: 'Menu Manager', icon: Menu },
 ];
 
 export default function AdminSettingsHub({
@@ -1009,7 +1009,7 @@ export default function AdminSettingsHub({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 6: PORTAL MENU MANAGER */}
+      {/* TAB 6: MENU MANAGER */}
       {/* ========================================================================= */}
       {activeSubTab === 'portal-menu' && <PortalMenuManager />}
     </div>
