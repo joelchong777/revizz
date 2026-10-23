@@ -43,7 +43,7 @@ const TABS: { id: SettingsSubTab; label: string; icon: React.ElementType }[] = [
   { id: 'school', label: 'School & Licences', icon: Building2 },
   { id: 'system', label: 'System & Telemetry', icon: Activity },
   { id: 'ingestion', label: 'Ingestion & AI Engine', icon: Sparkles },
-  { id: 'gameplay', label: 'Curriculum & Quiz Rules', icon: Sliders },
+  { id: 'gameplay', label: 'Quiz', icon: Sliders },
   { id: 'auth', label: 'Auth & Security', icon: ShieldCheck },
   { id: 'portal-menu', label: 'Menu Manager', icon: Menu },
 ];
