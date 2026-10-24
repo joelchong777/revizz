@@ -285,8 +285,15 @@ export default function UserManagementHub({ onSelectTab }: UserManagementHubProp
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.users)) {
+          // The server is the source of truth: a user it still returns exists, so a
+          // stale local "deleted" mark must not hide them. Drop such marks.
+          const staleMarks = data.users.filter((u: ManagedUser) => deletedIds.has(u.id));
+          if (staleMarks.length > 0) {
+            for (const u of staleMarks) deletedIds.delete(u.id);
+            saveStoredDeletedIds(deletedIds);
+          }
           const liveUsers: ManagedUser[] = data.users
-            .filter((u: ManagedUser) => !deletedIds.has(u.id) && !isTestFixtureEmail(u.email))
+            .filter((u: ManagedUser) => !isTestFixtureEmail(u.email))
             .map((u: ManagedUser) => {
               const override = overrides[u.id];
               if (!override) return u;
