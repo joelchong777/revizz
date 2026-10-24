@@ -29,6 +29,20 @@ import type { DiagramFilter } from '../hooks/useQuizGame';
 export const STUDENT_PREFS_KEY = 'revizz_student_prefs_v1';
 export const BOOKMARKED_QUESTIONS_KEY = 'revizz_bookmarked_questions_v1';
 export const ROUND_HISTORY_KEY = 'revizz_student_round_history_v1';
+/** Profile data lives in localStorage; the active user's id is appended so accounts on one device never share it. */
+let storageScope: string | null = null;
+
+export function setStudentStorageScope(userId: string | null | undefined): boolean {
+  const next = userId || null;
+  if (next === storageScope) return false;
+  storageScope = next;
+  return true;
+}
+
+function scopedKey(base: string): string {
+  return storageScope ? `${base}:${storageScope}` : base;
+}
+
 export const STUDENT_PROFILE_EVENT = 'revizz:student-profile-updated';
 
 export type StudentProfileTab = 'overview' | 'homework' | 'stats' | 'review' | 'achievements' | 'settings';
@@ -102,7 +116,7 @@ export function getStudentPreferences(): StudentPreferences {
   if (!isClient()) return defaults;
 
   try {
-    const raw = localStorage.getItem(STUDENT_PREFS_KEY);
+    const raw = localStorage.getItem(scopedKey(STUDENT_PREFS_KEY));
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return defaults;
@@ -171,7 +185,7 @@ export function saveStudentPreferences(partial: Partial<StudentPreferences>): St
 
   if (isClient()) {
     try {
-      localStorage.setItem(STUDENT_PREFS_KEY, JSON.stringify(updated));
+      localStorage.setItem(scopedKey(STUDENT_PREFS_KEY), JSON.stringify(updated));
 
       // Synchronize shared config with StartFlow's revizz_last_config
       const rawConfig = localStorage.getItem('revizz_last_config');
@@ -266,7 +280,7 @@ export interface BookmarkEntry {
 export function getBookmarkedQuestions(): BookmarkEntry[] {
   if (!isClient()) return [];
   try {
-    const raw = localStorage.getItem(BOOKMARKED_QUESTIONS_KEY);
+    const raw = localStorage.getItem(scopedKey(BOOKMARKED_QUESTIONS_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
@@ -313,7 +327,7 @@ export function toggleQuestionBookmark(
   const updated = [entry, ...current.filter((b) => b.questionId !== questionId)];
   if (isClient()) {
     try {
-      localStorage.setItem(BOOKMARKED_QUESTIONS_KEY, JSON.stringify(updated));
+      localStorage.setItem(scopedKey(BOOKMARKED_QUESTIONS_KEY), JSON.stringify(updated));
       notifyStudentProfileChanged();
     } catch (err) {
       console.warn('Failed to save bookmark:', err);
@@ -328,7 +342,7 @@ export function removeQuestionBookmark(questionId: string): void {
   const updated = current.filter((b) => b.questionId !== questionId);
   if (isClient()) {
     try {
-      localStorage.setItem(BOOKMARKED_QUESTIONS_KEY, JSON.stringify(updated));
+      localStorage.setItem(scopedKey(BOOKMARKED_QUESTIONS_KEY), JSON.stringify(updated));
       notifyStudentProfileChanged();
     } catch (err) {
       console.warn('Failed to remove bookmark:', err);
@@ -350,7 +364,7 @@ export function updateBookmarkNote(questionId: string, note: string): void {
 
   if (changed && isClient()) {
     try {
-      localStorage.setItem(BOOKMARKED_QUESTIONS_KEY, JSON.stringify(updated));
+      localStorage.setItem(scopedKey(BOOKMARKED_QUESTIONS_KEY), JSON.stringify(updated));
       notifyStudentProfileChanged();
     } catch (err) {
       console.warn('Failed to update bookmark note:', err);
@@ -361,7 +375,7 @@ export function updateBookmarkNote(questionId: string, note: string): void {
 export function clearBookmarkedQuestions(): void {
   if (isClient()) {
     try {
-      localStorage.removeItem(BOOKMARKED_QUESTIONS_KEY);
+      localStorage.removeItem(scopedKey(BOOKMARKED_QUESTIONS_KEY));
       notifyStudentProfileChanged();
     } catch (err) {
       console.warn('Failed to clear bookmarked questions:', err);
@@ -400,7 +414,7 @@ export interface DailyGoalProgress {
 export function getRoundHistory(): CompletedRoundRecord[] {
   if (!isClient()) return [];
   try {
-    const raw = localStorage.getItem(ROUND_HISTORY_KEY);
+    const raw = localStorage.getItem(scopedKey(ROUND_HISTORY_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
@@ -455,7 +469,7 @@ export function recordCompletedRound(
 
   if (isClient()) {
     try {
-      localStorage.setItem(ROUND_HISTORY_KEY, JSON.stringify(updated));
+      localStorage.setItem(scopedKey(ROUND_HISTORY_KEY), JSON.stringify(updated));
       notifyStudentProfileChanged();
     } catch (err) {
       console.warn('Failed to save round history:', err);
@@ -468,7 +482,7 @@ export function recordCompletedRound(
 export function clearRoundHistory(): void {
   if (isClient()) {
     try {
-      localStorage.removeItem(ROUND_HISTORY_KEY);
+      localStorage.removeItem(scopedKey(ROUND_HISTORY_KEY));
       notifyStudentProfileChanged();
     } catch (err) {
       console.warn('Failed to clear round history:', err);

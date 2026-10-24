@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 import { authFetch } from './authFetch';
 import { UserProfile } from '../types';
+import { setStudentStorageScope, notifyStudentProfileChanged } from './studentProfile';
 
 export const PROVIDER_NOT_ENABLED_CODE = 'PROVIDER_NOT_ENABLED';
 
@@ -578,6 +579,12 @@ export const useAuth = () => {
   });
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
+  // Set during render so children reading profile storage in this same render see the right user.
+  const scopeChanged = setStudentStorageScope(userProfile?.id);
+  useEffect(() => {
+    if (scopeChanged) notifyStudentProfileChanged();
+  });
 
   useEffect(() => {
     let mounted = true;
