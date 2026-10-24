@@ -715,6 +715,7 @@ export function computeBankFacetCounts(
     subjectMap.set(q.subjectCode, entry);
   }
   const subjectItems: FilterOptionWithCount[] = Array.from(subjectMap.entries())
+    .filter(([, data]) => data.count > 0)
     .map(([code, data]) => ({
       value: code,
       label: `${code} - ${data.name}`,
@@ -754,11 +755,13 @@ export function computeBankFacetCounts(
   for (const q of questions) {
     topicMap.set(q.topic, (topicMap.get(q.topic) || 0) + 1);
   }
-  const topicItems: FilterOptionWithCount[] = Array.from(topicMap.entries()).map(([topic, count]) => ({
-    value: topic,
-    label: topic,
-    count,
-  }));
+  const topicItems: FilterOptionWithCount[] = Array.from(topicMap.entries())
+    .filter(([, count]) => count > 0)
+    .map(([topic, count]) => ({
+      value: topic,
+      label: topic,
+      count,
+    }));
   // Maintain knownTopics order if provided
   if (knownTopics && knownTopics.length > 0) {
     const topicOrder = new Map(knownTopics.map((t, idx) => [t, idx]));
@@ -776,22 +779,26 @@ export function computeBankFacetCounts(
   const diffOrder: BankDifficulty[] = ['Easy', 'Medium', 'Hard'];
   const difficulties: FilterOptionWithCount[] = [
     { value: 'All', label: 'All', count: total },
-    ...diffOrder.map((d) => ({
-      value: d,
-      label: d,
-      count: questions.filter((q) => q.diff === d).length,
-    })),
+    ...diffOrder
+      .map((d) => ({
+        value: d,
+        label: d,
+        count: questions.filter((q) => q.diff === d).length,
+      }))
+      .filter((o) => o.count > 0),
   ];
 
   // 9. Statuses
   const statusOrder: BankItemStatus[] = ['Live', 'Agent draft', 'Needs review', 'Flagged'];
   const statuses: FilterOptionWithCount[] = [
     { value: 'All', label: 'All', count: total },
-    ...statusOrder.map((s) => ({
-      value: s,
-      label: s,
-      count: questions.filter((q) => q.st === s).length,
-    })),
+    ...statusOrder
+      .map((s) => ({
+        value: s,
+        label: s,
+        count: questions.filter((q) => q.st === s).length,
+      }))
+      .filter((o) => o.count > 0),
   ];
 
   // 10. Content Features

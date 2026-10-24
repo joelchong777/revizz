@@ -357,7 +357,10 @@ export function BankFilterDropdown({
                 )}
               </div>
             )}
-            {options.map((opt) => {
+            {options.every((opt) => opt.value === 'All') && (
+              <div className="px-3 py-2 text-xs font-semibold text-[#645c50]">No options yet</div>
+            )}
+            {options.filter((opt) => opt.value !== 'All' || options.length > 1).map((opt) => {
               const isSelected = multiSelect
                 ? opt.value === 'All'
                   ? selectedValues.length === 0
