@@ -331,22 +331,6 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             <Zap className="w-4 h-4 fill-[#201e1d] text-[#201e1d]" />
             <span>Start Practice</span>
           </button>
-
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await signOut();
-              } catch (err) {
-                console.error('Failed to sign out:', err);
-              }
-              router.push('/');
-            }}
-            className="px-3.5 py-2 rounded-2xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
-          >
-            <LogOut className="w-4 h-4 text-rose-800 shrink-0" />
-            <span>Log Out</span>
-          </button>
         </div>
       </header>
 
@@ -938,6 +922,25 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             />
           </div>
         )}
+
+      {/* Log Out: bottom of every tab */}
+      <div className="flex justify-center pt-2">
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await signOut();
+            } catch (err) {
+              console.error('Failed to sign out:', err);
+            }
+            router.push('/');
+          }}
+          className="px-3.5 py-2 rounded-2xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-rose-800 font-heading text-xs border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none duration-75 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+        >
+          <LogOut className="w-4 h-4 text-rose-800 shrink-0" />
+          <span>Log Out</span>
+        </button>
+      </div>
 
       {/* Global Auth Modal for Guest Conversion */}
       <AuthModal
