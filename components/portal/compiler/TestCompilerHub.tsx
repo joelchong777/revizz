@@ -1502,7 +1502,7 @@ export default function TestCompilerHub() {
             </div>
 
             {/* Feature Filter Chips */}
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 type="button"
                 role="switch"
@@ -1515,7 +1515,7 @@ export default function TestCompilerHub() {
                 }`}
               >
                 <ImageIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span className="truncate">Diagrams</span>
+                <span className="truncate">Graphs</span>
               </button>
               <button
                 type="button"
@@ -1530,20 +1530,6 @@ export default function TestCompilerHub() {
               >
                 <Table className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">Tables</span>
-              </button>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={withMathOnly}
-                onClick={() => setWithMathOnly(!withMathOnly)}
-                className={`py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                  withMathOnly
-                    ? 'bg-[#728157] text-white'
-                    : 'bg-white text-[#474238] hover:bg-[#eee7db]'
-                }`}
-              >
-                <Calculator className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span className="truncate">Calculations</span>
               </button>
             </div>
 
