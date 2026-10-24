@@ -318,7 +318,7 @@ export function StudentProfileHub({ initialTab }: StudentProfileHubProps): React
             <span className="w-8 h-8 rounded-xl bg-[#FFDE59] border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] inline-flex items-center justify-center text-base shrink-0">
               🎓
             </span>
-            <span className="truncate">Student Profile Hub</span>
+            <span className="truncate">Profile</span>
           </h1>
         </div>
 

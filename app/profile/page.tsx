@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { StudentProfileHub } from '@/components/profile/StudentProfileHub';
 
 export const metadata: Metadata = {
-  title: 'Student Profile Hub | Revizz',
+  title: 'Profile | Revizz',
   description:
     'Track your Cambridge IGCSE revision progress, mastery stats, review pile, and exam countdown.',
 };
