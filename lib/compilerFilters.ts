@@ -375,8 +375,8 @@ export function filterAndSortQuestions(
     if (selection === 'selected' && !isSelected) return false;
     if (selection === 'unselected' && isSelected) return false;
 
-    // 5. Diagrams toggle
-    if (withDiagramsOnly && !q.image_url) {
+    // 5. Graphs toggle (image questions, minus table images, which have their own toggle)
+    if (withDiagramsOnly && (!q.image_url || hasDataTable(q.stem_markdown, q))) {
       return false;
     }
 
