@@ -1376,7 +1376,7 @@ export default function TestCompilerHub() {
                       data-testid="compiler-topic-filter-menu"
                       role="listbox"
                       aria-multiselectable="true"
-                      className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-[#201e1d] rounded-2xl shadow-offset-3 p-2 max-h-[320px] overflow-y-auto"
+                      className="absolute top-full left-0 right-0 sm:right-auto sm:w-[calc(200%+0.5rem)] mt-1 z-30 bg-white border border-[#201e1d] rounded-2xl shadow-offset-3 p-2 max-h-[320px] overflow-y-auto"
                     >
                       <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#eee7db] px-1">
                         <button
@@ -1428,7 +1428,7 @@ export default function TestCompilerHub() {
                                 </span>
                               )}
                               <span
-                                className="text-xs font-semibold text-[#201e1d] truncate flex-1"
+                                className="text-xs font-semibold text-[#201e1d] break-words min-w-0 flex-1"
                                 title={t.name}
                               >
                                 {t.name}
