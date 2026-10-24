@@ -1,7 +1,7 @@
 import { TestPaperConfig, CompiledExamQuestion, OnlineQuizAssignment, TopicDistributionItem } from '../types/testCompiler';
 import { Question, CAMBRIDGE_QUESTIONS } from './questions';
 import { resolveDiagramUrl } from './resolveDiagramUrl';
-import { hasDataTable } from './compilerFilters';
+import { hasDataTable, isGraphQuestion } from './compilerFilters';
 
 export const DRAFT_KEY_PREFIX = 'revizz_test_draft_';
 export const PRINT_SNAPSHOT_PREFIX = 'revizz_print_snapshot_';
@@ -516,6 +516,8 @@ export function autoSelectQuestions(
     count: number;
     topicIds?: string[];
     difficulty?: string;
+    withGraphsOnly?: boolean;
+    withTablesOnly?: boolean;
     questionPool?: Question[];
   },
   pool?: Question[]
@@ -535,6 +537,14 @@ export function autoSelectQuestions(
   
   if (options.topicIds && options.topicIds.length > 0) {
     filtered = filtered.filter((q) => options.topicIds?.includes(q.topic_id || ''));
+  }
+
+  if (options.withGraphsOnly) {
+    filtered = filtered.filter((q) => isGraphQuestion(q));
+  }
+
+  if (options.withTablesOnly) {
+    filtered = filtered.filter((q) => hasDataTable(q.stem_markdown, q));
   }
 
   if (filtered.length === 0) {

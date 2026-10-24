@@ -194,6 +194,14 @@ export function parseCitationTagPills(citation?: string, id?: string): CitationT
 export const CAMBRIDGE_TABLE_REGEX =
   /\b(?:the\s+table\s+(?:shows|gives|contains|lists|provides|presents|below|illustrates)|\b(?:in|from|of|to|into|about|according\s+to)\s+(?:the|this)\s+table|\b(?:data|information|figures|statistics|indicators|details|forecast|results|rates|values|components)\s+in\s+(?:the|this)\s+table|\bthe\s+following\s+table|\btable\s+\d+)\b/i;
 
+/**
+ * A "graph" question has an image that is not a table. Table images are stored the same way
+ * as graphs, so they are told apart by the stem text (see hasDataTable).
+ */
+export function isGraphQuestion(q: any): boolean {
+  return Boolean(q?.image_url) && !hasDataTable(q.stem_markdown, q);
+}
+
 export const HTML_TABLE_REGEX = /<\s*(?:table|tbody|tr|td|th)\b/i;
 
 /**
@@ -376,7 +384,7 @@ export function filterAndSortQuestions(
     if (selection === 'unselected' && isSelected) return false;
 
     // 5. Graphs toggle (image questions, minus table images, which have their own toggle)
-    if (withDiagramsOnly && (!q.image_url || hasDataTable(q.stem_markdown, q))) {
+    if (withDiagramsOnly && !isGraphQuestion(q)) {
       return false;
     }
 

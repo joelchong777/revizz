@@ -208,6 +208,10 @@ export default function TestCompilerHub() {
   const [autoTopicIds, setAutoTopicIds] = useState<string[]>(['all']);
   const autoTopicId =
     autoTopicIds.includes('all') || autoTopicIds.length === 0 ? 'all' : autoTopicIds[0];
+  const [autoTopicSearch, setAutoTopicSearch] = useState('');
+  const [autoGraphsOnly, setAutoGraphsOnly] = useState(false);
+  const [autoTablesOnly, setAutoTablesOnly] = useState(false);
+  const [autoNoMatch, setAutoNoMatch] = useState(false);
   const setAutoTopicId = (id: string) => {
     setAutoTopicIds(id === 'all' ? ['all'] : [id]);
   };
@@ -803,9 +807,15 @@ export default function TestCompilerHub() {
       {
         count: autoCount,
         topicIds: topicIdsParam,
+        withGraphsOnly: autoGraphsOnly,
+        withTablesOnly: autoTablesOnly,
       },
       questions
     );
+    if (ids.length === 0) {
+      setAutoNoMatch(true);
+      return;
+    }
     setSelectedQuestionIds((prev) => {
       const newIds = [...prev];
       ids.forEach((id) => {
@@ -1565,7 +1575,11 @@ export default function TestCompilerHub() {
             <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-[#dcd3c4]">
               <button
                 type="button"
-                onClick={() => setIsAutoModalOpen(true)}
+                onClick={() => {
+                  setAutoNoMatch(false);
+                  setAutoTopicSearch('');
+                  setIsAutoModalOpen(true);
+                }}
                 title="Auto-generate question preset"
                 aria-label="Auto-generate question preset"
                 className="py-1.5 px-1 rounded-xl bg-[#f0fae1] border-2 border-[#201e1d] text-[11px] font-bold text-[#272e1b] hover:bg-[#e1eecc] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-[2px_2px_0_0_#201e1d] truncate"
@@ -2037,6 +2051,21 @@ export default function TestCompilerHub() {
                   aria-labelledby="auto-topic-label"
                   className="flex flex-col gap-1 p-1.5 rounded-xl bg-white border-[1.5px] border-[#dcd3c4] max-h-48 overflow-y-auto"
                 >
+                  <div className="relative mb-0.5">
+                    <Search
+                      className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    <input
+                      type="text"
+                      value={autoTopicSearch}
+                      onChange={(e) => setAutoTopicSearch(e.target.value)}
+                      placeholder="Search topics..."
+                      aria-label="Search topics"
+                      data-testid="auto-topic-search"
+                      className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-[#dcd3c4] bg-white text-xs font-semibold text-[#201e1d] placeholder:text-[#82796a] placeholder:font-medium focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => setAutoTopicIds(['all'])}
@@ -2051,7 +2080,14 @@ export default function TestCompilerHub() {
                       <Check className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
                     )}
                   </button>
-                  {topics.map((t) => {
+                  {topics
+                    .filter((t) => {
+                      const q = autoTopicSearch.trim().toLowerCase();
+                      if (!q) return true;
+                      const ch = t.orderIndex != null ? `ch ${t.orderIndex}` : '';
+                      return `${t.name} ${ch}`.toLowerCase().includes(q);
+                    })
+                    .map((t) => {
                     const isSelected = !autoTopicIds.includes('all') && autoTopicIds.includes(t.id);
                     const qCount = questions.filter((q) => q.topic_id === t.id).length;
                     return (
@@ -2102,6 +2138,37 @@ export default function TestCompilerHub() {
                   })}
                 </div>
               </div>
+              <div className="flex flex-col gap-1.5 mt-2">
+                <span className="text-xs font-bold text-[#645c50]">Question Types</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { label: 'Graphs', Icon: ImageIcon, on: autoGraphsOnly, set: setAutoGraphsOnly },
+                    { label: 'Tables', Icon: Table, on: autoTablesOnly, set: setAutoTablesOnly },
+                  ].map(({ label, Icon, on, set }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      role="switch"
+                      aria-checked={on}
+                      onClick={() => {
+                        set(!on);
+                        setAutoNoMatch(false);
+                      }}
+                      className={`py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#201e1d] shadow-[2px_2px_0_0_#201e1d] active:translate-y-0.5 transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                        on ? 'bg-[#728157] text-white' : 'bg-white text-[#474238] hover:bg-[#eee7db]'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {autoNoMatch && (
+                <p role="alert" className="text-xs font-bold text-[#b3402a]">
+                  No questions match these filters. Try fewer filters or more topics.
+                </p>
+              )}
             </div>
             <div className="flex gap-2 mt-2">
               <button
