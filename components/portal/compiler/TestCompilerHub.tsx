@@ -107,6 +107,7 @@ export default function TestCompilerHub() {
       ? 'all'
       : selectedTopicIds.join(',');
   const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState(false);
+  const [topicSearch, setTopicSearch] = useState('');
   const topicDropdownRef = useRef<HTMLDivElement>(null);
 
   const [selectedSeries, setSelectedSeries] = useState<string>('all');
@@ -172,6 +173,10 @@ export default function TestCompilerHub() {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
+  }, [isTopicDropdownOpen]);
+
+  useEffect(() => {
+    if (!isTopicDropdownOpen) setTopicSearch('');
   }, [isTopicDropdownOpen]);
 
   // --- Right Column (Test Config) State ---
@@ -1378,6 +1383,22 @@ export default function TestCompilerHub() {
                       aria-multiselectable="true"
                       className="absolute top-full left-0 right-0 sm:right-auto sm:w-[calc(200%+0.5rem)] mt-1 z-30 bg-white border border-[#201e1d] rounded-2xl shadow-offset-3 p-2 max-h-[320px] overflow-y-auto"
                     >
+                      <div className="relative mb-1.5">
+                        <Search
+                          className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#82796a] pointer-events-none"
+                          aria-hidden="true"
+                        />
+                        <input
+                          type="text"
+                          autoFocus
+                          value={topicSearch}
+                          onChange={(e) => setTopicSearch(e.target.value)}
+                          placeholder="Search topics..."
+                          aria-label="Search topics"
+                          data-testid="compiler-topic-search"
+                          className="w-full pl-8 pr-2 py-1.5 rounded-xl border border-[#dcd3c4] bg-white text-xs font-semibold text-[#201e1d] placeholder:text-[#82796a] placeholder:font-medium focus-visible:outline-none focus-visible:border-[#c67139] focus-visible:ring-2 focus-visible:ring-[#c67139]"
+                        />
+                      </div>
                       <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#eee7db] px-1">
                         <button
                           type="button"
@@ -1396,7 +1417,14 @@ export default function TestCompilerHub() {
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        {topics.map((t) => {
+                        {topics
+                          .filter((t) => {
+                            const q = topicSearch.trim().toLowerCase();
+                            if (!q) return true;
+                            const ch = t.orderIndex != null ? `ch ${t.orderIndex}` : '';
+                            return `${t.name} ${ch}`.toLowerCase().includes(q);
+                          })
+                          .map((t) => {
                           const isChecked =
                             !selectedTopicIds.includes('all') && selectedTopicIds.includes(t.id);
                           const qCount = questions.filter((q) => q.topic_id === t.id).length;
