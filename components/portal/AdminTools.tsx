@@ -1608,12 +1608,12 @@ export default function AdminTools({
           SUB-TAB 2: QUESTION BANK BROWSER (Mockup 2f)
           ======================================================== */}
       {activeSubTab === 'bank' && (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-3">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
               <span className="text-xs font-bold text-[#645c50]">Question bank</span>
-              <h2 className="font-heading text-2xl sm:text-3xl font-black text-[#201e1d] mt-0.5">
+              <h2 className="font-heading text-2xl sm:text-3xl font-semibold text-[#201e1d] mt-0.5">
                 {(isLoadingLive || questionsLoading) && bankQuestions.length === 0
                   ? '0 questions'
                   : filteredBankItems.length === baseBankQuestions.length
@@ -1626,9 +1626,9 @@ export default function AdminTools({
                 onClick={() => {
                   window.location.href = '/portal?tab=compiler';
                 }}
-                className="px-3.5 py-2 rounded-full bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-semibold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-[10px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs font-semibold text-[#3d472b] hover:bg-[#e1eecc] active:translate-y-0.5 flex items-center gap-2 cursor-pointer"
               >
-                <FileText className="w-3.5 h-3.5" /> Compile Test Paper (PDF)
+                <FileText className="w-3.5 h-3.5" /> Compile test paper (PDF)
               </button>
               {!isTeacherMode && (
                 <>
@@ -1643,13 +1643,13 @@ export default function AdminTools({
                     type="button"
                     disabled={isUploadingJson}
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3.5 py-2 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 rounded-[10px] bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    <Upload className="w-3.5 h-3.5" /> {isUploadingJson ? 'Uploading...' : 'Upload JSON 🚀'}
+                    <Upload className="w-3.5 h-3.5" /> {isUploadingJson ? 'Uploading' : 'Upload JSON'}
                   </button>
                   <button
                     onClick={() => onOpenEditor?.('new')}
-                    className="px-4 py-2 rounded-full bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading text-xs font-black hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-[10px] bg-[#c67139] text-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] font-heading text-xs font-semibold hover:bg-[#b2622d] active:translate-y-0.5 active:shadow-none flex items-center gap-2"
                   >
                     <Plus className="w-3.5 h-3.5" /> New question
                   </button>
@@ -1664,10 +1664,10 @@ export default function AdminTools({
               <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82796a]" />
               <input
                 type="text"
-                placeholder={isTeacherMode ? "Search question stems, citations, topics, options..." : "Search stems, IDs, citations, options..."}
+                placeholder="Search questions"
                 value={bankFilters.search}
                 onChange={(e) => setBankFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }))}
-                className="w-full pl-9 pr-8 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
+                className="w-full pl-9 pr-8 py-2 rounded-[10px] bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
               />
               {bankFilters.search && (
                 <button
@@ -1743,7 +1743,7 @@ export default function AdminTools({
                 refetchQuestions();
                 showNotification('Refreshed questions from Supabase');
               }}
-              className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+              className="px-3 py-2 rounded-[10px] bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-xs font-semibold text-[#201e1d] hover:bg-[#eee7db] active:translate-y-0.5 flex items-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
               title="Refresh questions from database"
             >
               <RotateCw className={`w-3.5 h-3.5 ${isLoadingLive ? 'animate-spin text-[#c67139]' : 'text-[#645c50]'}`} />
@@ -1754,13 +1754,13 @@ export default function AdminTools({
           {/* Row 2: Content Feature Toggle Pills & Results Summary */}
           <div className="flex items-center justify-between gap-3 flex-wrap text-xs pt-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#645c50] mr-1">
+              <span className="text-[11px] font-bold text-[#645c50] mr-1">
                 Features:
               </span>
               <button
                 type="button"
                 onClick={() => toggleFeature('diagram')}
-                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-2 ${
                   bankFilters.features.includes('diagram')
                     ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
                     : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
@@ -1768,7 +1768,7 @@ export default function AdminTools({
               >
                 <span>Has Diagram</span>
                 <span
-                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
                     bankFilters.features.includes('diagram')
                       ? 'bg-[#c67139] text-[#f9f4ed]'
                       : 'bg-[#e8decb] text-[#645c50]'
@@ -1781,7 +1781,7 @@ export default function AdminTools({
                 type="button"
                 data-testid="filter-tables"
                 onClick={() => toggleFeature('table')}
-                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-2 ${
                   bankFilters.features.includes('table') || (bankFilters.features as any[]).includes('tables')
                     ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
                     : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
@@ -1789,7 +1789,7 @@ export default function AdminTools({
               >
                 <span>Has Table</span>
                 <span
-                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
                     bankFilters.features.includes('table') || (bankFilters.features as any[]).includes('tables')
                       ? 'bg-[#c67139] text-[#f9f4ed]'
                       : 'bg-[#e8decb] text-[#645c50]'
@@ -1801,7 +1801,7 @@ export default function AdminTools({
               <button
                 type="button"
                 onClick={() => toggleFeature('math')}
-                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-full border-[1.5px] text-xs font-semibold cursor-pointer transition-colors flex items-center gap-2 ${
                   bankFilters.features.includes('math')
                     ? 'bg-[#ffe1d0] border-[#c67139] text-[#c67139] font-bold shadow-sm'
                     : 'bg-[#f9f4ed] border-[#dcd3c4] text-[#474238] hover:bg-[#eee7db]'
@@ -1809,7 +1809,7 @@ export default function AdminTools({
               >
                 <span>Has Math/LaTeX</span>
                 <span
-                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
                     bankFilters.features.includes('math')
                       ? 'bg-[#c67139] text-[#f9f4ed]'
                       : 'bg-[#e8decb] text-[#645c50]'
@@ -1829,7 +1829,7 @@ export default function AdminTools({
           {/* Row 3: Active Filter Chips Bar */}
           {activeFilterChips.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
+              <span className="text-[11px] font-bold text-[#645c50]">
                 Active Filters:
               </span>
               {activeFilterChips.map((chip, idx) => (
@@ -1837,7 +1837,7 @@ export default function AdminTools({
                   key={`${chip.key}-${chip.value}-${idx}`}
                   type="button"
                   onClick={() => handleRemoveChip(chip)}
-                  className="px-2.5 py-1 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] hover:border-[#c67139] cursor-pointer flex items-center gap-1 transition-all active:translate-y-0.5 active:shadow-none"
+                  className="px-3 py-1 rounded-[10px] bg-[#f9f4ed] border-[1.5px] border-[#201e1d] shadow-[2px_2px_0_#201e1d] text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] hover:border-[#c67139] cursor-pointer flex items-center gap-1 transition-colors active:translate-y-0.5 active:shadow-none"
                   title={`Remove ${chip.label}: ${chip.value}`}
                 >
                   <span>
@@ -1849,7 +1849,7 @@ export default function AdminTools({
               <button
                 type="button"
                 onClick={handleClearAllFilters}
-                className="px-2.5 py-1 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold transition-colors cursor-pointer ml-1"
+                className="px-3 py-1 rounded-[10px] bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold transition-colors cursor-pointer ml-1"
               >
                 Clear all ({activeFilterChips.length})
               </button>
@@ -1862,7 +1862,7 @@ export default function AdminTools({
               <button
                 type="button"
                 onClick={() => setBankFilters((prev) => ({ ...prev, status: 'All', page: 1 }))}
-                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-[10px] transition-colors cursor-pointer ${
                   bankFilters.status === 'All' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
                 }`}
               >
@@ -1871,7 +1871,7 @@ export default function AdminTools({
               <button
                 type="button"
                 onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Live', page: 1 }))}
-                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-[10px] transition-colors cursor-pointer ${
                   bankFilters.status === 'Live' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
                 }`}
               >
@@ -1880,19 +1880,19 @@ export default function AdminTools({
               <button
                 type="button"
                 onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Agent draft', page: 1 }))}
-                className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2 rounded-[10px] transition-colors flex items-center gap-2 cursor-pointer ${
                   bankFilters.status === 'Agent draft' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
                 }`}
               >
                 <span>Agent drafts</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[10px]">
+                <span className="px-2 py-0.5 rounded-full bg-[#728157] text-[#f9f4ed] text-[11px]">
                   {filteredBankItems.filter((q) => q.st === 'Agent draft').length}
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Needs review', page: 1 }))}
-                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-[10px] transition-colors cursor-pointer ${
                   bankFilters.status === 'Needs review' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
                 }`}
               >
@@ -1901,7 +1901,7 @@ export default function AdminTools({
               <button
                 type="button"
                 onClick={() => setBankFilters((prev) => ({ ...prev, status: 'Flagged', page: 1 }))}
-                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-[10px] transition-colors cursor-pointer ${
                   bankFilters.status === 'Flagged' ? 'bg-[#ffe1d0] text-[#201e1d]' : 'text-[#645c50] hover:bg-[#eee7db]'
                 }`}
               >
@@ -1911,18 +1911,18 @@ export default function AdminTools({
           )}
 
           {/* Bank Table */}
-          <div className="rounded-[24px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
+          <div className="rounded-[16px] bg-[#f9f4ed] border-[1.5px] border-[#dcd3c4] p-4 sm:p-5 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[680px]">
                 {/* Table Header */}
                 {isTeacherMode ? (
-                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[1fr_260px_130px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4] px-1">
+                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[1fr_260px_130px] gap-2 items-center pb-2.5 text-[11px] font-bold text-[#645c50] border-b border-[#dcd3c4] px-1">
                     <span>Question & Classroom Tags</span>
                     <span>Topic</span>
                     <span className="text-right pr-2">Classroom</span>
                   </div>
                 ) : (
-                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_1fr_240px_90px_44px] gap-2 items-center pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#645c50] border-b border-[#dcd3c4]">
+                  <div className="sticky top-0 z-10 bg-[#f9f4ed] grid grid-cols-[38px_1fr_240px_90px_44px] gap-2 items-center pb-2.5 text-[11px] font-bold text-[#645c50] border-b border-[#dcd3c4]">
                     <div className="flex items-center justify-center">
                       <input
                         type="checkbox"
@@ -1978,13 +1978,13 @@ export default function AdminTools({
                   {(isLoadingLive || questionsLoading) && bankQuestions.length === 0 ? (
                     <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
                       <RotateCw className="w-6 h-6 animate-spin text-[#c67139]" />
-                      <span className="font-heading font-black text-base text-[#201e1d]">Loading questions from database...</span>
-                      <span className="text-xs text-[#645c50]">Connecting to live repository</span>
+                      <span className="font-heading font-semibold text-base text-[#201e1d]">Loading questions</span>
+                      <span className="text-xs text-[#645c50]">Connecting to the live repository</span>
                     </div>
                   ) : bankQuestions.length === 0 ? (
                     <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
-                      <span className="text-3xl">🗄️</span>
-                      <span className="font-heading font-black text-base text-[#201e1d]">Question Bank is Empty</span>
+                      <BookOpen className="w-6 h-6 text-[#82796a]" />
+                      <span className="font-heading font-semibold text-base text-[#201e1d]">Question bank is empty</span>
                       <span className="text-xs text-[#645c50] max-w-sm">
                         There are no questions in the repository yet. Ingest and publish exam papers in Ingestion Studio to build your question bank.
                       </span>
@@ -1999,19 +1999,19 @@ export default function AdminTools({
                       const isExpanded = expandedQuestionId === item.id;
                       const annotation = teacherAnnotations[item.id];
                       return (
-                        <div key={item.id} className="transition-all">
+                        <div key={item.id} className="transition-colors">
                           {isTeacherMode ? (
                             <div
                               onClick={() =>
                                 setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
                               }
-                              className={`grid grid-cols-[1fr_260px_130px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1.5 ${
+                              className={`grid grid-cols-[1fr_260px_130px] gap-2 items-center py-3 text-xs cursor-pointer rounded-xl transition-colors px-2 ${
                                 isExpanded
                                   ? 'bg-[#fbf8f2] border-l-4 border-[#201e1d] shadow-xs'
                                   : 'hover:bg-[#eee7db]/60 border-l-4 border-transparent'
                               }`}
                             >
-                              <div className="flex items-start gap-1.5 min-w-0">
+                              <div className="flex items-start gap-2 min-w-0">
                                 <motion.div
                                   animate={{ rotate: isExpanded ? 180 : 0 }}
                                   transition={{ duration: 0.15 }}
@@ -2023,12 +2023,12 @@ export default function AdminTools({
                                   <span className="font-bold text-[#201e1d] truncate" title={item.stem}>
                                     {item.stem}
                                   </span>
-                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     {annotation?.classroomTags && annotation.classroomTags.length > 0 && (
                                       annotation.classroomTags.map((tag) => (
                                         <span
                                           key={tag}
-                                          className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#8c491a] font-bold text-[10px]"
+                                          className="px-2 py-0.5 rounded-full bg-[#ffe1d0] text-[#8c491a] font-bold text-[11px]"
                                         >
                                           #{tag}
                                         </span>
@@ -2036,15 +2036,15 @@ export default function AdminTools({
                                     )}
                                     {annotation?.teacherNote && (
                                       <span
-                                        className="px-2 py-0.5 rounded-full bg-[#eee7db] text-[#474238] font-bold text-[10px] inline-flex items-center gap-1"
+                                        className="px-2 py-0.5 rounded-full bg-[#eee7db] text-[#474238] font-bold text-[11px] inline-flex items-center gap-1"
                                         title={annotation.teacherNote}
                                       >
-                                        📝 Note
+                                        <FileText className="w-3 h-3" /> Note
                                       </span>
                                     )}
                                     {annotation?.flaggedForAdmin && (
                                       <span
-                                        className="px-2 py-0.5 rounded-full bg-[#fde8e8] text-[#e0533c] font-bold text-[10px] inline-flex items-center gap-1"
+                                        className="px-2 py-0.5 rounded-full bg-[#fde8e8] text-[#e0533c] font-bold text-[11px] inline-flex items-center gap-1"
                                         title={annotation.flagReason || 'Flagged by educator for review'}
                                       >
                                         🚩 Flagged
@@ -2065,7 +2065,7 @@ export default function AdminTools({
                                   onClick={() =>
                                     setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
                                   }
-                                  className="px-2.5 py-1 rounded-lg border border-[#c0b6a5] bg-[#f9f4ed] hover:bg-[#eee7db] text-[11px] font-bold text-[#201e1d] transition-all cursor-pointer whitespace-nowrap active:translate-y-0.5"
+                                  className="px-3 py-1 rounded-lg border border-[#c0b6a5] bg-[#f9f4ed] hover:bg-[#eee7db] text-[11px] font-bold text-[#201e1d] transition-colors cursor-pointer whitespace-nowrap active:translate-y-0.5"
                                 >
                                   Preview & Notes
                                 </button>
@@ -2076,7 +2076,7 @@ export default function AdminTools({
                               onClick={() =>
                                 setExpandedQuestionId((prev) => (prev === item.id ? null : item.id))
                               }
-                              className={`grid grid-cols-[38px_1fr_240px_90px_44px] gap-2 items-center py-2.5 text-xs cursor-pointer rounded-xl transition-all px-1 ${
+                              className={`grid grid-cols-[38px_1fr_240px_90px_44px] gap-2 items-center py-3 text-xs cursor-pointer rounded-xl transition-colors px-1 ${
                                 isSelected
                                   ? 'bg-[#ffe1d0]/50 border-l-4 border-[#c67139]'
                                   : isExpanded
@@ -2099,7 +2099,7 @@ export default function AdminTools({
                                   className="w-4 h-4 rounded cursor-pointer accent-[#c67139]"
                                 />
                               </div>
-                              <div className="flex items-center gap-1.5 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <motion.div
                                   animate={{ rotate: isExpanded ? 180 : 0 }}
                                   transition={{ duration: 0.15 }}
@@ -2133,7 +2133,7 @@ export default function AdminTools({
                                   }}
                                   aria-label={`Delete question ${item.id}`}
                                   title={`Delete question ${item.id}`}
-                                  className="p-1.5 rounded-lg border border-transparent hover:border-[#e0533c]/40 hover:bg-[#fde8e8] text-[#8c8275] hover:text-[#e0533c] transition-all cursor-pointer active:translate-y-0.5"
+                                  className="p-1.5 rounded-lg border border-transparent hover:border-[#e0533c]/40 hover:bg-[#fde8e8] text-[#8c8275] hover:text-[#e0533c] transition-colors cursor-pointer active:translate-y-0.5"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -2154,7 +2154,7 @@ export default function AdminTools({
                                   {/* Top Bar inside dropdown */}
                                   {isTeacherMode ? (
                                     <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#dcd3c4]">
-                                      <div className="flex flex-wrap items-center gap-1.5">
+                                      <div className="flex flex-wrap items-center gap-2">
                                         <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-bold text-[11px]">
                                           {item.paper}
                                         </span>
@@ -2167,11 +2167,11 @@ export default function AdminTools({
                                         <span className="px-2 py-0.5 rounded-md bg-[#fdfbf7] border border-[#dcd3c4] text-[#474238] font-medium text-[11px]">
                                           {item.diff}
                                         </span>
-                                        <span className="px-2.5 py-0.5 rounded-full bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] whitespace-nowrap">
+                                        <span className="px-3 py-0.5 rounded-full bg-[#f0fae1] border border-[#8fa073] text-[11px] font-bold text-[#3d472b] whitespace-nowrap">
                                           🔒 Official Cambridge Content (Read-Only)
                                         </span>
                                         <span className="text-[11px] font-bold text-[#645c50] ml-1">
-                                          Accuracy: <span className="text-[#201e1d] font-black">{item.acc}</span>
+                                          Accuracy: <span className="text-[#201e1d] font-semibold">{item.acc}</span>
                                         </span>
                                       </div>
 
@@ -2182,7 +2182,7 @@ export default function AdminTools({
                                             e.stopPropagation();
                                             setShowFlagForm((prev) => !prev);
                                           }}
-                                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs transition-all cursor-pointer active:translate-y-0.5 ${
+                                          className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border font-bold text-xs transition-colors cursor-pointer active:translate-y-0.5 ${
                                             annotation?.flaggedForAdmin
                                               ? 'bg-[#fde8e8] border-[#e0533c] text-[#e0533c]'
                                               : 'bg-[#f9f4ed] border-[#c0b6a5] text-[#201e1d] hover:bg-[#eee7db]'
@@ -2206,7 +2206,7 @@ export default function AdminTools({
                                     </div>
                                   ) : (
                                     <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#dcd3c4]">
-                                      <div className="flex flex-wrap items-center gap-1.5">
+                                      <div className="flex flex-wrap items-center gap-2">
                                         <span className="px-2 py-0.5 rounded-md bg-[#eee7db] text-[#474238] font-bold text-[11px]">
                                           {item.paper}
                                         </span>
@@ -2223,7 +2223,7 @@ export default function AdminTools({
                                           {item.st}
                                         </span>
                                         <span className="text-[11px] font-bold text-[#645c50] ml-1">
-                                          Accuracy: <span className="text-[#201e1d] font-black">{item.acc}</span>
+                                          Accuracy: <span className="text-[#201e1d] font-semibold">{item.acc}</span>
                                         </span>
                                       </div>
 
@@ -2234,11 +2234,11 @@ export default function AdminTools({
                                             e.stopPropagation();
                                             onOpenEditor?.(item.id);
                                           }}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#201e1d] hover:bg-[#34302c] text-[#fdfbf7] font-bold text-xs shadow-[0_2px_0_0_#000] hover:shadow-[0_1px_0_0_#000] active:translate-y-0.5 transition-all cursor-pointer"
+                                          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#201e1d] hover:bg-[#34302c] text-[#fdfbf7] font-bold text-xs shadow-[0_2px_0_0_#000] hover:shadow-[0_1px_0_0_#000] active:translate-y-0.5 transition-colors cursor-pointer"
                                         >
                                           <Edit3 className="w-3.5 h-3.5" />
                                           <span>Open Full Editor</span>
-                                          <span className="text-[10px] opacity-75">↗</span>
+                                          <ExternalLink className="w-3.5 h-3.5 opacity-75" />
                                         </button>
                                         <button
                                           type="button"
@@ -2257,7 +2257,7 @@ export default function AdminTools({
 
                                   {/* Question Stem */}
                                   <div className="bg-white rounded-xl border border-[#dcd3c4] p-3">
-                                    <div className="text-[11px] font-bold text-[#8c8275] uppercase tracking-wider mb-1">
+                                    <div className="text-[11px] font-bold text-[#8c8275] mb-1">
                                       Question Stem
                                     </div>
                                     <div className="text-[#201e1d] font-medium leading-relaxed">
@@ -2270,7 +2270,7 @@ export default function AdminTools({
                                   {/* Diagram Image Preview */}
                                   {item.imageUrl && (
                                     <div className="bg-white rounded-xl border border-[#dcd3c4] p-3">
-                                      <div className="text-[11px] font-bold text-[#8c8275] uppercase tracking-wider mb-2">
+                                      <div className="text-[11px] font-bold text-[#8c8275] mb-2">
                                         Diagram / Figure
                                       </div>
                                       <CompilerDiagramPreview
@@ -2284,14 +2284,14 @@ export default function AdminTools({
                                   {/* Options Grid */}
                                   {item.options && item.options.length > 0 && (
                                     <div className="space-y-1.5">
-                                      <div className="text-[11px] font-bold text-[#8c8275] uppercase tracking-wider">
+                                      <div className="text-[11px] font-bold text-[#8c8275]">
                                         Answer Options
                                       </div>
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {item.options.map((opt) => (
                                           <div
                                             key={opt.id}
-                                            className={`p-3 rounded-xl transition-all ${
+                                            className={`p-3 rounded-xl transition-colors ${
                                               opt.isCorrect
                                                 ? 'bg-[#ecf5e4] border-2 border-[#728157] text-[#222c15]'
                                                 : 'bg-white border border-[#dcd3c4] text-[#201e1d]'
@@ -2333,7 +2333,7 @@ export default function AdminTools({
                                   {/* Explanation Card */}
                                   {item.explanationMarkdown && (
                                     <div className="bg-[#f0fae1]/60 rounded-xl border border-[#c4dc9e] p-3 text-xs">
-                                      <div className="text-[11px] font-bold text-[#4c5c2d] uppercase tracking-wider mb-1 flex items-center gap-1">
+                                      <div className="text-[11px] font-bold text-[#4c5c2d] mb-1 flex items-center gap-1">
                                         <Sparkles className="w-3 h-3 text-[#728157]" />
                                         Explanation & Key Takeaway
                                       </div>
@@ -2349,22 +2349,22 @@ export default function AdminTools({
                                   {isTeacherMode && (
                                     <div className="bg-[#f9f4ed] border-2 border-[#201e1d] rounded-xl p-3.5 space-y-3 mt-2">
                                       <div className="flex items-center justify-between">
-                                        <h4 className="font-heading font-black text-xs sm:text-sm text-[#201e1d] flex items-center gap-1.5">
-                                          <span>🏷️</span> Classroom Tags & Teacher Notes (Editable by Educator)
+                                        <h4 className="font-heading font-semibold text-xs sm:text-sm text-[#201e1d] flex items-center gap-2">
+                                          <Tag className="w-3.5 h-3.5" /> Classroom tags and teacher notes
                                         </h4>
                                       </div>
 
                                       {/* Classroom Tags Section */}
                                       <div className="space-y-2">
-                                        <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider">
+                                        <div className="text-[11px] font-bold text-[#645c50]">
                                           Classroom Tags
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-1.5">
+                                        <div className="flex flex-wrap items-center gap-2">
                                           {annotation?.classroomTags && annotation.classroomTags.length > 0 ? (
                                             annotation.classroomTags.map((tag) => (
                                               <span
                                                 key={tag}
-                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ffe1d0] text-[#8c491a] text-xs font-bold"
+                                                className="inline-flex items-center gap-1 px-3 py-1 rounded-[10px] bg-[#ffe1d0] text-[#8c491a] text-xs font-bold"
                                               >
                                                 #{tag}
                                                 <button
@@ -2378,13 +2378,13 @@ export default function AdminTools({
                                               </span>
                                             ))
                                           ) : (
-                                            <span className="text-xs text-[#8c8275] italic">No classroom tags added yet.</span>
+                                            <span className="text-xs text-[#8c8275]">No classroom tags added yet.</span>
                                           )}
                                         </div>
 
                                         {/* Quick Preset Tags */}
-                                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                          <span className="text-[10px] font-bold text-[#8c8275]">Quick Presets:</span>
+                                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                                          <span className="text-[11px] font-bold text-[#8c8275]">Quick presets</span>
                                           {['Exam Focus', 'Homework', 'Common Misconception', 'Review in Class'].map((preset) => {
                                             const hasTag = annotation?.classroomTags?.includes(preset);
                                             return (
@@ -2415,7 +2415,7 @@ export default function AdminTools({
                                                 }
                                               }
                                             }}
-                                            placeholder="New tag (e.g. Set 1, Revision)..."
+                                            placeholder="New tag, e.g. Set 1"
                                             className="flex-1 px-3 py-1 rounded-lg bg-white border border-[#c0b6a5] text-xs text-[#201e1d] outline-none focus:border-[#c67139]"
                                           />
                                           <button
@@ -2435,7 +2435,7 @@ export default function AdminTools({
 
                                       {/* Teacher Classroom Note Section */}
                                       <div className="space-y-1.5 pt-1 border-t border-[#dcd3c4]">
-                                        <div className="text-[11px] font-bold text-[#645c50] uppercase tracking-wider">
+                                        <div className="text-[11px] font-bold text-[#645c50]">
                                           Teacher Classroom Note
                                         </div>
                                         <textarea
@@ -2449,7 +2449,7 @@ export default function AdminTools({
                                           <button
                                             type="button"
                                             onClick={() => handleSaveTeacherNote(item.id, noteDraft)}
-                                            className="px-3.5 py-1.5 rounded-xl bg-[#c67139] text-[#f9f4ed] font-heading font-black text-xs hover:bg-[#b2622d] shadow-sm active:translate-y-0.5 cursor-pointer"
+                                            className="px-4 py-2 rounded-xl bg-[#c67139] text-[#f9f4ed] font-heading font-semibold text-xs hover:bg-[#b2622d] shadow-sm active:translate-y-0.5 cursor-pointer"
                                           >
                                             Save Note
                                           </button>
@@ -2460,7 +2460,7 @@ export default function AdminTools({
                                       {(showFlagForm || annotation?.flaggedForAdmin) && (
                                         <div className="p-3 rounded-lg bg-[#fde8e8]/70 border border-[#e0533c]/40 space-y-2 mt-2">
                                           <div className="flex items-center justify-between">
-                                            <span className="font-heading font-bold text-xs text-[#c0392b] flex items-center gap-1.5">
+                                            <span className="font-heading font-bold text-xs text-[#c0392b] flex items-center gap-2">
                                               🚩 {annotation?.flaggedForAdmin ? 'Flagged for App Admin Review' : 'Flag Question for App Admin'}
                                             </span>
                                             {showFlagForm && (
@@ -2485,7 +2485,7 @@ export default function AdminTools({
                                                 value={flagReasonInput}
                                                 onChange={(e) => setFlagReasonInput(e.target.value)}
                                                 placeholder="Reason for flagging (e.g., diagram missing, typo in option B, syllabus mismatch)..."
-                                                className="w-full px-3 py-1.5 rounded-lg bg-white border border-[#e0533c]/50 text-xs text-[#201e1d] outline-none focus:border-[#e0533c]"
+                                                className="w-full px-3 py-2 rounded-lg bg-white border border-[#e0533c]/50 text-xs text-[#201e1d] outline-none focus:border-[#e0533c]"
                                               />
                                               <div className="flex justify-end gap-2">
                                                 <button
@@ -2546,7 +2546,7 @@ export default function AdminTools({
 
           {/* Bulk Agent Actions Card */}
           {!isTeacherMode && (
-            <div className="mt-1.5 flex items-center gap-3 p-3.5 rounded-[20px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs shadow-xs">
+            <div className="mt-2 flex items-center gap-3 p-3.5 rounded-[16px] bg-[#f0fae1] border-[1.5px] border-[#8fa073] text-xs shadow-xs">
               <Sparkles className="w-4 h-4 text-[#728157] shrink-0" />
               <span className="flex-1 leading-snug text-[#201e1d]">
                 <b>Bulk agent actions:</b> write explanations for items that have none · check
@@ -2554,7 +2554,7 @@ export default function AdminTools({
               </span>
               <button
                 onClick={() => alert(`Agent scanning ${filteredBankItems.length} filtered questions in background...`)}
-                className="px-3.5 py-1.5 rounded-full border-[1.5px] border-[#728157] font-bold text-xs text-[#3d472b] hover:bg-[#ccdbb2] active:translate-y-0.5 whitespace-nowrap"
+                className="px-4 py-2 rounded-[10px] border-[1.5px] border-[#728157] font-bold text-xs text-[#3d472b] hover:bg-[#ccdbb2] active:translate-y-0.5 whitespace-nowrap"
               >
                 Run on filtered ({filteredBankItems.length})
               </button>
@@ -2570,12 +2570,12 @@ export default function AdminTools({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 30, scale: 0.95 }}
                 transition={{ duration: 0.18 }}
-                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[6px_6px_0_#201e1d] rounded-2xl px-4 py-2.5 flex items-center gap-2.5 sm:gap-3 flex-wrap max-w-[94vw]"
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#f9f4ed] border-2 border-[#201e1d] shadow-[6px_6px_0_#201e1d] rounded-2xl px-4 py-3 flex items-center gap-3 sm:gap-3 flex-wrap max-w-[94vw]"
               >
                 {/* Selection count */}
-                <div className="flex items-center gap-2 pr-2.5 border-r border-[#dcd3c4]">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#c67139] animate-pulse shrink-0" />
-                  <span className="font-heading font-black text-xs sm:text-sm text-[#201e1d] whitespace-nowrap">
+                <div className="flex items-center gap-2 pr-3 border-r border-[#dcd3c4]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#c67139] shrink-0" />
+                  <span className="font-heading font-semibold text-xs sm:text-sm text-[#201e1d] whitespace-nowrap">
                     {selectedIds.size} selected
                   </span>
                 </div>
@@ -2584,7 +2584,7 @@ export default function AdminTools({
                 <button
                   type="button"
                   onClick={() => handleOpenConfirmModal('delete')}
-                  className="px-3 py-1.5 rounded-full bg-[#fde8e8] text-[#e0533c] hover:bg-[#fad2d2] border-[1.5px] border-[#e0533c] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all active:translate-y-0.5 whitespace-nowrap"
+                  className="px-3 py-2 rounded-[10px] bg-[#fde8e8] text-[#e0533c] hover:bg-[#fad2d2] border-[1.5px] border-[#e0533c] font-bold text-xs flex items-center gap-2 cursor-pointer transition-colors active:translate-y-0.5 whitespace-nowrap"
                 >
                   <Trash2 className="w-3.5 h-3.5 shrink-0" />
                   <span>Delete Selected</span>
@@ -2598,7 +2598,7 @@ export default function AdminTools({
                       setStatusDropdownOpen(!statusDropdownOpen);
                       setTopicDropdownOpen(false);
                     }}
-                    className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-[#201e1d] hover:bg-[#eee7db] font-bold text-xs flex items-center gap-1 cursor-pointer transition-all active:translate-y-0.5 whitespace-nowrap"
+                    className="px-3 py-2 rounded-[10px] bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-[#201e1d] hover:bg-[#eee7db] font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors active:translate-y-0.5 whitespace-nowrap"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5 text-[#645c50] shrink-0" />
                     <span>Change Status</span>
@@ -2614,7 +2614,7 @@ export default function AdminTools({
                         transition={{ duration: 0.12 }}
                         className="absolute bottom-full mb-2 left-0 w-44 rounded-2xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[4px_4px_0_#201e1d] p-1.5 z-50 flex flex-col gap-1"
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#645c50] px-2 py-1">
+                        <span className="text-[11px] font-bold text-[#645c50] px-2 py-1">
                           Select Status
                         </span>
                         {(['Live', 'Needs review', 'Agent draft', 'Flagged'] as BankItemStatus[]).map((status) => (
@@ -2625,9 +2625,9 @@ export default function AdminTools({
                               setStatusDropdownOpen(false);
                               handleOpenConfirmModal('status', status);
                             }}
-                            className="w-full text-left rounded-xl px-2 py-1.5 text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] cursor-pointer flex items-center justify-between transition-colors"
+                            className="w-full text-left rounded-xl px-2 py-2 text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] cursor-pointer flex items-center justify-between transition-colors"
                           >
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadgeClass(status)}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${getStatusBadgeClass(status)}`}>
                               {status}
                             </span>
                           </button>
@@ -2645,7 +2645,7 @@ export default function AdminTools({
                       setTopicDropdownOpen(!topicDropdownOpen);
                       setStatusDropdownOpen(false);
                     }}
-                    className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-[#201e1d] hover:bg-[#eee7db] font-bold text-xs flex items-center gap-1 cursor-pointer transition-all active:translate-y-0.5 whitespace-nowrap"
+                    className="px-3 py-2 rounded-[10px] bg-[#f9f4ed] border-[1.5px] border-[#c0b6a5] text-[#201e1d] hover:bg-[#eee7db] font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors active:translate-y-0.5 whitespace-nowrap"
                   >
                     <BookOpen className="w-3.5 h-3.5 text-[#645c50] shrink-0" />
                     <span>Reassign Topic</span>
@@ -2661,7 +2661,7 @@ export default function AdminTools({
                         transition={{ duration: 0.12 }}
                         className="absolute bottom-full mb-2 left-0 w-72 max-h-60 overflow-y-auto rounded-2xl border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[4px_4px_0_#201e1d] p-1.5 z-50 flex flex-col gap-1"
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#645c50] px-2 py-1">
+                        <span className="text-[11px] font-bold text-[#645c50] px-2 py-1">
                           Select Cambridge Topic
                         </span>
                         {reassignTopicOptions.length === 0 ? (
@@ -2675,7 +2675,7 @@ export default function AdminTools({
                                 setTopicDropdownOpen(false);
                                 handleOpenConfirmModal('topic', topicName);
                               }}
-                              className="w-full text-left rounded-xl px-2 py-1.5 text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] cursor-pointer truncate transition-colors"
+                              className="w-full text-left rounded-xl px-2 py-2 text-xs font-bold text-[#201e1d] hover:bg-[#ffe1d0] cursor-pointer truncate transition-colors"
                               title={topicName}
                             >
                               {topicName}
@@ -2691,7 +2691,7 @@ export default function AdminTools({
                 <button
                   type="button"
                   onClick={handleExportSelected}
-                  className="px-3 py-1.5 rounded-full bg-[#f9f4ed] border-[1.5px] border-[#201e1d] text-[#201e1d] hover:bg-[#eee7db] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all active:translate-y-0.5 whitespace-nowrap"
+                  className="px-3 py-2 rounded-[10px] bg-[#f9f4ed] border-[1.5px] border-[#201e1d] text-[#201e1d] hover:bg-[#eee7db] font-bold text-xs flex items-center gap-2 cursor-pointer transition-colors active:translate-y-0.5 whitespace-nowrap"
                 >
                   <Download className="w-3.5 h-3.5 shrink-0" />
                   <span>Export Selected</span>
@@ -2727,7 +2727,7 @@ export default function AdminTools({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.92, y: 10 }}
                   transition={{ duration: 0.16 }}
-                  className="w-full max-w-2xl lg:max-w-3xl rounded-[28px] border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[6px_6px_0_#201e1d] p-6 sm:p-7 flex flex-col gap-4 max-h-[90vh] overflow-hidden"
+                  className="w-full max-w-2xl lg:max-w-3xl rounded-[16px] border-2 border-[#201e1d] bg-[#f9f4ed] shadow-[6px_6px_0_#201e1d] p-6 sm:p-7 flex flex-col gap-4 max-h-[90vh] overflow-hidden"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Modal Header */}
@@ -2748,7 +2748,7 @@ export default function AdminTools({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 id="confirm-modal-title" className="font-heading text-xl sm:text-2xl font-black text-[#201e1d]">
+                      <h3 id="confirm-modal-title" className="font-heading text-xl sm:text-2xl font-semibold text-[#201e1d]">
                         {confirmationModal.type === 'delete' &&
                           `Delete ${modalCount} Question${modalCount === 1 ? '' : 's'}?`}
                         {confirmationModal.type === 'status' &&
@@ -2768,19 +2768,19 @@ export default function AdminTools({
                   </div>
 
                   {/* Selected Items Preview */}
-                  <div className="flex flex-col gap-1.5 flex-1 min-h-0">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#645c50]">
+                  <div className="flex flex-col gap-2 flex-1 min-h-0">
+                    <span className="text-[11px] font-bold text-[#645c50]">
                       Affected Questions ({modalCount})
                     </span>
                     <div className="max-h-48 overflow-y-auto overflow-x-hidden rounded-2xl border border-[#dcd3c4] bg-[#eee7db]/50 p-2.5 divide-y divide-[#dcd3c4]">
                       {modalPreviewItems.map((item) => (
                         <div
                           key={item.id}
-                          className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2.5 text-xs min-w-0"
+                          className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs min-w-0"
                         >
                           <span className="font-mono font-bold text-[#201e1d] shrink-0">{item.id}</span>
                           <span className="text-[#474238] truncate flex-1 min-w-0 font-medium">{item.stem}</span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f9f4ed] border border-[#dcd3c4] shrink-0 max-w-[200px] truncate text-[#645c50]">
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#f9f4ed] border border-[#dcd3c4] shrink-0 max-w-[200px] truncate text-[#645c50]">
                             {item.topic}
                           </span>
                         </div>
@@ -2793,14 +2793,14 @@ export default function AdminTools({
                     <button
                       type="button"
                       onClick={() => setConfirmationModal({ isOpen: false, type: 'delete' })}
-                      className="px-4 py-2 rounded-full border-[1.5px] border-[#201e1d] bg-[#f9f4ed] hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] transition-colors cursor-pointer"
+                      className="px-4 py-2 rounded-[10px] border-[1.5px] border-[#201e1d] bg-[#f9f4ed] hover:bg-[#eee7db] text-xs font-bold text-[#201e1d] transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={handleConfirmMassAction}
-                      className={`px-5 py-2 rounded-full border-2 border-[#201e1d] shadow-[3px_3px_0_#201e1d] font-heading text-xs font-black text-[#f9f4ed] transition-all cursor-pointer active:translate-y-0.5 active:shadow-none ${
+                      className={`px-5 py-2 rounded-[10px] border-2 border-[#201e1d] shadow-[3px_3px_0_#201e1d] font-heading text-xs font-semibold text-[#f9f4ed] transition-colors cursor-pointer active:translate-y-0.5 active:shadow-none ${
                         confirmationModal.type === 'delete'
                           ? 'bg-[#e0533c] hover:bg-[#cb422c]'
                           : 'bg-[#c67139] hover:bg-[#b2622d]'
@@ -2824,7 +2824,7 @@ export default function AdminTools({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-[#201e1d] text-[#f9f4ed] border-2 border-[#dcd3c4] shadow-[4px_4px_0_#201e1d] px-4 py-2.5 rounded-full flex items-center gap-2 text-xs font-bold"
+                className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-[#201e1d] text-[#f9f4ed] border-2 border-[#dcd3c4] shadow-[4px_4px_0_#201e1d] px-4 py-3 rounded-full flex items-center gap-2 text-xs font-bold"
               >
                 <Check className="w-4 h-4 text-[#ccdbb2] shrink-0" />
                 <span>{notification}</span>
